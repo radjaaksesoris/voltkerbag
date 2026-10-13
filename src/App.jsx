@@ -27,8 +27,7 @@ export default function App() {
     <div className={'app ' + (navHidden ? 'nav-hidden' : '')}>
       <aside className="sidebar" id="primary-navigation" hidden={navHidden}>
         <div className="logo">
-          <span className="logo-bolt"><Icon name="bolt" size={25} /></span> VOLTKER
-          <span className="logo-sub">Toko Tas</span>
+          <img src={import.meta.env.BASE_URL + 'voltker-logo.png'} alt="VOLTKER Toko Tas" />
         </div>
         <nav>
           {NAV.map((n) => (

@@ -55,21 +55,16 @@ button:focus-visible, input:focus-visible, select:focus-visible {
 .logo {
   display: flex;
   align-items: center;
-  gap: 7px;
-  padding: 0 10px;
+  justify-content: center;
+  padding: 0 2px;
   margin-bottom: 48px;
-  color: #f5eee3;
-  font-size: 21px;
-  font-weight: 800;
-  letter-spacing: 1.8px;
 }
-.logo-bolt { display: inline-flex; align-items: center; color: #ffe0a6; }
-.logo-sub {
-  color: rgba(255, 248, 238, .7);
-  font-size: 9px;
-  font-weight: 600;
-  letter-spacing: 2px;
-  text-transform: uppercase;
+.logo img {
+  display: block;
+  width: 100%;
+  max-width: 216px;
+  height: auto;
+  object-fit: contain;
 }
 .sidebar nav { display: flex; flex-direction: column; gap: 7px; flex: 1; }
 .nav-item {
@@ -545,9 +540,8 @@ select.input { appearance: none; }
 
 @media (max-width: 1050px) {
   .sidebar { width: 78px; flex-basis: 78px; padding: 20px 8px 14px; }
-  .logo { justify-content: center; padding: 0; font-size: 0; margin-bottom: 36px; }
-  .logo-bolt { font-size: 26px; }
-  .logo-sub { display: none; }
+  .logo { padding: 0; margin-bottom: 36px; }
+  .logo img { width: 58px; }
   .nav-item { justify-content: center; padding: 13px 8px; font-size: 0; }
   .nav-icon { width: auto; }
   .sidebar-foot { justify-content: center; padding-inline: 0; font-size: 0; }
