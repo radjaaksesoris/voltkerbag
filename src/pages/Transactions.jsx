@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useState } from 'react'
-import { getAll, put, onRefresh } from '../db'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import { getAll, completeSale, recordTransactionPayment, onRefresh } from '../db'
 import { rupiah, dateTime, isToday } from '../format'
 
 export default function Transactions() {
@@ -8,7 +8,15 @@ export default function Transactions() {
   const [cart, setCart] = useState([])
   const [q, setQ] = useState('')
   const [pay, setPay] = useState('')
+  const [customerName, setCustomerName] = useState('')
+  const [paymentType, setPaymentType] = useState('cash')
+  const [checkoutError, setCheckoutError] = useState('')
   const [done, setDone] = useState(null)
+  const [installmentTransaction, setInstallmentTransaction] = useState(null)
+  const [installmentAmount, setInstallmentAmount] = useState('')
+  const [installmentError, setInstallmentError] = useState('')
+  const [saving, setSaving] = useState(false)
+  const operationLock = useRef(false)
 
   async function load() {
     setProducts(await getAll('products'))
@@ -24,7 +32,8 @@ export default function Transactions() {
     p.name.toLowerCase().includes(q.toLowerCase()) && Number(p.stock) > 0
   )
   const total = useMemo(() => cart.reduce((s, c) => s + c.price * c.qty, 0), [cart])
-  const change = Number(pay || 0) - total
+  const paidNow = Number(pay || 0)
+  const change = paidNow - total
 
   function addToCart(p) {
     setCart((prev) => {
@@ -45,31 +54,105 @@ export default function Transactions() {
   }
 
   async function checkout() {
-    if (cart.length === 0) return alert('Keranjang masih kosong')
-    if (change < 0) return alert('Uang pembayaran kurang')
-    const now = new Date().toISOString()
-    // 1) simpan transaksi
-    const txId = await put('transactions', {
-      items: cart.map((c) => ({ productId: c.productId, name: c.name, price: c.price, cost: c.cost, qty: c.qty })),
-      total, payment: Number(pay || 0), change
-    })
-    // 2) kurangi stok
-    for (const c of cart) {
-      const p = products.find((x) => x.id === c.productId)
-      if (p) await put('products', { ...p, stock: Number(p.stock) - c.qty })
+    if (operationLock.current) return
+    setCheckoutError('')
+    if (!customerName.trim()) { setCheckoutError('Nama pelanggan wajib diisi.'); return }
+    if (cart.length === 0) { setCheckoutError('Keranjang masih kosong.'); return }
+    if (paymentType === 'cash' && change < 0) { setCheckoutError('Uang tunai kurang dari total belanja.'); return }
+    if (paymentType === 'credit' && (paidNow < 0 || paidNow > total)) {
+      setCheckoutError('Pembayaran awal harus antara Rp0 dan total belanja.')
+      return
     }
-    // 3) catat pemasukan otomatis ke finance
-    await put('finance', {
-      type: 'income', category: 'Penjualan',
-      amount: total, note: 'Transaksi #' + txId + ' (' + cart.reduce((s, c) => s + c.qty, 0) + ' item)',
-      refId: txId, date: now
-    })
-    setDone({ id: txId, total, payment: Number(pay || 0), change })
-    setCart([]); setPay('')
+
+    const now = new Date().toISOString()
+    const initialPayment = paymentType === 'cash' ? total : paidNow
+    const remaining = total - initialPayment
+    const sale = {
+      customerName: customerName.trim(),
+      paymentType,
+      items: cart.map((c) => ({ productId: c.productId, name: c.name, price: c.price, cost: c.cost, qty: c.qty })),
+      total,
+      payment: paidNow,
+      paidAmount: initialPayment,
+      balanceDue: remaining,
+      payments: initialPayment > 0 ? [{ amount: initialPayment, date: now }] : [],
+      change: paymentType === 'cash' ? change : 0
+    }
+    const financeEntry = initialPayment > 0 ? {
+      type: 'income',
+      category: paymentType === 'credit' ? 'DP kredit' : 'Penjualan',
+      amount: initialPayment,
+      note: 'Penjualan · ' + customerName.trim(),
+      date: now
+    } : null
+    operationLock.current = true
+    setSaving(true)
+    try {
+      const txId = await completeSale(sale, cart, financeEntry)
+      setDone({
+        id: txId,
+        total,
+        payment: initialPayment,
+        change: paymentType === 'cash' ? change : 0,
+        balance: remaining,
+        paymentType
+      })
+      setCart([])
+      setPay('')
+      setCustomerName('')
+      setPaymentType('cash')
+    } catch (error) {
+      setCheckoutError('Transaksi gagal disimpan: ' + error.message)
+    } finally {
+      operationLock.current = false
+      setSaving(false)
+    }
   }
 
-  const todayCount = history.filter((t) => isToday(t.createdAt)).length
-  const todayOmzet = history.filter((t) => isToday(t.createdAt)).reduce((s, t) => s + t.total, 0)
+  async function recordInstallment(e) {
+    e.preventDefault()
+    if (operationLock.current) return
+    setInstallmentError('')
+    const amount = Number(installmentAmount)
+    const balance = getBalanceDue(installmentTransaction)
+    if (!Number.isFinite(amount) || amount <= 0) {
+      setInstallmentError('Masukkan jumlah pembayaran yang lebih dari Rp0.')
+      return
+    }
+    if (amount > balance) {
+      setInstallmentError('Pembayaran tidak boleh melebihi sisa utang ' + rupiah(balance) + '.')
+      return
+    }
+
+    const now = new Date().toISOString()
+    operationLock.current = true
+    setSaving(true)
+    try {
+      await recordTransactionPayment(
+        installmentTransaction.id,
+        amount,
+        {
+          type: 'income',
+          category: 'Cicilan kredit',
+          amount,
+          note: 'Cicilan transaksi #' + installmentTransaction.id + ' · ' + installmentTransaction.customerName,
+          refId: installmentTransaction.id,
+          date: now
+        }
+      )
+      setInstallmentTransaction(null)
+      setInstallmentAmount('')
+    } catch (error) {
+      setInstallmentError('Gagal menyimpan cicilan: ' + error.message)
+    } finally {
+      operationLock.current = false
+      setSaving(false)
+    }
+  }
+
+  const todayTx = history.filter((t) => isToday(t.createdAt))
+  const todayCount = todayTx.length
+  const todayOmzet = todayTx.reduce((s, t) => s + t.total, 0)
 
   return (
     <div className="page">
@@ -112,37 +195,86 @@ export default function Transactions() {
             </div>
           ))}
 
+          <label>Nama pelanggan *</label>
+          <input className="input" value={customerName} onChange={(e) => setCustomerName(e.target.value)}
+            placeholder="Masukkan nama pelanggan" required />
+          <label>Metode pembayaran</label>
+          <select className="input" value={paymentType} onChange={(e) => setPaymentType(e.target.value)}>
+            <option value="cash">Tunai</option>
+            <option value="credit">Kredit tanpa bunga</option>
+          </select>
           <div className="cart-total">
             <span>Total</span>
             <strong className="accent">{rupiah(total)}</strong>
           </div>
-          <label className="muted small">Uang Tunai (Rp)</label>
-          <input className="input" type="number" min="0" value={pay} onChange={(e) => setPay(e.target.value)} placeholder={total || 0} />
-          <div className={'change ' + (change < 0 ? 'negative' : '')}>
-            Kembalian: <strong>{rupiah(change < 0 ? 0 : change)}</strong>
-          </div>
-          <button className="btn btn-primary btn-block btn-lg" onClick={checkout} disabled={cart.length === 0}>
-            ⚡ Bayar & Simpan
+          <label>{paymentType === 'cash' ? 'Uang tunai diterima (Rp)' : 'Pembayaran awal / DP (Rp)'}</label>
+          <input className="input" type="number" min="0" max={paymentType === 'credit' ? total : undefined}
+            value={pay} onChange={(e) => setPay(e.target.value)}
+            placeholder={paymentType === 'cash' ? total || 0 : '0 jika belum membayar'} />
+          {paymentType === 'cash' ? (
+            <div className={'change ' + (change < 0 ? 'negative' : '')}>
+              Kembalian: <strong>{rupiah(change < 0 ? 0 : change)}</strong>
+            </div>
+          ) : (
+            <div className="change credit-balance">Sisa kredit: <strong>{rupiah(Math.max(0, total - paidNow))}</strong></div>
+          )}
+          {checkoutError && <p className="form-error" role="alert">{checkoutError}</p>}
+          <button className="btn btn-primary btn-block btn-lg" onClick={checkout} disabled={cart.length === 0 || saving}>
+            {saving ? 'Menyimpan…' : '⚡ Simpan Transaksi'}
           </button>
         </div>
       </div>
 
       <div className="card table-card">
         <h3>Riwayat Transaksi</h3>
-        <table>
-          <thead><tr><th>ID</th><th>Waktu</th><th>Item</th><th>Total</th><th>Bayar</th><th>Kembalian</th></tr></thead>
+        <table className="transaction-table">
+          <thead><tr><th>ID</th><th>Pelanggan</th><th>Waktu</th><th>Item</th><th>Total</th><th>Terbayar</th><th>Sisa</th><th>Kembalian</th><th>Status / Aksi</th></tr></thead>
           <tbody>
-            {history.length === 0 && <tr><td colSpan="6" className="muted center">Belum ada transaksi.</td></tr>}
-            {history.slice(0, 50).map((t) => (
-              <tr key={t.id}>
-                <td>#{t.id}</td>
-                <td>{dateTime(t.createdAt)}</td>
-                <td>{t.items.map((i) => i.name + ' ×' + i.qty).join(', ')}</td>
-                <td className="accent"><strong>{rupiah(t.total)}</strong></td>
-                <td>{rupiah(t.payment)}</td>
-                <td>{rupiah(t.change)}</td>
-              </tr>
-            ))}
+            {history.length === 0 && <tr><td colSpan="9" className="muted center">Belum ada transaksi.</td></tr>}
+            {history.slice(0, 50).map((t) => {
+              const balance = getBalanceDue(t)
+              const credit = (t.paymentType || 'cash') === 'credit'
+              const payments = t.payments || []
+              return (
+                <tr key={t.id}>
+                  <td>#{t.id}</td>
+                  <td>{t.customerName || '—'}</td>
+                  <td>{dateTime(t.createdAt)}</td>
+                  <td>{t.items.map((i) => i.name + ' ×' + i.qty).join(', ')}</td>
+                  <td className="accent"><strong>{rupiah(t.total)}</strong></td>
+                  <td>{rupiah(getPaidAmount(t))}</td>
+                  <td className={balance > 0 ? 'danger' : ''}>{rupiah(balance)}</td>
+                  <td>{rupiah(t.change)}</td>
+                  <td>
+                    {credit && balance > 0 ? (
+                      <button className="btn btn-sm btn-primary" onClick={() => {
+                        setInstallmentTransaction(t)
+                        setInstallmentAmount('')
+                        setInstallmentError('')
+                      }}>Catat cicilan</button>
+                    ) : (
+                      <span className={'badge ' + (balance > 0 ? 'badge-danger' : 'badge-ok')}>
+                        {balance > 0 ? 'Kredit' : 'Lunas'}
+                      </span>
+                    )}
+                    {credit && (
+                      <details className="payment-history">
+                        <summary>Riwayat pembayaran</summary>
+                        {payments.length === 0 ? (
+                          <span className="muted small">Belum ada pembayaran.</span>
+                        ) : (
+                          <ul>
+                            {payments.map((entry, index) => (
+                              <li key={index}>{dateTime(entry.date)} · {rupiah(entry.amount)}</li>
+                            ))}
+                          </ul>
+                        )}
+                      </details>
+                    )}
+                  </td>
+                </tr>
+              )
+            })}
           </tbody>
         </table>
       </div>
@@ -152,11 +284,48 @@ export default function Transactions() {
           <div className="modal center-text" onClick={(e) => e.stopPropagation()}>
             <div className="success-icon">✓</div>
             <h3>Transaksi #{done.id} Berhasil</h3>
-            <p className="muted">Total {rupiah(done.total)} · Bayar {rupiah(done.payment)} · Kembali {rupiah(done.change)}</p>
+            <p className="muted">Total {rupiah(done.total)} · Dibayar {rupiah(done.payment)}
+              {done.paymentType === 'credit' ? ' · Sisa kredit ' + rupiah(done.balance) : ' · Kembali ' + rupiah(done.change)}
+            </p>
             <button className="btn btn-primary" onClick={() => setDone(null)}>Tutup</button>
           </div>
         </div>
       )}
+
+      {installmentTransaction && (
+        <div className="overlay" onClick={() => setInstallmentTransaction(null)}>
+          <form className="modal" onClick={(e) => e.stopPropagation()} onSubmit={recordInstallment}>
+            <h3>Catat cicilan</h3>
+            <p className="muted small">{installmentTransaction.customerName} · Transaksi #{installmentTransaction.id}</p>
+            <p className="installment-balance">Sisa utang <strong>{rupiah(getBalanceDue(installmentTransaction))}</strong></p>
+            <label>Jumlah pembayaran (Rp)</label>
+            <input className="input" type="number" min="1" max={getBalanceDue(installmentTransaction)}
+              value={installmentAmount} onChange={(e) => setInstallmentAmount(e.target.value)}
+              placeholder="Masukkan nominal pembayaran" required autoFocus />
+            {installmentError && <p className="form-error" role="alert">{installmentError}</p>}
+            <div className="modal-actions">
+              <button type="button" className="btn" onClick={() => setInstallmentTransaction(null)}>Batal</button>
+              <button type="submit" className="btn btn-primary" disabled={saving}>
+                {saving ? 'Menyimpan…' : 'Simpan pembayaran'}
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
     </div>
   )
+}
+
+function getPaidAmount(transaction) {
+  if (transaction.paidAmount != null && Number.isFinite(Number(transaction.paidAmount))) {
+    return Number(transaction.paidAmount)
+  }
+  return Math.min(Number(transaction.total) || 0, Number(transaction.payment) || 0)
+}
+
+function getBalanceDue(transaction) {
+  if (transaction.balanceDue != null && Number.isFinite(Number(transaction.balanceDue))) {
+    return Number(transaction.balanceDue)
+  }
+  return Math.max(0, (Number(transaction.total) || 0) - getPaidAmount(transaction))
 }

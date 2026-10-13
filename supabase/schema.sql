@@ -21,6 +21,11 @@ create table if not exists transactions (
   items jsonb not null default '[]'::jsonb,
   total double precision default 0,
   payment double precision default 0,
+  "customerName" text,
+  "paymentType" text not null default 'cash',
+  "paidAmount" double precision,
+  "balanceDue" double precision,
+  payments jsonb not null default '[]'::jsonb,
   "change" double precision default 0,
   "createdAt" timestamptz,
   "updatedAt" timestamptz
@@ -42,7 +47,17 @@ create table if not exists finance_entries (
 -- Add ownership to tables that were created with the older schema.
 alter table products add column if not exists owner_id uuid default auth.uid();
 alter table transactions add column if not exists owner_id uuid default auth.uid();
+alter table transactions add column if not exists "customerName" text;
+alter table transactions add column if not exists "paymentType" text not null default 'cash';
+alter table transactions add column if not exists "paidAmount" double precision;
+alter table transactions add column if not exists "balanceDue" double precision;
+alter table transactions add column if not exists payments jsonb not null default '[]'::jsonb;
 alter table finance_entries add column if not exists owner_id uuid default auth.uid();
+
+update transactions
+set "paidAmount" = least(coalesce(total, 0), coalesce(payment, 0)),
+    "balanceDue" = 0
+where "paymentType" = 'cash' and "paidAmount" is null;
 
 create index if not exists products_owner_id_idx on products (owner_id);
 create index if not exists transactions_owner_id_idx on transactions (owner_id);

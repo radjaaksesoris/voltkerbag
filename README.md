@@ -4,8 +4,8 @@ Aplikasi kasir toko tas dengan React + Vite. **Semua data tersimpan offline di I
 dengan opsi sinkronisasi dan backup ke Supabase menggunakan login.
 
 ## Fitur
-- 📊 **Dashboard** — omzet, transaksi & laba hari ini, peringatan stok menipis, produk terlaris
-- 🛒 **Kasir / Transaksi** — klik produk → keranjang → bayar (stok otomatis berkurang, pemasukan otomatis tercatat)
+- 📊 **Dashboard** — ringkasan omzet, laba, dan kondisi stok
+- 🛒 **Kasir / Transaksi** — nama pelanggan wajib; pembayaran tunai atau kredit tanpa bunga, termasuk DP opsional dan pencatatan cicilan
 - 👜 **Stok Barang** — tambah/edit/hapus produk, harga beli & jual, badge stok menipis
 - 💰 **Keuangan** — buku kas otomatis + catat pengeluaran/modal manual, laba kotor & bersih
 - ⇅ **Sinkronisasi Supabase** — tombol besar di kanan atas; push + pull + hapus tersinkron
@@ -43,3 +43,5 @@ Public key akan disertakan dalam bundle browser dan bukan rahasia. Tabel mengakt
 ## Catatan
 - Tanpa konfigurasi Supabase pun aplikasi berjalan 100% offline.
 - Angka `id` dari IndexedDB dipakai sebagai primary key di Supabase; data cloud dibatasi ke akun yang sedang masuk.
+- Pembayaran kredit dicatat di buku kas hanya saat uang diterima (DP dan cicilan). Skema Supabase menambahkan kolom pelanggan, metode pembayaran, jumlah terbayar, sisa tagihan, dan riwayat pembayaran transaksi.
+- Jika skema Supabase sudah pernah dibuat, jalankan kembali isi `supabase/schema.sql` agar kolom transaksi kredit ditambahkan sebelum sinkronisasi.

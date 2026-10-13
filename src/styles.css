@@ -337,6 +337,7 @@ select.input { appearance: none; }
 .badge-ok { background: #e4eee7; color: #3b765e; }
 .badge-danger { background: #f5e5e0; color: #a5222a; }
 .badge-neutral { background: #eee9df; color: #766c63; }
+.form-error { margin: 0 0 12px; color: var(--danger); font-size: 12px; font-weight: 600; }
 
 /* Point of sale */
 .pos-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(320px, 390px); gap: 22px; align-items: start; margin-bottom: 25px; }
@@ -375,6 +376,14 @@ select.input { appearance: none; }
 .cart-total { display: flex; align-items: center; justify-content: space-between; margin-top: 8px; padding: 14px 0; border-top: 2px solid var(--border); font-size: 17px; }
 .change { padding: 8px 0 14px; color: var(--muted); }
 .change.negative { color: var(--danger); }
+.change.credit-balance { color: var(--accent); }
+.transaction-table { min-width: 1040px; }
+.payment-history { margin-top: 8px; font-size: 11px; }
+.payment-history summary { color: var(--muted); cursor: pointer; font-weight: 600; }
+.payment-history ul { min-width: 210px; margin: 7px 0 0; padding-left: 17px; color: var(--text); }
+.payment-history li + li { margin-top: 4px; }
+.installment-balance { display: flex; justify-content: space-between; margin: 15px 0; color: var(--muted); }
+.installment-balance strong { color: var(--accent); font-variant-numeric: tabular-nums; }
 
 /* Finance and forms */
 .finance-grid { display: grid; grid-template-columns: minmax(280px, 340px) minmax(0, 1fr); gap: 22px; align-items: start; }

@@ -40,6 +40,91 @@ export async function put(store, value) {
   notifyRefresh()
   return id
 }
+export async function completeSale(transaction, cart, financeEntry) {
+  const db = await dbPromise
+  const tx = db.transaction(['transactions', 'products', 'finance'], 'readwrite')
+  const now = new Date().toISOString()
+  const productStore = tx.objectStore('products')
+  const products = await Promise.all(cart.map(async (item) => ({
+    item,
+    product: await productStore.get(item.productId)
+  })))
+
+  for (const { item, product } of products) {
+    if (!product) throw new Error('Produk "' + item.name + '" tidak ditemukan.')
+    if (Number(product.stock) < item.qty) {
+      throw new Error('Stok "' + item.name + '" tidak cukup untuk menyelesaikan transaksi.')
+    }
+  }
+
+  const savedTransaction = {
+    ...transaction,
+    updatedAt: now,
+    createdAt: transaction.createdAt || now
+  }
+  const transactionId = await tx.objectStore('transactions').add(savedTransaction)
+
+  for (const { item, product } of products) {
+    await productStore.put({
+      ...product,
+      stock: Number(product.stock) - item.qty,
+      updatedAt: now
+    })
+  }
+
+  if (financeEntry) {
+    await tx.objectStore('finance').add({
+      ...financeEntry,
+      refId: transactionId,
+      updatedAt: now,
+      createdAt: financeEntry.createdAt || now
+    })
+  }
+
+  await tx.done
+  notifyRefresh()
+  return transactionId
+}
+export async function recordTransactionPayment(transactionId, amount, financeEntry) {
+  const db = await dbPromise
+  const tx = db.transaction(['transactions', 'finance'], 'readwrite')
+  const now = new Date().toISOString()
+  const transactionStore = tx.objectStore('transactions')
+  const transaction = await transactionStore.get(transactionId)
+  if (!transaction) throw new Error('Transaksi tidak ditemukan.')
+  if (transaction.paymentType !== 'credit') throw new Error('Cicilan hanya dapat dicatat untuk transaksi kredit.')
+
+  const total = Number(transaction.total) || 0
+  const paidAmount = transaction.paidAmount != null
+    ? Number(transaction.paidAmount)
+    : Math.min(total, Number(transaction.payment) || 0)
+  const balanceDue = transaction.balanceDue != null
+    ? Number(transaction.balanceDue)
+    : Math.max(0, total - paidAmount)
+  if (!Number.isFinite(amount) || amount <= 0) throw new Error('Nominal cicilan harus lebih dari Rp0.')
+  if (amount > balanceDue) throw new Error('Nominal cicilan melebihi sisa utang ' + balanceDue + '.')
+
+  const savedTransaction = {
+    ...transaction,
+    paidAmount: paidAmount + amount,
+    balanceDue: Math.max(0, total - paidAmount - amount),
+    payments: [...(transaction.payments || []), { amount, date: now }],
+    updatedAt: now,
+    createdAt: transaction.createdAt || now
+  }
+  const savedFinanceEntry = {
+    ...financeEntry,
+    refId: transactionId,
+    updatedAt: now,
+    createdAt: financeEntry.createdAt || now
+  }
+  await Promise.all([
+    transactionStore.put(savedTransaction),
+    tx.objectStore('finance').put(savedFinanceEntry)
+  ])
+  await tx.done
+  notifyRefresh()
+}
 export async function bulkPut(store, values) {
   const db = await dbPromise
   const tx = db.transaction(store, 'readwrite')
