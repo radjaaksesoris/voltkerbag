@@ -43,7 +43,7 @@ button:focus-visible, input:focus-visible, select:focus-visible {
 .sidebar {
   width: 252px;
   flex: 0 0 252px;
-  background: var(--ink);
+  background: var(--accent-dark);
   color: #f6efe3;
   display: flex;
   flex-direction: column;
@@ -62,9 +62,9 @@ button:focus-visible, input:focus-visible, select:focus-visible {
   font-weight: 800;
   letter-spacing: 1.8px;
 }
-.logo-bolt { color: #d24943; font-size: 25px; }
+.logo-bolt { color: #ffe0a6; font-size: 25px; }
 .logo-sub {
-  color: #a89b8d;
+  color: rgba(255, 248, 238, .7);
   font-size: 9px;
   font-weight: 600;
   letter-spacing: 2px;
@@ -78,28 +78,28 @@ button:focus-visible, input:focus-visible, select:focus-visible {
   border: 1px solid transparent;
   border-radius: 11px;
   background: transparent;
-  color: #b7aca1;
+  color: rgba(255, 248, 238, .82);
   padding: 13px 14px;
   font-size: 13px;
   font-weight: 600;
   text-align: left;
   transition: color .2s, background .2s, border-color .2s, transform .2s;
 }
-.nav-item:hover { background: #24211f; color: #fffaf1; transform: translateX(2px); }
+.nav-item:hover { background: rgba(255, 255, 255, .11); color: #fffaf1; transform: translateX(2px); }
 .nav-item.active {
   color: #fff8ee;
-  background: #302321;
-  border-color: #53302c;
-  box-shadow: inset 3px 0 #c33a3d;
+  background: rgba(255, 255, 255, .16);
+  border-color: rgba(255, 255, 255, .2);
+  box-shadow: inset 3px 0 #ffe0a6;
 }
 .nav-icon { width: 21px; font-size: 16px; text-align: center; }
 .sidebar-foot {
   display: flex;
   align-items: center;
   gap: 9px;
-  border-top: 1px solid #332e2a;
+  border-top: 1px solid rgba(255, 255, 255, .2);
   padding: 15px 9px 3px;
-  color: #a89b8d;
+  color: rgba(255, 248, 238, .76);
   font-size: 11px;
 }
 .dot-online { width: 7px; height: 7px; border-radius: 50%; background: #86a88a; }
@@ -556,13 +556,13 @@ select.input { appearance: none; }
     width: auto;
     height: 68px;
     padding: 6px 9px max(6px, env(safe-area-inset-bottom));
-    border-top: 1px solid #332e2a;
+    border-top: 1px solid rgba(255, 255, 255, .22);
   }
   .sidebar[hidden] { display: none; }
   .logo, .sidebar-foot { display: none; }
   .sidebar nav { flex-direction: row; justify-content: space-around; gap: 3px; }
   .nav-item { flex: 1; flex-direction: column; gap: 2px; padding: 6px 2px; border-radius: 8px; font-size: 9px; text-align: center; }
-  .nav-item.active { box-shadow: inset 0 2px #c33a3d; }
+  .nav-item.active { box-shadow: inset 0 2px #ffe0a6; }
   .nav-icon { font-size: 17px; }
   .topbar { min-height: 70px; padding: 10px 14px; }
   .topbar-start { flex: 1; gap: 9px; }
