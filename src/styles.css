@@ -120,8 +120,19 @@ button:focus-visible, input:focus-visible, select:focus-visible {
   border-bottom: 1px solid var(--border);
   backdrop-filter: blur(14px);
 }
-.topbar-title { display: flex; flex-direction: column; gap: 2px; font-size: 15px; }
+.topbar-title { display: flex; flex-direction: column; gap: 2px; color: var(--text); font-size: 14px; }
 .topbar-title strong { font-weight: 700; }
+.topbar-title span { color: var(--muted); font-size: 12px; }
+.topbar-title-dashboard { gap: 0; }
+.topbar-title-dashboard strong {
+  color: var(--ink);
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: clamp(28px, 3vw, 36px);
+  font-weight: 700;
+  letter-spacing: -.8px;
+  line-height: 1.12;
+}
+.topbar-title-dashboard span { margin-top: 4px; color: var(--text); font-size: 13px; }
 .content { width: 100%; max-width: 1480px; margin: 0 auto; padding: 38px clamp(20px, 4vw, 52px) 56px; }
 
 /* Sync and utility buttons */

@@ -38,9 +38,18 @@ export default function App() {
 
       <main className="main">
         <header className="topbar">
-          <div className="topbar-title">
-            <strong>Operasional toko</strong>
-            <span className="muted small">Penjualan, stok, dan keuangan dalam satu tempat</span>
+          <div className={'topbar-title ' + (page === 'dashboard' ? 'topbar-title-dashboard' : '')}>
+            {page === 'dashboard' ? (
+              <>
+                <strong>Dashboard</strong>
+                <span>Ringkasan performa tokomu hari ini.</span>
+              </>
+            ) : (
+              <>
+                <strong>Operasional toko</strong>
+                <span>Penjualan, stok, dan keuangan dalam satu tempat</span>
+              </>
+            )}
           </div>
           <SyncButton />
         </header>

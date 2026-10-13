@@ -31,13 +31,6 @@ export default function Dashboard() {
 
   return (
     <div className="page">
-      <div className="page-head">
-        <div>
-          <h2>Dashboard</h2>
-          <p className="muted">Ringkasan performa tokomu hari ini.</p>
-        </div>
-      </div>
-
       <div className="stats-grid">
         <div className="stat-card highlight"><span>Omzet Hari Ini</span><strong>{rupiah(omzetToday)}</strong></div>
         <div className="stat-card"><span>Laba Kotor Hari Ini</span><strong className="ok">{rupiah(profitToday)}</strong></div>
