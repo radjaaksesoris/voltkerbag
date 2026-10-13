@@ -90,16 +90,17 @@ export default function SyncButton() {
       {showSettings && createPortal(
         <div className="overlay" onClick={() => setShowSettings(false)}>
           <div className="modal" onClick={(e) => e.stopPropagation()}>
-            <h3>Akun Supabase</h3>
+            <h3>VOLTKER</h3>
             {isConfigured() ? (
               session ? (
                 <div>
+                  <p className="muted small">Sinkoronisasi ke database server</p>
                   <p className="muted small">Masuk sebagai {session.user.email}</p>
                   <button className="btn btn-block" disabled={authBusy} onClick={doSignOut}>Keluar</button>
                 </div>
               ) : (
                 <form onSubmit={doSignIn}>
-                  <p className="muted small">Masuk dengan akun Supabase yang sudah dibuat untuk perangkat ini.</p>
+                  <p className="muted small">Sinkoronisasi ke database server</p>
                   <label>Email</label>
                   <input className="input" type="email" autoComplete="username" required
                     value={email} onChange={(e) => setEmail(e.target.value)} />
