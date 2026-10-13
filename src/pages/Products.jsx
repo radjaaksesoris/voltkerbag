@@ -50,11 +50,8 @@ export default function Products() {
 
   return (
     <div className="page">
-      <div className="page-head">
-        <div>
-          <h2>Stok Barang</h2>
-          <p className="muted">{items.length} produk · {lowStock.length} stok menipis (≤5)</p>
-        </div>
+      <div className="page-toolbar">
+        <p className="muted"><strong>{items.length} produk</strong> · {lowStock.length} stok menipis (≤5)</p>
         <button className="btn btn-primary" onClick={openAdd}>+ Tambah Produk</button>
       </div>
 

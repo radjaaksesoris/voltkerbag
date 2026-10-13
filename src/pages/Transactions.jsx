@@ -73,11 +73,8 @@ export default function Transactions() {
 
   return (
     <div className="page">
-      <div className="page-head">
-        <div>
-          <h2>Kasir / Transaksi</h2>
-          <p className="muted">Hari ini: {todayCount} transaksi · {rupiah(todayOmzet)}</p>
-        </div>
+      <div className="page-toolbar">
+        <p className="muted">Hari ini <strong>{todayCount} transaksi</strong> · {rupiah(todayOmzet)}</p>
       </div>
 
       <div className="pos-grid">

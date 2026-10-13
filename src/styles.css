@@ -120,11 +120,8 @@ button:focus-visible, input:focus-visible, select:focus-visible {
   border-bottom: 1px solid var(--border);
   backdrop-filter: blur(14px);
 }
-.topbar-title { display: flex; flex-direction: column; gap: 2px; color: var(--text); font-size: 14px; }
-.topbar-title strong { font-weight: 700; }
-.topbar-title span { color: var(--muted); font-size: 12px; }
-.topbar-title-dashboard { gap: 0; }
-.topbar-title-dashboard strong {
+.topbar-title { display: flex; flex-direction: column; gap: 3px; color: var(--text); }
+.topbar-title strong {
   color: var(--ink);
   font-family: 'Playfair Display', Georgia, serif;
   font-size: clamp(28px, 3vw, 36px);
@@ -132,7 +129,7 @@ button:focus-visible, input:focus-visible, select:focus-visible {
   letter-spacing: -.8px;
   line-height: 1.12;
 }
-.topbar-title-dashboard span { margin-top: 4px; color: var(--text); font-size: 13px; }
+.topbar-title span { color: var(--text); font-size: 13px; }
 .content { width: 100%; max-width: 1480px; margin: 0 auto; padding: 38px clamp(20px, 4vw, 52px) 56px; }
 
 /* Sync and utility buttons */
@@ -193,6 +190,16 @@ button:focus-visible, input:focus-visible, select:focus-visible {
 
 /* Pages and type */
 .page-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; flex-wrap: wrap; margin-bottom: 25px; }
+.page-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 17px;
+}
+.page-toolbar p { font-size: 12px; }
+.page-toolbar p strong { color: var(--text); font-weight: 700; }
 h2, .page-head h2 {
   color: var(--ink);
   font-family: 'Playfair Display', Georgia, serif;
@@ -399,7 +406,9 @@ select.input { appearance: none; }
   .nav-icon { font-size: 17px; }
   .topbar { min-height: 70px; padding: 10px 14px; }
   .topbar-title { font-size: 13px; }
-  .topbar-title .small { max-width: 150px; font-size: 10px; }
+  .topbar-title { max-width: 48%; }
+  .topbar-title strong { font-size: 23px; }
+  .topbar-title span { font-size: 10px; line-height: 1.3; }
   .btn-sync { min-height: 40px; gap: 6px; padding: 10px 11px; font-size: 9px; letter-spacing: .2px; }
   .sync-icon { font-size: 15px; }
   .btn-gear { width: 40px; height: 40px; }

@@ -50,13 +50,6 @@ export default function Finance() {
 
   return (
     <div className="page">
-      <div className="page-head">
-        <div>
-          <h2>Keuangan</h2>
-          <p className="muted">Semua pemasukan penjualan tercatat otomatis dari kasir.</p>
-        </div>
-      </div>
-
       <div className="stats-grid">
         <div className="stat-card"><span>Pemasukan Penjualan</span><strong className="ok">+{rupiah(income)}</strong></div>
         <div className="stat-card"><span>Pengeluaran</span><strong className="danger">−{rupiah(expense)}</strong></div>

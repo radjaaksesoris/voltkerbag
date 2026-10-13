@@ -6,14 +6,15 @@ import Finance from './pages/Finance.jsx'
 import SyncButton from './components/SyncButton.jsx'
 
 const NAV = [
-  { id: 'dashboard', label: 'Dashboard', icon: '📊' },
-  { id: 'pos', label: 'Kasir / Transaksi', icon: '🛒' },
-  { id: 'stok', label: 'Stok Barang', icon: '👜' },
-  { id: 'finance', label: 'Keuangan', icon: '💰' }
+  { id: 'dashboard', label: 'Dashboard', description: 'Ringkasan performa tokomu hari ini.', icon: '📊' },
+  { id: 'pos', label: 'Kasir / Transaksi', description: 'Pilih produk, atur pembayaran, dan simpan transaksi.', icon: '🛒' },
+  { id: 'stok', label: 'Stok Barang', description: 'Kelola katalog produk, harga, dan ketersediaan stok.', icon: '👜' },
+  { id: 'finance', label: 'Keuangan', description: 'Pantau pemasukan, pengeluaran, dan saldo kas toko.', icon: '💰' }
 ]
 
 export default function App() {
   const [page, setPage] = useState('dashboard')
+  const currentPage = NAV.find((n) => n.id === page)
 
   return (
     <div className="app">
@@ -38,18 +39,9 @@ export default function App() {
 
       <main className="main">
         <header className="topbar">
-          <div className={'topbar-title ' + (page === 'dashboard' ? 'topbar-title-dashboard' : '')}>
-            {page === 'dashboard' ? (
-              <>
-                <strong>Dashboard</strong>
-                <span>Ringkasan performa tokomu hari ini.</span>
-              </>
-            ) : (
-              <>
-                <strong>Operasional toko</strong>
-                <span>Penjualan, stok, dan keuangan dalam satu tempat</span>
-              </>
-            )}
+          <div className="topbar-title">
+            <strong>{currentPage.label}</strong>
+            <span>{currentPage.description}</span>
           </div>
           <SyncButton />
         </header>
