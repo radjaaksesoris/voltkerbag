@@ -27,11 +27,12 @@ Atur **Settings → Pages → Build and deployment → Source** ke **GitHub Acti
 1. Buat project gratis di https://supabase.com
 2. Di **Authentication → Users**, buat akun email dan kata sandi untuk perangkat ini.
 3. Buka **SQL Editor** → paste isi file `supabase/schema.sql` → **Run**
-4. Buka **Settings → API**, salin **Project URL** dan **anon public key**. Jangan gunakan `service_role` key di aplikasi browser.
-5. Di aplikasi VOLTKER, klik ikon **⚙** → masukkan URL dan anon key → **Simpan konfigurasi**.
-6. Masukkan email dan kata sandi akun Supabase tadi → **Masuk**, lalu klik **SINKRON SEKARANG**.
+4. Buka **Settings → API Keys**, salin **anon/public key**. Jangan gunakan `service_role`/secret key di aplikasi browser.
+5. Untuk GitHub Pages, tambahkan repository Actions secret bernama `VITE_SUPABASE_ANON_KEY`, lalu jalankan workflow deploy kembali. URL project sudah dikonfigurasi di aplikasi.
+6. Untuk lokal, isi `VITE_SUPABASE_ANON_KEY=...` di `.env.local`, lalu jalankan ulang `npm run dev`.
+7. Di aplikasi VOLTKER, klik ikon **⚙**, masuk dengan email dan kata sandi akun Supabase, lalu klik **SINKRON SEKARANG**.
 
-Tabel mengaktifkan Row Level Security: akun hanya dapat mengakses baris miliknya. Jika database lama sudah berisi data sebelum kolom `owner_id` ditambahkan, isi kolom tersebut dengan UUID akun toko sebelum sinkronisasi.
+Public key akan disertakan dalam bundle browser dan bukan rahasia. Tabel mengaktifkan Row Level Security agar hanya akun yang masuk dapat mengakses baris miliknya. Jika database lama sudah berisi data sebelum kolom `owner_id` ditambahkan, isi kolom tersebut dengan UUID akun toko sebelum sinkronisasi.
 
 ## Cara Kerja Sinkronisasi
 - **Push**: semua data lokal di-upsert ke Supabase (tambah jika baru, update jika ada)

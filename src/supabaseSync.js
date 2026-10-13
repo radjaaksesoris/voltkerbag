@@ -10,19 +10,13 @@ const TABLES = [
   { store: 'finance', table: 'finance_entries' }
 ]
 
+const SUPABASE_URL = 'https://rylqzasdlxxxvygsqfvw.supabase.co'
+const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || ''
+
 let client
-let clientConfig = ''
 
 export function getConfig() {
-  return {
-    url: localStorage.getItem('voltker_sb_url') || '',
-    key: localStorage.getItem('voltker_sb_key') || ''
-  }
-}
-
-export function saveConfig(url, key) {
-  localStorage.setItem('voltker_sb_url', url.trim())
-  localStorage.setItem('voltker_sb_key', key.trim())
+  return { url: SUPABASE_URL, key: SUPABASE_ANON_KEY }
 }
 
 export function isConfigured() {
@@ -32,13 +26,9 @@ export function isConfigured() {
 
 function getClient() {
   const { url, key } = getConfig()
-  if (!url || !key) throw new Error('Supabase belum dikonfigurasi. Klik ikon gerigi dulu.')
+  if (!key) throw new Error('Supabase belum dikonfigurasi. Tambahkan VITE_SUPABASE_ANON_KEY ke environment build.')
 
-  const configId = url + '\n' + key
-  if (!client || clientConfig !== configId) {
-    client = createClient(url, key)
-    clientConfig = configId
-  }
+  if (!client) client = createClient(url, key)
   return client
 }
 

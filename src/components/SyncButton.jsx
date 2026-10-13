@@ -1,15 +1,13 @@
 import { useEffect, useState } from 'react'
 import {
-  syncAll, isConfigured, getConfig, saveConfig, getLastSync,
-  getAuthSession, signIn, signOut
+  syncAll, isConfigured, getLastSync, getAuthSession, signIn, signOut
 } from '../supabaseSync'
 import { onRefresh } from '../db'
 
 export default function SyncButton() {
-  const [status, setStatus] = useState('idle') // idle | syncing | ok | error
+  const [status, setStatus] = useState('idle')
   const [message, setMessage] = useState('')
   const [showSettings, setShowSettings] = useState(false)
-  const [cfg, setCfg] = useState({ url: '', key: '' })
   const [lastSync, setLastSync] = useState(null)
   const [session, setSession] = useState(null)
   const [email, setEmail] = useState('')
@@ -18,31 +16,16 @@ export default function SyncButton() {
   const [authBusy, setAuthBusy] = useState(false)
 
   useEffect(() => {
-    setCfg(getConfig())
     getLastSync().then(setLastSync)
     getAuthSession().then(setSession).catch((err) => setAuthMessage(err.message || String(err)))
     return onRefresh(async () => setLastSync(await getLastSync()))
   }, [])
-
-  async function saveSettings() {
-    saveConfig(cfg.url, cfg.key)
-    setCfg(getConfig())
-    try {
-      setSession(await getAuthSession())
-      setAuthMessage('Konfigurasi Supabase tersimpan.')
-    } catch (err) {
-      setSession(null)
-      setAuthMessage(err.message || String(err))
-    }
-  }
 
   async function doSignIn(e) {
     e.preventDefault()
     setAuthBusy(true)
     setAuthMessage('')
     try {
-      saveConfig(cfg.url, cfg.key)
-      setCfg(getConfig())
       setSession(await signIn(email.trim(), password))
       setPassword('')
       setAuthMessage('Berhasil masuk ke Supabase.')
@@ -93,26 +76,15 @@ export default function SyncButton() {
           <span className="sync-icon">{status === 'syncing' ? '⟳' : '⇅'}</span>
           {status === 'syncing' ? 'SINKRONISASI...' : 'SINKRON SEKARANG'}
         </button>
-        <button className="btn-gear" onClick={() => setShowSettings(true)} title="Pengaturan Supabase">⚙</button>
+        <button className="btn-gear" onClick={() => setShowSettings(true)} title="Akun Supabase">⚙</button>
       </div>
-      {message && (
-        <div className={'sync-msg ' + status}>{message}</div>
-      )}
+      {message && <div className={'sync-msg ' + status}>{message}</div>}
 
       {showSettings && (
         <div className="overlay" onClick={() => setShowSettings(false)}>
           <div className="modal" onClick={(e) => e.stopPropagation()}>
-            <h3>Pengaturan Supabase</h3>
-            <p className="muted small">Masukkan URL Project dan anon/public key dari Settings → API. Jangan gunakan service_role key.</p>
-            <label>Supabase URL</label>
-            <input className="input" placeholder="https://xxxx.supabase.co"
-              value={cfg.url} onChange={(e) => setCfg({ ...cfg, url: e.target.value })} />
-            <label>Anon / Public Key</label>
-            <input className="input" type="password" placeholder="eyJhbGciOi..."
-              value={cfg.key} onChange={(e) => setCfg({ ...cfg, key: e.target.value })} />
-            <button className="btn btn-block" onClick={saveSettings}>Simpan konfigurasi</button>
-
-            {isConfigured() && (
+            <h3>Akun Supabase</h3>
+            {isConfigured() ? (
               session ? (
                 <div>
                   <p className="muted small">Masuk sebagai {session.user.email}</p>
@@ -120,7 +92,7 @@ export default function SyncButton() {
                 </div>
               ) : (
                 <form onSubmit={doSignIn}>
-                  <h4>Masuk ke akun toko</h4>
+                  <p className="muted small">Masuk dengan akun Supabase yang sudah dibuat untuk perangkat ini.</p>
                   <label>Email</label>
                   <input className="input" type="email" autoComplete="username" required
                     value={email} onChange={(e) => setEmail(e.target.value)} />
@@ -132,6 +104,10 @@ export default function SyncButton() {
                   </button>
                 </form>
               )
+            ) : (
+              <p className="muted small">
+                Supabase belum dikonfigurasi untuk build ini. Atur VITE_SUPABASE_ANON_KEY di environment lalu build ulang.
+              </p>
             )}
             {authMessage && <p className="muted small" role="status">{authMessage}</p>}
             <div className="modal-actions">
