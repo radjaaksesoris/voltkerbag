@@ -39,8 +39,8 @@ export default function App() {
       <main className="main">
         <header className="topbar">
           <div className="topbar-title">
-            <strong>{NAV.find((n) => n.id === page).label}</strong>
-            <span className="muted small">Data tersimpan otomatis di perangkat ini</span>
+            <strong>Operasional toko</strong>
+            <span className="muted small">Penjualan, stok, dan keuangan dalam satu tempat</span>
           </div>
           <SyncButton />
         </header>
