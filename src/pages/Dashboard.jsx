@@ -40,7 +40,6 @@ export default function Dashboard() {
 
       <div className="stats-grid">
         <div className="stat-card highlight"><span>Omzet Hari Ini</span><strong>{rupiah(omzetToday)}</strong></div>
-        <div className="stat-card"><span>Transaksi Hari Ini</span><strong>{todayTx.length}</strong></div>
         <div className="stat-card"><span>Laba Kotor Hari Ini</span><strong className="ok">{rupiah(profitToday)}</strong></div>
         <div className="stat-card"><span>Nilai Stok (Modal)</span><strong>{rupiah(totalAsset)}</strong></div>
         <div className="stat-card"><span>Total Produk</span><strong>{products.length}</strong></div>
