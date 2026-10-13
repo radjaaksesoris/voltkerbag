@@ -14,6 +14,7 @@ const NAV = [
 
 export default function App() {
   const [page, setPage] = useState('dashboard')
+  const [navHidden, setNavHidden] = useState(false)
   const currentPage = NAV.find((n) => n.id === page)
   const contentRef = useRef(null)
 
@@ -22,8 +23,8 @@ export default function App() {
   }, [page])
 
   return (
-    <div className="app">
-      <aside className="sidebar">
+    <div className={'app ' + (navHidden ? 'nav-hidden' : '')}>
+      <aside className="sidebar" id="primary-navigation" hidden={navHidden}>
         <div className="logo">
           <span className="logo-bolt">⚡</span> VOLTKER
           <span className="logo-sub">Toko Tas</span>
@@ -44,9 +45,20 @@ export default function App() {
 
       <main className="main">
         <header className="topbar">
-          <div className="topbar-title">
-            <strong>{currentPage.label}</strong>
-            <span>{currentPage.description}</span>
+          <div className="topbar-start">
+            <button
+              className="nav-toggle"
+              type="button"
+              aria-label={navHidden ? 'Tampilkan navigasi' : 'Sembunyikan navigasi'}
+              aria-controls="primary-navigation"
+              aria-expanded={!navHidden}
+              onClick={() => setNavHidden((hidden) => !hidden)}>
+              <span className="hamburger-icon" aria-hidden="true"><i /><i /><i /></span>
+            </button>
+            <div className="topbar-title">
+              <strong>{currentPage.label}</strong>
+              <span>{currentPage.description}</span>
+            </div>
           </div>
           <SyncButton />
         </header>

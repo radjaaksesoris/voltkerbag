@@ -50,6 +50,7 @@ button:focus-visible, input:focus-visible, select:focus-visible {
   padding: 28px 18px 18px;
   height: 100%;
 }
+.sidebar[hidden] { display: none; }
 .logo {
   display: flex;
   align-items: center;
@@ -129,6 +130,24 @@ button:focus-visible, input:focus-visible, select:focus-visible {
   line-height: 1.12;
 }
 .topbar-title span { color: var(--text); font-size: 13px; }
+.topbar-start { display: flex; align-items: center; gap: 15px; min-width: 0; }
+.nav-toggle {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  width: 43px;
+  height: 43px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--card);
+  color: var(--ink);
+  transition: border-color .18s, background .18s, color .18s, transform .18s;
+}
+.nav-toggle:hover { border-color: #c9b9a5; background: var(--card-hover); color: var(--accent); }
+.nav-toggle:active { transform: scale(.97); }
+.hamburger-icon { display: flex; flex-direction: column; justify-content: center; gap: 4px; width: 18px; }
+.hamburger-icon i { display: block; width: 100%; height: 2px; border-radius: 2px; background: currentColor; }
 .content {
   width: 100%;
   max-width: 1480px;
@@ -419,20 +438,24 @@ select.input { appearance: none; }
     padding: 6px 9px max(6px, env(safe-area-inset-bottom));
     border-top: 1px solid #332e2a;
   }
+  .sidebar[hidden] { display: none; }
   .logo, .sidebar-foot { display: none; }
   .sidebar nav { flex-direction: row; justify-content: space-around; gap: 3px; }
   .nav-item { flex: 1; flex-direction: column; gap: 2px; padding: 6px 2px; border-radius: 8px; font-size: 9px; text-align: center; }
   .nav-item.active { box-shadow: inset 0 2px #c33a3d; }
   .nav-icon { font-size: 17px; }
   .topbar { min-height: 70px; padding: 10px 14px; }
+  .topbar-start { flex: 1; gap: 9px; }
+  .nav-toggle { width: 38px; height: 38px; border-radius: 9px; }
   .topbar-title { font-size: 13px; }
-  .topbar-title { max-width: 48%; }
-  .topbar-title strong { font-size: 23px; }
+  .topbar-title { max-width: none; min-width: 0; }
+  .topbar-title strong { overflow: hidden; font-size: 21px; text-overflow: ellipsis; white-space: nowrap; }
   .topbar-title span { font-size: 10px; line-height: 1.3; }
   .btn-sync { min-height: 40px; gap: 6px; padding: 10px 11px; font-size: 9px; letter-spacing: .2px; }
   .sync-icon { font-size: 15px; }
   .btn-gear { width: 40px; height: 40px; }
   .content { padding: 27px 15px 94px; }
+  .nav-hidden .content { padding-bottom: 27px; }
   .page-head { margin-bottom: 20px; }
   h2, .page-head h2 { font-size: 29px; }
   .stats-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin-bottom: 18px; }
