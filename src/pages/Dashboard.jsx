@@ -39,44 +39,26 @@ export default function Dashboard() {
         <div className="stat-card"><span>Stok Menipis</span><strong className={lowStock.length ? 'danger' : ''}>{lowStock.length}</strong></div>
       </div>
 
-      <div className="finance-grid">
-        <div className="card table-card">
-          <h3>Transaksi Terakhir</h3>
-          <table>
-            <thead><tr><th>Waktu</th><th>Item</th><th className="right">Total</th></tr></thead>
-            <tbody>
-              {txs.length === 0 && <tr><td colSpan="3" className="muted center">Belum ada transaksi.</td></tr>}
-              {txs.slice(0, 8).map((t) => (
-                <tr key={t.id}>
-                  <td>{dateTime(t.createdAt)}</td>
-                  <td>{t.items.map((i) => i.name + ' ×' + i.qty).join(', ')}</td>
-                  <td className="right accent"><strong>{rupiah(t.total)}</strong></td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-
-        <div className="card table-card">
-          <h3>Peringatan Stok (≤ 5)</h3>
-          <table>
-            <thead><tr><th>Produk</th><th className="right">Sisa</th></tr></thead>
-            <tbody>
-              {lowStock.length === 0 && <tr><td colSpan="2" className="muted center">Semua stok aman ✓</td></tr>}
-              {lowStock.map((p) => (
-                <tr key={p.id}>
-                  <td>{p.name}<br /><span className="muted small">{p.category || 'Umum'}</span></td>
-                  <td className="right"><span className="badge badge-danger">{p.stock}</span></td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-          {topSeller && (
-            <p className="muted small" style={{ marginTop: 12 }}>
-              🏆 Terlaris: <strong>{topSeller[0]}</strong> ({topSeller[1]} terjual)
-            </p>
-          )}
-        </div>
+      <div className="card table-card dashboard-transactions">
+        <h3>Transaksi Terakhir</h3>
+        <table>
+          <thead><tr><th>Waktu</th><th>Item</th><th className="right">Total</th></tr></thead>
+          <tbody>
+            {txs.length === 0 && <tr><td colSpan="3" className="muted center">Belum ada transaksi.</td></tr>}
+            {txs.slice(0, 8).map((t) => (
+              <tr key={t.id}>
+                <td>{dateTime(t.createdAt)}</td>
+                <td>{t.items.map((i) => i.name + ' ×' + i.qty).join(', ')}</td>
+                <td className="right accent"><strong>{rupiah(t.total)}</strong></td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+        {topSeller && (
+          <p className="muted small" style={{ marginTop: 12 }}>
+            🏆 Terlaris: <strong>{topSeller[0]}</strong> ({topSeller[1]} terjual)
+          </p>
+        )}
       </div>
     </div>
   )
