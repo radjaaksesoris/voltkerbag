@@ -10,6 +10,9 @@ const TABLES = [
   { store: 'finance', table: 'finance_entries' }
 ]
 
+let client
+let clientConfig = ''
+
 export function getConfig() {
   return {
     url: localStorage.getItem('voltker_sb_url') || '',
@@ -27,14 +30,45 @@ export function isConfigured() {
   return Boolean(url && key)
 }
 
+function getClient() {
+  const { url, key } = getConfig()
+  if (!url || !key) throw new Error('Supabase belum dikonfigurasi. Klik ikon gerigi dulu.')
+
+  const configId = url + '\n' + key
+  if (!client || clientConfig !== configId) {
+    client = createClient(url, key)
+    clientConfig = configId
+  }
+  return client
+}
+
+export async function getAuthSession() {
+  if (!isConfigured()) return null
+  const { data, error } = await getClient().auth.getSession()
+  if (error) throw new Error('Gagal memeriksa sesi Supabase: ' + error.message)
+  return data.session
+}
+
+export async function signIn(email, password) {
+  const { data, error } = await getClient().auth.signInWithPassword({ email, password })
+  if (error) throw new Error('Gagal masuk: ' + error.message)
+  return data.session
+}
+
+export async function signOut() {
+  const { error } = await getClient().auth.signOut()
+  if (error) throw new Error('Gagal keluar: ' + error.message)
+}
+
 export async function getLastSync() {
   return await getMeta('lastSync', null)
 }
 
 export async function syncAll(onProgress) {
-  const { url, key } = getConfig()
-  if (!url || !key) throw new Error('Supabase belum dikonfigurasi. Klik ikon gerigi dulu.')
-  const sb = createClient(url, key)
+  const sb = getClient()
+  const { data: { session }, error: sessionError } = await sb.auth.getSession()
+  if (sessionError) throw new Error('Gagal memeriksa sesi Supabase: ' + sessionError.message)
+  if (!session) throw new Error('Silakan masuk ke akun Supabase melalui ikon gerigi sebelum menyinkronkan.')
   let pushed = 0, pulled = 0, deleted = 0
 
   for (const { store, table } of TABLES) {
