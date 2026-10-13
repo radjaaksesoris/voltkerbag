@@ -18,7 +18,11 @@ npm run dev
 ```
 Buka http://localhost:5173 — atau cukup double-click `start.bat` (Windows) / `start.sh` (Mac/Linux).
 
-> Butuh Node.js 18+ yang terinstall.
+> Butuh Node.js 18, 20, atau 22+ yang terinstall.
+
+## Deploy ke GitHub Pages
+Workflow GitHub Actions membangun dan menerbitkan aplikasi setiap ada push ke branch `main`.
+Atur **Settings → Pages → Build and deployment → Source** ke **GitHub Actions**.
 
 ## Setup Supabase (agar multi-device bisa sinkron)
 1. Buat project gratis di https://supabase.com
