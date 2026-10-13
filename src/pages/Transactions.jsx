@@ -17,19 +17,8 @@ export default function Transactions() {
   const [installmentAmount, setInstallmentAmount] = useState('')
   const [installmentError, setInstallmentError] = useState('')
   const [saving, setSaving] = useState(false)
-  const [printTransaction, setPrintTransaction] = useState(null)
+  const [previewTransaction, setPreviewTransaction] = useState(null)
   const operationLock = useRef(false)
-
-  useEffect(() => {
-    if (!printTransaction) return undefined
-    const clearPrintTransaction = () => setPrintTransaction(null)
-    window.addEventListener('afterprint', clearPrintTransaction)
-    const timer = window.setTimeout(() => window.print(), 150)
-    return () => {
-      window.clearTimeout(timer)
-      window.removeEventListener('afterprint', clearPrintTransaction)
-    }
-  }, [printTransaction])
 
   async function load() {
     setProducts(await getAll('products'))
@@ -112,7 +101,6 @@ export default function Transactions() {
         balance: remaining,
         paymentType
       })
-      setPrintTransaction(completedTransaction)
       setCart([])
       setPay('')
       setCustomerName('')
@@ -262,7 +250,7 @@ export default function Transactions() {
                   <td className={balance > 0 ? 'danger' : ''}>{rupiah(balance)}</td>
                   <td>{rupiah(t.change)}</td>
                   <td>
-                    <button className="btn btn-sm receipt-button" onClick={() => setPrintTransaction(t)}>
+                    <button className="btn btn-sm receipt-button" onClick={() => setPreviewTransaction(t)}>
                       Cetak struk
                     </button>
                     {credit && balance > 0 ? (
@@ -308,7 +296,7 @@ export default function Transactions() {
             </p>
             <button className="btn btn-primary" onClick={() => {
               const transaction = history.find((item) => item.id === done.id)
-              if (transaction) setPrintTransaction(transaction)
+              if (transaction) setPreviewTransaction(transaction)
             }}>Cetak struk</button>
             <button className="btn btn-primary" onClick={() => setDone(null)}>Tutup</button>
           </div>
@@ -336,7 +324,31 @@ export default function Transactions() {
         </div>
       )}
 
-      {printTransaction && <Receipt transaction={printTransaction} />}
+      {previewTransaction && (
+        <div className="overlay receipt-preview-overlay" onClick={() => setPreviewTransaction(null)}>
+          <section
+            className="receipt-preview-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="receipt-preview-title"
+            onClick={(event) => event.stopPropagation()}>
+            <header className="receipt-preview-heading">
+              <div>
+                <h3 id="receipt-preview-title">Pratinjau struk</h3>
+                <p className="muted small">Ukuran cetak 24 × 14 cm · continuous form</p>
+              </div>
+              <button className="btn" onClick={() => setPreviewTransaction(null)}>Tutup</button>
+            </header>
+            <div className="receipt-preview-paper">
+              <Receipt transaction={previewTransaction} />
+            </div>
+            <footer className="receipt-preview-actions">
+              <button className="btn" onClick={() => setPreviewTransaction(null)}>Batal</button>
+              <button className="btn btn-primary" onClick={() => window.print()}>Cetak</button>
+            </footer>
+          </section>
+        </div>
+      )}
     </div>
   )
 }

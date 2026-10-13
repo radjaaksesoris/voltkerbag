@@ -405,6 +405,112 @@ select.input { appearance: none; }
 .installment-balance strong { color: var(--accent); font-variant-numeric: tabular-nums; }
 .receipt-button { display: block; margin-bottom: 6px; white-space: nowrap; }
 .print-receipt { display: none; }
+.receipt-preview-overlay { z-index: 70; }
+.receipt-preview-modal {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: min(960px, calc(100vw - 32px));
+  max-height: 92dvh;
+  padding: 22px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: 17px;
+  background: var(--bg-soft);
+  box-shadow: 0 24px 70px rgba(26, 19, 15, .24);
+}
+.receipt-preview-heading, .receipt-preview-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex: 0 0 auto;
+}
+.receipt-preview-heading h3 { margin: 0; }
+.receipt-preview-paper {
+  width: 100%;
+  min-height: 0;
+  aspect-ratio: 12 / 7;
+  overflow: auto;
+  padding: 5mm;
+  background: #fff;
+  color: #000;
+  box-shadow: 0 5px 20px rgba(26, 19, 15, .12);
+}
+.receipt-preview-paper .print-receipt {
+  display: block;
+  width: 100%;
+  color: #000;
+  font: 9pt/1.2 "Courier New", Courier, monospace;
+}
+.receipt-preview-paper .receipt-header,
+.receipt-preview-paper .receipt-footer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1mm;
+  text-align: center;
+}
+.receipt-preview-paper .receipt-header {
+  padding-bottom: 2mm;
+  border-bottom: 1px dashed #000;
+}
+.receipt-preview-paper .receipt-header strong { font-size: 16pt; letter-spacing: 1.5pt; }
+.receipt-preview-paper .receipt-header span { font-weight: 700; }
+.receipt-preview-paper .receipt-meta {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1mm 8mm;
+  padding: 2mm 0;
+  border-bottom: 1px dashed #000;
+}
+.receipt-preview-paper .receipt-meta div,
+.receipt-preview-paper .receipt-totals > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 4mm;
+}
+.receipt-preview-paper .receipt-meta strong,
+.receipt-preview-paper .receipt-totals strong { font-weight: 700; text-align: right; }
+.receipt-preview-paper .receipt-items {
+  width: 100%;
+  margin: 2mm 0;
+  border-collapse: collapse;
+  color: #000;
+  font: inherit;
+}
+.receipt-preview-paper .receipt-items th,
+.receipt-preview-paper .receipt-items td {
+  padding: 1mm 1mm 1mm 0;
+  border: 0;
+  color: #000;
+  font: inherit;
+  text-transform: none;
+  white-space: normal;
+}
+.receipt-preview-paper .receipt-items thead { border-bottom: 1px solid #000; }
+.receipt-preview-paper .receipt-qty { width: 12mm; text-align: center; }
+.receipt-preview-paper .receipt-money { width: 34mm; text-align: right; white-space: nowrap !important; }
+.receipt-preview-paper .receipt-totals {
+  display: flex;
+  flex-direction: column;
+  gap: 1mm;
+  padding-top: 2mm;
+  border-top: 1px dashed #000;
+}
+.receipt-preview-paper .receipt-total {
+  padding-bottom: 1mm;
+  border-bottom: 1px solid #000;
+  font-size: 11pt;
+  font-weight: 700;
+}
+.receipt-preview-paper .receipt-payment-list { display: flex; flex-direction: column; gap: 1mm; }
+.receipt-preview-paper .receipt-payment-list > span { margin-bottom: 1mm; }
+.receipt-preview-paper .receipt-footer {
+  margin-top: 3mm;
+  padding-top: 2mm;
+  border-top: 1px dashed #000;
+}
 
 /* Finance and forms */
 .finance-grid { display: grid; grid-template-columns: minmax(280px, 340px) minmax(0, 1fr); gap: 22px; align-items: start; }
@@ -475,6 +581,8 @@ select.input { appearance: none; }
   td { padding: 11px 8px; }
   .grid-3 { grid-template-columns: 1fr; gap: 0; }
   .sync-msg { top: 78px; right: 12px; }
+  .receipt-preview-modal { gap: 12px; padding: 14px; }
+  .receipt-preview-paper { min-height: 240px; aspect-ratio: auto; }
 }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
@@ -497,10 +605,35 @@ select.input { appearance: none; }
   body { color: #000; font-family: "Courier New", Courier, monospace; }
   body * { visibility: hidden !important; }
   .print-receipt, .print-receipt * { visibility: visible !important; }
+  .receipt-preview-overlay {
+    position: static;
+    display: block;
+    padding: 0;
+    background: transparent;
+    backdrop-filter: none;
+  }
+  .receipt-preview-modal {
+    position: static;
+    display: block;
+    width: auto;
+    max-height: none;
+    padding: 0;
+    overflow: visible;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+  }
+  .receipt-preview-heading, .receipt-preview-actions { display: none; }
+  .receipt-preview-paper {
+    width: 100%;
+    min-height: 0;
+    aspect-ratio: auto;
+    overflow: visible;
+    padding: 0;
+    box-shadow: none;
+  }
   .print-receipt {
-    position: absolute;
-    top: 0;
-    left: 0;
     display: block !important;
     width: 100%;
     padding: 0;

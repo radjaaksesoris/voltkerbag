@@ -6,7 +6,7 @@ dengan opsi sinkronisasi dan backup ke Supabase menggunakan login.
 ## Fitur
 - 📊 **Dashboard** — ringkasan omzet, laba, dan kondisi stok
 - 🛒 **Kasir / Transaksi** — nama pelanggan wajib; pembayaran tunai atau kredit tanpa bunga, termasuk DP opsional dan pencatatan cicilan
-- 🧾 **Struk transaksi** — format cetak hitam-putih untuk printer dot matrix dan kertas continuous form 24 × 14 cm; struk bisa dicetak sesudah transaksi atau dicetak ulang dari riwayat
+- 🧾 **Struk transaksi** — pratinjau sebelum mencetak, format hitam-putih untuk printer dot matrix dan kertas continuous form 24 × 14 cm; struk bisa dicetak sesudah transaksi atau dicetak ulang dari riwayat
 - 👜 **Stok Barang** — tambah/edit/hapus produk, harga beli & jual, badge stok menipis
 - 💰 **Keuangan** — buku kas otomatis + catat pengeluaran/modal manual, laba kotor & bersih
 - ⇅ **Sinkronisasi Supabase** — tombol besar di kanan atas; push + pull + hapus tersinkron
