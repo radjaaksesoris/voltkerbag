@@ -23,11 +23,6 @@ export default function Dashboard() {
   )
   const totalAsset = products.reduce((s, p) => s + (p.cost || 0) * p.stock, 0)
   const lowStock = products.filter((p) => Number(p.stock) <= 5)
-  const best = {}
-  txs.forEach((t) => t.items.forEach((i) => {
-    best[i.name] = (best[i.name] || 0) + i.qty
-  }))
-  const topSeller = Object.entries(best).sort((a, b) => b[1] - a[1])[0]
 
   return (
     <div className="page">
@@ -54,11 +49,6 @@ export default function Dashboard() {
             ))}
           </tbody>
         </table>
-        {topSeller && (
-          <p className="muted small" style={{ marginTop: 12 }}>
-            🏆 Terlaris: <strong>{topSeller[0]}</strong> ({topSeller[1]} terjual)
-          </p>
-        )}
       </div>
     </div>
   )
