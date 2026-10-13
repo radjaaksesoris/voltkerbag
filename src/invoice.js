@@ -5,9 +5,12 @@ export function invoiceNumber(createdAt, id) {
     String(date.getMonth() + 1).padStart(2, '0'),
     String(date.getDate()).padStart(2, '0')
   ].join('')
-  return `INV-${datePart}-${String(id).padStart(6, '0')}`
+  return `INV-${datePart}-${String(id).padStart(2, '0')}`
 }
 
 export function getInvoiceNumber(transaction) {
-  return transaction.invoiceNo || invoiceNumber(transaction.createdAt, transaction.id)
+  if (!transaction.invoiceNo) return invoiceNumber(transaction.createdAt, transaction.id)
+  return transaction.invoiceNo.replace(/-(\d+)$/, (_, sequence) =>
+    '-' + String(Number(sequence)).padStart(2, '0')
+  )
 }
