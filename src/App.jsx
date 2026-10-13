@@ -126,7 +126,7 @@ export default function App() {
       </aside>
 
       <main className="main">
-        <header className="topbar">
+        <header className={'topbar ' + (page === 'dashboard' ? 'dashboard-topbar' : '')}>
           <div className="topbar-start">
             <button
               className="nav-toggle"
