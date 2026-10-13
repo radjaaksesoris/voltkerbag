@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { createPortal } from 'react-dom'
 import {
   syncAll, isConfigured, getLastSync, getAuthSession, signIn, signOut
 } from '../supabaseSync'
@@ -86,7 +87,7 @@ export default function SyncButton() {
       </div>
       {message && <div className={'sync-msg ' + status}>{message}</div>}
 
-      {showSettings && (
+      {showSettings && createPortal(
         <div className="overlay" onClick={() => setShowSettings(false)}>
           <div className="modal" onClick={(e) => e.stopPropagation()}>
             <h3>Akun Supabase</h3>
@@ -120,7 +121,8 @@ export default function SyncButton() {
               <button className="btn" onClick={() => setShowSettings(false)}>Tutup</button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </>
   )
