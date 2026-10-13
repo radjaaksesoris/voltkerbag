@@ -10,8 +10,20 @@ export default function Products() {
   const [form, setForm] = useState(EMPTY)
   const [editId, setEditId] = useState(null)
   const [showForm, setShowForm] = useState(false)
+  const [loadError, setLoadError] = useState('')
+  const [actionError, setActionError] = useState('')
+  const [loaded, setLoaded] = useState(false)
 
-  async function load() { setItems(await getAll('products')) }
+  async function load() {
+    try {
+      setItems(await getAll('products'))
+      setLoadError('')
+    } catch (error) {
+      setLoadError(error.message || 'Gagal memuat produk dari server.')
+    } finally {
+      setLoaded(true)
+    }
+  }
   useEffect(() => {
     load()
     return onRefresh(load)
@@ -31,25 +43,43 @@ export default function Products() {
 
   async function save(e) {
     e.preventDefault()
-    if (!form.name || !form.price) return alert('Nama dan harga jual wajib diisi')
-    await put('products', {
-      id: editId || undefined,
-      name: form.name.trim(),
-      category: form.category.trim(),
-      price: Number(form.price),
-      cost: Number(form.cost) || 0,
-      stock: Number(form.stock) || 0
-    })
-    setShowForm(false)
+    setActionError('')
+    if (!form.name || !form.price) { setActionError('Nama dan harga jual wajib diisi.'); return }
+    try {
+      await put('products', {
+        id: editId || undefined,
+        name: form.name.trim(),
+        category: form.category.trim(),
+        price: Number(form.price),
+        cost: Number(form.cost) || 0,
+        stock: Number(form.stock) || 0
+      })
+      setShowForm(false)
+    } catch (error) {
+      setActionError(error.message || 'Gagal menyimpan produk ke server.')
+    }
   }
 
   async function del(p) {
     if (!confirm('Hapus "' + p.name + '"? Stok & produk ini akan dihapus.')) return
-    await remove('products', p.id)
+    try {
+      await remove('products', p.id)
+      setActionError('')
+    } catch (error) {
+      setActionError(error.message || 'Gagal menghapus produk dari server.')
+    }
+  }
+
+  if (!loaded) return <div className="page"><p className="muted">Memuat produk dari server...</p></div>
+  if (loadError) {
+    return <div className="page"><p className="form-error" role="alert">{loadError}</p>
+      <button className="btn" onClick={() => window.dispatchEvent(new CustomEvent('voltker:refresh'))}>Coba lagi</button>
+    </div>
   }
 
   return (
     <div className="page">
+      {actionError && <p className="form-error" role="alert">{actionError}</p>}
       <div className="page-toolbar">
         <p className="muted"><strong>{items.length} produk</strong> · {lowStock.length} stok menipis (≤5)</p>
         <button className="btn btn-primary" onClick={openAdd}>+ Tambah Produk</button>
@@ -111,6 +141,7 @@ export default function Products() {
               </div>
             </div>
             <div className="modal-actions">
+              {actionError && <p className="form-error" role="alert">{actionError}</p>}
               <button type="button" className="btn" onClick={() => setShowForm(false)}>Batal</button>
               <button type="submit" className="btn btn-primary">Simpan</button>
             </div>

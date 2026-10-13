@@ -3,8 +3,10 @@ import Dashboard from './pages/Dashboard.jsx'
 import Transactions from './pages/Transactions.jsx'
 import Products from './pages/Products.jsx'
 import Finance from './pages/Finance.jsx'
-import SyncButton from './components/SyncButton.jsx'
+import LoginScreen from './components/LoginScreen.jsx'
+import SessionControl from './components/SessionControl.jsx'
 import Icon from './components/Icon.jsx'
+import { getAuthSession, isConfigured, onAuthStateChange } from './supabaseSync'
 
 const NAV = [
   { id: 'dashboard', label: 'Dashboard', description: 'Ringkasan performa tokomu hari ini.', icon: 'dashboard' },
@@ -16,12 +18,92 @@ const NAV = [
 export default function App() {
   const [page, setPage] = useState('dashboard')
   const [navHidden, setNavHidden] = useState(false)
+  const [session, setSession] = useState(null)
+  const [checkingSession, setCheckingSession] = useState(true)
+  const [connectionError, setConnectionError] = useState('')
+  const [authCheckKey, setAuthCheckKey] = useState(0)
   const currentPage = NAV.find((n) => n.id === page)
   const contentRef = useRef(null)
 
   useEffect(() => {
+    let active = true
+
+    async function verifyConnection() {
+      if (!navigator.onLine) {
+        if (active) {
+          setSession(null)
+          setConnectionError('Koneksi internet tidak tersedia. VOLTKER hanya dapat digunakan saat online.')
+          setCheckingSession(false)
+        }
+        return
+      }
+      try {
+        const currentSession = await getAuthSession()
+        if (!active) return
+        setSession(currentSession)
+        setConnectionError('')
+      } catch (error) {
+        if (!active) return
+        setSession(null)
+        setConnectionError(error.message || 'Tidak dapat menghubungi database server.')
+      } finally {
+        if (active) setCheckingSession(false)
+      }
+    }
+
+    const unsubscribe = isConfigured()
+      ? onAuthStateChange((event) => {
+        if (event === 'SIGNED_OUT') {
+          setSession(null)
+          setConnectionError('')
+        }
+      })
+      : () => {}
+    const onOnline = () => { setCheckingSession(true); verifyConnection() }
+    const onOffline = () => {
+      setSession(null)
+      setConnectionError('Koneksi internet tidak tersedia. VOLTKER hanya dapat digunakan saat online.')
+      setCheckingSession(false)
+    }
+
+    verifyConnection()
+    window.addEventListener('online', onOnline)
+    window.addEventListener('offline', onOffline)
+    const heartbeat = window.setInterval(verifyConnection, 30000)
+    return () => {
+      active = false
+      unsubscribe()
+      window.removeEventListener('online', onOnline)
+      window.removeEventListener('offline', onOffline)
+      window.clearInterval(heartbeat)
+    }
+  }, [authCheckKey])
+
+  useEffect(() => {
     contentRef.current?.scrollTo({ top: 0 })
   }, [page])
+
+  if (checkingSession && !session && !connectionError) {
+    return <main className="login-page"><p className="login-loading">Memeriksa koneksi dan sesi VOLTKER...</p></main>
+  }
+
+  if (!session || connectionError) {
+    return (
+      <LoginScreen
+        configured={isConfigured()}
+        connectionError={connectionError}
+        onSignedIn={(nextSession) => {
+          setSession(nextSession)
+          setConnectionError('')
+        }}
+        onRetry={() => {
+          setCheckingSession(true)
+          setConnectionError('')
+          setAuthCheckKey((key) => key + 1)
+        }}
+      />
+    )
+  }
 
   return (
     <div className={'app ' + (navHidden ? 'nav-hidden' : '')}>
@@ -39,7 +121,7 @@ export default function App() {
           ))}
         </nav>
         <div className="sidebar-foot">
-          <span className="dot-online"></span> Mode Offline · IndexedDB
+          <span className="dot-online"></span> Online · Database server
         </div>
       </aside>
 
@@ -60,7 +142,7 @@ export default function App() {
               <span>{currentPage.description}</span>
             </div>
           </div>
-          <SyncButton />
+          <SessionControl email={session.user.email} onSignedOut={() => setSession(null)} />
         </header>
 
         <div className="content" ref={contentRef}>

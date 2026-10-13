@@ -1,49 +1,45 @@
-# ⚡ VOLTKER — Aplikasi Toko Tas (Offline-First)
+# VOLTKER — Aplikasi Toko Tas Online
 
-Aplikasi kasir toko tas dengan React + Vite. **Semua data tersimpan offline di IndexedDB**,
-dengan opsi sinkronisasi dan backup ke Supabase menggunakan login.
+VOLTKER adalah aplikasi kasir React + Vite dengan Supabase sebagai sumber data utama. **Koneksi internet dan login akun toko wajib digunakan.** Aplikasi tidak membaca, menulis, atau mengimpor data dari IndexedDB/perangkat.
 
 ## Fitur
-- 📊 **Dashboard** — ringkasan omzet, laba, dan kondisi stok; transaksi terakhir menampilkan nama pelanggan, nomor faktur, tanggal, nominal, dan detail barang
-- 🛒 **Kasir / Transaksi** — nama pelanggan wajib; nomor faktur dibuat otomatis dan pembayaran tunai atau kredit tanpa bunga mendukung DP opsional dan pencatatan cicilan
-- 🧾 **Struk transaksi** — pratinjau sebelum mencetak, format hitam-putih untuk printer dot matrix dan kertas continuous form 24 × 14 cm; struk bisa dicetak sesudah transaksi atau dicetak ulang dari riwayat
-- 👜 **Stok Barang** — tambah/edit/hapus produk, harga beli & jual, badge stok menipis
-- 💰 **Keuangan** — buku kas otomatis + catat pengeluaran/modal manual, laba kotor & bersih
-- ⇅ **Sinkronisasi Supabase** — tombol besar di kanan atas; push + pull + hapus tersinkron
+- Dashboard penjualan, stok, riwayat transaksi, filter tanggal, dan detail barang.
+- Kasir tunai/kredit dengan nama pelanggan wajib; checkout dan pengurangan stok diproses atomik di database.
+- Pembayaran cicilan kredit tanpa bunga, dengan validasi saldo dan pencatatan buku kas di server.
+- Cetak ulang dan pratinjau struk continuous form 24 × 14 cm.
+- CRUD stok produk dan buku kas online.
 
-## Cara Menjalankan
+## Setup Supabase
+1. Pastikan project Supabase yang dipakai adalah project VOLTKER yang benar.
+2. Di **Authentication → Users**, buat satu akun toko. Jangan aktifkan pendaftaran publik; hanya akun ini yang boleh digunakan.
+3. Jalankan seluruh `supabase/schema.sql` di **SQL Editor**.
+4. Setelah memastikan pengosongan memang diinginkan, jalankan `supabase/clear-data.sql` satu kali. **Perintah ini menghapus permanen semua produk, transaksi, dan catatan keuangan di project tersebut serta memulai ulang ID.**
+5. Salin Supabase anon/publishable key (bukan `service_role` atau secret key).
+6. Untuk GitHub Pages, simpan key sebagai repository Actions secret `VITE_SUPABASE_ANON_KEY`, lalu jalankan workflow deploy. Untuk lokal, isi `VITE_SUPABASE_ANON_KEY` dalam `.env.local`.
+
+`schema.sql` menyiapkan tabel, Row Level Security, dan fungsi database untuk checkout serta pembayaran cicilan. Database kosong setelah `clear-data.sql`; data di browser lama tidak akan dipindahkan. Jangan jalankan `clear-data.sql` lagi setelah mulai memasukkan data toko.
+
+## Menjalankan lokal
 ```bash
 npm install
 npm run dev
 ```
-Buka http://localhost:5173 — atau cukup double-click `start.bat` (Windows) / `start.sh` (Mac/Linux).
 
-> Butuh Node.js 18, 20, atau 22+ yang terinstall.
+Buka URL yang dicetak Vite. Untuk build lokal:
+```bash
+npm run build
+```
 
 ## Deploy ke GitHub Pages
-Workflow GitHub Actions membangun dan menerbitkan aplikasi setiap ada push ke branch `main`.
-Atur **Settings → Pages → Build and deployment → Source** ke **GitHub Actions**.
+Workflow `.github/workflows/deploy.yml` membangun dan menerbitkan folder `dist` dari branch `main`. Pastikan secret `VITE_SUPABASE_ANON_KEY` sudah tersedia sebelum deploy; tanpa key, aplikasi menampilkan instruksi konfigurasi dan tidak membuka fitur toko.
 
-## Setup Supabase (sinkronisasi dan backup)
-1. Buat project gratis di https://supabase.com
-2. Di **Authentication → Users**, buat akun email dan kata sandi untuk perangkat ini.
-3. Buka **SQL Editor** → paste isi file `supabase/schema.sql` → **Run**
-4. Buka **Settings → API Keys**, salin **anon/public key**. Jangan gunakan `service_role`/secret key di aplikasi browser.
-5. Untuk GitHub Pages, tambahkan repository Actions secret bernama `VITE_SUPABASE_ANON_KEY`, lalu jalankan workflow deploy kembali. URL project sudah dikonfigurasi di aplikasi.
-6. Untuk lokal, isi `VITE_SUPABASE_ANON_KEY=...` di `.env.local`, lalu jalankan ulang `npm run dev`.
-7. Di aplikasi VOLTKER, klik ikon **⚙**, masuk dengan email dan kata sandi akun Supabase, lalu klik **SINKRON SEKARANG**.
+## Online-only dan akses akun
+- Login divalidasi ke server sebelum aplikasi ditampilkan; status jaringan dipantau dan login ulang dibutuhkan jika koneksi server gagal.
+- Seluruh baca/tulis data dilakukan langsung ke Supabase. Data yang sempat terlihat tidak disimpan sebagai cache aplikasi untuk penggunaan offline.
+- RLS membatasi setiap akun ke baris dengan `owner_id` akun tersebut. Buat hanya satu akun toko melalui Supabase Auth dan nonaktifkan sign-up publik.
+- Anon/publishable key memang dikirim ke browser. Keamanan data bergantung pada Supabase Auth, RLS, dan fungsi database; jangan pernah menaruh service-role key pada aplikasi frontend.
+- Jika secret diubah, jalankan ulang build/deploy karena Vite memasukkan nilainya ke bundle pada waktu build.
+- Jika server tidak dapat dijangkau, aplikasi menampilkan kegagalan secara eksplisit dan operasi tidak disimpan secara lokal.
 
-Public key akan disertakan dalam bundle browser dan bukan rahasia. Tabel mengaktifkan Row Level Security agar hanya akun yang masuk dapat mengakses baris miliknya. Jika database lama sudah berisi data sebelum kolom `owner_id` ditambahkan, isi kolom tersebut dengan UUID akun toko sebelum sinkronisasi.
-
-## Cara Kerja Sinkronisasi
-- **Push**: semua data lokal di-upsert ke Supabase (tambah jika baru, update jika ada)
-- **Delete**: produk/catatan yang dihapus ikut terhapus di Supabase
-- **Pull**: data terbaru dari Supabase ditarik ke device ini (data dengan `updatedAt` terbaru menang)
-- Indikator terakhir sinkron muncul saat kursor diarahkan ke tombol sinkron
-
-## Catatan
-- Tanpa konfigurasi Supabase pun aplikasi berjalan 100% offline.
-- Angka `id` dari IndexedDB dipakai sebagai primary key di Supabase; data cloud dibatasi ke akun yang sedang masuk.
-- Pembayaran kredit dicatat di buku kas hanya saat uang diterima (DP dan cicilan). Skema Supabase menambahkan kolom pelanggan, metode pembayaran, jumlah terbayar, sisa tagihan, dan riwayat pembayaran transaksi.
-- Jika skema Supabase sudah pernah dibuat, jalankan kembali isi `supabase/schema.sql` agar kolom transaksi kredit ditambahkan sebelum sinkronisasi.
-- Saat mencetak struk, pilih ukuran kertas khusus **240 × 140 mm** di pengaturan printer, gunakan sumber kertas tractor feed/continuous form, orientasi landscape, skala 100%, dan matikan header/footer browser. Konfigurasi ukuran kertas juga perlu disimpan pada driver printer.
+## Printer struk
+Pilih ukuran kertas khusus **240 × 140 mm**, continuous form/tractor feed, orientasi landscape, skala 100%, dan matikan header/footer browser. Simpan ukuran tersebut di driver printer.

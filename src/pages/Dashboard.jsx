@@ -11,16 +11,35 @@ export default function Dashboard() {
   const [txs, setTxs] = useState([])
   const [dateRange, setDateRange] = useState({ from: '', to: '' })
   const [selectedTransaction, setSelectedTransaction] = useState(null)
+  const [loadError, setLoadError] = useState('')
+  const [loaded, setLoaded] = useState(false)
 
   useEffect(() => {
     async function load() {
-      setProducts(await getAll('products'))
-      const t = await getAll('transactions')
-      setTxs(t.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)))
+      try {
+        const [productRows, transactionRows] = await Promise.all([
+          getAll('products'),
+          getAll('transactions')
+        ])
+        setProducts(productRows)
+        setTxs(transactionRows.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)))
+        setLoadError('')
+      } catch (error) {
+        setLoadError(error.message || 'Gagal memuat data dashboard dari server.')
+      } finally {
+        setLoaded(true)
+      }
     }
     load()
     return onRefresh(load)
   }, [])
+
+  if (!loaded) return <div className="page"><p className="muted">Memuat data dari server...</p></div>
+  if (loadError) {
+    return <div className="page"><p className="form-error" role="alert">{loadError}</p>
+      <button className="btn" onClick={() => window.dispatchEvent(new CustomEvent('voltker:refresh'))}>Coba lagi</button>
+    </div>
+  }
 
   const hasFilter = hasDateRange(dateRange)
   const selectedTx = hasFilter

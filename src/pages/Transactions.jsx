@@ -26,16 +26,37 @@ export default function Transactions() {
   const [selectedTransaction, setSelectedTransaction] = useState(null)
   const [dateRange, setDateRange] = useState({ from: '', to: '' })
   const operationLock = useRef(false)
+  const saleRequest = useRef(null)
+  const installmentRequest = useRef(null)
+  const [loadError, setLoadError] = useState('')
+  const [loaded, setLoaded] = useState(false)
 
   async function load() {
-    setProducts(await getAll('products'))
-    const txs = await getAll('transactions')
-    setHistory(txs.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)))
+    try {
+      const [productRows, txs] = await Promise.all([
+        getAll('products'),
+        getAll('transactions')
+      ])
+      setProducts(productRows)
+      setHistory(txs.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)))
+      setLoadError('')
+    } catch (error) {
+      setLoadError(error.message || 'Gagal memuat data kasir dari server.')
+    } finally {
+      setLoaded(true)
+    }
   }
   useEffect(() => {
     load()
     return onRefresh(load)
   }, [])
+
+  if (!loaded) return <div className="page"><p className="muted">Memuat data dari server...</p></div>
+  if (loadError) {
+    return <div className="page"><p className="form-error" role="alert">{loadError}</p>
+      <button className="btn" onClick={() => window.dispatchEvent(new CustomEvent('voltker:refresh'))}>Coba lagi</button>
+    </div>
+  }
 
   const filtered = products.filter((p) =>
     p.name.toLowerCase().includes(q.toLowerCase()) && Number(p.stock) > 0
@@ -87,17 +108,20 @@ export default function Transactions() {
       payments: initialPayment > 0 ? [{ amount: initialPayment, date: now }] : [],
       change: paymentType === 'cash' ? change : 0
     }
-    const financeEntry = initialPayment > 0 ? {
-      type: 'income',
-      category: paymentType === 'credit' ? 'DP kredit' : 'Penjualan',
-      amount: initialPayment,
-      note: 'Penjualan · ' + customerName.trim(),
-      date: now
-    } : null
+    const requestFingerprint = JSON.stringify({
+      customerName: sale.customerName,
+      paymentType,
+      payment: paidNow,
+      cart: cart.map(({ productId, price, qty }) => [productId, price, qty])
+    })
+    if (saleRequest.current?.fingerprint !== requestFingerprint) {
+      saleRequest.current = { fingerprint: requestFingerprint, id: crypto.randomUUID() }
+    }
     operationLock.current = true
     setSaving(true)
     try {
-      const txId = await completeSale(sale, cart, financeEntry)
+      const txId = await completeSale(sale, cart, saleRequest.current.id)
+      saleRequest.current = null
       const completedTransaction = {
         ...sale,
         id: txId,
@@ -140,22 +164,19 @@ export default function Transactions() {
       return
     }
 
-    const now = new Date().toISOString()
+    const requestFingerprint = installmentTransaction.id + ':' + amount
+    if (installmentRequest.current?.fingerprint !== requestFingerprint) {
+      installmentRequest.current = { fingerprint: requestFingerprint, id: crypto.randomUUID() }
+    }
     operationLock.current = true
     setSaving(true)
     try {
       await recordTransactionPayment(
         installmentTransaction.id,
         amount,
-        {
-          type: 'income',
-          category: 'Cicilan kredit',
-          amount,
-          note: 'Cicilan transaksi #' + installmentTransaction.id + ' · ' + installmentTransaction.customerName,
-          refId: installmentTransaction.id,
-          date: now
-        }
+        installmentRequest.current.id
       )
+      installmentRequest.current = null
       setInstallmentTransaction(null)
       setInstallmentAmount('')
     } catch (error) {

@@ -12,10 +12,28 @@ const TYPES = {
 
 export default function Finance() {
   const [entries, setEntries] = useState([])
+  const [txs, setTxs] = useState([])
   const [dateRange, setDateRange] = useState({ from: '', to: '' })
   const [form, setForm] = useState({ type: 'expense', amount: '', note: '', category: '' })
+  const [loadError, setLoadError] = useState('')
+  const [actionError, setActionError] = useState('')
+  const [loaded, setLoaded] = useState(false)
 
-  async function load() { setEntries(await getAll('finance')) }
+  async function load() {
+    try {
+      const [financeRows, transactionRows] = await Promise.all([
+        getAll('finance'),
+        getAll('transactions')
+      ])
+      setEntries(financeRows)
+      setTxs(transactionRows)
+      setLoadError('')
+    } catch (error) {
+      setLoadError(error.message || 'Gagal memuat data keuangan dari server.')
+    } finally {
+      setLoaded(true)
+    }
+  }
   useEffect(() => {
     load()
     return onRefresh(load)
@@ -34,12 +52,6 @@ export default function Finance() {
   const income = sum('income'), expense = sum('expense'), capital = sum('capital')
   const balance = income + capital - expense
 
-  // laba kotor dari transaksi: (harga jual - harga beli) × qty
-  const [txs, setTxs] = useState([])
-  useEffect(() => {
-    getAll('transactions').then(setTxs)
-    return onRefresh(async () => setTxs(await getAll('transactions')))
-  }, [])
   const filteredTransactions = txs.filter((transaction) =>
     !hasFilter || isInDateRange(transaction.createdAt, dateRange)
   )
@@ -50,17 +62,30 @@ export default function Finance() {
 
   async function addEntry(e) {
     e.preventDefault()
-    if (!form.amount) return alert('Nominal wajib diisi')
-    await put('finance', {
-      type: form.type, amount: Number(form.amount),
-      note: form.note.trim(), category: form.category.trim(),
-      date: new Date().toISOString()
-    })
-    setForm({ type: 'expense', amount: '', note: '', category: '' })
+    setActionError('')
+    if (!form.amount || Number(form.amount) <= 0) { setActionError('Nominal wajib lebih dari Rp0.'); return }
+    try {
+      await put('finance', {
+        type: form.type, amount: Number(form.amount),
+        note: form.note.trim(), category: form.category.trim(),
+        date: new Date().toISOString()
+      })
+      setForm({ type: 'expense', amount: '', note: '', category: '' })
+    } catch (error) {
+      setActionError(error.message || 'Gagal menyimpan catatan ke server.')
+    }
+  }
+
+  if (!loaded) return <div className="page"><p className="muted">Memuat data keuangan dari server...</p></div>
+  if (loadError) {
+    return <div className="page"><p className="form-error" role="alert">{loadError}</p>
+      <button className="btn" onClick={() => window.dispatchEvent(new CustomEvent('voltker:refresh'))}>Coba lagi</button>
+    </div>
   }
 
   return (
     <div className="page">
+      {actionError && <p className="form-error" role="alert">{actionError}</p>}
       <div className="stats-grid">
         <div className="stat-card"><span>Pemasukan Penjualan</span><strong className="ok">+{rupiah(income)}</strong></div>
         <div className="stat-card"><span>Pengeluaran</span><strong className="danger">−{rupiah(expense)}</strong></div>
@@ -93,6 +118,7 @@ export default function Finance() {
           <input className="input" value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} placeholder="cth: Listrik, Sewa, Gaji" />
           <label>Catatan</label>
           <input className="input" value={form.note} onChange={(e) => setForm({ ...form, note: e.target.value })} placeholder="cth: Bayar listrik Oktober" />
+          {actionError && <p className="form-error" role="alert">{actionError}</p>}
           <button type="submit" className="btn btn-primary btn-block">Simpan Catatan</button>
         </form>
 
@@ -115,7 +141,13 @@ export default function Finance() {
                   </td>
                   <td>
                     <button className="btn btn-sm btn-danger" onClick={async () => {
-                      if (confirm('Hapus catatan ini?')) await remove('finance', e.id)
+                      if (!confirm('Hapus catatan ini?')) return
+                      try {
+                        await remove('finance', e.id)
+                        setActionError('')
+                      } catch (error) {
+                        setActionError(error.message || 'Gagal menghapus catatan dari server.')
+                      }
                     }}>Hapus</button>
                   </td>
                 </tr>
