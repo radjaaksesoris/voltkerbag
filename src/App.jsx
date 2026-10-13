@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import Dashboard from './pages/Dashboard.jsx'
 import Transactions from './pages/Transactions.jsx'
 import Products from './pages/Products.jsx'
@@ -15,6 +15,11 @@ const NAV = [
 export default function App() {
   const [page, setPage] = useState('dashboard')
   const currentPage = NAV.find((n) => n.id === page)
+  const contentRef = useRef(null)
+
+  useEffect(() => {
+    contentRef.current?.scrollTo({ top: 0 })
+  }, [page])
 
   return (
     <div className="app">
@@ -46,7 +51,7 @@ export default function App() {
           <SyncButton />
         </header>
 
-        <div className="content">
+        <div className="content" ref={contentRef}>
           {page === 'dashboard' && <Dashboard />}
           {page === 'pos' && <Transactions />}
           {page === 'stok' && <Products />}
