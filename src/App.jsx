@@ -137,7 +137,7 @@ export default function App() {
               onClick={() => setNavHidden((hidden) => !hidden)}>
               <Icon name="menu" size={20} />
             </button>
-            <div className="topbar-title">
+            <div className={'topbar-title ' + (page === 'dashboard' ? 'dashboard-title' : '')}>
               <strong>{currentPage.label}</strong>
               <span>{currentPage.description}</span>
             </div>

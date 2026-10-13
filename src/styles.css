@@ -157,6 +157,7 @@ button:focus-visible, input:focus-visible, select:focus-visible {
   letter-spacing: -.8px;
   line-height: 1.12;
 }
+.topbar-title.dashboard-title strong { color: var(--accent); }
 .topbar-title span { color: var(--text); font-size: 13px; }
 .topbar-start { display: flex; align-items: center; gap: 15px; min-width: 0; }
 .nav-toggle {
