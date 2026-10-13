@@ -1,4 +1,5 @@
 import { rupiah, dateTime } from '../format'
+import { getInvoiceNumber } from '../invoice'
 
 function printRupiah(amount) {
   return rupiah(amount).replace(/\u00a0/g, ' ')
@@ -23,7 +24,7 @@ export default function Receipt({ transaction }) {
       </header>
 
       <section className="receipt-meta">
-        <div><span>No. Transaksi</span><strong>#{transaction.id}</strong></div>
+        <div><span>No. Faktur</span><strong>{getInvoiceNumber(transaction)}</strong></div>
         <div><span>Tanggal</span><strong>{dateTime(transaction.createdAt)}</strong></div>
         <div><span>Pelanggan</span><strong>{transaction.customerName || '-'}</strong></div>
         <div><span>Pembayaran</span><strong>{isCredit ? 'Kredit tanpa bunga' : 'Tunai'}</strong></div>

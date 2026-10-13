@@ -5,6 +5,8 @@ import Receipt from '../components/Receipt'
 import Icon from '../components/Icon.jsx'
 import DateRangeFilter from '../components/DateRangeFilter.jsx'
 import { hasDateRange, isInDateRange } from '../dateFilter'
+import TransactionDetails from '../components/TransactionDetails'
+import { getInvoiceNumber } from '../invoice'
 
 export default function Transactions() {
   const [products, setProducts] = useState([])
@@ -21,6 +23,7 @@ export default function Transactions() {
   const [installmentError, setInstallmentError] = useState('')
   const [saving, setSaving] = useState(false)
   const [previewTransaction, setPreviewTransaction] = useState(null)
+  const [selectedTransaction, setSelectedTransaction] = useState(null)
   const [dateRange, setDateRange] = useState({ from: '', to: '' })
   const operationLock = useRef(false)
 
@@ -95,7 +98,12 @@ export default function Transactions() {
     setSaving(true)
     try {
       const txId = await completeSale(sale, cart, financeEntry)
-      const completedTransaction = { ...sale, id: txId, createdAt: now }
+      const completedTransaction = {
+        ...sale,
+        id: txId,
+        invoiceNo: getInvoiceNumber({ ...sale, id: txId, createdAt: now }),
+        createdAt: now
+      }
       setHistory((current) => [completedTransaction, ...current])
       setDone({
         id: txId,
@@ -245,9 +253,9 @@ export default function Transactions() {
       <div className="card table-card">
         <h3>Riwayat Transaksi</h3>
         <table className="transaction-table">
-          <thead><tr><th>ID</th><th>Pelanggan</th><th>Waktu</th><th>Item</th><th>Total</th><th>Terbayar</th><th>Sisa</th><th>Kembalian</th><th>Status / Aksi</th></tr></thead>
+          <thead><tr><th>No. Faktur</th><th>Pelanggan</th><th>Waktu</th><th>Total</th><th>Terbayar</th><th>Sisa</th><th>Kembalian</th><th>Status / Aksi</th></tr></thead>
           <tbody>
-            {filteredHistory.length === 0 && <tr><td colSpan="9" className="muted center">
+            {filteredHistory.length === 0 && <tr><td colSpan="8" className="muted center">
               {hasFilter ? 'Tidak ada transaksi pada rentang tanggal ini.' : 'Belum ada transaksi.'}
             </td></tr>}
             {filteredHistory.slice(0, 50).map((t) => {
@@ -256,15 +264,15 @@ export default function Transactions() {
               const payments = t.payments || []
               return (
                 <tr key={t.id}>
-                  <td>#{t.id}</td>
+                  <td>{getInvoiceNumber(t)}</td>
                   <td>{t.customerName || '—'}</td>
                   <td>{dateTime(t.createdAt)}</td>
-                  <td>{t.items.map((i) => i.name + ' ×' + i.qty).join(', ')}</td>
                   <td className="accent"><strong>{rupiah(t.total)}</strong></td>
                   <td>{rupiah(getPaidAmount(t))}</td>
                   <td className={balance > 0 ? 'danger' : ''}>{rupiah(balance)}</td>
                   <td>{rupiah(t.change)}</td>
                   <td>
+                    <button className="btn btn-sm" onClick={() => setSelectedTransaction(t)}>Detail</button>
                     <button className="btn btn-sm receipt-button" onClick={() => setPreviewTransaction(t)}>
                       Cetak struk
                     </button>
@@ -363,6 +371,9 @@ export default function Transactions() {
             </footer>
           </section>
         </div>
+      )}
+      {selectedTransaction && (
+        <TransactionDetails transaction={selectedTransaction} onClose={() => setSelectedTransaction(null)} />
       )}
     </div>
   )

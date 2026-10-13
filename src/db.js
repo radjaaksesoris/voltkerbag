@@ -57,12 +57,19 @@ export async function completeSale(transaction, cart, financeEntry) {
     }
   }
 
+  const transactionStore = tx.objectStore('transactions')
   const savedTransaction = {
     ...transaction,
     updatedAt: now,
     createdAt: transaction.createdAt || now
   }
-  const transactionId = await tx.objectStore('transactions').add(savedTransaction)
+  const transactionId = await transactionStore.add(savedTransaction)
+  const transactionWithInvoice = {
+    ...savedTransaction,
+    id: transactionId,
+    invoiceNo: createInvoiceNumber(savedTransaction.createdAt, transactionId)
+  }
+  await transactionStore.put(transactionWithInvoice)
 
   for (const { item, product } of products) {
     await productStore.put({
@@ -84,6 +91,16 @@ export async function completeSale(transaction, cart, financeEntry) {
   await tx.done
   notifyRefresh()
   return transactionId
+}
+
+function createInvoiceNumber(createdAt, id) {
+  const date = new Date(createdAt)
+  const datePart = [
+    date.getFullYear(),
+    String(date.getMonth() + 1).padStart(2, '0'),
+    String(date.getDate()).padStart(2, '0')
+  ].join('')
+  return 'INV-' + datePart + '-' + String(id).padStart(6, '0')
 }
 export async function recordTransactionPayment(transactionId, amount, financeEntry) {
   const db = await dbPromise

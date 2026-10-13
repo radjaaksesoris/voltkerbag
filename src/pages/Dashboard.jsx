@@ -3,11 +3,14 @@ import { getAll, onRefresh } from '../db'
 import { rupiah, dateTime, isToday } from '../format'
 import DateRangeFilter from '../components/DateRangeFilter'
 import { hasDateRange, isInDateRange } from '../dateFilter'
+import TransactionDetails from '../components/TransactionDetails'
+import { getInvoiceNumber } from '../invoice'
 
 export default function Dashboard() {
   const [products, setProducts] = useState([])
   const [txs, setTxs] = useState([])
   const [dateRange, setDateRange] = useState({ from: '', to: '' })
+  const [selectedTransaction, setSelectedTransaction] = useState(null)
 
   useEffect(() => {
     async function load() {
@@ -52,22 +55,34 @@ export default function Dashboard() {
 
       <div className="card table-card dashboard-transactions">
         <h3>Transaksi Terakhir</h3>
-        <table>
-          <thead><tr><th>Waktu</th><th>Item</th><th className="right">Total</th></tr></thead>
+        <table className="dashboard-transaction-table">
+          <thead>
+            <tr><th>No</th><th>Nama <span className="th-subtitle">No. Faktur</span></th><th>Tanggal Transaksi</th><th className="right">Nominal Transaksi</th><th className="right">Detail</th></tr>
+          </thead>
           <tbody>
-            {visibleTx.length === 0 && <tr><td colSpan="3" className="muted center">
+            {visibleTx.length === 0 && <tr><td colSpan="5" className="muted center">
               {hasFilter ? 'Tidak ada transaksi pada rentang tanggal ini.' : 'Belum ada transaksi.'}
             </td></tr>}
-            {visibleTx.slice(0, 8).map((t) => (
+            {visibleTx.slice(0, 8).map((t, index) => (
               <tr key={t.id}>
+                <td className="dashboard-row-number">{index + 1}</td>
+                <td>
+                  <strong className="transaction-customer">{t.customerName || 'Pelanggan lama'}</strong>
+                  <span className="transaction-invoice">{getInvoiceNumber(t)}</span>
+                </td>
                 <td>{dateTime(t.createdAt)}</td>
-                <td>{t.items.map((i) => i.name + ' ×' + i.qty).join(', ')}</td>
                 <td className="right accent"><strong>{rupiah(t.total)}</strong></td>
+                <td className="right">
+                  <button className="btn btn-sm btn-primary" onClick={() => setSelectedTransaction(t)}>Detail</button>
+                </td>
               </tr>
             ))}
           </tbody>
         </table>
       </div>
+      {selectedTransaction && (
+        <TransactionDetails transaction={selectedTransaction} onClose={() => setSelectedTransaction(null)} />
+      )}
     </div>
   )
 }

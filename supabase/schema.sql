@@ -18,6 +18,7 @@ create table if not exists products (
 create table if not exists transactions (
   id bigint primary key,
   owner_id uuid not null default auth.uid(),
+  "invoiceNo" text,
   items jsonb not null default '[]'::jsonb,
   total double precision default 0,
   payment double precision default 0,
@@ -47,6 +48,7 @@ create table if not exists finance_entries (
 -- Add ownership to tables that were created with the older schema.
 alter table products add column if not exists owner_id uuid default auth.uid();
 alter table transactions add column if not exists owner_id uuid default auth.uid();
+alter table transactions add column if not exists "invoiceNo" text;
 alter table transactions add column if not exists "customerName" text;
 alter table transactions add column if not exists "paymentType" text not null default 'cash';
 alter table transactions add column if not exists "paidAmount" double precision;
