@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState } from 'react'
 import { getAll, put, remove, onRefresh } from '../db'
 import { rupiah, dateTime } from '../format'
+import DateRangeFilter from '../components/DateRangeFilter.jsx'
+import { hasDateRange, isInDateRange } from '../dateFilter'
 
 const TYPES = {
   income: { label: 'Pemasukan', cls: 'badge-ok' },
@@ -10,6 +12,7 @@ const TYPES = {
 
 export default function Finance() {
   const [entries, setEntries] = useState([])
+  const [dateRange, setDateRange] = useState({ from: '', to: '' })
   const [form, setForm] = useState({ type: 'expense', amount: '', note: '', category: '' })
 
   async function load() { setEntries(await getAll('finance')) }
@@ -18,11 +21,16 @@ export default function Finance() {
     return onRefresh(load)
   }, [])
 
-  const sorted = useMemo(
-    () => [...entries].sort((a, b) => new Date(b.date || b.createdAt) - new Date(a.date || a.createdAt)),
-    [entries]
+  const hasFilter = hasDateRange(dateRange)
+  const filteredEntries = useMemo(
+    () => entries.filter((entry) => !hasFilter || isInDateRange(entry.date || entry.createdAt, dateRange)),
+    [entries, hasFilter, dateRange]
   )
-  const sum = (t) => entries.filter((e) => e.type === t).reduce((s, e) => s + Number(e.amount), 0)
+  const sorted = useMemo(
+    () => [...filteredEntries].sort((a, b) => new Date(b.date || b.createdAt) - new Date(a.date || a.createdAt)),
+    [filteredEntries]
+  )
+  const sum = (t) => filteredEntries.filter((e) => e.type === t).reduce((s, e) => s + Number(e.amount), 0)
   const income = sum('income'), expense = sum('expense'), capital = sum('capital')
   const balance = income + capital - expense
 
@@ -32,7 +40,10 @@ export default function Finance() {
     getAll('transactions').then(setTxs)
     return onRefresh(async () => setTxs(await getAll('transactions')))
   }, [])
-  const grossProfit = txs.reduce(
+  const filteredTransactions = txs.filter((transaction) =>
+    !hasFilter || isInDateRange(transaction.createdAt, dateRange)
+  )
+  const grossProfit = filteredTransactions.reduce(
     (s, t) => s + t.items.reduce((a, i) => a + (i.price - (i.cost || 0)) * i.qty, 0), 0
   )
   const netProfit = grossProfit - expense
@@ -59,6 +70,14 @@ export default function Finance() {
         <div className="stat-card"><span>Laba Bersih</span><strong className={netProfit >= 0 ? 'ok' : 'danger'}>{rupiah(netProfit)}</strong></div>
       </div>
 
+      <div className="finance-date-filter">
+        <div className="date-filter-caption">
+          <strong>Filter periode keuangan</strong>
+          <span className="muted">Pemasukan, pengeluaran, saldo, dan laba mengikuti tanggal yang dipilih.</span>
+        </div>
+        <DateRangeFilter value={dateRange} onChange={setDateRange} />
+      </div>
+
       <div className="finance-grid">
         <form className="card" onSubmit={addEntry}>
           <h3>Catat Manual</h3>
@@ -82,7 +101,9 @@ export default function Finance() {
           <table>
             <thead><tr><th>Waktu</th><th>Jenis</th><th>Kategori</th><th>Catatan</th><th className="right">Nominal</th><th></th></tr></thead>
             <tbody>
-              {sorted.length === 0 && <tr><td colSpan="6" className="muted center">Belum ada catatan.</td></tr>}
+              {sorted.length === 0 && <tr><td colSpan="6" className="muted center">
+                {hasFilter ? 'Tidak ada catatan pada rentang tanggal ini.' : 'Belum ada catatan.'}
+              </td></tr>}
               {sorted.map((e) => (
                 <tr key={e.id}>
                   <td>{dateTime(e.date || e.createdAt)}</td>

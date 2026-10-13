@@ -3,6 +3,8 @@ import { getAll, completeSale, recordTransactionPayment, onRefresh } from '../db
 import { rupiah, dateTime, isToday } from '../format'
 import Receipt from '../components/Receipt'
 import Icon from '../components/Icon.jsx'
+import DateRangeFilter from '../components/DateRangeFilter.jsx'
+import { hasDateRange, isInDateRange } from '../dateFilter'
 
 export default function Transactions() {
   const [products, setProducts] = useState([])
@@ -19,6 +21,7 @@ export default function Transactions() {
   const [installmentError, setInstallmentError] = useState('')
   const [saving, setSaving] = useState(false)
   const [previewTransaction, setPreviewTransaction] = useState(null)
+  const [dateRange, setDateRange] = useState({ from: '', to: '' })
   const operationLock = useRef(false)
 
   async function load() {
@@ -155,14 +158,19 @@ export default function Transactions() {
     }
   }
 
-  const todayTx = history.filter((t) => isToday(t.createdAt))
-  const todayCount = todayTx.length
-  const todayOmzet = todayTx.reduce((s, t) => s + t.total, 0)
+  const hasFilter = hasDateRange(dateRange)
+  const filteredHistory = history.filter((t) => !hasFilter || isInDateRange(t.createdAt, dateRange))
+  const summaryTransactions = hasFilter
+    ? filteredHistory
+    : history.filter((t) => isToday(t.createdAt))
+  const summaryLabel = hasFilter ? 'Periode dipilih' : 'Hari ini'
+  const summaryOmzet = summaryTransactions.reduce((s, t) => s + t.total, 0)
 
   return (
     <div className="page">
       <div className="page-toolbar">
-        <p className="muted">Hari ini <strong>{todayCount} transaksi</strong> · {rupiah(todayOmzet)}</p>
+        <p className="muted">{summaryLabel} <strong>{summaryTransactions.length} transaksi</strong> · {rupiah(summaryOmzet)}</p>
+        <DateRangeFilter value={dateRange} onChange={setDateRange} />
       </div>
 
       <div className="pos-grid">
@@ -239,8 +247,10 @@ export default function Transactions() {
         <table className="transaction-table">
           <thead><tr><th>ID</th><th>Pelanggan</th><th>Waktu</th><th>Item</th><th>Total</th><th>Terbayar</th><th>Sisa</th><th>Kembalian</th><th>Status / Aksi</th></tr></thead>
           <tbody>
-            {history.length === 0 && <tr><td colSpan="9" className="muted center">Belum ada transaksi.</td></tr>}
-            {history.slice(0, 50).map((t) => {
+            {filteredHistory.length === 0 && <tr><td colSpan="9" className="muted center">
+              {hasFilter ? 'Tidak ada transaksi pada rentang tanggal ini.' : 'Belum ada transaksi.'}
+            </td></tr>}
+            {filteredHistory.slice(0, 50).map((t) => {
               const balance = getBalanceDue(t)
               const credit = (t.paymentType || 'cash') === 'credit'
               const payments = t.payments || []
