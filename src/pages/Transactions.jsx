@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { getAll, completeSale, recordTransactionPayment, onRefresh } from '../db'
 import { rupiah, dateTime, isToday } from '../format'
+import Receipt from '../components/Receipt'
 
 export default function Transactions() {
   const [products, setProducts] = useState([])
@@ -16,7 +17,19 @@ export default function Transactions() {
   const [installmentAmount, setInstallmentAmount] = useState('')
   const [installmentError, setInstallmentError] = useState('')
   const [saving, setSaving] = useState(false)
+  const [printTransaction, setPrintTransaction] = useState(null)
   const operationLock = useRef(false)
+
+  useEffect(() => {
+    if (!printTransaction) return undefined
+    const clearPrintTransaction = () => setPrintTransaction(null)
+    window.addEventListener('afterprint', clearPrintTransaction)
+    const timer = window.setTimeout(() => window.print(), 150)
+    return () => {
+      window.clearTimeout(timer)
+      window.removeEventListener('afterprint', clearPrintTransaction)
+    }
+  }, [printTransaction])
 
   async function load() {
     setProducts(await getAll('products'))
@@ -89,6 +102,8 @@ export default function Transactions() {
     setSaving(true)
     try {
       const txId = await completeSale(sale, cart, financeEntry)
+      const completedTransaction = { ...sale, id: txId, createdAt: now }
+      setHistory((current) => [completedTransaction, ...current])
       setDone({
         id: txId,
         total,
@@ -97,6 +112,7 @@ export default function Transactions() {
         balance: remaining,
         paymentType
       })
+      setPrintTransaction(completedTransaction)
       setCart([])
       setPay('')
       setCustomerName('')
@@ -246,6 +262,9 @@ export default function Transactions() {
                   <td className={balance > 0 ? 'danger' : ''}>{rupiah(balance)}</td>
                   <td>{rupiah(t.change)}</td>
                   <td>
+                    <button className="btn btn-sm receipt-button" onClick={() => setPrintTransaction(t)}>
+                      Cetak struk
+                    </button>
                     {credit && balance > 0 ? (
                       <button className="btn btn-sm btn-primary" onClick={() => {
                         setInstallmentTransaction(t)
@@ -287,6 +306,10 @@ export default function Transactions() {
             <p className="muted">Total {rupiah(done.total)} · Dibayar {rupiah(done.payment)}
               {done.paymentType === 'credit' ? ' · Sisa kredit ' + rupiah(done.balance) : ' · Kembali ' + rupiah(done.change)}
             </p>
+            <button className="btn btn-primary" onClick={() => {
+              const transaction = history.find((item) => item.id === done.id)
+              if (transaction) setPrintTransaction(transaction)
+            }}>Cetak struk</button>
             <button className="btn btn-primary" onClick={() => setDone(null)}>Tutup</button>
           </div>
         </div>
@@ -312,6 +335,8 @@ export default function Transactions() {
           </form>
         </div>
       )}
+
+      {printTransaction && <Receipt transaction={printTransaction} />}
     </div>
   )
 }

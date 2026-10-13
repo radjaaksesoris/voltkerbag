@@ -6,6 +6,7 @@ dengan opsi sinkronisasi dan backup ke Supabase menggunakan login.
 ## Fitur
 - 📊 **Dashboard** — ringkasan omzet, laba, dan kondisi stok
 - 🛒 **Kasir / Transaksi** — nama pelanggan wajib; pembayaran tunai atau kredit tanpa bunga, termasuk DP opsional dan pencatatan cicilan
+- 🧾 **Struk transaksi** — format cetak hitam-putih untuk printer dot matrix dan kertas continuous form 24 × 14 cm; struk bisa dicetak sesudah transaksi atau dicetak ulang dari riwayat
 - 👜 **Stok Barang** — tambah/edit/hapus produk, harga beli & jual, badge stok menipis
 - 💰 **Keuangan** — buku kas otomatis + catat pengeluaran/modal manual, laba kotor & bersih
 - ⇅ **Sinkronisasi Supabase** — tombol besar di kanan atas; push + pull + hapus tersinkron
@@ -45,3 +46,4 @@ Public key akan disertakan dalam bundle browser dan bukan rahasia. Tabel mengakt
 - Angka `id` dari IndexedDB dipakai sebagai primary key di Supabase; data cloud dibatasi ke akun yang sedang masuk.
 - Pembayaran kredit dicatat di buku kas hanya saat uang diterima (DP dan cicilan). Skema Supabase menambahkan kolom pelanggan, metode pembayaran, jumlah terbayar, sisa tagihan, dan riwayat pembayaran transaksi.
 - Jika skema Supabase sudah pernah dibuat, jalankan kembali isi `supabase/schema.sql` agar kolom transaksi kredit ditambahkan sebelum sinkronisasi.
+- Saat mencetak struk, pilih ukuran kertas khusus **240 × 140 mm** di pengaturan printer, gunakan sumber kertas tractor feed/continuous form, orientasi landscape, skala 100%, dan matikan header/footer browser. Konfigurasi ukuran kertas juga perlu disimpan pada driver printer.
