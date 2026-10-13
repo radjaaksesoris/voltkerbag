@@ -21,6 +21,20 @@ export default function SyncButton() {
     return onRefresh(async () => setLastSync(await getLastSync()))
   }, [])
 
+  async function syncNow() {
+    setStatus('syncing')
+    setMessage('')
+    try {
+      const res = await syncAll((msg) => setMessage(msg))
+      setStatus('ok')
+      setMessage('Terpush ' + res.pushed + ' · Terambil ' + res.pulled + (res.deleted ? ' · Terhapus ' + res.deleted : ''))
+    } catch (err) {
+      setStatus('error')
+      setMessage(err.message || String(err))
+    }
+    setTimeout(() => { setStatus('idle'); setMessage('') }, 6000)
+  }
+
   async function doSignIn(e) {
     e.preventDefault()
     setAuthBusy(true)
@@ -28,7 +42,8 @@ export default function SyncButton() {
     try {
       setSession(await signIn(email.trim(), password))
       setPassword('')
-      setAuthMessage('Berhasil masuk ke Supabase.')
+      setShowSettings(false)
+      await syncNow()
     } catch (err) {
       setAuthMessage(err.message || String(err))
     } finally {
@@ -52,16 +67,7 @@ export default function SyncButton() {
 
   async function doSync() {
     if (!isConfigured() || !session) { setShowSettings(true); return }
-    setStatus('syncing'); setMessage('')
-    try {
-      const res = await syncAll((msg) => setMessage(msg))
-      setStatus('ok')
-      setMessage('Terpush ' + res.pushed + ' · Terambil ' + res.pulled + (res.deleted ? ' · Terhapus ' + res.deleted : ''))
-    } catch (err) {
-      setStatus('error')
-      setMessage(err.message || String(err))
-    }
-    setTimeout(() => { setStatus('idle'); setMessage('') }, 6000)
+    await syncNow()
   }
 
   return (
