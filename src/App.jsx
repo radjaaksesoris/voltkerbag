@@ -4,12 +4,13 @@ import Transactions from './pages/Transactions.jsx'
 import Products from './pages/Products.jsx'
 import Finance from './pages/Finance.jsx'
 import SyncButton from './components/SyncButton.jsx'
+import Icon from './components/Icon.jsx'
 
 const NAV = [
-  { id: 'dashboard', label: 'Dashboard', description: 'Ringkasan performa tokomu hari ini.', icon: '📊' },
-  { id: 'pos', label: 'Kasir / Transaksi', description: 'Pilih produk, atur pembayaran, dan simpan transaksi.', icon: '🛒' },
-  { id: 'stok', label: 'Stok Barang', description: 'Kelola katalog produk, harga, dan ketersediaan stok.', icon: '👜' },
-  { id: 'finance', label: 'Keuangan', description: 'Pantau pemasukan, pengeluaran, dan saldo kas toko.', icon: '💰' }
+  { id: 'dashboard', label: 'Dashboard', description: 'Ringkasan performa tokomu hari ini.', icon: 'dashboard' },
+  { id: 'pos', label: 'Kasir / Transaksi', description: 'Pilih produk, atur pembayaran, dan simpan transaksi.', icon: 'cart' },
+  { id: 'stok', label: 'Stok Barang', description: 'Kelola katalog produk, harga, dan ketersediaan stok.', icon: 'bag' },
+  { id: 'finance', label: 'Keuangan', description: 'Pantau pemasukan, pengeluaran, dan saldo kas toko.', icon: 'wallet' }
 ]
 
 export default function App() {
@@ -26,7 +27,7 @@ export default function App() {
     <div className={'app ' + (navHidden ? 'nav-hidden' : '')}>
       <aside className="sidebar" id="primary-navigation" hidden={navHidden}>
         <div className="logo">
-          <span className="logo-bolt">⚡</span> VOLTKER
+          <span className="logo-bolt"><Icon name="bolt" size={25} /></span> VOLTKER
           <span className="logo-sub">Toko Tas</span>
         </div>
         <nav>
@@ -34,7 +35,7 @@ export default function App() {
             <button key={n.id}
               className={'nav-item ' + (page === n.id ? 'active' : '')}
               onClick={() => setPage(n.id)}>
-              <span className="nav-icon">{n.icon}</span> {n.label}
+              <span className="nav-icon"><Icon name={n.icon} size={19} /></span> {n.label}
             </button>
           ))}
         </nav>
@@ -53,7 +54,7 @@ export default function App() {
               aria-controls="primary-navigation"
               aria-expanded={!navHidden}
               onClick={() => setNavHidden((hidden) => !hidden)}>
-              <span className="hamburger-icon" aria-hidden="true"><i /><i /><i /></span>
+              <Icon name="menu" size={20} />
             </button>
             <div className="topbar-title">
               <strong>{currentPage.label}</strong>

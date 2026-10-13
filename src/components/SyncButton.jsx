@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
+import Icon from './Icon.jsx'
 import {
   syncAll, isConfigured, getLastSync, getAuthSession, signIn, signOut
 } from '../supabaseSync'
@@ -80,10 +81,12 @@ export default function SyncButton() {
           disabled={status === 'syncing'}
           title={lastSync ? 'Sinkron terakhir: ' + new Date(lastSync).toLocaleString('id-ID') : 'Belum pernah sinkron'}
         >
-          <span className="sync-icon">{status === 'syncing' ? '⟳' : '⇅'}</span>
+          <Icon name="sync" size={18} className="sync-icon" />
           {status === 'syncing' ? 'SINKRONISASI...' : 'SINKRON SEKARANG'}
         </button>
-        <button className="btn-gear" onClick={() => setShowSettings(true)} title="Akun Supabase">⚙</button>
+        <button className="btn-gear" onClick={() => setShowSettings(true)} title="Akun Supabase" aria-label="Akun Supabase">
+          <Icon name="settings" size={19} />
+        </button>
       </div>
       {message && <div className={'sync-msg ' + status}>{message}</div>}
 

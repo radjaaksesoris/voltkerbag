@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { getAll, completeSale, recordTransactionPayment, onRefresh } from '../db'
 import { rupiah, dateTime, isToday } from '../format'
 import Receipt from '../components/Receipt'
+import Icon from '../components/Icon.jsx'
 
 export default function Transactions() {
   const [products, setProducts] = useState([])
@@ -172,7 +173,7 @@ export default function Transactions() {
             {filtered.length === 0 && <p className="muted">Tidak ada produk. Tambahkan di menu Stok Barang.</p>}
             {filtered.map((p) => (
               <button key={p.id} className="product-card" onClick={() => addToCart(p)}>
-                <div className="product-emoji">👜</div>
+                <div className="product-illustration"><Icon name="bag" size={28} /></div>
                 <strong>{p.name}</strong>
                 <span className="muted small">{p.category || 'Umum'} · stok {p.stock}</span>
                 <span className="accent">{rupiah(p.price)}</span>
@@ -191,9 +192,13 @@ export default function Transactions() {
                 <span className="muted small">{rupiah(c.price)}</span>
               </div>
               <div className="qty-ctrl">
-                <button onClick={() => setQty(c.productId, c.qty - 1)}>−</button>
+                <button aria-label={'Kurangi jumlah ' + c.name} onClick={() => setQty(c.productId, c.qty - 1)}>
+                  <Icon name="minus" size={15} />
+                </button>
                 <span>{c.qty}</span>
-                <button onClick={() => setQty(c.productId, c.qty + 1)}>+</button>
+                <button aria-label={'Tambah jumlah ' + c.name} onClick={() => setQty(c.productId, c.qty + 1)}>
+                  <Icon name="plus" size={15} />
+                </button>
               </div>
               <span className="cart-sub">{rupiah(c.price * c.qty)}</span>
             </div>
@@ -224,7 +229,7 @@ export default function Transactions() {
           )}
           {checkoutError && <p className="form-error" role="alert">{checkoutError}</p>}
           <button className="btn btn-primary btn-block btn-lg" onClick={checkout} disabled={cart.length === 0 || saving}>
-            {saving ? 'Menyimpan…' : '⚡ Simpan Transaksi'}
+            {saving ? 'Menyimpan…' : <><Icon name="bolt" size={17} /> Simpan Transaksi</>}
           </button>
         </div>
       </div>
@@ -289,7 +294,7 @@ export default function Transactions() {
       {done && (
         <div className="overlay" onClick={() => setDone(null)}>
           <div className="modal center-text" onClick={(e) => e.stopPropagation()}>
-            <div className="success-icon">✓</div>
+            <div className="success-icon"><Icon name="check" size={32} /></div>
             <h3>Transaksi #{done.id} Berhasil</h3>
             <p className="muted">Total {rupiah(done.total)} · Dibayar {rupiah(done.payment)}
               {done.paymentType === 'credit' ? ' · Sisa kredit ' + rupiah(done.balance) : ' · Kembali ' + rupiah(done.change)}
