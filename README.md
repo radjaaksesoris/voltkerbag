@@ -4,6 +4,8 @@ VOLTKER adalah aplikasi kasir React + Vite dengan Supabase sebagai sumber data u
 
 ## Fitur
 - Dashboard penjualan, stok, riwayat transaksi, filter tanggal, dan detail barang.
+- Daftar nama pelanggan di tab Setting, dengan pilihan pelanggan wajib saat checkout.
+- Foto produk yang diunggah dari form Tambah/Edit Produk dan disimpan di Supabase Storage.
 - Kasir tunai/kredit dengan nama pelanggan wajib; checkout dan pengurangan stok diproses atomik di database.
 - Pembayaran cicilan kredit tanpa bunga, dengan validasi saldo dan pencatatan buku kas di server.
 - Cetak ulang dan pratinjau struk continuous form 24 × 14 cm.
@@ -12,12 +14,14 @@ VOLTKER adalah aplikasi kasir React + Vite dengan Supabase sebagai sumber data u
 ## Setup Supabase
 1. Pastikan project Supabase yang dipakai adalah project VOLTKER yang benar.
 2. Di **Authentication → Users**, buat satu akun toko. Jangan aktifkan pendaftaran publik; hanya akun ini yang boleh digunakan.
-3. Jalankan seluruh `supabase/schema.sql` di **SQL Editor**. Jika skema pernah dijalankan sebelumnya, jalankan ulang file terbaru ini untuk menyiapkan tabel kategori/satuan produk dan memasukkan kategori serta satuan awal ke daftar pilihan.
-4. Setelah memastikan pengosongan memang diinginkan, jalankan `supabase/clear-data.sql` satu kali. **Perintah ini menghapus permanen semua produk, transaksi, dan catatan keuangan di project tersebut serta memulai ulang ID.**
+3. Jalankan seluruh `supabase/schema.sql` di **SQL Editor**. Skema ini menyiapkan tabel pelanggan, kebijakan Row Level Security, bucket `product-images`, serta tabel dan pilihan kategori/satuan produk. Skema dapat dijalankan ulang; migrasi mempertahankan data dan mengisi daftar nama pelanggan dari riwayat transaksi yang sudah ada.
+4. Jangan jalankan `supabase/clear-data.sql` untuk migrasi atau deploy. Jalankan hanya jika memang ingin menghapus permanen semua produk, transaksi, dan catatan keuangan di project tersebut serta memulai ulang ID.
 5. Salin Supabase anon/publishable key (bukan `service_role` atau secret key).
 6. Untuk GitHub Pages, simpan key sebagai repository Actions secret `VITE_SUPABASE_ANON_KEY`, lalu jalankan workflow deploy. Untuk lokal, isi `VITE_SUPABASE_ANON_KEY` dalam `.env.local`.
 
 `schema.sql` menyiapkan tabel, Row Level Security, dan fungsi database untuk checkout serta pembayaran cicilan. Database kosong setelah `clear-data.sql`; data di browser lama tidak akan dipindahkan. Jangan jalankan `clear-data.sql` lagi setelah mulai memasukkan data toko.
+
+Nama pelanggan dikelola di tab Setting. Checkout hanya menerima nama yang dipilih dari daftar tersebut; nama lama di riwayat transaksi tidak terhapus jika nama pelanggan dihapus dari pilihan. Foto produk dapat diunggah saat menambah atau mengedit produk; JPG, PNG, dan WebP hingga 5 MB didukung. Gambar disajikan dari bucket publik `product-images`, sedangkan unggah dan penghapusan dibatasi ke akun toko.
 
 Kategori dan satuan produk dikelola di database. Kategori/satuan yang masih dipakai produk tidak dapat dihapus; ubah data produk terkait terlebih dahulu. Satuan awal yang tersedia: pcs, lusin, dan kodi. Produk dengan satuan utama pcs/lusin/kodi dapat dijual dalam ketiga satuan tersebut; konversi stok mengikuti 1 lusin = 12 pcs dan 1 kodi = 20 pcs. Harga jual pada form produk adalah tarif per pcs yang dipilih berdasarkan satuan penjualan: contoh tarif kodi Rp45.000/pcs menghasilkan Rp900.000 per kodi. Satuan, harga per kemasan, dan subtotal transaksi dicatat di item transaksi, detail transaksi, dan struk.
 

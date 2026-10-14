@@ -1,15 +1,17 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { getAll, completeSale, recordTransactionPayment, onRefresh } from '../db'
+import { getAll, getProductImageUrl, completeSale, recordTransactionPayment, onRefresh } from '../db'
 import { rupiah, dateTime, isToday } from '../format'
 import Receipt from '../components/Receipt'
 import Icon from '../components/Icon.jsx'
 import TransactionDetails from '../components/TransactionDetails'
 import { getInvoiceNumber } from '../invoice'
 import MoneyInput from '../components/MoneyInput.jsx'
+import CustomerSelect from '../components/CustomerSelect.jsx'
 import { productPrice, saleUnitPrice, saleUnits, stockInPcs, stockLabel, unitCost, unitFactor } from '../productUnits'
 
 export default function Transactions() {
   const [products, setProducts] = useState([])
+  const [customers, setCustomers] = useState([])
   const [history, setHistory] = useState([])
   const [cart, setCart] = useState([])
   const [q, setQ] = useState('')
@@ -32,11 +34,13 @@ export default function Transactions() {
 
   async function load() {
     try {
-      const [productRows, txs] = await Promise.all([
+      const [productRows, txs, customerRows] = await Promise.all([
         getAll('products'),
-        getAll('transactions')
+        getAll('transactions'),
+        getAll('customers')
       ])
       setProducts(productRows)
+      setCustomers(customerRows)
       setHistory(txs.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)))
       setLoadError('')
     } catch (error) {
@@ -149,7 +153,10 @@ export default function Transactions() {
   async function checkout() {
     if (operationLock.current) return
     setCheckoutError('')
-    if (!customerName.trim()) { setCheckoutError('Nama pelanggan wajib diisi.'); return }
+    if (!customers.some((customer) => customer.name === customerName)) {
+      setCheckoutError('Pilih nama pelanggan yang masih tersedia dari tab Setting.')
+      return
+    }
     if (cart.length === 0) { setCheckoutError('Keranjang masih kosong.'); return }
     if (paymentType === 'cash' && change < 0) { setCheckoutError('Uang tunai kurang dari total belanja.'); return }
     if (paymentType === 'credit' && (paidNow < 0 || paidNow > total)) {
@@ -267,7 +274,11 @@ export default function Transactions() {
             {filtered.length === 0 && <p className="muted">Tidak ada produk. Tambahkan di menu Stok Barang.</p>}
             {filtered.map((p) => (
               <article key={p.id} className="product-card">
-                <div className="product-illustration"><Icon name="bag" size={28} /></div>
+                {p.image_path ? (
+                  <img className="product-card-image" src={getProductImageUrl(p.image_path)} alt="" />
+                ) : (
+                  <div className="product-illustration"><Icon name="bag" size={28} /></div>
+                )}
                 <strong>{p.name}</strong>
                 <span className="muted small">{p.category || 'Umum'} · stok {stockLabel(p)}</span>
                 <div className="product-sale-options" aria-label={'Satuan dan harga ' + p.name}>
@@ -328,8 +339,11 @@ export default function Transactions() {
           ))}
 
           <label>Nama pelanggan *</label>
-          <input className="input" value={customerName} onChange={(e) => setCustomerName(e.target.value)}
-            placeholder="Masukkan nama pelanggan" required />
+          <CustomerSelect
+            customers={customers}
+            value={customerName}
+            onChange={setCustomerName}
+          />
           <label>Metode pembayaran</label>
           <select className="input" value={paymentType} onChange={(e) => setPaymentType(e.target.value)}>
             <option value="cash">Tunai</option>
@@ -350,7 +364,7 @@ export default function Transactions() {
             <div className="change credit-balance">Sisa kredit: <strong>{rupiah(Math.max(0, total - paidNow))}</strong></div>
           )}
           {checkoutError && <p className="form-error" role="alert">{checkoutError}</p>}
-          <button className="btn btn-primary btn-block btn-lg" onClick={checkout} disabled={cart.length === 0 || saving}>
+          <button className="btn btn-primary btn-block btn-lg" onClick={checkout} disabled={cart.length === 0 || !customerName || saving}>
             {saving ? 'Menyimpan…' : <><Icon name="bolt" size={17} /> Simpan Transaksi</>}
           </button>
         </div>

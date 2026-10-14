@@ -3,6 +3,7 @@ import Dashboard from './pages/Dashboard.jsx'
 import Transactions from './pages/Transactions.jsx'
 import Products from './pages/Products.jsx'
 import Finance from './pages/Finance.jsx'
+import Settings from './pages/Settings.jsx'
 import LoginScreen from './components/LoginScreen.jsx'
 import SessionControl from './components/SessionControl.jsx'
 import Icon from './components/Icon.jsx'
@@ -12,7 +13,8 @@ const NAV = [
   { id: 'dashboard', label: 'Dashboard', description: 'Ringkasan performa tokomu hari ini.', icon: 'dashboard' },
   { id: 'pos', label: 'Transaksi', description: 'Pilih produk, atur pembayaran, dan simpan transaksi.', icon: 'cart' },
   { id: 'stok', label: 'Stok Barang', description: 'Kelola katalog produk, harga, dan ketersediaan stok.', icon: 'bag' },
-  { id: 'finance', label: 'Keuangan', description: 'Pantau pemasukan, pengeluaran, dan saldo kas toko.', icon: 'wallet' }
+  { id: 'finance', label: 'Keuangan', description: 'Pantau pemasukan, pengeluaran, dan saldo kas toko.', icon: 'wallet' },
+  { id: 'settings', label: 'Setting', description: 'Kelola nama pelanggan dan gambar produk.', icon: 'settings' }
 ]
 
 export default function App() {
@@ -150,6 +152,7 @@ export default function App() {
           {page === 'pos' && <Transactions />}
           {page === 'stok' && <Products />}
           {page === 'finance' && <Finance />}
+          {page === 'settings' && <Settings />}
         </div>
       </main>
     </div>

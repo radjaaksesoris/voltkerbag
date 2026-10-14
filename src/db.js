@@ -4,6 +4,7 @@ const TABLES = {
   products: 'products',
   categories: 'product_categories',
   units: 'product_units',
+  customers: 'customer_names',
   transactions: 'transactions',
   finance: 'finance_entries'
 }
@@ -78,6 +79,43 @@ export async function recordTransactionPayment(transactionId, amount, requestId)
   throwIfError(error, 'Gagal menyimpan cicilan')
   notifyRefresh()
   return data
+}
+
+export async function uploadProductImage(file) {
+  const allowedTypes = {
+    'image/jpeg': 'jpg',
+    'image/png': 'png',
+    'image/webp': 'webp'
+  }
+  const extension = allowedTypes[file.type]
+  if (!extension) throw new Error('Gunakan gambar JPG, PNG, atau WebP.')
+  if (file.size > 5 * 1024 * 1024) throw new Error('Ukuran gambar maksimal 5 MB.')
+
+  const client = getClient()
+  const { data: { user }, error: userError } = await client.auth.getUser()
+  throwIfError(userError, 'Gagal memeriksa akun untuk upload gambar')
+  if (!user) throw new Error('Sesi login tidak ditemukan. Silakan masuk kembali.')
+
+  const path = user.id + '/' + crypto.randomUUID() + '.' + extension
+  const { error } = await client.storage.from('product-images').upload(path, file, {
+    cacheControl: '3600',
+    contentType: file.type,
+    upsert: false
+  })
+  throwIfError(error, 'Gagal mengunggah gambar produk')
+  return path
+}
+
+export async function removeProductImage(path) {
+  if (!path) return
+  const { error } = await getClient().storage.from('product-images').remove([path])
+  throwIfError(error, 'Gagal menghapus gambar produk')
+}
+
+export function getProductImageUrl(path) {
+  if (!path) return ''
+  const { data } = getClient().storage.from('product-images').getPublicUrl(path)
+  return data.publicUrl
 }
 
 export async function remove(store, id) {

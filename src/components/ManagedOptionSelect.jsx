@@ -11,7 +11,8 @@ export default function ManagedOptionSelect({
   fieldName,
   placeholder,
   emptyLabel,
-  allowEmpty = true
+  allowEmpty = true,
+  canManage = true
 }) {
   const [open, setOpen] = useState(false)
   const [draft, setDraft] = useState('')
@@ -70,9 +71,11 @@ export default function ManagedOptionSelect({
     event.preventDefault()
     const optionNames = [...(allowEmpty ? [''] : []), ...options.map((option) => option.name)]
     if (optionNames.length === 0) return
-    const selectedIndex = Math.max(0, optionNames.indexOf(value || ''))
+    const selectedIndex = optionNames.indexOf(value || '')
     const direction = event.key === 'ArrowDown' ? 1 : -1
-    const nextIndex = (selectedIndex + direction + optionNames.length) % optionNames.length
+    const nextIndex = selectedIndex < 0
+      ? direction > 0 ? 0 : optionNames.length - 1
+      : (selectedIndex + direction + optionNames.length) % optionNames.length
     onChange(optionNames[nextIndex])
     setOpen(true)
   }
@@ -115,6 +118,9 @@ export default function ManagedOptionSelect({
                 {emptyLabel}
               </button>
             )}
+            {!allowEmpty && options.length === 0 && (
+              <p className="customer-select-empty">Belum ada pilihan. Tambahkan nama pelanggan di tab Setting.</p>
+            )}
             {options.map((option) => (
               <div className="category-option-row" key={option.id}>
                 <button
@@ -126,29 +132,33 @@ export default function ManagedOptionSelect({
                   onClick={() => selectOption(option.name)}>
                   {option.name}
                 </button>
-                <button
-                  className="category-delete"
-                  type="button"
-                  tabIndex={-1}
-                  aria-label={'Hapus ' + fieldName.toLowerCase() + ' ' + option.name}
-                  title={'Hapus ' + fieldName.toLowerCase()}
-                  disabled={busy}
-                  onClick={() => deleteOption(option)}>
-                  <Icon name="trash" size={15} />
-                </button>
+                {canManage && (
+                  <button
+                    className="category-delete"
+                    type="button"
+                    tabIndex={-1}
+                    aria-label={'Hapus ' + fieldName.toLowerCase() + ' ' + option.name}
+                    title={'Hapus ' + fieldName.toLowerCase()}
+                    disabled={busy}
+                    onClick={() => deleteOption(option)}>
+                    <Icon name="trash" size={15} />
+                  </button>
+                )}
               </div>
             ))}
           </div>
-          <div className="category-add-form">
-            <input className="input" value={draft} maxLength={80}
-              tabIndex={-1}
-              onChange={(event) => setDraft(event.target.value)}
-              onKeyDown={(event) => { if (event.key === 'Enter') addOption(event) }}
-              placeholder={'Nama ' + fieldName.toLowerCase() + ' baru'} aria-label={'Nama ' + fieldName.toLowerCase() + ' baru'} />
-            <button className="btn btn-primary" type="button" tabIndex={-1} disabled={busy || !draft.trim()} onClick={addOption}>
-              {busy ? '...' : 'Tambah'}
-            </button>
-          </div>
+          {canManage && (
+            <div className="category-add-form">
+              <input className="input" value={draft} maxLength={80}
+                tabIndex={-1}
+                onChange={(event) => setDraft(event.target.value)}
+                onKeyDown={(event) => { if (event.key === 'Enter') addOption(event) }}
+                placeholder={'Nama ' + fieldName.toLowerCase() + ' baru'} aria-label={'Nama ' + fieldName.toLowerCase() + ' baru'} />
+              <button className="btn btn-primary" type="button" tabIndex={-1} disabled={busy || !draft.trim()} onClick={addOption}>
+                {busy ? '...' : 'Tambah'}
+              </button>
+            </div>
+          )}
           {error && <p className="form-error category-error" role="alert">{error}</p>}
         </div>
       )}

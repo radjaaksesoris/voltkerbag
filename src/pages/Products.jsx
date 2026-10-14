@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { getAll, put, remove, onRefresh } from '../db'
+import { getAll, getProductImageUrl, put, remove, removeProductImage, uploadProductImage, onRefresh } from '../db'
 import { rupiah } from '../format'
 import MoneyInput from '../components/MoneyInput.jsx'
 import CategorySelect from '../components/CategorySelect.jsx'
@@ -14,7 +14,8 @@ const EMPTY = {
   price: '',
   prices: { pcs: '', lusin: '', kodi: '' },
   cost: '',
-  stock: ''
+  stock: '',
+  image_path: null
 }
 
 export default function Products() {
@@ -25,10 +26,14 @@ export default function Products() {
   const [form, setForm] = useState(EMPTY)
   const [editId, setEditId] = useState(null)
   const [showForm, setShowForm] = useState(false)
+  const [imageFile, setImageFile] = useState(null)
+  const [imagePreview, setImagePreview] = useState('')
+  const [saving, setSaving] = useState(false)
   const [loadError, setLoadError] = useState('')
   const [actionError, setActionError] = useState('')
   const [loaded, setLoaded] = useState(false)
   const nameInputRef = useRef(null)
+  const originalImagePathRef = useRef(null)
   const categoryInputRef = useRef(null)
   const unitInputRef = useRef(null)
   const priceInputRefs = {
@@ -39,6 +44,13 @@ export default function Products() {
   const customPriceInputRef = useRef(null)
   const costInputRef = useRef(null)
   const stockInputRef = useRef(null)
+  const imageInputRef = useRef(null)
+
+  useEffect(() => {
+    return () => {
+      if (imagePreview.startsWith('blob:')) URL.revokeObjectURL(imagePreview)
+    }
+  }, [imagePreview])
 
   async function load() {
     try {
@@ -69,6 +81,7 @@ export default function Products() {
 
   function openEdit(p) {
     setEditId(p.id)
+    originalImagePathRef.current = p.image_path || null
     setForm({
       name: p.name,
       category: p.category || '',
@@ -80,11 +93,56 @@ export default function Products() {
         kodi: productPrice(p, 'kodi')
       },
       cost: p.cost || '',
-      stock: String(stockInPcs(p) / unitFactor(p.unit || 'pcs'))
+      stock: String(stockInPcs(p) / unitFactor(p.unit || 'pcs')),
+      image_path: p.image_path || null
     })
+    setImageFile(null)
+    setImagePreview('')
+    if (imageInputRef.current) imageInputRef.current.value = ''
     setShowForm(true)
   }
-  function openAdd() { setEditId(null); setForm(EMPTY); setShowForm(true) }
+  function openAdd() {
+    setEditId(null)
+    originalImagePathRef.current = null
+    setForm(EMPTY)
+    setImageFile(null)
+    setImagePreview('')
+    if (imageInputRef.current) imageInputRef.current.value = ''
+    setShowForm(true)
+  }
+
+  function closeProductForm() {
+    if (saving) return
+    setShowForm(false)
+    setImageFile(null)
+    setImagePreview('')
+    if (imageInputRef.current) imageInputRef.current.value = ''
+  }
+
+  function selectProductImage(event) {
+    const file = event.target.files?.[0]
+    if (!file) return
+    if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
+      setActionError('Gunakan gambar JPG, PNG, atau WebP.')
+      event.target.value = ''
+      return
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      setActionError('Ukuran gambar maksimal 5 MB.')
+      event.target.value = ''
+      return
+    }
+    setActionError('')
+    setImageFile(file)
+    setImagePreview(URL.createObjectURL(file))
+  }
+
+  function clearProductImage() {
+    setImageFile(null)
+    setImagePreview('')
+    setForm((current) => ({ ...current, image_path: null }))
+    if (imageInputRef.current) imageInputRef.current.value = ''
+  }
 
   async function addCategory(name) {
     if (categories.some((category) => category.name.toLocaleLowerCase('id-ID') === name.toLocaleLowerCase('id-ID'))) {
@@ -153,7 +211,15 @@ export default function Products() {
       return
     }
     const stockPcs = quantityToPcs(baseStock, form.unit)
+    const previousImagePath = originalImagePathRef.current
+    let imagePath = previousImagePath
+    let uploadedImagePath = null
+    setSaving(true)
     try {
+      if (imageFile) {
+        uploadedImagePath = await uploadProductImage(imageFile)
+        imagePath = uploadedImagePath
+      }
       await put('products', {
         id: editId || undefined,
         name: form.name.trim(),
@@ -165,11 +231,32 @@ export default function Products() {
         price_kodi: isStandard ? prices.kodi : 0,
         cost: Number(form.cost) || 0,
         stock: stockPcs / unitFactor(form.unit),
-        stock_pcs: stockPcs
+        stock_pcs: stockPcs,
+        image_path: imagePath
       })
+      originalImagePathRef.current = imagePath
       setShowForm(false)
+      setImageFile(null)
+      setImagePreview('')
+      if (previousImagePath && previousImagePath !== imagePath) {
+        try {
+          await removeProductImage(previousImagePath)
+        } catch (error) {
+          setActionError('Produk tersimpan, tetapi gambar lama gagal dihapus: ' + error.message)
+        }
+      }
     } catch (error) {
-      setActionError(error.message || 'Gagal menyimpan produk ke server.')
+      let message = error.message || 'Gagal menyimpan produk ke server.'
+      if (uploadedImagePath) {
+        try {
+          await removeProductImage(uploadedImagePath)
+        } catch (cleanupError) {
+          message += ' Gambar yang gagal disimpan juga tidak berhasil dibersihkan: ' + cleanupError.message
+        }
+      }
+      setActionError(message)
+    } finally {
+      setSaving(false)
     }
   }
 
@@ -180,6 +267,7 @@ export default function Products() {
       : [customPriceInputRef.current]
     const fields = [
       nameInputRef.current,
+      imageInputRef.current,
       categoryInputRef.current,
       unitInputRef.current,
       ...priceFields,
@@ -200,6 +288,13 @@ export default function Products() {
     try {
       await remove('products', p.id)
       setActionError('')
+      if (p.image_path) {
+        try {
+          await removeProductImage(p.image_path)
+        } catch (error) {
+          setActionError('Produk terhapus, tetapi gambar gagal dihapus: ' + error.message)
+        }
+      }
     } catch (error) {
       setActionError(error.message || 'Gagal menghapus produk dari server.')
     }
@@ -234,7 +329,10 @@ export default function Products() {
             )}
             {filtered.map((p) => (
               <tr key={p.id}>
-                <td><strong>{p.name}</strong></td>
+                <td className="product-name-cell">
+                  {p.image_path && <img src={getProductImageUrl(p.image_path)} alt="" />}
+                  <strong>{p.name}</strong>
+                </td>
                 <td>{p.category || '-'}</td>
                 <td>{p.unit || 'pcs'}</td>
                 <td>{rupiah(p.cost)}</td>
@@ -262,7 +360,7 @@ export default function Products() {
       </div>
 
       {showForm && (
-        <div className="overlay" onClick={() => setShowForm(false)}>
+        <div className="overlay" onClick={closeProductForm}>
           <form className="modal product-modal" onClick={(e) => e.stopPropagation()} onKeyDown={handleProductFormKeyDown} onSubmit={save}>
             <div className="product-modal-heading">
               <span className="product-modal-mark"><Icon name="bag" size={22} /></span>
@@ -273,6 +371,27 @@ export default function Products() {
             </div>
             <label>Nama Produk *</label>
             <input ref={nameInputRef} className="input" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="cth: Tas Ransel Volt Hitam" />
+            <div className="product-image-field">
+              <label htmlFor="product-image">Gambar produk</label>
+              <input
+                ref={imageInputRef}
+                id="product-image"
+                className="input product-image-input"
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                disabled={saving}
+                onChange={selectProductImage}
+              />
+              <p className="muted small">JPG, PNG, atau WebP · maksimal 5 MB.</p>
+              {(imagePreview || form.image_path) && (
+                <div className="product-image-preview">
+                  <img src={imagePreview || getProductImageUrl(form.image_path)} alt="Pratinjau gambar produk" />
+                  <button className="btn btn-sm btn-danger" type="button" onClick={clearProductImage}>
+                    <Icon name="trash" size={14} /> Hapus gambar
+                  </button>
+                </div>
+              )}
+            </div>
             <div className="product-option-fields">
               <div>
                 <label>Kategori</label>
@@ -334,8 +453,10 @@ export default function Products() {
             <p className="muted small product-stock-hint">Stok disimpan sebagai pcs agar penjualan dalam satuan berbeda mengurangi persediaan dengan tepat. Harga beli dan stok mengikuti satuan utama {form.unit}.</p>
             <div className="modal-actions">
               {actionError && <p className="form-error" role="alert">{actionError}</p>}
-              <button type="button" className="btn" onClick={() => setShowForm(false)}>Batal</button>
-              <button type="submit" className="btn btn-primary">Simpan</button>
+              <button type="button" className="btn" disabled={saving} onClick={closeProductForm}>Batal</button>
+              <button type="submit" className="btn btn-primary" disabled={saving}>
+                {saving ? 'Menyimpan...' : 'Simpan'}
+              </button>
             </div>
           </form>
         </div>
