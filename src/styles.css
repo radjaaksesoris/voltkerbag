@@ -135,6 +135,7 @@ button:focus-visible, input:focus-visible, select:focus-visible {
 /* Main shell */
 .main { display: flex; flex: 1; flex-direction: column; min-width: 0; min-height: 0; height: 100%; }
 .topbar {
+  isolation: isolate;
   position: relative;
   z-index: 10;
   flex: 0 0 auto;
@@ -144,9 +145,25 @@ button:focus-visible, input:focus-visible, select:focus-visible {
   gap: 16px;
   min-height: 82px;
   padding: 15px clamp(20px, 4vw, 52px);
-  background: var(--accent-dark);
-  border-bottom: 1px solid var(--accent-dark);
-  backdrop-filter: blur(14px);
+  overflow: hidden;
+  border-bottom: 1px solid rgba(255, 255, 255, .18);
+  background:
+    radial-gradient(ellipse at 78% 125%, rgba(242, 180, 137, .22), transparent 38%),
+    linear-gradient(112deg, #791c24 0%, var(--accent-dark) 46%, #aa2932 100%);
+  box-shadow: 0 8px 25px rgba(104, 25, 31, .14);
+}
+.topbar::after {
+  position: absolute;
+  z-index: -1;
+  top: -92px;
+  right: clamp(140px, 24vw, 370px);
+  width: 250px;
+  height: 250px;
+  border: 1px solid rgba(255, 248, 238, .1);
+  border-radius: 50%;
+  box-shadow: 0 0 0 18px rgba(255, 248, 238, .035), 0 0 0 38px rgba(255, 248, 238, .025);
+  content: '';
+  pointer-events: none;
 }
 .topbar-title { display: flex; flex-direction: column; gap: 3px; color: #fffaf3; }
 .topbar-title strong {
@@ -172,6 +189,7 @@ button:focus-visible, input:focus-visible, select:focus-visible {
 }
 .topbar-title span { color: rgba(255, 250, 243, .9); font-size: 13px; }
 .topbar-start { display: flex; align-items: center; gap: 15px; min-width: 0; }
+.topbar-start, .session-control { z-index: 1; }
 .nav-toggle {
   display: inline-flex;
   flex: 0 0 auto;
