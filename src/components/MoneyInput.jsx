@@ -9,7 +9,7 @@ function rawAmount(value) {
   return String(value ?? '').replace(/\D/g, '')
 }
 
-export default function MoneyInput({ value, onChange, className = 'input', ...props }) {
+export default function MoneyInput({ value, onChange, className = 'input', inputRef: externalInputRef, ...props }) {
   const inputRef = useRef(null)
   const pendingDigitOffset = useRef(null)
   const [displayValue, setDisplayValue] = useState(() => formatAmount(value))
@@ -49,7 +49,10 @@ export default function MoneyInput({ value, onChange, className = 'input', ...pr
       <span className="money-input-prefix" aria-hidden="true">Rp</span>
       <input
         {...props}
-        ref={inputRef}
+        ref={(node) => {
+          inputRef.current = node
+          if (externalInputRef) externalInputRef.current = node
+        }}
         className={className}
         type="text"
         inputMode="numeric"

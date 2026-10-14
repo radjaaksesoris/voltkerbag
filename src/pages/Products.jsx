@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { getAll, put, remove, onRefresh } from '../db'
 import { rupiah } from '../format'
 import MoneyInput from '../components/MoneyInput.jsx'
@@ -17,6 +17,11 @@ export default function Products() {
   const [loadError, setLoadError] = useState('')
   const [actionError, setActionError] = useState('')
   const [loaded, setLoaded] = useState(false)
+  const nameInputRef = useRef(null)
+  const categoryInputRef = useRef(null)
+  const salePriceInputRef = useRef(null)
+  const costInputRef = useRef(null)
+  const stockInputRef = useRef(null)
 
   async function load() {
     try {
@@ -85,6 +90,24 @@ export default function Products() {
     }
   }
 
+  function handleProductFormKeyDown(event) {
+    if (event.key !== 'Tab') return
+    const fields = [
+      nameInputRef.current,
+      categoryInputRef.current,
+      salePriceInputRef.current,
+      costInputRef.current,
+      stockInputRef.current
+    ]
+    const currentIndex = fields.indexOf(event.target)
+    if (currentIndex < 0) return
+    const direction = event.shiftKey ? -1 : 1
+    const nextIndex = currentIndex + direction
+    if (nextIndex < 0 || nextIndex >= fields.length) return
+    event.preventDefault()
+    fields[nextIndex].focus()
+  }
+
   async function del(p) {
     if (!confirm('Hapus "' + p.name + '"? Stok & produk ini akan dihapus.')) return
     try {
@@ -145,7 +168,7 @@ export default function Products() {
 
       {showForm && (
         <div className="overlay" onClick={() => setShowForm(false)}>
-          <form className="modal product-modal" onClick={(e) => e.stopPropagation()} onSubmit={save}>
+          <form className="modal product-modal" onClick={(e) => e.stopPropagation()} onKeyDown={handleProductFormKeyDown} onSubmit={save}>
             <div className="product-modal-heading">
               <span className="product-modal-mark"><Icon name="bag" size={22} /></span>
               <div>
@@ -154,7 +177,7 @@ export default function Products() {
               </div>
             </div>
             <label>Nama Produk *</label>
-            <input className="input" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="cth: Tas Ransel Volt Hitam" />
+            <input ref={nameInputRef} className="input" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="cth: Tas Ransel Volt Hitam" />
             <label>Kategori</label>
             <CategorySelect
               categories={categories}
@@ -162,19 +185,20 @@ export default function Products() {
               onChange={(category) => setForm({ ...form, category })}
               onAdd={addCategory}
               onDelete={deleteCategory}
+              triggerRef={categoryInputRef}
             />
             <div className="grid-3">
               <div>
                 <label>Harga Jual *</label>
-                <MoneyInput value={form.price} onChange={(price) => setForm({ ...form, price })} />
+                <MoneyInput inputRef={salePriceInputRef} value={form.price} onChange={(price) => setForm({ ...form, price })} />
               </div>
               <div>
                 <label>Harga Beli</label>
-                <MoneyInput value={form.cost} onChange={(cost) => setForm({ ...form, cost })} />
+                <MoneyInput inputRef={costInputRef} value={form.cost} onChange={(cost) => setForm({ ...form, cost })} />
               </div>
               <div>
                 <label>Stok</label>
-                <input className="input" type="number" min="0" value={form.stock} onChange={(e) => setForm({ ...form, stock: e.target.value })} />
+                <input ref={stockInputRef} className="input" type="number" min="0" value={form.stock} onChange={(e) => setForm({ ...form, stock: e.target.value })} />
               </div>
             </div>
             <div className="modal-actions">

@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import Icon from './Icon.jsx'
 
-export default function CategorySelect({ categories, value, onChange, onAdd, onDelete }) {
+export default function CategorySelect({ categories, value, onChange, onAdd, onDelete, triggerRef }) {
   const [open, setOpen] = useState(false)
   const [draft, setDraft] = useState('')
   const [error, setError] = useState('')
@@ -64,6 +64,12 @@ export default function CategorySelect({ categories, value, onChange, onAdd, onD
     setOpen(true)
   }
 
+  function selectCategory(categoryName) {
+    onChange(categoryName)
+    setOpen(false)
+    requestAnimationFrame(() => triggerRef?.current?.focus())
+  }
+
   return (
     <div className="category-select category-select-inline" ref={rootRef}>
       <button
@@ -75,6 +81,8 @@ export default function CategorySelect({ categories, value, onChange, onAdd, onD
         aria-controls="product-category-options"
         aria-autocomplete="none"
         aria-expanded={open}
+        tabIndex={0}
+        ref={triggerRef}
         onKeyDown={handleTriggerKeyDown}
         onClick={() => setOpen((isOpen) => !isOpen)}>
         <span className={selected ? '' : 'category-placeholder'}>{selected?.name || 'Pilih kategori'}</span>
@@ -89,7 +97,7 @@ export default function CategorySelect({ categories, value, onChange, onAdd, onD
               role="option"
               tabIndex={-1}
               aria-selected={!value}
-              onClick={() => { onChange(''); setOpen(false) }}>
+              onClick={() => selectCategory('')}>
               Tanpa kategori
             </button>
             {categories.map((category) => (
@@ -100,7 +108,7 @@ export default function CategorySelect({ categories, value, onChange, onAdd, onD
                   role="option"
                   tabIndex={-1}
                   aria-selected={value === category.name}
-                  onClick={() => { onChange(category.name); setOpen(false) }}>
+                  onClick={() => selectCategory(category.name)}>
                   {category.name}
                 </button>
                 <button
