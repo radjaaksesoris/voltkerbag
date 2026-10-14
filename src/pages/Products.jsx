@@ -3,6 +3,7 @@ import { getAll, put, remove, onRefresh } from '../db'
 import { rupiah } from '../format'
 import MoneyInput from '../components/MoneyInput.jsx'
 import CategorySelect from '../components/CategorySelect.jsx'
+import Icon from '../components/Icon.jsx'
 
 const EMPTY = { name: '', category: '', price: '', cost: '', stock: '' }
 
@@ -144,8 +145,14 @@ export default function Products() {
 
       {showForm && (
         <div className="overlay" onClick={() => setShowForm(false)}>
-          <form className="modal" onClick={(e) => e.stopPropagation()} onSubmit={save}>
-            <h3>{editId ? 'Edit Produk' : 'Tambah Produk'}</h3>
+          <form className="modal product-modal" onClick={(e) => e.stopPropagation()} onSubmit={save}>
+            <div className="product-modal-heading">
+              <span className="product-modal-mark"><Icon name="bag" size={22} /></span>
+              <div>
+                <p className="product-modal-eyebrow">{editId ? 'Perbarui katalog' : 'Katalog produk'}</p>
+                <h3>{editId ? 'Edit Produk' : 'Tambah Produk'}</h3>
+              </div>
+            </div>
             <label>Nama Produk *</label>
             <input className="input" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="cth: Tas Ransel Volt Hitam" />
             <label>Kategori</label>
