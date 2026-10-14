@@ -7,10 +7,13 @@ import TransactionDetails from '../components/TransactionDetails'
 import { getInvoiceNumber } from '../invoice'
 import { availableQuantity, stockInPcs, unitFactor } from '../productUnits'
 
+const TRANSACTIONS_PER_PAGE = 15
+
 export default function Dashboard() {
   const [products, setProducts] = useState([])
   const [txs, setTxs] = useState([])
   const [dateRange, setDateRange] = useState({ from: '', to: '' })
+  const [transactionPage, setTransactionPage] = useState(1)
   const [selectedTransaction, setSelectedTransaction] = useState(null)
   const [loadError, setLoadError] = useState('')
   const [loaded, setLoaded] = useState(false)
@@ -53,6 +56,10 @@ export default function Dashboard() {
   const visibleTx = hasFilter
     ? txs.filter((t) => isInDateRange(t.createdAt, dateRange))
     : txs
+  const pageCount = Math.max(1, Math.ceil(visibleTx.length / TRANSACTIONS_PER_PAGE))
+  const currentPage = Math.min(transactionPage, pageCount)
+  const pageStart = (currentPage - 1) * TRANSACTIONS_PER_PAGE
+  const pageTransactions = visibleTx.slice(pageStart, pageStart + TRANSACTIONS_PER_PAGE)
   const totalAsset = products.reduce(
     (sum, product) => sum + (Number(product.cost) || 0) * stockInPcs(product) / unitFactor(product.unit),
     0
@@ -66,7 +73,10 @@ export default function Dashboard() {
           <strong>{hasFilter ? 'Ringkasan periode' : 'Ringkasan hari ini'}</strong>
           <span className="muted">{hasFilter ? 'Sesuaikan rentang untuk melihat performa.' : 'Pilih rentang tanggal untuk melihat laporan lain.'}</span>
         </div>
-        <DateRangeFilter value={dateRange} onChange={setDateRange} />
+        <DateRangeFilter value={dateRange} onChange={(range) => {
+          setDateRange(range)
+          setTransactionPage(1)
+        }} />
       </div>
       <div className="stats-grid dashboard-stats-grid">
         <div className="stat-card highlight"><span>{hasFilter ? 'Omzet Periode' : 'Omzet Hari Ini'}</span><strong>{rupiah(omzet)}</strong></div>
@@ -94,9 +104,9 @@ export default function Dashboard() {
             {visibleTx.length === 0 && <tr><td colSpan="5" className="muted center">
               {hasFilter ? 'Tidak ada transaksi pada rentang tanggal ini.' : 'Belum ada transaksi.'}
             </td></tr>}
-            {visibleTx.slice(0, 8).map((t, index) => (
+            {pageTransactions.map((t, index) => (
               <tr key={t.id}>
-                <td className="dashboard-row-number">{index + 1}</td>
+                <td className="dashboard-row-number">{pageStart + index + 1}</td>
                 <td>
                   <strong className="transaction-customer">{t.customerName || 'Pelanggan lama'}</strong>
                   <span className="transaction-invoice">{getInvoiceNumber(t)}</span>
@@ -110,6 +120,32 @@ export default function Dashboard() {
             ))}
           </tbody>
         </table>
+        {visibleTx.length > 0 && (
+          <div className="dashboard-pagination">
+            <span className="muted small">
+              Menampilkan {pageStart + 1}–{Math.min(pageStart + TRANSACTIONS_PER_PAGE, visibleTx.length)} dari {visibleTx.length} transaksi
+            </span>
+            {pageCount > 1 && (
+              <div className="dashboard-pagination-controls" aria-label="Navigasi halaman transaksi">
+                <button
+                  className="btn btn-sm"
+                  type="button"
+                  disabled={currentPage === 1}
+                  onClick={() => setTransactionPage(currentPage - 1)}>
+                  Sebelumnya
+                </button>
+                <span className="small">Halaman {currentPage} dari {pageCount}</span>
+                <button
+                  className="btn btn-sm"
+                  type="button"
+                  disabled={currentPage === pageCount}
+                  onClick={() => setTransactionPage(currentPage + 1)}>
+                  Berikutnya
+                </button>
+              </div>
+            )}
+          </div>
+        )}
       </div>
       {selectedTransaction && (
         <TransactionDetails transaction={selectedTransaction} onClose={() => setSelectedTransaction(null)} />
