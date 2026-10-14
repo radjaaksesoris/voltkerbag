@@ -328,7 +328,12 @@ h3 { margin-bottom: 16px; color: var(--ink); font-size: 15px; font-weight: 700; 
 .center, .center-text { text-align: center; }
 .th-subtitle { display: block; margin-top: 3px; font-size: 9px; font-weight: 500; letter-spacing: .2px; text-transform: none; }
 .dashboard-transaction-table { min-width: 720px; }
-.dashboard-transaction-table thead th { text-align: center; }
+.dashboard-transaction-table thead th {
+  background: linear-gradient(110deg, #8f2029, #bd2d35 58%, #a1242d);
+  border-bottom-color: #8f2029;
+  color: #fffaf4;
+  text-align: center;
+}
 .dashboard-transaction-table tbody td { text-align: center; }
 .dashboard-pagination { display: flex; align-items: center; justify-content: space-between; gap: 14px; padding-top: 14px; }
 .dashboard-pagination-controls { display: flex; align-items: center; gap: 10px; }
