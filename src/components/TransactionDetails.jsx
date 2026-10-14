@@ -39,7 +39,7 @@ export default function TransactionDetails({ transaction, onClose }) {
               {transaction.items.map((item, index) => (
                 <tr key={index}>
                   <td><strong>{item.name}</strong></td>
-                  <td className="right">{item.qty}</td>
+                  <td className="right">{item.qty} {item.unit || 'pcs'}</td>
                   <td className="right">{rupiah(item.price)}</td>
                   <td className="right">{rupiah(item.price * item.qty)}</td>
                 </tr>

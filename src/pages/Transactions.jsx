@@ -71,7 +71,7 @@ export default function Transactions() {
         if (found.qty + 1 > p.stock) { alert('Stok "' + p.name + '" tidak cukup!'); return prev }
         return prev.map((c) => (c.productId === p.id ? { ...c, qty: c.qty + 1 } : c))
       }
-      return [...prev, { productId: p.id, name: p.name, price: p.price, cost: p.cost || 0, qty: 1, stock: p.stock }]
+      return [...prev, { productId: p.id, name: p.name, unit: p.unit || 'pcs', price: p.price, cost: p.cost || 0, qty: 1, stock: p.stock }]
     })
   }
   function setQty(productId, qty) {
@@ -99,7 +99,7 @@ export default function Transactions() {
     const sale = {
       customerName: customerName.trim(),
       paymentType,
-      items: cart.map((c) => ({ productId: c.productId, name: c.name, price: c.price, cost: c.cost, qty: c.qty })),
+      items: cart.map((c) => ({ productId: c.productId, name: c.name, unit: c.unit, price: c.price, cost: c.cost, qty: c.qty })),
       total,
       payment: paidNow,
       paidAmount: initialPayment,
@@ -205,7 +205,7 @@ export default function Transactions() {
               <button key={p.id} className="product-card" onClick={() => addToCart(p)}>
                 <div className="product-illustration"><Icon name="bag" size={28} /></div>
                 <strong>{p.name}</strong>
-                <span className="muted small">{p.category || 'Umum'} · stok {p.stock}</span>
+                <span className="muted small">{p.category || 'Umum'} · stok {p.stock} {p.unit || 'pcs'}</span>
                 <span className="accent">{rupiah(p.price)}</span>
               </button>
             ))}
@@ -225,7 +225,7 @@ export default function Transactions() {
                 <button aria-label={'Kurangi jumlah ' + c.name} onClick={() => setQty(c.productId, c.qty - 1)}>
                   <Icon name="minus" size={15} />
                 </button>
-                <span>{c.qty}</span>
+                <span>{c.qty} {c.unit}</span>
                 <button aria-label={'Tambah jumlah ' + c.name} onClick={() => setQty(c.productId, c.qty + 1)}>
                   <Icon name="plus" size={15} />
                 </button>

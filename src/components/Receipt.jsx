@@ -38,7 +38,7 @@ export default function Receipt({ transaction }) {
           {transaction.items.map((item, index) => (
             <tr key={index}>
               <td>{item.name}</td>
-              <td className="receipt-qty">{item.qty}</td>
+              <td className="receipt-qty">{item.qty} {item.unit || 'pcs'}</td>
               <td className="receipt-money">{printRupiah(item.price)}</td>
               <td className="receipt-money">{printRupiah(item.price * item.qty)}</td>
             </tr>

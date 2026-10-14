@@ -3,6 +3,7 @@ import { getClient } from './supabaseSync'
 const TABLES = {
   products: 'products',
   categories: 'product_categories',
+  units: 'product_units',
   transactions: 'transactions',
   finance: 'finance_entries'
 }
@@ -80,11 +81,12 @@ export async function recordTransactionPayment(transactionId, amount, requestId)
 }
 
 export async function remove(store, id) {
-  if (store === 'categories') {
-    const { error } = await getClient().rpc('delete_product_category', {
-      p_category_id: id
+  if (store === 'categories' || store === 'units') {
+    const rpc = store === 'categories' ? 'delete_product_category' : 'delete_product_unit'
+    const { error } = await getClient().rpc(rpc, {
+      [store === 'categories' ? 'p_category_id' : 'p_unit_id']: id
     })
-    throwIfError(error, 'Gagal menghapus kategori')
+    throwIfError(error, 'Gagal menghapus ' + (store === 'categories' ? 'kategori' : 'satuan'))
     notifyRefresh()
     return
   }

@@ -3,13 +3,15 @@ import { getAll, put, remove, onRefresh } from '../db'
 import { rupiah } from '../format'
 import MoneyInput from '../components/MoneyInput.jsx'
 import CategorySelect from '../components/CategorySelect.jsx'
+import UnitSelect from '../components/UnitSelect.jsx'
 import Icon from '../components/Icon.jsx'
 
-const EMPTY = { name: '', category: '', price: '', cost: '', stock: '' }
+const EMPTY = { name: '', category: '', unit: 'pcs', price: '', cost: '', stock: '' }
 
 export default function Products() {
   const [items, setItems] = useState([])
   const [categories, setCategories] = useState([])
+  const [units, setUnits] = useState([])
   const [q, setQ] = useState('')
   const [form, setForm] = useState(EMPTY)
   const [editId, setEditId] = useState(null)
@@ -19,18 +21,21 @@ export default function Products() {
   const [loaded, setLoaded] = useState(false)
   const nameInputRef = useRef(null)
   const categoryInputRef = useRef(null)
+  const unitInputRef = useRef(null)
   const salePriceInputRef = useRef(null)
   const costInputRef = useRef(null)
   const stockInputRef = useRef(null)
 
   async function load() {
     try {
-      const [productRows, categoryRows] = await Promise.all([
+      const [productRows, categoryRows, unitRows] = await Promise.all([
         getAll('products'),
-        getAll('categories')
+        getAll('categories'),
+        getAll('units')
       ])
       setItems(productRows)
       setCategories(categoryRows)
+      setUnits(unitRows)
       setLoadError('')
     } catch (error) {
       setLoadError(error.message || 'Gagal memuat produk dari server.')
@@ -50,7 +55,7 @@ export default function Products() {
 
   function openEdit(p) {
     setEditId(p.id)
-    setForm({ name: p.name, category: p.category || '', price: p.price, cost: p.cost || '', stock: p.stock })
+    setForm({ name: p.name, category: p.category || '', unit: p.unit || 'pcs', price: p.price, cost: p.cost || '', stock: p.stock })
     setShowForm(true)
   }
   function openAdd() { setEditId(null); setForm(EMPTY); setShowForm(true) }
@@ -71,15 +76,30 @@ export default function Products() {
     }
   }
 
+  async function addUnit(name) {
+    if (units.some((unit) => unit.name.toLocaleLowerCase('id-ID') === name.toLocaleLowerCase('id-ID'))) {
+      throw new Error('Satuan "' + name + '" sudah ada.')
+    }
+    await put('units', { name })
+    setForm((current) => ({ ...current, unit: name }))
+  }
+
+  async function deleteUnit(unit) {
+    await remove('units', unit.id)
+    if (form.unit === unit.name) setForm((current) => ({ ...current, unit: '' }))
+  }
+
   async function save(e) {
     e.preventDefault()
     setActionError('')
     if (!form.name || !form.price) { setActionError('Nama dan harga jual wajib diisi.'); return }
+    if (!form.unit) { setActionError('Satuan produk wajib dipilih.'); return }
     try {
       await put('products', {
         id: editId || undefined,
         name: form.name.trim(),
         category: form.category.trim(),
+        unit: form.unit.trim(),
         price: Number(form.price),
         cost: Number(form.cost) || 0,
         stock: Number(form.stock) || 0
@@ -95,6 +115,7 @@ export default function Products() {
     const fields = [
       nameInputRef.current,
       categoryInputRef.current,
+      unitInputRef.current,
       salePriceInputRef.current,
       costInputRef.current,
       stockInputRef.current
@@ -139,16 +160,17 @@ export default function Products() {
       <div className="card table-card">
         <table>
           <thead>
-            <tr><th>Produk</th><th>Kategori</th><th>Harga Beli</th><th>Harga Jual</th><th>Stok</th><th></th></tr>
+            <tr><th>Produk</th><th>Kategori</th><th>Satuan</th><th>Harga Beli</th><th>Harga Jual</th><th>Stok</th><th></th></tr>
           </thead>
           <tbody>
             {filtered.length === 0 && (
-              <tr><td colSpan="6" className="muted center">Belum ada produk. Klik "+ Tambah Produk".</td></tr>
+              <tr><td colSpan="7" className="muted center">Belum ada produk. Klik "+ Tambah Produk".</td></tr>
             )}
             {filtered.map((p) => (
               <tr key={p.id}>
                 <td><strong>{p.name}</strong></td>
                 <td>{p.category || '-'}</td>
+                <td>{p.unit || 'pcs'}</td>
                 <td>{rupiah(p.cost)}</td>
                 <td className="accent">{rupiah(p.price)}</td>
                 <td>
@@ -186,6 +208,15 @@ export default function Products() {
               onAdd={addCategory}
               onDelete={deleteCategory}
               triggerRef={categoryInputRef}
+            />
+            <label>Satuan *</label>
+            <UnitSelect
+              categories={units}
+              value={form.unit}
+              onChange={(unit) => setForm({ ...form, unit })}
+              onAdd={addUnit}
+              onDelete={deleteUnit}
+              triggerRef={unitInputRef}
             />
             <div className="grid-3">
               <div>
