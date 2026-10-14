@@ -813,6 +813,7 @@ select.input { appearance: none; }
 .product-modal .category-select-trigger { background-color: rgba(255, 255, 255, .8); }
 .product-option-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
 .product-option-fields > div { min-width: 0; }
+.product-modal > .product-option-fields:focus-within { z-index: 2; }
 .product-option-fields .category-select-trigger { padding-inline: 11px; }
 .product-modal .grid-3 { gap: 9px; }
 .product-sale-prices { margin-top: 6px; }
