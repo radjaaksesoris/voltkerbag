@@ -8,8 +8,12 @@ create table if not exists public.products (
   category text,
   unit text not null default 'pcs',
   price double precision not null default 0,
+  price_pcs double precision,
+  price_lusin double precision,
+  price_kodi double precision,
   cost double precision not null default 0,
   stock integer not null default 0,
+  stock_pcs integer not null default 0,
   "createdAt" timestamptz,
   "updatedAt" timestamptz
 );
@@ -67,12 +71,48 @@ alter table public.products add column if not exists owner_id uuid default auth.
 alter table public.products add column if not exists "createdAt" timestamptz;
 alter table public.products add column if not exists "updatedAt" timestamptz;
 alter table public.products add column if not exists unit text not null default 'pcs';
+alter table public.products add column if not exists price_pcs double precision;
+alter table public.products add column if not exists price_lusin double precision;
+alter table public.products add column if not exists price_kodi double precision;
+alter table public.products add column if not exists stock_pcs integer;
 update public.products set unit = 'pcs' where unit is null;
 alter table public.products alter column unit set default 'pcs';
 alter table public.products alter column unit set not null;
 alter table public.products alter column price set default 0;
 alter table public.products alter column cost set default 0;
 alter table public.products alter column stock set default 0;
+
+update public.products
+set price_pcs = coalesce(price_pcs, case lower(trim(unit))
+      when 'kodi' then round(price / 20)
+      when 'lusin' then round(price / 12)
+      else price end),
+    price_lusin = coalesce(price_lusin, case lower(trim(unit))
+      when 'kodi' then round(price * 12 / 20)
+      when 'lusin' then price
+      else price * 12 end),
+    price_kodi = coalesce(price_kodi, case lower(trim(unit))
+      when 'kodi' then price
+      when 'lusin' then round(price * 20 / 12)
+      else price * 20 end)
+where price_pcs is null or price_lusin is null or price_kodi is null;
+
+update public.products
+set stock_pcs = round(coalesce(stock, 0) * case lower(trim(unit))
+      when 'lusin' then 12
+      when 'kodi' then 20
+      else 1 end)
+where stock_pcs is null;
+
+alter table public.products alter column price_pcs set default 0;
+alter table public.products alter column price_lusin set default 0;
+alter table public.products alter column price_kodi set default 0;
+alter table public.products alter column price_pcs set not null;
+alter table public.products alter column price_lusin set not null;
+alter table public.products alter column price_kodi set not null;
+alter table public.products alter column stock_pcs set default 0;
+alter table public.products alter column stock_pcs set not null;
+alter table public.products alter column stock type double precision using stock::double precision;
 
 alter table public.product_categories add column if not exists owner_id uuid default auth.uid();
 alter table public.product_categories add column if not exists name text;
@@ -201,7 +241,11 @@ from (
   union
   select id from auth.users
 ) as store_owners
-cross join (values ('pcs'), ('lusin'), ('kodi')) as defaults(name)
+cross join (
+  select name from (values ('pcs'), ('lusin'), ('kodi')) as standard_units(name)
+  union
+  select distinct trim(unit) from public.products where nullif(trim(unit), '') is not null
+) as defaults
 on conflict do nothing;
 
 grant select, insert on public.product_categories to authenticated;
@@ -275,6 +319,21 @@ $$;
 revoke all on function public.delete_product_unit(bigint) from public, anon;
 grant execute on function public.delete_product_unit(bigint) to authenticated;
 
+create or replace function public.product_unit_factor(p_unit text)
+returns integer
+language sql
+immutable
+set search_path = public, pg_temp
+as $$
+  select case lower(trim(coalesce(p_unit, '')))
+    when 'lusin' then 12
+    when 'kodi' then 20
+    else 1
+  end;
+$$;
+
+revoke all on function public.product_unit_factor(text) from public, anon, authenticated;
+
 revoke insert, update, delete on public.transactions from anon, authenticated;
 grant select on public.transactions to authenticated;
 
@@ -298,6 +357,12 @@ declare
   item jsonb;
   product_row public.products%rowtype;
   item_qty integer;
+  requested_unit text;
+  base_factor integer;
+  sale_factor integer;
+  stock_deduction integer;
+  sale_price double precision;
+  sale_cost double precision;
   sale_total double precision := 0;
   saved_items jsonb := '[]'::jsonb;
   initial_payment double precision;
@@ -322,6 +387,9 @@ begin
 
   for item in select value from jsonb_array_elements(p_cart)
   loop
+    if coalesce(item ->> 'qty', '') !~ '^[0-9]+$' then
+      raise exception 'Jumlah barang tidak valid.';
+    end if;
     item_qty := (item ->> 'qty')::integer;
     if item_qty <= 0 then raise exception 'Jumlah barang tidak valid.'; end if;
 
@@ -330,24 +398,48 @@ begin
     where id = (item ->> 'productId')::bigint and owner_id = current_user_id
     for update;
     if not found then raise exception 'Produk tidak ditemukan atau tidak dapat diakses.'; end if;
-    if product_row.stock < item_qty then
-      raise exception 'Stok "%" tidak cukup.', product_row.name;
+    requested_unit := lower(trim(coalesce(item ->> 'unit', product_row.unit)));
+    base_factor := public.product_unit_factor(product_row.unit);
+    sale_factor := public.product_unit_factor(requested_unit);
+    if lower(trim(product_row.unit)) not in ('pcs', 'lusin', 'kodi')
+       and requested_unit <> lower(trim(product_row.unit)) then
+      raise exception 'Satuan transaksi untuk "%" tidak valid.', product_row.name;
     end if;
-    if product_row.price is distinct from (item ->> 'price')::double precision then
+    if lower(trim(product_row.unit)) in ('pcs', 'lusin', 'kodi')
+       and requested_unit not in ('pcs', 'lusin', 'kodi') then
+      raise exception 'Satuan transaksi untuk "%" tidak valid.', product_row.name;
+    end if;
+    stock_deduction := item_qty * sale_factor;
+    if product_row.stock_pcs < stock_deduction then
+      raise exception 'Stok "%" tidak cukup untuk dijual per %.', product_row.name, requested_unit;
+    end if;
+    sale_price := case requested_unit
+      when 'pcs' then product_row.price_pcs
+      when 'lusin' then product_row.price_lusin
+      when 'kodi' then product_row.price_kodi
+      else product_row.price
+    end;
+    if sale_price <= 0 then
+      raise exception 'Harga jual per % untuk "%" belum diatur.', requested_unit, product_row.name;
+    end if;
+    if sale_price is distinct from (item ->> 'price')::double precision then
       raise exception 'Harga produk "%" berubah. Muat ulang halaman sebelum menyimpan.', product_row.name;
     end if;
 
-    sale_total := sale_total + product_row.price * item_qty;
+    sale_cost := product_row.cost * sale_factor / base_factor;
+    sale_total := sale_total + sale_price * item_qty;
     saved_items := saved_items || jsonb_build_array(jsonb_build_object(
       'productId', product_row.id,
       'name', product_row.name,
-      'unit', product_row.unit,
-      'price', product_row.price,
-      'cost', product_row.cost,
+      'unit', requested_unit,
+      'price', sale_price,
+      'cost', sale_cost,
       'qty', item_qty
     ));
     update public.products
-    set stock = stock - item_qty, "updatedAt" = operation_time
+    set stock_pcs = stock_pcs - stock_deduction,
+        stock = (stock_pcs - stock_deduction)::double precision / base_factor,
+        "updatedAt" = operation_time
     where id = product_row.id and owner_id = current_user_id;
   end loop;
 

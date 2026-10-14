@@ -5,8 +5,17 @@ import MoneyInput from '../components/MoneyInput.jsx'
 import CategorySelect from '../components/CategorySelect.jsx'
 import UnitSelect from '../components/UnitSelect.jsx'
 import Icon from '../components/Icon.jsx'
+import { availableQuantity, productPrice, quantityToPcs, saleUnits, stockInPcs, unitFactor, stockLabel } from '../productUnits'
 
-const EMPTY = { name: '', category: '', unit: 'pcs', price: '', cost: '', stock: '' }
+const EMPTY = {
+  name: '',
+  category: '',
+  unit: 'pcs',
+  price: '',
+  prices: { pcs: '', lusin: '', kodi: '' },
+  cost: '',
+  stock: ''
+}
 
 export default function Products() {
   const [items, setItems] = useState([])
@@ -22,7 +31,12 @@ export default function Products() {
   const nameInputRef = useRef(null)
   const categoryInputRef = useRef(null)
   const unitInputRef = useRef(null)
-  const salePriceInputRef = useRef(null)
+  const priceInputRefs = {
+    pcs: useRef(null),
+    lusin: useRef(null),
+    kodi: useRef(null)
+  }
+  const customPriceInputRef = useRef(null)
   const costInputRef = useRef(null)
   const stockInputRef = useRef(null)
 
@@ -51,11 +65,23 @@ export default function Products() {
   const filtered = items.filter((p) =>
     (p.name + ' ' + (p.category || '')).toLowerCase().includes(q.toLowerCase())
   )
-  const lowStock = items.filter((p) => Number(p.stock) <= 5)
+  const lowStock = items.filter((p) => availableQuantity(p, p.unit || 'pcs') <= 5)
 
   function openEdit(p) {
     setEditId(p.id)
-    setForm({ name: p.name, category: p.category || '', unit: p.unit || 'pcs', price: p.price, cost: p.cost || '', stock: p.stock })
+    setForm({
+      name: p.name,
+      category: p.category || '',
+      unit: p.unit || 'pcs',
+      price: p.price || '',
+      prices: {
+        pcs: productPrice(p, 'pcs'),
+        lusin: productPrice(p, 'lusin'),
+        kodi: productPrice(p, 'kodi')
+      },
+      cost: p.cost || '',
+      stock: String(stockInPcs(p) / unitFactor(p.unit || 'pcs'))
+    })
     setShowForm(true)
   }
   function openAdd() { setEditId(null); setForm(EMPTY); setShowForm(true) }
@@ -89,20 +115,57 @@ export default function Products() {
     if (form.unit === unit.name) setForm((current) => ({ ...current, unit: '' }))
   }
 
+  function changeBaseUnit(unit) {
+    setForm((current) => {
+      const conversion = unitFactor(unit) / unitFactor(current.unit)
+      return {
+        ...current,
+        unit,
+        cost: String(Math.round((Number(current.cost) || 0) * conversion)),
+        stock: String((Number(current.stock) || 0) / conversion)
+      }
+    })
+  }
+
   async function save(e) {
     e.preventDefault()
     setActionError('')
-    if (!form.name || !form.price) { setActionError('Nama dan harga jual wajib diisi.'); return }
+    if (!form.name) { setActionError('Nama produk wajib diisi.'); return }
     if (!form.unit) { setActionError('Satuan produk wajib dipilih.'); return }
+    const isStandard = saleUnits(form.unit).length === 3
+    const prices = Object.fromEntries(
+      Object.entries(form.prices).map(([unit, value]) => [unit, Number(value) || 0])
+    )
+    const basePrice = isStandard
+      ? prices[form.unit.trim().toLocaleLowerCase('id-ID')]
+      : Number(form.price)
+    if (isStandard && Object.values(prices).some((price) => price <= 0)) {
+      setActionError('Isi harga jual pcs, lusin, dan kodi dengan nominal lebih dari Rp0.')
+      return
+    }
+    if (!Number.isFinite(basePrice) || basePrice <= 0) {
+      setActionError('Harga jual wajib diisi dengan nominal lebih dari Rp0.')
+      return
+    }
+    const baseStock = Number(form.stock)
+    if (!Number.isFinite(baseStock) || baseStock < 0) {
+      setActionError('Stok harus berupa angka nol atau lebih.')
+      return
+    }
+    const stockPcs = quantityToPcs(baseStock, form.unit)
     try {
       await put('products', {
         id: editId || undefined,
         name: form.name.trim(),
         category: form.category.trim(),
         unit: form.unit.trim(),
-        price: Number(form.price),
+        price: basePrice,
+        price_pcs: isStandard ? prices.pcs : 0,
+        price_lusin: isStandard ? prices.lusin : 0,
+        price_kodi: isStandard ? prices.kodi : 0,
         cost: Number(form.cost) || 0,
-        stock: Number(form.stock) || 0
+        stock: stockPcs / unitFactor(form.unit),
+        stock_pcs: stockPcs
       })
       setShowForm(false)
     } catch (error) {
@@ -112,11 +175,14 @@ export default function Products() {
 
   function handleProductFormKeyDown(event) {
     if (event.key !== 'Tab') return
+    const priceFields = saleUnits(form.unit).length === 3
+      ? ['pcs', 'lusin', 'kodi'].map((unit) => priceInputRefs[unit].current)
+      : [customPriceInputRef.current]
     const fields = [
       nameInputRef.current,
       categoryInputRef.current,
       unitInputRef.current,
-      salePriceInputRef.current,
+      ...priceFields,
       costInputRef.current,
       stockInputRef.current
     ]
@@ -160,7 +226,7 @@ export default function Products() {
       <div className="card table-card">
         <table>
           <thead>
-            <tr><th>Produk</th><th>Kategori</th><th>Satuan</th><th>Harga Beli</th><th>Harga Jual</th><th>Stok</th><th></th></tr>
+            <tr><th>Produk</th><th>Kategori</th><th>Satuan</th><th>Harga Beli / Satuan Stok</th><th>Harga Jual</th><th>Stok</th><th></th></tr>
           </thead>
           <tbody>
             {filtered.length === 0 && (
@@ -172,10 +238,14 @@ export default function Products() {
                 <td>{p.category || '-'}</td>
                 <td>{p.unit || 'pcs'}</td>
                 <td>{rupiah(p.cost)}</td>
-                <td className="accent">{rupiah(p.price)}</td>
+                <td className="product-price-cell">
+                  {saleUnits(p.unit || 'pcs').map((unit) => (
+                    <span key={unit}>{unit}: <strong>{rupiah(productPrice(p, unit))}</strong></span>
+                  ))}
+                </td>
                 <td>
-                  <span className={'badge ' + (Number(p.stock) <= 5 ? 'badge-danger' : 'badge-ok')}>
-                    {p.stock}
+                  <span className={'badge ' + (availableQuantity(p, p.unit || 'pcs') <= 5 ? 'badge-danger' : 'badge-ok')}>
+                    {stockLabel(p)}
                   </span>
                 </td>
                 <td className="row-actions">
@@ -213,25 +283,45 @@ export default function Products() {
             <UnitSelect
               categories={units}
               value={form.unit}
-              onChange={(unit) => setForm({ ...form, unit })}
+              onChange={changeBaseUnit}
               onAdd={addUnit}
               onDelete={deleteUnit}
               triggerRef={unitInputRef}
             />
-            <div className="grid-3">
-              <div>
-                <label>Harga Jual *</label>
-                <MoneyInput inputRef={salePriceInputRef} value={form.price} onChange={(price) => setForm({ ...form, price })} />
+            {saleUnits(form.unit).length === 3 ? (
+              <div className="product-sale-prices">
+                <label>Harga jual per satuan *</label>
+                <div className="grid-3">
+                  {['pcs', 'lusin', 'kodi'].map((unit) => (
+                    <div key={unit}>
+                      <label htmlFor={'product-price-' + unit}>{unit}</label>
+                      <MoneyInput
+                        inputRef={priceInputRefs[unit]}
+                        id={'product-price-' + unit}
+                        value={form.prices[unit]}
+                        onChange={(price) => setForm({ ...form, prices: { ...form.prices, [unit]: price } })}
+                      />
+                    </div>
+                  ))}
+                </div>
               </div>
+            ) : (
               <div>
-                <label>Harga Beli</label>
+                <label>Harga Jual per {form.unit} *</label>
+                <MoneyInput inputRef={customPriceInputRef} value={form.price} onChange={(price) => setForm({ ...form, price })} />
+              </div>
+            )}
+            <div className="grid-2 product-stock-fields">
+              <div>
+                <label>Harga Beli per {form.unit}</label>
                 <MoneyInput inputRef={costInputRef} value={form.cost} onChange={(cost) => setForm({ ...form, cost })} />
               </div>
               <div>
-                <label>Stok</label>
-                <input ref={stockInputRef} className="input" type="number" min="0" value={form.stock} onChange={(e) => setForm({ ...form, stock: e.target.value })} />
+                <label>Stok ({form.unit})</label>
+                <input ref={stockInputRef} className="input" type="number" min="0" step="any" value={form.stock} onChange={(e) => setForm({ ...form, stock: e.target.value })} />
               </div>
             </div>
+            <p className="muted small product-stock-hint">Stok disimpan sebagai pcs agar penjualan dalam satuan berbeda mengurangi persediaan dengan tepat. Harga beli dan stok mengikuti satuan utama {form.unit}.</p>
             <div className="modal-actions">
               {actionError && <p className="form-error" role="alert">{actionError}</p>}
               <button type="button" className="btn" onClick={() => setShowForm(false)}>Batal</button>

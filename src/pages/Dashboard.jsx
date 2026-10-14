@@ -5,6 +5,7 @@ import DateRangeFilter from '../components/DateRangeFilter'
 import { hasDateRange, isInDateRange } from '../dateFilter'
 import TransactionDetails from '../components/TransactionDetails'
 import { getInvoiceNumber } from '../invoice'
+import { availableQuantity, stockInPcs, unitFactor } from '../productUnits'
 
 export default function Dashboard() {
   const [products, setProducts] = useState([])
@@ -52,8 +53,11 @@ export default function Dashboard() {
   const visibleTx = hasFilter
     ? txs.filter((t) => isInDateRange(t.createdAt, dateRange))
     : txs
-  const totalAsset = products.reduce((s, p) => s + (p.cost || 0) * p.stock, 0)
-  const lowStock = products.filter((p) => Number(p.stock) <= 5)
+  const totalAsset = products.reduce(
+    (sum, product) => sum + (Number(product.cost) || 0) * stockInPcs(product) / unitFactor(product.unit),
+    0
+  )
+  const lowStock = products.filter((product) => availableQuantity(product, product.unit || 'pcs') <= 5)
 
   return (
     <div className="page">

@@ -6,6 +6,7 @@ import Icon from '../components/Icon.jsx'
 import TransactionDetails from '../components/TransactionDetails'
 import { getInvoiceNumber } from '../invoice'
 import MoneyInput from '../components/MoneyInput.jsx'
+import { productPrice, saleUnits, stockInPcs, stockLabel, unitCost, unitFactor } from '../productUnits'
 
 export default function Transactions() {
   const [products, setProducts] = useState([])
@@ -51,6 +52,24 @@ export default function Transactions() {
 
   const total = useMemo(() => cart.reduce((s, c) => s + c.price * c.qty, 0), [cart])
 
+  function remainingStockPcs(productId, excludedUnit) {
+    const product = products.find((item) => item.id === productId)
+    if (!product) return 0
+    const reserved = cart
+      .filter((item) => item.productId === productId && item.unit !== excludedUnit)
+      .reduce((sum, item) => sum + item.qty * unitFactor(item.unit), 0)
+    return Math.max(0, stockInPcs(product) - reserved)
+  }
+
+  function maxCartQuantity(productId, unit, excludedUnit = unit) {
+    return Math.floor(remainingStockPcs(productId, excludedUnit) / unitFactor(unit))
+  }
+
+  function canAddOne(productId, unit) {
+    const existingQty = cart.find((item) => item.productId === productId && item.unit === unit)?.qty || 0
+    return maxCartQuantity(productId, unit) > existingQty
+  }
+
   if (!loaded) return <div className="page"><p className="muted">Memuat data dari server...</p></div>
   if (loadError) {
     return <div className="page"><p className="form-error" role="alert">{loadError}</p>
@@ -59,27 +78,72 @@ export default function Transactions() {
   }
 
   const filtered = products.filter((p) =>
-    p.name.toLowerCase().includes(q.toLowerCase()) && Number(p.stock) > 0
+    p.name.toLowerCase().includes(q.toLowerCase()) && stockInPcs(p) > 0
   )
   const paidNow = Number(pay || 0)
   const change = paidNow - total
 
-  function addToCart(p) {
-    setCart((prev) => {
-      const found = prev.find((c) => c.productId === p.id)
-      if (found) {
-        if (found.qty + 1 > p.stock) { alert('Stok "' + p.name + '" tidak cukup!'); return prev }
-        return prev.map((c) => (c.productId === p.id ? { ...c, qty: c.qty + 1 } : c))
-      }
-      return [...prev, { productId: p.id, name: p.name, unit: p.unit || 'pcs', price: p.price, cost: p.cost || 0, qty: 1, stock: p.stock }]
-    })
+  function addToCart(p, unit = p.unit || 'pcs') {
+    const maxQty = maxCartQuantity(p.id, unit)
+    if (maxQty < 1) {
+      setCheckoutError('Stok "' + p.name + '" tidak cukup untuk dijual per ' + unit + '.')
+      return
+    }
+    const found = cart.find((c) => c.productId === p.id && c.unit === unit)
+    if (found && found.qty + 1 > maxQty) {
+      setCheckoutError('Stok "' + p.name + '" tidak cukup untuk jumlah tersebut.')
+      return
+    }
+    if (found) {
+      setCart(cart.map((c) => (c.productId === p.id && c.unit === unit ? { ...c, qty: c.qty + 1 } : c)))
+    } else {
+      setCart([...cart, {
+        productId: p.id,
+        name: p.name,
+        unit,
+        price: productPrice(p, unit),
+        cost: unitCost(p, unit),
+        qty: 1,
+        saleUnits: saleUnits(p.unit || 'pcs')
+      }])
+    }
+    setCheckoutError('')
   }
-  function setQty(productId, qty) {
+  function setQty(productId, unit, qty) {
     setCart((prev) =>
       qty <= 0
-        ? prev.filter((c) => c.productId !== productId)
-        : prev.map((c) => (c.productId === productId ? { ...c, qty: Math.min(qty, c.stock) } : c))
+        ? prev.filter((c) => !(c.productId === productId && c.unit === unit))
+        : prev.map((c) => {
+            if (c.productId !== productId || c.unit !== unit) return c
+            return { ...c, qty: Math.min(qty, maxCartQuantity(productId, unit)) }
+          })
     )
+    setCheckoutError('')
+  }
+
+  function changeCartUnit(productId, oldUnit, newUnit) {
+    const product = products.find((item) => item.id === productId)
+    const cartItem = cart.find((item) => item.productId === productId && item.unit === oldUnit)
+    if (!product || !cartItem || oldUnit === newUnit) return
+    if (cart.some((item) => item.productId === productId && item.unit === newUnit)) {
+      setCheckoutError('Keranjang sudah memiliki baris produk "' + product.name + '" dengan satuan ' + newUnit + '.')
+      return
+    }
+    if (cartItem.qty > maxCartQuantity(productId, newUnit, oldUnit)) {
+      setCheckoutError('Stok tidak cukup untuk jumlah ' + cartItem.qty + ' ' + newUnit + ' "' + product.name + '".')
+      return
+    }
+    setCart((current) => {
+      return current.map((item) => item.productId === productId && item.unit === oldUnit
+        ? {
+            ...item,
+            unit: newUnit,
+            price: productPrice(product, newUnit),
+            cost: unitCost(product, newUnit),
+          }
+        : item)
+    })
+    setCheckoutError('')
   }
 
   async function checkout() {
@@ -111,7 +175,7 @@ export default function Transactions() {
       customerName: sale.customerName,
       paymentType,
       payment: paidNow,
-      cart: cart.map(({ productId, price, qty }) => [productId, price, qty])
+      cart: cart.map(({ productId, unit, price, qty }) => [productId, unit, price, qty])
     })
     if (saleRequest.current?.fingerprint !== requestFingerprint) {
       saleRequest.current = { fingerprint: requestFingerprint, id: crypto.randomUUID() }
@@ -202,12 +266,24 @@ export default function Transactions() {
           <div className="product-grid">
             {filtered.length === 0 && <p className="muted">Tidak ada produk. Tambahkan di menu Stok Barang.</p>}
             {filtered.map((p) => (
-              <button key={p.id} className="product-card" onClick={() => addToCart(p)}>
+              <article key={p.id} className="product-card">
                 <div className="product-illustration"><Icon name="bag" size={28} /></div>
                 <strong>{p.name}</strong>
-                <span className="muted small">{p.category || 'Umum'} · stok {p.stock} {p.unit || 'pcs'}</span>
-                <span className="accent">{rupiah(p.price)}</span>
-              </button>
+                <span className="muted small">{p.category || 'Umum'} · stok {stockLabel(p)}</span>
+                <div className="product-sale-options" aria-label={'Satuan dan harga ' + p.name}>
+                  {saleUnits(p.unit || 'pcs').map((unit) => (
+                    <button
+                      key={unit}
+                      className="product-sale-option"
+                      type="button"
+                      disabled={!canAddOne(p.id, unit)}
+                      onClick={() => addToCart(p, unit)}>
+                      <span>+ {unit}</span>
+                      <strong>{rupiah(productPrice(p, unit))}</strong>
+                    </button>
+                  ))}
+                </div>
+              </article>
             ))}
           </div>
         </div>
@@ -216,17 +292,34 @@ export default function Transactions() {
           <h3>Keranjang</h3>
           {cart.length === 0 && <p className="muted">Klik produk untuk menambahkan.</p>}
           {cart.map((c) => (
-            <div key={c.productId} className="cart-row">
+            <div key={c.productId + '-' + c.unit} className="cart-row">
               <div className="cart-info">
                 <strong>{c.name}</strong>
                 <span className="muted small">{rupiah(c.price)}</span>
+                <select
+                  className="input cart-unit-select"
+                  aria-label={'Satuan jual ' + c.name}
+                  value={c.unit}
+                  onChange={(event) => changeCartUnit(c.productId, c.unit, event.target.value)}>
+                  {c.saleUnits.map((unit) => (
+                    <option
+                      key={unit}
+                      value={unit}
+                      disabled={unit !== c.unit && maxCartQuantity(c.productId, unit, c.unit) < c.qty}>
+                      {unit}
+                    </option>
+                  ))}
+                </select>
               </div>
               <div className="qty-ctrl">
-                <button aria-label={'Kurangi jumlah ' + c.name} onClick={() => setQty(c.productId, c.qty - 1)}>
+                <button aria-label={'Kurangi jumlah ' + c.name} onClick={() => setQty(c.productId, c.unit, c.qty - 1)}>
                   <Icon name="minus" size={15} />
                 </button>
                 <span>{c.qty} {c.unit}</span>
-                <button aria-label={'Tambah jumlah ' + c.name} onClick={() => setQty(c.productId, c.qty + 1)}>
+                <button
+                  aria-label={'Tambah jumlah ' + c.name}
+                  disabled={c.qty >= maxCartQuantity(c.productId, c.unit)}
+                  onClick={() => setQty(c.productId, c.unit, c.qty + 1)}>
                   <Icon name="plus" size={15} />
                 </button>
               </div>

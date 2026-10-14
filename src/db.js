@@ -61,7 +61,7 @@ export async function completeSale(transaction, cart, requestId) {
     p_customer_name: transaction.customerName,
     p_payment_type: transaction.paymentType,
     p_payment: transaction.payment,
-    p_cart: cart.map((item) => ({ productId: item.productId, price: item.price, qty: item.qty })),
+    p_cart: cart.map((item) => ({ productId: item.productId, unit: item.unit, price: item.price, qty: item.qty })),
     p_request_id: requestId || crypto.randomUUID()
   })
   throwIfError(error, 'Gagal menyimpan transaksi')

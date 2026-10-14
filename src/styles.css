@@ -565,6 +565,25 @@ select.input { appearance: none; }
 }
 .product-card:hover { transform: translateY(-3px); border-color: #c9857d; background: #fffaf4; box-shadow: 0 9px 20px rgba(56, 39, 27, .08); }
 .product-card:active { transform: translateY(-1px); }
+.product-sale-options { display: grid; gap: 4px; margin-top: 7px; }
+.product-sale-option {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  width: 100%;
+  padding: 6px 7px;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  background: rgba(255, 255, 255, .78);
+  color: var(--text);
+  cursor: pointer;
+  font-size: 10px;
+  transition: border-color .16s, background .16s, color .16s;
+}
+.product-sale-option strong { color: var(--accent); font-size: 10px; font-variant-numeric: tabular-nums; }
+.product-sale-option:hover:not(:disabled) { border-color: var(--accent); background: var(--accent-soft); }
+.product-sale-option:disabled { cursor: not-allowed; opacity: .45; }
 .product-illustration {
   display: grid;
   width: 42px;
@@ -578,6 +597,7 @@ select.input { appearance: none; }
 .cart { position: static; }
 .cart-row { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--border); }
 .cart-info { display: flex; flex: 1; flex-direction: column; }
+.cart-unit-select { min-height: 31px; padding: 5px 8px; font-size: 11px; }
 .qty-ctrl { display: flex; align-items: center; gap: 8px; }
 .qty-ctrl button {
   width: 28px;
@@ -770,6 +790,14 @@ select.input { appearance: none; }
 .product-modal .input,
 .product-modal .category-select-trigger { background-color: rgba(255, 255, 255, .8); }
 .product-modal .grid-3 { gap: 9px; }
+.product-sale-prices { margin-top: 6px; }
+.product-sale-prices > label { display: block; margin-bottom: 7px; }
+.product-sale-prices .grid-3 > div > label { font-size: 10px; }
+.product-stock-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin-top: 10px; }
+.product-stock-hint { margin: 9px 0 0; line-height: 1.45; }
+.product-price-cell { min-width: 125px; }
+.product-price-cell span { display: block; color: var(--muted); font-size: 10px; white-space: nowrap; }
+.product-price-cell strong { color: var(--accent); font-variant-numeric: tabular-nums; }
 .product-modal .modal-actions { padding-top: 15px; border-top: 1px solid rgba(145, 32, 39, .12); }
 .modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 18px; }
 .success-icon { display: flex; align-items: center; justify-content: center; width: 64px; height: 64px; margin: 0 auto 16px; border-radius: 50%; background: #e4eee7; color: var(--ok); }
