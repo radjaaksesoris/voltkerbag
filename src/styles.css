@@ -415,6 +415,20 @@ tbody tr:hover { background: #fbf5ed; }
   font-size: 13px;
   transition: border-color .18s, box-shadow .18s;
 }
+.money-input-wrap { position: relative; }
+.money-input-wrap .input { padding-left: 40px; font-variant-numeric: tabular-nums; }
+.money-input-prefix {
+  position: absolute;
+  top: 0;
+  left: 13px;
+  display: flex;
+  align-items: center;
+  height: calc(100% - 13px);
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+  pointer-events: none;
+}
 .input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(181, 40, 46, .1); }
 .search { max-width: 440px; }
 label { display: block; margin-bottom: 6px; color: var(--muted); font-size: 11px; font-weight: 700; }

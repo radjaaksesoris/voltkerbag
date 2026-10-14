@@ -7,6 +7,7 @@ import DateRangeFilter from '../components/DateRangeFilter.jsx'
 import { hasDateRange, isInDateRange } from '../dateFilter'
 import TransactionDetails from '../components/TransactionDetails'
 import { getInvoiceNumber } from '../invoice'
+import MoneyInput from '../components/MoneyInput.jsx'
 
 export default function Transactions() {
   const [products, setProducts] = useState([])
@@ -253,10 +254,9 @@ export default function Transactions() {
             <span>Total</span>
             <strong className="accent">{rupiah(total)}</strong>
           </div>
-          <label>{paymentType === 'cash' ? 'Uang tunai diterima (Rp)' : 'Pembayaran awal / DP (Rp)'}</label>
-          <input className="input" type="number" min="0" max={paymentType === 'credit' ? total : undefined}
-            value={pay} onChange={(e) => setPay(e.target.value)}
-            placeholder={paymentType === 'cash' ? total || 0 : '0 jika belum membayar'} />
+          <label>{paymentType === 'cash' ? 'Uang tunai diterima' : 'Pembayaran awal / DP'}</label>
+          <MoneyInput value={pay} onChange={setPay}
+            placeholder={paymentType === 'cash' ? total ? String(total) : '0' : '0 jika belum membayar'} />
           {paymentType === 'cash' ? (
             <div className={'change ' + (change < 0 ? 'negative' : '')}>
               Kembalian: <strong>{rupiah(change < 0 ? 0 : change)}</strong>
@@ -353,9 +353,8 @@ export default function Transactions() {
             <h3>Catat cicilan</h3>
             <p className="muted small">{installmentTransaction.customerName} · Transaksi #{installmentTransaction.id}</p>
             <p className="installment-balance">Sisa utang <strong>{rupiah(getBalanceDue(installmentTransaction))}</strong></p>
-            <label>Jumlah pembayaran (Rp)</label>
-            <input className="input" type="number" min="1" max={getBalanceDue(installmentTransaction)}
-              value={installmentAmount} onChange={(e) => setInstallmentAmount(e.target.value)}
+            <label>Jumlah pembayaran</label>
+            <MoneyInput value={installmentAmount} onChange={setInstallmentAmount}
               placeholder="Masukkan nominal pembayaran" required autoFocus />
             {installmentError && <p className="form-error" role="alert">{installmentError}</p>}
             <div className="modal-actions">

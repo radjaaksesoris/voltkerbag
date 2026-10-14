@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { getAll, put, remove, onRefresh } from '../db'
 import { rupiah } from '../format'
+import MoneyInput from '../components/MoneyInput.jsx'
 
 const EMPTY = { name: '', category: '', price: '', cost: '', stock: '' }
 
@@ -128,12 +129,12 @@ export default function Products() {
             <input className="input" value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} placeholder="cth: Ransel / Slingbag / Duffel" />
             <div className="grid-3">
               <div>
-                <label>Harga Jual (Rp) *</label>
-                <input className="input" type="number" min="0" value={form.price} onChange={(e) => setForm({ ...form, price: e.target.value })} />
+                <label>Harga Jual *</label>
+                <MoneyInput value={form.price} onChange={(price) => setForm({ ...form, price })} />
               </div>
               <div>
-                <label>Harga Beli (Rp)</label>
-                <input className="input" type="number" min="0" value={form.cost} onChange={(e) => setForm({ ...form, cost: e.target.value })} />
+                <label>Harga Beli</label>
+                <MoneyInput value={form.cost} onChange={(cost) => setForm({ ...form, cost })} />
               </div>
               <div>
                 <label>Stok</label>

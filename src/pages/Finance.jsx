@@ -3,6 +3,7 @@ import { getAll, put, remove, onRefresh } from '../db'
 import { rupiah, dateTime } from '../format'
 import DateRangeFilter from '../components/DateRangeFilter.jsx'
 import { hasDateRange, isInDateRange } from '../dateFilter'
+import MoneyInput from '../components/MoneyInput.jsx'
 
 const TYPES = {
   income: { label: 'Pemasukan', cls: 'badge-ok' },
@@ -112,8 +113,8 @@ export default function Finance() {
             <option value="capital">Modal (setoran pemilik)</option>
             <option value="income">Pemasukan lain</option>
           </select>
-          <label>Nominal (Rp)</label>
-          <input className="input" type="number" min="0" value={form.amount} onChange={(e) => setForm({ ...form, amount: e.target.value })} />
+          <label>Nominal</label>
+          <MoneyInput value={form.amount} onChange={(amount) => setForm({ ...form, amount })} />
           <label>Kategori</label>
           <input className="input" value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} placeholder="cth: Listrik, Sewa, Gaji" />
           <label>Catatan</label>
