@@ -53,24 +53,41 @@ export default function CategorySelect({ categories, value, onChange, onAdd, onD
     }
   }
 
+  function handleTriggerKeyDown(event) {
+    if (event.key !== 'ArrowDown' && event.key !== 'ArrowUp') return
+    event.preventDefault()
+    const options = ['', ...categories.map((category) => category.name)]
+    const selectedIndex = Math.max(0, options.indexOf(value || ''))
+    const direction = event.key === 'ArrowDown' ? 1 : -1
+    const nextIndex = (selectedIndex + direction + options.length) % options.length
+    onChange(options[nextIndex])
+    setOpen(true)
+  }
+
   return (
-    <div className="category-select" ref={rootRef}>
+    <div className="category-select category-select-inline" ref={rootRef}>
       <button
         className="input category-select-trigger"
         type="button"
+        role="combobox"
+        aria-label="Kategori"
         aria-haspopup="listbox"
+        aria-controls="product-category-options"
+        aria-autocomplete="none"
         aria-expanded={open}
+        onKeyDown={handleTriggerKeyDown}
         onClick={() => setOpen((isOpen) => !isOpen)}>
         <span className={selected ? '' : 'category-placeholder'}>{selected?.name || 'Pilih kategori'}</span>
         <Icon name={open ? 'chevronUp' : 'chevronDown'} size={17} />
       </button>
       {open && (
         <div className="category-menu">
-          <div className="category-options" role="listbox" aria-label="Kategori produk">
+          <div className="category-options" id="product-category-options" role="listbox" aria-label="Kategori produk">
             <button
               className={'category-option ' + (!value ? 'selected' : '')}
               type="button"
               role="option"
+              tabIndex={-1}
               aria-selected={!value}
               onClick={() => { onChange(''); setOpen(false) }}>
               Tanpa kategori
@@ -81,6 +98,7 @@ export default function CategorySelect({ categories, value, onChange, onAdd, onD
                   className={'category-option ' + (value === category.name ? 'selected' : '')}
                   type="button"
                   role="option"
+                  tabIndex={-1}
                   aria-selected={value === category.name}
                   onClick={() => { onChange(category.name); setOpen(false) }}>
                   {category.name}
@@ -88,6 +106,7 @@ export default function CategorySelect({ categories, value, onChange, onAdd, onD
                 <button
                   className="category-delete"
                   type="button"
+                  tabIndex={-1}
                   aria-label={'Hapus kategori ' + category.name}
                   title="Hapus kategori"
                   disabled={busy}
@@ -99,10 +118,11 @@ export default function CategorySelect({ categories, value, onChange, onAdd, onD
           </div>
           <div className="category-add-form">
             <input className="input" value={draft} maxLength={80}
+              tabIndex={-1}
               onChange={(event) => setDraft(event.target.value)}
               onKeyDown={(event) => { if (event.key === 'Enter') addCategory(event) }}
               placeholder="Nama kategori baru" aria-label="Nama kategori baru" />
-            <button className="btn btn-primary" type="button" disabled={busy || !draft.trim()} onClick={addCategory}>
+            <button className="btn btn-primary" type="button" tabIndex={-1} disabled={busy || !draft.trim()} onClick={addCategory}>
               {busy ? '...' : 'Tambah'}
             </button>
           </div>

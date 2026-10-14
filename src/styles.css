@@ -502,6 +502,15 @@ tbody tr:hover { background: #fbf5ed; }
   background: var(--card);
   box-shadow: 0 14px 32px rgba(56, 39, 27, .16);
 }
+.category-select-inline .category-menu {
+  position: relative;
+  top: auto;
+  right: auto;
+  left: auto;
+  max-height: none;
+  margin-top: 5px;
+  overflow: visible;
+}
 .category-options { max-height: 174px; overflow-y: auto; }
 .category-option-row { display: flex; align-items: center; gap: 4px; }
 .category-option {
@@ -725,7 +734,7 @@ select.input { appearance: none; }
 .modal { width: 100%; max-width: 460px; max-height: 90vh; overflow-y: auto; padding: 26px; border: 1px solid var(--border); border-radius: 17px; background: var(--card); box-shadow: 0 24px 70px rgba(26, 19, 15, .24); }
 .product-modal {
   position: relative;
-  overflow: hidden;
+  overflow-y: auto;
   border-color: #ead6c8;
   background:
     radial-gradient(ellipse at 100% 0%, rgba(181, 40, 46, .075), transparent 34%),
