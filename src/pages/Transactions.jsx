@@ -6,7 +6,7 @@ import Icon from '../components/Icon.jsx'
 import TransactionDetails from '../components/TransactionDetails'
 import { getInvoiceNumber } from '../invoice'
 import MoneyInput from '../components/MoneyInput.jsx'
-import { productPrice, saleUnits, stockInPcs, stockLabel, unitCost, unitFactor } from '../productUnits'
+import { productPrice, saleUnitPrice, saleUnits, stockInPcs, stockLabel, unitCost, unitFactor } from '../productUnits'
 
 export default function Transactions() {
   const [products, setProducts] = useState([])
@@ -101,7 +101,7 @@ export default function Transactions() {
         productId: p.id,
         name: p.name,
         unit,
-        price: productPrice(p, unit),
+        price: saleUnitPrice(p, unit),
         cost: unitCost(p, unit),
         qty: 1,
         saleUnits: saleUnits(p.unit || 'pcs')
@@ -138,7 +138,7 @@ export default function Transactions() {
         ? {
             ...item,
             unit: newUnit,
-            price: productPrice(product, newUnit),
+            price: saleUnitPrice(product, newUnit),
             cost: unitCost(product, newUnit),
           }
         : item)
@@ -279,7 +279,7 @@ export default function Transactions() {
                       disabled={!canAddOne(p.id, unit)}
                       onClick={() => addToCart(p, unit)}>
                       <span>+ {unit}</span>
-                      <strong>{rupiah(productPrice(p, unit))}</strong>
+                      <strong>{rupiah(saleUnitPrice(p, unit))}/{unit}</strong>
                     </button>
                   ))}
                 </div>

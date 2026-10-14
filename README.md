@@ -19,9 +19,9 @@ VOLTKER adalah aplikasi kasir React + Vite dengan Supabase sebagai sumber data u
 
 `schema.sql` menyiapkan tabel, Row Level Security, dan fungsi database untuk checkout serta pembayaran cicilan. Database kosong setelah `clear-data.sql`; data di browser lama tidak akan dipindahkan. Jangan jalankan `clear-data.sql` lagi setelah mulai memasukkan data toko.
 
-Kategori dan satuan produk dikelola di database. Kategori/satuan yang masih dipakai produk tidak dapat dihapus; ubah data produk terkait terlebih dahulu. Satuan awal yang tersedia: pcs, lusin, dan kodi. Produk dengan satuan utama pcs/lusin/kodi dapat dijual dalam ketiga satuan tersebut; konversi stok mengikuti 1 lusin = 12 pcs dan 1 kodi = 20 pcs. Harga jual pcs, lusin, dan kodi diatur terpisah pada form produk. Satuan serta harga yang berlaku ikut dicatat di item transaksi, detail transaksi, dan struk.
+Kategori dan satuan produk dikelola di database. Kategori/satuan yang masih dipakai produk tidak dapat dihapus; ubah data produk terkait terlebih dahulu. Satuan awal yang tersedia: pcs, lusin, dan kodi. Produk dengan satuan utama pcs/lusin/kodi dapat dijual dalam ketiga satuan tersebut; konversi stok mengikuti 1 lusin = 12 pcs dan 1 kodi = 20 pcs. Harga jual pada form produk adalah tarif per pcs yang dipilih berdasarkan satuan penjualan: contoh tarif kodi Rp45.000/pcs menghasilkan Rp900.000 per kodi. Satuan, harga per kemasan, dan subtotal transaksi dicatat di item transaksi, detail transaksi, dan struk.
 
-Perubahan konversi dan harga satuan memerlukan versi terbaru aplikasi dan `supabase/schema.sql`. Jalankan ulang skema sebelum deploy versi aplikasi ini; migrasi mempertahankan data, mengubah stok lama ke hitungan pcs, dan mengisi harga satuan awal secara proporsional dari harga lama. Sesuaikan harga di menu Stok Barang agar mencerminkan harga jual toko. Jangan jalankan `clear-data.sql`.
+Perubahan konversi dan harga satuan memerlukan versi terbaru aplikasi dan `supabase/schema.sql`. Jalankan ulang skema sebelum deploy versi aplikasi ini; migrasi mempertahankan data dan mengubah stok lama ke hitungan pcs. Nilai harga pada kolom pcs/lusin/kodi ditafsirkan sebagai tarif per pcs untuk tingkat harga yang dipilih. Periksa dan sesuaikan nilai harga di menu Stok Barang sebelum berjualan. Jangan jalankan `clear-data.sql`.
 
 ## Menjalankan lokal
 ```bash

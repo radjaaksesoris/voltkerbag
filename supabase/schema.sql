@@ -88,13 +88,13 @@ set price_pcs = coalesce(price_pcs, case lower(trim(unit))
       when 'lusin' then round(price / 12)
       else price end),
     price_lusin = coalesce(price_lusin, case lower(trim(unit))
-      when 'kodi' then round(price * 12 / 20)
-      when 'lusin' then price
-      else price * 12 end),
+      when 'kodi' then round(price / 20)
+      when 'lusin' then round(price / 12)
+      else price end),
     price_kodi = coalesce(price_kodi, case lower(trim(unit))
-      when 'kodi' then price
-      when 'lusin' then round(price * 20 / 12)
-      else price * 20 end)
+      when 'kodi' then round(price / 20)
+      when 'lusin' then round(price / 12)
+      else price end)
 where price_pcs is null or price_lusin is null or price_kodi is null;
 
 update public.products
@@ -362,6 +362,7 @@ declare
   sale_factor integer;
   stock_deduction integer;
   sale_price double precision;
+  sale_unit_price double precision;
   sale_cost double precision;
   sale_total double precision := 0;
   saved_items jsonb := '[]'::jsonb;
@@ -422,17 +423,18 @@ begin
     if sale_price <= 0 then
       raise exception 'Harga jual per % untuk "%" belum diatur.', requested_unit, product_row.name;
     end if;
-    if sale_price is distinct from (item ->> 'price')::double precision then
+    sale_unit_price := sale_price * sale_factor;
+    if sale_unit_price is distinct from (item ->> 'price')::double precision then
       raise exception 'Harga produk "%" berubah. Muat ulang halaman sebelum menyimpan.', product_row.name;
     end if;
 
     sale_cost := product_row.cost * sale_factor / base_factor;
-    sale_total := sale_total + sale_price * item_qty;
+    sale_total := sale_total + sale_unit_price * item_qty;
     saved_items := saved_items || jsonb_build_array(jsonb_build_object(
       'productId', product_row.id,
       'name', product_row.name,
       'unit', requested_unit,
-      'price', sale_price,
+      'price', sale_unit_price,
       'cost', sale_cost,
       'qty', item_qty
     ));

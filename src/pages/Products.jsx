@@ -5,7 +5,7 @@ import MoneyInput from '../components/MoneyInput.jsx'
 import CategorySelect from '../components/CategorySelect.jsx'
 import UnitSelect from '../components/UnitSelect.jsx'
 import Icon from '../components/Icon.jsx'
-import { availableQuantity, productPrice, quantityToPcs, saleUnits, stockInPcs, unitFactor, stockLabel } from '../productUnits'
+import { availableQuantity, productPrice, quantityToPcs, saleUnitPrice, saleUnits, stockInPcs, unitFactor, stockLabel } from '../productUnits'
 
 const EMPTY = {
   name: '',
@@ -159,7 +159,7 @@ export default function Products() {
         name: form.name.trim(),
         category: form.category.trim(),
         unit: form.unit.trim(),
-        price: basePrice,
+        price: isStandard ? basePrice * unitFactor(form.unit) : basePrice,
         price_pcs: isStandard ? prices.pcs : 0,
         price_lusin: isStandard ? prices.lusin : 0,
         price_kodi: isStandard ? prices.kodi : 0,
@@ -240,7 +240,10 @@ export default function Products() {
                 <td>{rupiah(p.cost)}</td>
                 <td className="product-price-cell">
                   {saleUnits(p.unit || 'pcs').map((unit) => (
-                    <span key={unit}>{unit}: <strong>{rupiah(productPrice(p, unit))}</strong></span>
+                    <span key={unit}>
+                      {unit}: <strong>{rupiah(productPrice(p, unit))}/pcs</strong>
+                      {unitFactor(unit) > 1 && <> · {rupiah(saleUnitPrice(p, unit))}/{unit}</>}
+                    </span>
                   ))}
                 </td>
                 <td>
@@ -296,11 +299,12 @@ export default function Products() {
             </div>
             {saleUnits(form.unit).length === 3 ? (
               <div className="product-sale-prices">
-                <label>Harga jual per satuan *</label>
+                <label>Tarif per pcs saat dijual dalam satuan berikut *</label>
+                <p className="muted small product-price-hint">Harga transaksi dikalikan isi satuan: 1 lusin = 12 pcs, 1 kodi = 20 pcs.</p>
                 <div className="grid-3">
                   {['pcs', 'lusin', 'kodi'].map((unit) => (
                     <div key={unit}>
-                      <label htmlFor={'product-price-' + unit}>{unit}</label>
+                      <label htmlFor={'product-price-' + unit}>{unit} (/pcs)</label>
                       <MoneyInput
                         inputRef={priceInputRefs[unit]}
                         id={'product-price-' + unit}

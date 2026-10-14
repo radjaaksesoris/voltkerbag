@@ -39,9 +39,13 @@ export function productPrice(product, unit) {
     if (Number.isFinite(storedPrice) && storedPrice > 0) return storedPrice
 
     const legacyPrice = Number(product.price) || 0
-    return Math.round(legacyPrice * unitFactor(unit) / unitFactor(product.unit))
+    return Math.round(legacyPrice / unitFactor(product.unit))
   }
   return Number(product.price) || 0
+}
+
+export function saleUnitPrice(product, unit) {
+  return productPrice(product, unit) * unitFactor(unit)
 }
 
 export function unitCost(product, unit) {
