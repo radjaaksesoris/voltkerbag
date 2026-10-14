@@ -52,6 +52,8 @@ export default function Transactions() {
     return onRefresh(load)
   }, [])
 
+  const total = useMemo(() => cart.reduce((s, c) => s + c.price * c.qty, 0), [cart])
+
   if (!loaded) return <div className="page"><p className="muted">Memuat data dari server...</p></div>
   if (loadError) {
     return <div className="page"><p className="form-error" role="alert">{loadError}</p>
@@ -62,7 +64,6 @@ export default function Transactions() {
   const filtered = products.filter((p) =>
     p.name.toLowerCase().includes(q.toLowerCase()) && Number(p.stock) > 0
   )
-  const total = useMemo(() => cart.reduce((s, c) => s + c.price * c.qty, 0), [cart])
   const paidNow = Number(pay || 0)
   const change = paidNow - total
 
