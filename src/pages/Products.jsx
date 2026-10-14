@@ -270,24 +270,30 @@ export default function Products() {
             </div>
             <label>Nama Produk *</label>
             <input ref={nameInputRef} className="input" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="cth: Tas Ransel Volt Hitam" />
-            <label>Kategori</label>
-            <CategorySelect
-              categories={categories}
-              value={form.category}
-              onChange={(category) => setForm({ ...form, category })}
-              onAdd={addCategory}
-              onDelete={deleteCategory}
-              triggerRef={categoryInputRef}
-            />
-            <label>Satuan *</label>
-            <UnitSelect
-              categories={units}
-              value={form.unit}
-              onChange={changeBaseUnit}
-              onAdd={addUnit}
-              onDelete={deleteUnit}
-              triggerRef={unitInputRef}
-            />
+            <div className="product-option-fields">
+              <div>
+                <label>Kategori</label>
+                <CategorySelect
+                  categories={categories}
+                  value={form.category}
+                  onChange={(category) => setForm({ ...form, category })}
+                  onAdd={addCategory}
+                  onDelete={deleteCategory}
+                  triggerRef={categoryInputRef}
+                />
+              </div>
+              <div>
+                <label>Satuan *</label>
+                <UnitSelect
+                  categories={units}
+                  value={form.unit}
+                  onChange={changeBaseUnit}
+                  onAdd={addUnit}
+                  onDelete={deleteUnit}
+                  triggerRef={unitInputRef}
+                />
+              </div>
+            </div>
             {saleUnits(form.unit).length === 3 ? (
               <div className="product-sale-prices">
                 <label>Harga jual per satuan *</label>
