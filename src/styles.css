@@ -375,6 +375,10 @@ h3 { margin-bottom: 16px; color: var(--ink); font-size: 15px; font-weight: 700; 
 .dashboard-stats-grid .stat-card:nth-child(3) { --metric-wash: rgba(145, 32, 39, .06); }
 .dashboard-stats-grid .stat-card:nth-child(4) { --metric-wash: rgba(181, 40, 46, .035); }
 .dashboard-stats-grid .stat-card:nth-child(5) { --metric-wash: rgba(181, 40, 46, .11); }
+.dashboard-stock-summary { justify-content: center; gap: 10px; }
+.dashboard-stock-metric { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
+.dashboard-stock-metric + .dashboard-stock-metric { padding-top: 9px; border-top: 1px solid rgba(181, 40, 46, .14); }
+.dashboard-stock-metric strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
 /* Tables and surfaces */
 .card {

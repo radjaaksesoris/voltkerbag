@@ -67,8 +67,16 @@ export default function Dashboard() {
       <div className="stats-grid dashboard-stats-grid">
         <div className="stat-card highlight"><span>{hasFilter ? 'Omzet Periode' : 'Omzet Hari Ini'}</span><strong>{rupiah(omzet)}</strong></div>
         <div className="stat-card"><span>{hasFilter ? 'Laba Kotor Periode' : 'Laba Kotor Hari Ini'}</span><strong className="ok">{rupiah(profit)}</strong></div>
-        <div className="stat-card"><span>Nilai Stok (Modal)</span><strong>{rupiah(totalAsset)}</strong></div>
-        <div className="stat-card"><span>Total Produk</span><strong>{products.length}</strong></div>
+        <div className="stat-card dashboard-stock-summary">
+          <div className="dashboard-stock-metric">
+            <span>Nilai Stok (Modal)</span>
+            <strong>{rupiah(totalAsset)}</strong>
+          </div>
+          <div className="dashboard-stock-metric">
+            <span>Total Produk</span>
+            <strong>{products.length}</strong>
+          </div>
+        </div>
         <div className="stat-card"><span>Stok Menipis</span><strong className={lowStock.length ? 'danger' : ''}>{lowStock.length}</strong></div>
       </div>
 
