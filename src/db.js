@@ -2,6 +2,7 @@ import { getClient } from './supabaseSync'
 
 const TABLES = {
   products: 'products',
+  categories: 'product_categories',
   transactions: 'transactions',
   finance: 'finance_entries'
 }
@@ -79,6 +80,14 @@ export async function recordTransactionPayment(transactionId, amount, requestId)
 }
 
 export async function remove(store, id) {
+  if (store === 'categories') {
+    const { error } = await getClient().rpc('delete_product_category', {
+      p_category_id: id
+    })
+    throwIfError(error, 'Gagal menghapus kategori')
+    notifyRefresh()
+    return
+  }
   const { error } = await getClient().from(tableFor(store)).delete().eq('id', id)
   throwIfError(error, 'Gagal menghapus data')
   notifyRefresh()

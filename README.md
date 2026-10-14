@@ -12,12 +12,14 @@ VOLTKER adalah aplikasi kasir React + Vite dengan Supabase sebagai sumber data u
 ## Setup Supabase
 1. Pastikan project Supabase yang dipakai adalah project VOLTKER yang benar.
 2. Di **Authentication → Users**, buat satu akun toko. Jangan aktifkan pendaftaran publik; hanya akun ini yang boleh digunakan.
-3. Jalankan seluruh `supabase/schema.sql` di **SQL Editor**.
+3. Jalankan seluruh `supabase/schema.sql` di **SQL Editor**. Jika skema pernah dijalankan sebelumnya, jalankan ulang file terbaru ini untuk menyiapkan tabel kategori produk dan memasukkan kategori yang sudah digunakan produk ke daftar kategori.
 4. Setelah memastikan pengosongan memang diinginkan, jalankan `supabase/clear-data.sql` satu kali. **Perintah ini menghapus permanen semua produk, transaksi, dan catatan keuangan di project tersebut serta memulai ulang ID.**
 5. Salin Supabase anon/publishable key (bukan `service_role` atau secret key).
 6. Untuk GitHub Pages, simpan key sebagai repository Actions secret `VITE_SUPABASE_ANON_KEY`, lalu jalankan workflow deploy. Untuk lokal, isi `VITE_SUPABASE_ANON_KEY` dalam `.env.local`.
 
 `schema.sql` menyiapkan tabel, Row Level Security, dan fungsi database untuk checkout serta pembayaran cicilan. Database kosong setelah `clear-data.sql`; data di browser lama tidak akan dipindahkan. Jangan jalankan `clear-data.sql` lagi setelah mulai memasukkan data toko.
+
+Kategori produk dikelola di database. Kategori yang masih dipakai produk tidak dapat dihapus; ubah kategori pada produk terkait terlebih dahulu.
 
 ## Menjalankan lokal
 ```bash

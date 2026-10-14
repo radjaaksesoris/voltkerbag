@@ -439,6 +439,64 @@ tbody tr:hover { background: #fbf5ed; }
   pointer-events: none;
 }
 .input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(181, 40, 46, .1); }
+.category-select { position: relative; z-index: 1; margin-bottom: 13px; }
+.category-select:focus-within { z-index: 5; }
+.category-select-trigger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin: 0;
+  text-align: left;
+}
+.category-select-trigger svg { color: var(--muted); }
+.category-placeholder { color: #a79d92; }
+.category-menu {
+  position: absolute;
+  z-index: 15;
+  top: calc(100% + 4px);
+  right: 0;
+  left: 0;
+  max-height: 280px;
+  overflow-y: auto;
+  padding: 6px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--card);
+  box-shadow: 0 14px 32px rgba(56, 39, 27, .16);
+}
+.category-options { max-height: 174px; overflow-y: auto; }
+.category-option-row { display: flex; align-items: center; gap: 4px; }
+.category-option {
+  flex: 1;
+  min-width: 0;
+  padding: 9px 10px;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  color: var(--text);
+  font-size: 12px;
+  text-align: left;
+}
+.category-option:hover, .category-option.selected { background: var(--accent-soft); color: var(--accent-dark); }
+.category-delete {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  flex: 0 0 auto;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  color: var(--muted);
+}
+.category-delete:hover { background: #f8e9e5; color: var(--danger); }
+.category-delete:disabled { cursor: wait; opacity: .5; }
+.category-add-form { display: flex; gap: 7px; margin-top: 6px; padding-top: 8px; border-top: 1px solid var(--border); }
+.category-add-form .input { min-width: 0; margin: 0; padding: 8px 10px; font-size: 12px; }
+.category-add-form .btn { flex: 0 0 auto; padding: 8px 10px; }
+.category-error { margin: 8px 4px 3px; }
 .search { max-width: 440px; }
 label { display: block; margin-bottom: 6px; color: var(--muted); font-size: 11px; font-weight: 700; }
 select.input { appearance: none; }

@@ -2,11 +2,13 @@ import { useEffect, useState } from 'react'
 import { getAll, put, remove, onRefresh } from '../db'
 import { rupiah } from '../format'
 import MoneyInput from '../components/MoneyInput.jsx'
+import CategorySelect from '../components/CategorySelect.jsx'
 
 const EMPTY = { name: '', category: '', price: '', cost: '', stock: '' }
 
 export default function Products() {
   const [items, setItems] = useState([])
+  const [categories, setCategories] = useState([])
   const [q, setQ] = useState('')
   const [form, setForm] = useState(EMPTY)
   const [editId, setEditId] = useState(null)
@@ -17,7 +19,12 @@ export default function Products() {
 
   async function load() {
     try {
-      setItems(await getAll('products'))
+      const [productRows, categoryRows] = await Promise.all([
+        getAll('products'),
+        getAll('categories')
+      ])
+      setItems(productRows)
+      setCategories(categoryRows)
       setLoadError('')
     } catch (error) {
       setLoadError(error.message || 'Gagal memuat produk dari server.')
@@ -41,6 +48,22 @@ export default function Products() {
     setShowForm(true)
   }
   function openAdd() { setEditId(null); setForm(EMPTY); setShowForm(true) }
+
+  async function addCategory(name) {
+    if (categories.some((category) => category.name.toLocaleLowerCase('id-ID') === name.toLocaleLowerCase('id-ID'))) {
+      throw new Error('Kategori "' + name + '" sudah ada.')
+    }
+    const id = await put('categories', { name })
+    setForm((current) => ({ ...current, category: name }))
+    return id
+  }
+
+  async function deleteCategory(category) {
+    await remove('categories', category.id)
+    if (form.category === category.name) {
+      setForm((current) => ({ ...current, category: '' }))
+    }
+  }
 
   async function save(e) {
     e.preventDefault()
@@ -126,7 +149,13 @@ export default function Products() {
             <label>Nama Produk *</label>
             <input className="input" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="cth: Tas Ransel Volt Hitam" />
             <label>Kategori</label>
-            <input className="input" value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} placeholder="cth: Ransel / Slingbag / Duffel" />
+            <CategorySelect
+              categories={categories}
+              value={form.category}
+              onChange={(category) => setForm({ ...form, category })}
+              onAdd={addCategory}
+              onDelete={deleteCategory}
+            />
             <div className="grid-3">
               <div>
                 <label>Harga Jual *</label>
