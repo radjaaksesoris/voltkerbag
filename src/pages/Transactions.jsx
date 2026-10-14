@@ -3,8 +3,6 @@ import { getAll, completeSale, recordTransactionPayment, onRefresh } from '../db
 import { rupiah, dateTime, isToday } from '../format'
 import Receipt from '../components/Receipt'
 import Icon from '../components/Icon.jsx'
-import DateRangeFilter from '../components/DateRangeFilter.jsx'
-import { hasDateRange, isInDateRange } from '../dateFilter'
 import TransactionDetails from '../components/TransactionDetails'
 import { getInvoiceNumber } from '../invoice'
 import MoneyInput from '../components/MoneyInput.jsx'
@@ -25,7 +23,6 @@ export default function Transactions() {
   const [saving, setSaving] = useState(false)
   const [previewTransaction, setPreviewTransaction] = useState(null)
   const [selectedTransaction, setSelectedTransaction] = useState(null)
-  const [dateRange, setDateRange] = useState({ from: '', to: '' })
   const operationLock = useRef(false)
   const saleRequest = useRef(null)
   const installmentRequest = useRef(null)
@@ -189,19 +186,13 @@ export default function Transactions() {
     }
   }
 
-  const hasFilter = hasDateRange(dateRange)
-  const filteredHistory = history.filter((t) => !hasFilter || isInDateRange(t.createdAt, dateRange))
-  const summaryTransactions = hasFilter
-    ? filteredHistory
-    : history.filter((t) => isToday(t.createdAt))
-  const summaryLabel = hasFilter ? 'Periode dipilih' : 'Hari ini'
+  const summaryTransactions = history.filter((t) => isToday(t.createdAt))
   const summaryOmzet = summaryTransactions.reduce((s, t) => s + t.total, 0)
 
   return (
     <div className="page">
       <div className="page-toolbar">
-        <p className="muted">{summaryLabel} <strong>{summaryTransactions.length} transaksi</strong> · {rupiah(summaryOmzet)}</p>
-        <DateRangeFilter value={dateRange} onChange={setDateRange} />
+        <p className="muted">Hari ini <strong>{summaryTransactions.length} transaksi</strong> · {rupiah(summaryOmzet)}</p>
       </div>
 
       <div className="pos-grid">
@@ -270,65 +261,6 @@ export default function Transactions() {
             {saving ? 'Menyimpan…' : <><Icon name="bolt" size={17} /> Simpan Transaksi</>}
           </button>
         </div>
-      </div>
-
-      <div className="card table-card">
-        <h3>Riwayat Transaksi</h3>
-        <table className="transaction-table">
-          <thead><tr><th>No. Faktur</th><th>Pelanggan</th><th>Waktu</th><th>Total</th><th>Terbayar</th><th>Sisa</th><th>Kembalian</th><th>Status / Aksi</th></tr></thead>
-          <tbody>
-            {filteredHistory.length === 0 && <tr><td colSpan="8" className="muted center">
-              {hasFilter ? 'Tidak ada transaksi pada rentang tanggal ini.' : 'Belum ada transaksi.'}
-            </td></tr>}
-            {filteredHistory.slice(0, 50).map((t) => {
-              const balance = getBalanceDue(t)
-              const credit = (t.paymentType || 'cash') === 'credit'
-              const payments = t.payments || []
-              return (
-                <tr key={t.id}>
-                  <td>{getInvoiceNumber(t)}</td>
-                  <td>{t.customerName || '—'}</td>
-                  <td>{dateTime(t.createdAt)}</td>
-                  <td className="accent"><strong>{rupiah(t.total)}</strong></td>
-                  <td>{rupiah(getPaidAmount(t))}</td>
-                  <td className={balance > 0 ? 'danger' : ''}>{rupiah(balance)}</td>
-                  <td>{rupiah(t.change)}</td>
-                  <td>
-                    <button className="btn btn-sm" onClick={() => setSelectedTransaction(t)}>Detail</button>
-                    <button className="btn btn-sm receipt-button" onClick={() => setPreviewTransaction(t)}>
-                      Cetak struk
-                    </button>
-                    {credit && balance > 0 ? (
-                      <button className="btn btn-sm btn-primary" onClick={() => {
-                        setInstallmentTransaction(t)
-                        setInstallmentAmount('')
-                        setInstallmentError('')
-                      }}>Catat cicilan</button>
-                    ) : (
-                      <span className={'badge ' + (balance > 0 ? 'badge-danger' : 'badge-ok')}>
-                        {balance > 0 ? 'Kredit' : 'Lunas'}
-                      </span>
-                    )}
-                    {credit && (
-                      <details className="payment-history">
-                        <summary>Riwayat pembayaran</summary>
-                        {payments.length === 0 ? (
-                          <span className="muted small">Belum ada pembayaran.</span>
-                        ) : (
-                          <ul>
-                            {payments.map((entry, index) => (
-                              <li key={index}>{dateTime(entry.date)} · {rupiah(entry.amount)}</li>
-                            ))}
-                          </ul>
-                        )}
-                      </details>
-                    )}
-                  </td>
-                </tr>
-              )
-            })}
-          </tbody>
-        </table>
       </div>
 
       {done && (
