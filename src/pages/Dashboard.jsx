@@ -64,7 +64,7 @@ export default function Dashboard() {
         </div>
         <DateRangeFilter value={dateRange} onChange={setDateRange} />
       </div>
-      <div className="stats-grid">
+      <div className="stats-grid dashboard-stats-grid">
         <div className="stat-card highlight"><span>{hasFilter ? 'Omzet Periode' : 'Omzet Hari Ini'}</span><strong>{rupiah(omzet)}</strong></div>
         <div className="stat-card"><span>{hasFilter ? 'Laba Kotor Periode' : 'Laba Kotor Hari Ini'}</span><strong className="ok">{rupiah(profit)}</strong></div>
         <div className="stat-card"><span>Nilai Stok (Modal)</span><strong>{rupiah(totalAsset)}</strong></div>
