@@ -158,7 +158,7 @@ button:focus-visible, input:focus-visible, select:focus-visible {
   line-height: 1.12;
 }
 .topbar.dashboard-topbar {
-  background: var(--accent);
+  background: var(--accent-dark);
   border-bottom-color: var(--accent-dark);
 }
 .topbar .dashboard-title,
