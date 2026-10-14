@@ -502,16 +502,12 @@ tbody tr:hover { background: #fbf5ed; }
   background: var(--card);
   box-shadow: 0 14px 32px rgba(56, 39, 27, .16);
 }
-.category-select-inline .category-menu {
-  position: relative;
-  top: auto;
-  right: auto;
-  left: auto;
-  max-height: none;
-  margin-top: 5px;
-  overflow: visible;
+.category-options {
+  max-height: 174px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
 }
-.category-options { max-height: 174px; overflow-y: auto; }
 .category-option-row { display: flex; align-items: center; gap: 4px; }
 .category-option {
   flex: 1;
