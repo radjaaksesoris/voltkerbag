@@ -126,7 +126,7 @@ export default function App() {
       </aside>
 
       <main className="main">
-        <header className={'topbar ' + (page === 'dashboard' ? 'dashboard-topbar' : '')}>
+        <header className="topbar">
           <div className="topbar-start">
             <button
               className="nav-toggle"
@@ -137,7 +137,7 @@ export default function App() {
               onClick={() => setNavHidden((hidden) => !hidden)}>
               <Icon name="menu" size={20} />
             </button>
-            <div className={'topbar-title ' + (page === 'dashboard' ? 'dashboard-title' : '')}>
+            <div className="topbar-title">
               <strong>{currentPage.label}</strong>
               <span>{currentPage.description}</span>
             </div>
