@@ -162,6 +162,7 @@ create policy "Users can access their own products" on public.products
   with check ((select auth.uid()) = owner_id);
 
 drop policy if exists "Users can access their own product categories" on public.product_categories;
+drop policy if exists "Users can read their own product categories" on public.product_categories;
 create policy "Users can read their own product categories" on public.product_categories
   for select to authenticated using ((select auth.uid()) = owner_id);
 drop policy if exists "Users can add their own product categories" on public.product_categories;
@@ -169,6 +170,7 @@ create policy "Users can add their own product categories" on public.product_cat
   for insert to authenticated with check ((select auth.uid()) = owner_id);
 
 drop policy if exists "Users can access their own product units" on public.product_units;
+drop policy if exists "Users can read their own product units" on public.product_units;
 create policy "Users can read their own product units" on public.product_units
   for select to authenticated using ((select auth.uid()) = owner_id);
 drop policy if exists "Users can add their own product units" on public.product_units;
