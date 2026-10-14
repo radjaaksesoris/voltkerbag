@@ -88,7 +88,7 @@ export default function Dashboard() {
         <h3>Transaksi Terakhir</h3>
         <table className="dashboard-transaction-table">
           <thead>
-            <tr><th>No</th><th>Nama <span className="th-subtitle">No. Faktur</span></th><th>Tanggal Transaksi</th><th className="right">Nominal Transaksi</th><th className="right">Detail</th></tr>
+            <tr><th>No</th><th>Nama</th><th>Tanggal Transaksi</th><th className="right">Nominal Transaksi</th><th className="right">Detail</th></tr>
           </thead>
           <tbody>
             {visibleTx.length === 0 && <tr><td colSpan="5" className="muted center">
