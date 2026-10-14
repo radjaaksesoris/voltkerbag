@@ -29,6 +29,7 @@ export default function Transactions() {
   const operationLock = useRef(false)
   const saleRequest = useRef(null)
   const installmentRequest = useRef(null)
+  const productSearchRef = useRef(null)
   const [loadError, setLoadError] = useState('')
   const [loaded, setLoaded] = useState(false)
 
@@ -268,8 +269,29 @@ export default function Transactions() {
 
       <div className="pos-grid">
         <div>
-          <input className="input search" placeholder="Cari tas... (stok 0 disembunyikan)"
-            value={q} onChange={(e) => setQ(e.target.value)} />
+          <div className="search-field">
+            <input
+              ref={productSearchRef}
+              className="input search"
+              placeholder="Cari tas... (stok 0 disembunyikan)"
+              aria-label="Cari produk"
+              value={q}
+              onChange={(e) => setQ(e.target.value)}
+            />
+            {q && (
+              <button
+                className="search-clear"
+                type="button"
+                aria-label="Hapus pencarian"
+                title="Hapus pencarian"
+                onClick={() => {
+                  setQ('')
+                  productSearchRef.current?.focus()
+                }}>
+                <Icon name="close" size={16} />
+              </button>
+            )}
+          </div>
           <div className="product-grid">
             {filtered.length === 0 && <p className="muted">Tidak ada produk. Tambahkan di menu Stok Barang.</p>}
             {filtered.map((p) => (

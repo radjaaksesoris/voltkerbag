@@ -490,6 +490,23 @@ tbody tr:hover { background: #fbf5ed; }
   pointer-events: none;
 }
 .input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(181, 40, 46, .1); }
+.search-field { position: relative; width: 100%; max-width: 440px; }
+.search-field .search { max-width: none; padding-right: 42px; }
+.search-clear {
+  position: absolute;
+  top: 0;
+  right: 8px;
+  display: grid;
+  width: 32px;
+  height: 38px;
+  place-items: center;
+  padding: 0;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  color: var(--muted);
+}
+.search-clear:hover { background: var(--accent-soft); color: var(--accent); }
 .category-select { position: relative; z-index: 1; margin-bottom: 13px; }
 .category-select:focus-within { z-index: 5; }
 .category-select-trigger {

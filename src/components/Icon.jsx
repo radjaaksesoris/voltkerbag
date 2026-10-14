@@ -11,6 +11,7 @@ const ICONS = {
   minus: <path d="M5 12h14" />,
   chevronDown: <path d="m6 9 6 6 6-6" />,
   chevronUp: <path d="m6 15 6-6 6 6" />,
+  close: <><path d="m6 6 12 12" /><path d="M18 6 6 18" /></>,
   trash: <><path d="M4 7h16" /><path d="M10 11v6M14 11v6" /><path d="m5 7 1 13h12l1-13" /><path d="M9 7V4h6v3" /></>,
   check: <path d="m5 12 4 4L19 6" />
 }
