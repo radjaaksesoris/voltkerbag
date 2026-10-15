@@ -378,7 +378,7 @@ export default function Transactions() {
                 <label>Metode pembayaran</label>
                 <select className="input" value={paymentType} onChange={(e) => setPaymentType(e.target.value)}>
                   <option value="cash">Tunai</option>
-                  <option value="credit">Kredit tanpa bunga</option>
+                  <option value="credit">Kredit</option>
                 </select>
               </div>
             </div>

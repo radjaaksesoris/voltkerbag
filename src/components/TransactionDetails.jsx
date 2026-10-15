@@ -29,7 +29,7 @@ export default function TransactionDetails({ transaction, onClose }) {
         <dl className="transaction-details-meta">
           <div><dt>Nama pelanggan</dt><dd>{transaction.customerName || 'Pelanggan lama'}</dd></div>
           <div><dt>Tanggal transaksi</dt><dd>{dateTime(transaction.createdAt)}</dd></div>
-          <div><dt>Metode pembayaran</dt><dd>{transaction.paymentType === 'credit' ? 'Kredit tanpa bunga' : 'Tunai'}</dd></div>
+          <div><dt>Metode pembayaran</dt><dd>{transaction.paymentType === 'credit' ? 'Kredit' : 'Tunai'}</dd></div>
         </dl>
 
         <div className="table-card transaction-details-items">

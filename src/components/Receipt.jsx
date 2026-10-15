@@ -27,7 +27,7 @@ export default function Receipt({ transaction }) {
         <div><span>No. Faktur</span><strong>{getInvoiceNumber(transaction)}</strong></div>
         <div><span>Tanggal</span><strong>{dateTime(transaction.createdAt)}</strong></div>
         <div><span>Pelanggan</span><strong>{transaction.customerName || '-'}</strong></div>
-        <div><span>Pembayaran</span><strong>{isCredit ? 'Kredit tanpa bunga' : 'Tunai'}</strong></div>
+        <div><span>Pembayaran</span><strong>{isCredit ? 'Kredit' : 'Tunai'}</strong></div>
       </section>
 
       <table className="receipt-items">
