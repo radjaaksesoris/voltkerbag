@@ -98,10 +98,10 @@ export default function Dashboard() {
         <h3>Transaksi Terakhir</h3>
         <table className="dashboard-transaction-table">
           <thead>
-            <tr><th>No</th><th>Nama</th><th>Tanggal Transaksi</th><th className="right">Nominal Transaksi</th><th className="right">Detail</th></tr>
+            <tr><th>No</th><th>Nama</th><th>Tanggal Transaksi</th><th>Pembayaran</th><th className="right">Nominal Transaksi</th><th className="right">Detail</th></tr>
           </thead>
           <tbody>
-            {visibleTx.length === 0 && <tr><td colSpan="5" className="muted center">
+            {visibleTx.length === 0 && <tr><td colSpan="6" className="muted center">
               {hasFilter ? 'Tidak ada transaksi pada rentang tanggal ini.' : 'Belum ada transaksi.'}
             </td></tr>}
             {pageTransactions.map((t, index) => (
@@ -112,6 +112,9 @@ export default function Dashboard() {
                   <span className="transaction-invoice">{getInvoiceNumber(t)}</span>
                 </td>
                 <td>{dateTime(t.createdAt)}</td>
+                <td><span className={'badge ' + (t.paymentType === 'credit' ? 'badge-neutral' : 'badge-ok')}>
+                  {t.paymentType === 'credit' ? 'Kredit' : 'Tunai'}
+                </span></td>
                 <td className="right accent"><strong>{rupiah(t.total)}</strong></td>
                 <td className="right">
                   <button className="btn btn-sm btn-primary" onClick={() => setSelectedTransaction(t)}>Detail</button>
