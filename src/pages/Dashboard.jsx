@@ -115,7 +115,7 @@ export default function Dashboard() {
         <h3>Transaksi Terakhir</h3>
         <table className="dashboard-transaction-table">
           <thead>
-            <tr><th>No</th><th>Nama</th><th>Tanggal Transaksi</th><th>Pembayaran</th><th className="right">Nominal / Sisa Tagihan</th><th className="right">Detail</th></tr>
+            <tr><th>No</th><th>Nama</th><th>Tanggal Transaksi</th><th>Pembayaran</th><th className="right">Nominal Transaksi</th><th className="right">Detail</th></tr>
           </thead>
           <tbody>
             {visibleTx.length === 0 && <tr><td colSpan="6" className="muted center">
@@ -136,7 +136,7 @@ export default function Dashboard() {
                   <td><span className={'badge ' + (isCredit && !isPaid ? 'badge-danger' : 'badge-ok')}>
                     {isPaid ? 'Lunas' : isCredit ? 'Kredit' : 'Tunai'}
                   </span></td>
-                  <td className="right accent"><strong>{rupiah(isCredit ? balanceDue : t.total)}</strong></td>
+                  <td className="right accent"><strong>{rupiah(t.total)}</strong></td>
                   <td className="right">
                     <button className="btn btn-sm btn-primary" onClick={() => setSelectedTransaction(t)}>Detail</button>
                   </td>
