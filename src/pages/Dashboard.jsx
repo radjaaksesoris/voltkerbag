@@ -53,9 +53,9 @@ export default function Dashboard() {
   const cashOmzet = selectedTx
     .filter((t) => t.paymentType !== 'credit')
     .reduce((sum, t) => sum + t.total, 0)
-  const creditOmzet = selectedTx
+  const remainingCredit = selectedTx
     .filter((t) => t.paymentType === 'credit')
-    .reduce((sum, t) => sum + t.total, 0)
+    .reduce((sum, t) => sum + getTransactionBalanceDue(t), 0)
   const profit = selectedTx.reduce(
     (s, t) => s + t.items.reduce((a, i) => a + (i.price - (i.cost || 0)) * i.qty, 0), 0
   )
@@ -94,7 +94,7 @@ export default function Dashboard() {
           <strong>{rupiah(omzet)}</strong>
           <div className="dashboard-revenue-breakdown" aria-label="Rincian omzet berdasarkan metode pembayaran">
             <div><span>Tunai</span><strong>{rupiah(cashOmzet)}</strong></div>
-            <div><span>Kredit</span><strong>{rupiah(creditOmzet)}</strong></div>
+            <div><span>Sisa Kredit</span><strong>{rupiah(remainingCredit)}</strong></div>
           </div>
         </div>
         <div className="stat-card"><span>{hasFilter ? 'Laba Kotor Periode' : 'Laba Kotor Hari Ini'}</span><strong className="ok">{rupiah(profit)}</strong></div>
