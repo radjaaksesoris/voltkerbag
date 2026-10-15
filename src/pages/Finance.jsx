@@ -71,8 +71,6 @@ export default function Finance() {
       {actionError && <p className="form-error" role="alert">{actionError}</p>}
       <div className="stats-grid">
         <div className="stat-card"><span>Pemasukan Penjualan</span><strong className="ok">+{rupiah(income)}</strong></div>
-        <div className="stat-card"><span>Pengeluaran</span><strong className="danger">−{rupiah(expense)}</strong></div>
-        <div className="stat-card"><span>Modal Masuk</span><strong>{rupiah(capital)}</strong></div>
         <div className="stat-card highlight"><span>Saldo Kas</span><strong>{rupiah(balance)}</strong></div>
         <div className="stat-card"><span>Laba Kotor</span><strong className="ok">{rupiah(grossProfit)}</strong></div>
         <div className="stat-card"><span>Laba Bersih</span><strong className={netProfit >= 0 ? 'ok' : 'danger'}>{rupiah(netProfit)}</strong></div>
