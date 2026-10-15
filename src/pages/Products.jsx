@@ -318,7 +318,7 @@ export default function Products() {
       <input className="input search" placeholder="Cari produk atau kategori..."
         value={q} onChange={(e) => setQ(e.target.value)} />
 
-      <div className="card table-card">
+      <div className="card table-card products-table-card">
         <table className="products-table">
           <thead>
             <tr><th>Produk</th><th>Kategori</th><th>Satuan</th><th>Harga Beli</th><th>Harga Jual</th><th>Stok</th><th>Aksi</th></tr>
@@ -332,7 +332,10 @@ export default function Products() {
                 <td className="product-name-cell">
                   <div className="product-name-content">
                     {p.image_path && <img src={getProductImageUrl(p.image_path)} alt="" />}
-                    <strong>{p.name}</strong>
+                    <div className="product-name-text">
+                      <strong>{p.name}</strong>
+                      <span className="product-category-mobile">{p.category || '-'}</span>
+                    </div>
                   </div>
                 </td>
                 <td>{p.category || '-'}</td>
@@ -348,12 +351,15 @@ export default function Products() {
                 </td>
                 <td>
                   <span className={'badge ' + (availableQuantity(p, p.unit || 'pcs') <= 5 ? 'badge-danger' : 'badge-ok')}>
-                    {stockLabel(p)}
+                    <span className="product-stock-desktop">{stockLabel(p)}</span>
+                    <span className="product-stock-mobile">{stockInPcs(p)} pcs</span>
                   </span>
                 </td>
                 <td className="row-actions">
-                  <button className="btn btn-sm" onClick={() => openEdit(p)}>Edit</button>
-                  <button className="btn btn-sm btn-danger" onClick={() => del(p)}>Hapus</button>
+                  <div className="product-row-actions">
+                    <button className="btn btn-sm" onClick={() => openEdit(p)}>Edit</button>
+                    <button className="btn btn-sm btn-danger" onClick={() => del(p)}>Hapus</button>
+                  </div>
                 </td>
               </tr>
             ))}
