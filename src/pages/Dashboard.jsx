@@ -115,29 +115,34 @@ export default function Dashboard() {
         <h3>Transaksi Terakhir</h3>
         <table className="dashboard-transaction-table">
           <thead>
-            <tr><th>No</th><th>Nama</th><th>Tanggal Transaksi</th><th>Pembayaran</th><th className="right">Nominal Transaksi</th><th className="right">Detail</th></tr>
+            <tr><th>No</th><th>Nama</th><th>Tanggal Transaksi</th><th>Pembayaran</th><th className="right">Nominal / Sisa Tagihan</th><th className="right">Detail</th></tr>
           </thead>
           <tbody>
             {visibleTx.length === 0 && <tr><td colSpan="6" className="muted center">
               {hasFilter ? 'Tidak ada transaksi pada rentang tanggal ini.' : 'Belum ada transaksi.'}
             </td></tr>}
-            {pageTransactions.map((t, index) => (
-              <tr key={t.id}>
-                <td className="dashboard-row-number">{pageStart + index + 1}</td>
-                <td>
-                  <strong className="transaction-customer">{t.customerName || 'Pelanggan lama'}</strong>
-                  <span className="transaction-invoice">{getInvoiceNumber(t)}</span>
-                </td>
-                <td>{dateTime(t.createdAt)}</td>
-                <td><span className={'badge ' + (t.paymentType === 'credit' ? 'badge-danger' : 'badge-ok')}>
-                  {t.paymentType === 'credit' ? 'Kredit' : 'Tunai'}
-                </span></td>
-                <td className="right accent"><strong>{rupiah(t.total)}</strong></td>
-                <td className="right">
-                  <button className="btn btn-sm btn-primary" onClick={() => setSelectedTransaction(t)}>Detail</button>
-                </td>
-              </tr>
-            ))}
+            {pageTransactions.map((t, index) => {
+              const balanceDue = getTransactionBalanceDue(t)
+              const isCredit = t.paymentType === 'credit'
+              const isPaid = isCredit && balanceDue === 0
+              return (
+                <tr key={t.id}>
+                  <td className="dashboard-row-number">{pageStart + index + 1}</td>
+                  <td>
+                    <strong className="transaction-customer">{t.customerName || 'Pelanggan lama'}</strong>
+                    <span className="transaction-invoice">{getInvoiceNumber(t)}</span>
+                  </td>
+                  <td>{dateTime(t.createdAt)}</td>
+                  <td><span className={'badge ' + (isCredit && !isPaid ? 'badge-danger' : 'badge-ok')}>
+                    {isPaid ? 'Lunas' : isCredit ? 'Kredit' : 'Tunai'}
+                  </span></td>
+                  <td className="right accent"><strong>{rupiah(isCredit ? balanceDue : t.total)}</strong></td>
+                  <td className="right">
+                    <button className="btn btn-sm btn-primary" onClick={() => setSelectedTransaction(t)}>Detail</button>
+                  </td>
+                </tr>
+              )
+            })}
           </tbody>
         </table>
         {visibleTx.length > 0 && (
@@ -176,4 +181,15 @@ export default function Dashboard() {
       )}
     </div>
   )
+}
+
+function getTransactionBalanceDue(transaction) {
+  if (transaction.balanceDue != null && Number.isFinite(Number(transaction.balanceDue))) {
+    return Math.max(0, Number(transaction.balanceDue))
+  }
+  const total = Number(transaction.total) || 0
+  const paidAmount = transaction.paidAmount != null && Number.isFinite(Number(transaction.paidAmount))
+    ? Number(transaction.paidAmount)
+    : Math.min(total, Number(transaction.payment) || 0)
+  return Math.max(0, total - paidAmount)
 }
