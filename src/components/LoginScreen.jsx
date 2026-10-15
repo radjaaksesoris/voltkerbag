@@ -24,11 +24,24 @@ export default function LoginScreen({ configured, connectionError, onSignedIn, o
 
   return (
     <main className="login-page">
+      <aside className="login-brand" aria-label="VOLTKER Toko Tas">
+        <img className="login-brand-logo" src={import.meta.env.BASE_URL + 'voltker-logo.png'} alt="VOLTKER Toko Tas" />
+        <div className="login-brand-copy">
+          <span>VOLTKER · SISTEM TOKO</span>
+          <h2>Semua urusan toko, dalam satu tempat.</h2>
+          <p>Kelola penjualan, stok, dan keuangan dengan lebih mudah.</p>
+        </div>
+        <div className="login-brand-foot">
+          <span className="login-brand-dot" />
+          <span>Sistem kasir untuk Radja Aksesoris</span>
+        </div>
+      </aside>
       <section className="login-panel" aria-labelledby="login-title">
-        <img className="login-logo" src={import.meta.env.BASE_URL + 'voltker-logo.png'} alt="VOLTKER Toko Tas" />
-        <p className="login-eyebrow">Sistem toko online</p>
-        <h1 id="login-title">Masuk ke VOLTKER</h1>
-        <p className="login-description">Data tersimpan langsung di database server. Koneksi internet diperlukan untuk menggunakan aplikasi.</p>
+        <div className="login-panel-heading">
+          <p className="login-eyebrow">Selamat datang kembali</p>
+          <h1 id="login-title">Masuk ke akunmu</h1>
+          <p className="login-description">Gunakan akun administrator toko untuk melanjutkan.</p>
+        </div>
 
         {!configured ? (
           <div className="login-message error" role="alert">
