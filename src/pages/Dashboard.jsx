@@ -69,6 +69,13 @@ export default function Dashboard() {
   const totalAsset = products.reduce((sum, product) => sum + stockCostValue(product), 0)
   const lowStock = products.filter((product) => availableQuantity(product, product.unit || 'pcs') <= 5)
 
+  function updateSelectedTransaction(updatedTransaction) {
+    setTxs((current) => current.map((transaction) =>
+      transaction.id === updatedTransaction.id ? updatedTransaction : transaction
+    ))
+    setSelectedTransaction(updatedTransaction)
+  }
+
   return (
     <div className="page">
       <div className="dashboard-filter-row">
@@ -161,7 +168,11 @@ export default function Dashboard() {
         )}
       </div>
       {selectedTransaction && (
-        <TransactionDetails transaction={selectedTransaction} onClose={() => setSelectedTransaction(null)} />
+        <TransactionDetails
+          transaction={selectedTransaction}
+          onClose={() => setSelectedTransaction(null)}
+          onTransactionUpdated={updateSelectedTransaction}
+        />
       )}
     </div>
   )

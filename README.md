@@ -7,7 +7,7 @@ VOLTKER adalah aplikasi kasir React + Vite dengan Supabase sebagai sumber data u
 - Daftar nama pelanggan di tab Setting, dengan pilihan pelanggan wajib saat checkout.
 - Foto produk yang diunggah dari form Tambah/Edit Produk dan disimpan di Supabase Storage.
 - Kasir tunai/kredit dengan nama pelanggan wajib; checkout dan pengurangan stok diproses atomik di database.
-- Pembayaran cicilan kredit tanpa bunga, dengan validasi saldo dan pencatatan buku kas di server.
+- Pembayaran cicilan atau pelunasan kredit dari detail transaksi, dengan validasi saldo dan pencatatan buku kas di server.
 - Cetak ulang dan pratinjau struk continuous form 24 × 14 cm.
 - CRUD stok produk dan buku kas online.
 

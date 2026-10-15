@@ -945,6 +945,11 @@ select.input { appearance: none; }
 .transaction-details-payments li { display: flex; justify-content: space-between; gap: 12px; padding: 9px 11px; border-radius: 8px; background: var(--bg-soft); font-size: 11px; }
 .transaction-details-payments li span { color: var(--muted); }
 .transaction-details-payments li strong { color: var(--ink); }
+.transaction-details-payment-form { display: grid; gap: 8px; margin-top: 18px; padding-top: 15px; border-top: 1px solid var(--border); }
+.transaction-details-payment-form h4 { margin: 0; color: var(--ink); font-size: 12px; }
+.transaction-details-payment-form > .muted { margin: -4px 0 2px; line-height: 1.45; }
+.transaction-details-payment-form .form-error { margin: 0; }
+.transaction-details-payment-form .btn { justify-self: end; }
 
 @media (max-width: 1050px) {
   .sidebar { width: 78px; flex-basis: 78px; padding: 20px 8px 14px; }

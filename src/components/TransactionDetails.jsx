@@ -1,7 +1,10 @@
+import { useRef, useState } from 'react'
+import { recordTransactionPayment } from '../db'
 import { rupiah, dateTime } from '../format'
 import { getInvoiceNumber } from '../invoice'
+import MoneyInput from './MoneyInput'
 
-export default function TransactionDetails({ transaction, onClose }) {
+export default function TransactionDetails({ transaction, onClose, onTransactionUpdated }) {
   const payments = transaction.payments || []
   const paidAmount = transaction.paidAmount != null
     ? Number(transaction.paidAmount)
@@ -9,6 +12,56 @@ export default function TransactionDetails({ transaction, onClose }) {
   const balanceDue = transaction.balanceDue != null
     ? Number(transaction.balanceDue)
     : Math.max(0, (Number(transaction.total) || 0) - paidAmount)
+  const [amount, setAmount] = useState(() => String(balanceDue))
+  const [paymentError, setPaymentError] = useState('')
+  const [savingPayment, setSavingPayment] = useState(false)
+  const paymentRequest = useRef(null)
+  const operationLock = useRef(false)
+
+  async function submitPayment(event) {
+    event.preventDefault()
+    if (operationLock.current) return
+    setPaymentError('')
+    const paymentAmount = Number(amount)
+    if (!Number.isFinite(paymentAmount) || paymentAmount <= 0) {
+      setPaymentError('Masukkan nominal pembayaran lebih dari Rp0.')
+      return
+    }
+    if (paymentAmount > balanceDue) {
+      setPaymentError('Pembayaran tidak boleh melebihi sisa utang ' + rupiah(balanceDue) + '.')
+      return
+    }
+
+    const fingerprint = transaction.id + ':' + paymentAmount
+    if (paymentRequest.current?.fingerprint !== fingerprint) {
+      paymentRequest.current = { fingerprint, id: crypto.randomUUID() }
+    }
+
+    operationLock.current = true
+    setSavingPayment(true)
+    try {
+      await recordTransactionPayment(
+        transaction.id,
+        paymentAmount,
+        paymentRequest.current.id
+      )
+      paymentRequest.current = null
+      const updatedPaidAmount = paidAmount + paymentAmount
+      const updatedTransaction = {
+        ...transaction,
+        paidAmount: updatedPaidAmount,
+        balanceDue: Math.max(0, Number(transaction.total) - updatedPaidAmount),
+        payments: [...payments, { amount: paymentAmount, date: new Date().toISOString() }]
+      }
+      onTransactionUpdated?.(updatedTransaction)
+      setAmount(String(updatedTransaction.balanceDue))
+    } catch (error) {
+      setPaymentError('Gagal menyimpan pembayaran: ' + error.message)
+    } finally {
+      operationLock.current = false
+      setSavingPayment(false)
+    }
+  }
 
   return (
     <div className="overlay" onClick={onClose}>
@@ -66,6 +119,25 @@ export default function TransactionDetails({ transaction, onClose }) {
               </ul>
             )}
           </section>
+        )}
+
+        {transaction.paymentType === 'credit' && balanceDue > 0 && (
+          <form className="transaction-details-payment-form" onSubmit={submitPayment}>
+            <h4>Catat pembayaran</h4>
+            <p className="muted small">Isi sebesar sisa utang untuk melunasi, atau ubah nominal untuk membayar sebagian.</p>
+            <label htmlFor="transaction-payment-amount">Jumlah pembayaran</label>
+            <MoneyInput
+              id="transaction-payment-amount"
+              value={amount}
+              onChange={setAmount}
+              placeholder="Masukkan nominal pembayaran"
+              required
+            />
+            {paymentError && <p className="form-error" role="alert">{paymentError}</p>}
+            <button type="submit" className="btn btn-primary" disabled={savingPayment}>
+              {savingPayment ? 'Menyimpan...' : 'Simpan pembayaran'}
+            </button>
+          </form>
         )}
       </section>
     </div>
