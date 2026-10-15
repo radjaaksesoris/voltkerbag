@@ -322,45 +322,47 @@ export default function Transactions() {
         </div>
 
         <div className="card cart">
-          {cart.map((c) => (
-            <div key={c.productId + '-' + c.unit} className="cart-row">
-              <div className="cart-info">
-                <strong>{c.name}</strong>
-                <div className="cart-item-meta">
-                  <span className="muted small">{rupiah(c.price)} / {c.unit}</span>
-                  <select
-                    className="input cart-unit-select"
-                    aria-label={'Satuan jual ' + c.name}
-                    value={c.unit}
-                    onChange={(event) => changeCartUnit(c.productId, c.unit, event.target.value)}>
-                    {c.saleUnits.map((unit) => (
-                      <option
-                        key={unit}
-                        value={unit}
-                        disabled={unit !== c.unit && maxCartQuantity(c.productId, unit, c.unit) < c.qty}>
-                        {unit}
-                      </option>
-                    ))}
-                  </select>
+          <div className="cart-items">
+            {cart.map((c) => (
+              <div key={c.productId + '-' + c.unit} className="cart-row">
+                <div className="cart-info">
+                  <strong>{c.name}</strong>
+                  <div className="cart-item-meta">
+                    <span className="muted small">{rupiah(c.price)} / {c.unit}</span>
+                    <select
+                      className="input cart-unit-select"
+                      aria-label={'Satuan jual ' + c.name}
+                      value={c.unit}
+                      onChange={(event) => changeCartUnit(c.productId, c.unit, event.target.value)}>
+                      {c.saleUnits.map((unit) => (
+                        <option
+                          key={unit}
+                          value={unit}
+                          disabled={unit !== c.unit && maxCartQuantity(c.productId, unit, c.unit) < c.qty}>
+                          {unit}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+                <div className="cart-item-bottom">
+                  <div className="qty-ctrl">
+                    <button aria-label={'Kurangi jumlah ' + c.name} onClick={() => setQty(c.productId, c.unit, c.qty - 1)}>
+                      <Icon name="minus" size={15} />
+                    </button>
+                    <span>{c.qty} {c.unit}</span>
+                    <button
+                      aria-label={'Tambah jumlah ' + c.name}
+                      disabled={c.qty >= maxCartQuantity(c.productId, c.unit)}
+                      onClick={() => setQty(c.productId, c.unit, c.qty + 1)}>
+                      <Icon name="plus" size={15} />
+                    </button>
+                  </div>
+                  <span className="cart-sub">{rupiah(c.price * c.qty)}</span>
                 </div>
               </div>
-              <div className="cart-item-bottom">
-                <div className="qty-ctrl">
-                  <button aria-label={'Kurangi jumlah ' + c.name} onClick={() => setQty(c.productId, c.unit, c.qty - 1)}>
-                    <Icon name="minus" size={15} />
-                  </button>
-                  <span>{c.qty} {c.unit}</span>
-                  <button
-                    aria-label={'Tambah jumlah ' + c.name}
-                    disabled={c.qty >= maxCartQuantity(c.productId, c.unit)}
-                    onClick={() => setQty(c.productId, c.unit, c.qty + 1)}>
-                    <Icon name="plus" size={15} />
-                  </button>
-                </div>
-                <span className="cart-sub">{rupiah(c.price * c.qty)}</span>
-              </div>
-            </div>
-          ))}
+            ))}
+          </div>
 
           <label>Nama pelanggan *</label>
           <CustomerSelect

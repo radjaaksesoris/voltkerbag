@@ -629,6 +629,7 @@ select.input { appearance: none; }
   color: var(--accent);
 }
 .cart { position: static; }
+.cart-items:empty { min-height: 92px; }
 .cart-row { display: grid; gap: 9px; padding: 12px 0; border-bottom: 1px solid var(--border); }
 .cart-info { display: grid; min-width: 0; gap: 6px; }
 .cart-info > strong { color: var(--ink); font-size: 13px; line-height: 1.35; overflow-wrap: anywhere; }
