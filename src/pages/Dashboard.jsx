@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { getAll, onRefresh } from '../db'
-import { rupiah, dateTime, isToday } from '../format'
+import { rupiah, dateOnly, dateTime, isToday } from '../format'
 import DateRangeFilter from '../components/DateRangeFilter'
 import { hasDateRange, isInDateRange } from '../dateFilter'
 import TransactionDetails from '../components/TransactionDetails'
@@ -114,9 +114,9 @@ export default function Dashboard() {
         <table className="dashboard-transaction-table">
           <thead>
             <tr>
-              <th>No</th>
+              <th className="dashboard-row-number">No</th>
               <th>Nama</th>
-              <th>Tanggal Transaksi</th>
+              <th>Tanggal</th>
               <th>
                 <button
                   type="button"
@@ -131,7 +131,7 @@ export default function Dashboard() {
                   <span className="dashboard-payment-sort-indicator" aria-hidden="true">{creditFirst ? '↑' : '↕'}</span>
                 </button>
               </th>
-              <th className="right">Nominal Transaksi</th>
+              <th className="right">Nominal</th>
               <th className="right">Detail</th>
             </tr>
           </thead>
@@ -151,11 +151,17 @@ export default function Dashboard() {
                     <strong className="transaction-customer">{t.customerName || 'Pelanggan lama'}</strong>
                     <span className="transaction-invoice">{getInvoiceNumber(t)}</span>
                   </td>
-                  <td>{dateTime(t.createdAt)}</td>
+                  <td>
+                    <span className="dashboard-date-desktop">{dateTime(t.createdAt)}</span>
+                    <span className="dashboard-date-mobile">{dateOnly(t.createdAt)}</span>
+                  </td>
                   <td><span className={'badge ' + (isPartiallyPaid ? 'badge-partial' : isCredit && !isPaid ? 'badge-danger' : 'badge-ok')}>
                     {isPaid ? 'Lunas' : isCredit ? 'Kredit' : 'Tunai'}
                   </span></td>
-                  <td className="right accent"><strong>{rupiah(t.total)}</strong></td>
+                  <td className="right accent">
+                    <strong className="dashboard-amount-desktop">{rupiah(t.total)}</strong>
+                    <strong className="dashboard-amount-mobile">{rupiah(t.total).replace(/[^\d.,-]/g, '')}</strong>
+                  </td>
                   <td className="right">
                     <button className="btn btn-sm btn-primary" onClick={() => setSelectedTransaction(t)}>Detail</button>
                   </td>
