@@ -50,6 +50,12 @@ export default function Dashboard() {
     ? txs.filter((t) => isInDateRange(t.createdAt, dateRange))
     : txs.filter((t) => isToday(t.createdAt))
   const omzet = selectedTx.reduce((s, t) => s + t.total, 0)
+  const cashOmzet = selectedTx
+    .filter((t) => t.paymentType !== 'credit')
+    .reduce((sum, t) => sum + t.total, 0)
+  const creditOmzet = selectedTx
+    .filter((t) => t.paymentType === 'credit')
+    .reduce((sum, t) => sum + t.total, 0)
   const profit = selectedTx.reduce(
     (s, t) => s + t.items.reduce((a, i) => a + (i.price - (i.cost || 0)) * i.qty, 0), 0
   )
@@ -79,7 +85,14 @@ export default function Dashboard() {
         }} />
       </div>
       <div className="stats-grid dashboard-stats-grid">
-        <div className="stat-card highlight"><span>{hasFilter ? 'Omzet Periode' : 'Omzet Hari Ini'}</span><strong>{rupiah(omzet)}</strong></div>
+        <div className="stat-card highlight dashboard-revenue-card">
+          <span>{hasFilter ? 'Omzet Periode' : 'Omzet Hari Ini'}</span>
+          <strong>{rupiah(omzet)}</strong>
+          <div className="dashboard-revenue-breakdown" aria-label="Rincian omzet berdasarkan metode pembayaran">
+            <div><span>Tunai</span><strong>{rupiah(cashOmzet)}</strong></div>
+            <div><span>Kredit</span><strong>{rupiah(creditOmzet)}</strong></div>
+          </div>
+        </div>
         <div className="stat-card"><span>{hasFilter ? 'Laba Kotor Periode' : 'Laba Kotor Hari Ini'}</span><strong className="ok">{rupiah(profit)}</strong></div>
         <div className="stat-card dashboard-stock-summary">
           <div className="dashboard-stock-metric">
