@@ -364,35 +364,37 @@ export default function Transactions() {
             ))}
           </div>
 
-          <label>Nama pelanggan *</label>
-          <CustomerSelect
-            customers={customers}
-            value={customerName}
-            onChange={setCustomerName}
-          />
-          <label>Metode pembayaran</label>
-          <select className="input" value={paymentType} onChange={(e) => setPaymentType(e.target.value)}>
-            <option value="cash">Tunai</option>
-            <option value="credit">Kredit tanpa bunga</option>
-          </select>
-          <div className="cart-total">
-            <span>Total</span>
-            <strong className="accent">{rupiah(total)}</strong>
-          </div>
-          <label>{paymentType === 'cash' ? 'Uang tunai diterima' : 'Pembayaran awal / DP'}</label>
-          <MoneyInput value={pay} onChange={setPay}
-            placeholder={paymentType === 'cash' ? total ? String(total) : '0' : '0 jika belum membayar'} />
-          {paymentType === 'cash' ? (
-            <div className={'change ' + (change < 0 ? 'negative' : '')}>
-              Kembalian: <strong>{rupiah(change < 0 ? 0 : change)}</strong>
+          <div className="cart-checkout">
+            <label>Nama pelanggan *</label>
+            <CustomerSelect
+              customers={customers}
+              value={customerName}
+              onChange={setCustomerName}
+            />
+            <label>Metode pembayaran</label>
+            <select className="input" value={paymentType} onChange={(e) => setPaymentType(e.target.value)}>
+              <option value="cash">Tunai</option>
+              <option value="credit">Kredit tanpa bunga</option>
+            </select>
+            <div className="cart-total">
+              <span>Total</span>
+              <strong className="accent">{rupiah(total)}</strong>
             </div>
-          ) : (
-            <div className="change credit-balance">Sisa kredit: <strong>{rupiah(Math.max(0, total - paidNow))}</strong></div>
-          )}
-          {checkoutError && <p className="form-error" role="alert">{checkoutError}</p>}
-          <button className="btn btn-primary btn-block btn-lg" onClick={checkout} disabled={cart.length === 0 || !customerName || saving}>
-            {saving ? 'Menyimpan…' : <><Icon name="bolt" size={17} /> Simpan Transaksi</>}
-          </button>
+            <label>{paymentType === 'cash' ? 'Uang tunai diterima' : 'Pembayaran awal / DP'}</label>
+            <MoneyInput value={pay} onChange={setPay}
+              placeholder={paymentType === 'cash' ? total ? String(total) : '0' : '0 jika belum membayar'} />
+            {paymentType === 'cash' ? (
+              <div className={'change ' + (change < 0 ? 'negative' : '')}>
+                Kembalian: <strong>{rupiah(change < 0 ? 0 : change)}</strong>
+              </div>
+            ) : (
+              <div className="change credit-balance">Sisa kredit: <strong>{rupiah(Math.max(0, total - paidNow))}</strong></div>
+            )}
+            {checkoutError && <p className="form-error" role="alert">{checkoutError}</p>}
+            <button className="btn btn-primary btn-block btn-lg" onClick={checkout} disabled={cart.length === 0 || !customerName || saving}>
+              {saving ? 'Menyimpan…' : <><Icon name="bolt" size={17} /> Simpan Transaksi</>}
+            </button>
+          </div>
         </div>
       </div>
 
