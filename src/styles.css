@@ -277,6 +277,7 @@ button:focus-visible, input:focus-visible, select:focus-visible {
 }
 .page-toolbar p { font-size: 12px; }
 .page-toolbar p strong { color: var(--text); font-weight: 700; }
+.transactions-page > .page-toolbar { margin-bottom: 5px; }
 .date-filter {
   display: flex;
   align-items: flex-end;

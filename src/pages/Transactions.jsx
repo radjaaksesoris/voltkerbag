@@ -262,7 +262,7 @@ export default function Transactions() {
   const summaryOmzet = summaryTransactions.reduce((s, t) => s + t.total, 0)
 
   return (
-    <div className="page">
+    <div className="page transactions-page">
       <div className="page-toolbar">
         <p className="muted">Hari ini <strong>{summaryTransactions.length} transaksi</strong> · {rupiah(summaryOmzet)}</p>
       </div>
