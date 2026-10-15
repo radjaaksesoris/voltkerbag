@@ -78,8 +78,7 @@ export default function Finance() {
         <div className="stat-card"><span>Pemasukan Penjualan</span><strong className="ok">+{rupiah(income)}</strong></div>
         <div className="stat-card"><span>Total Kredit</span><strong className="danger">{rupiah(totalCredit)}</strong></div>
         <div className="stat-card highlight"><span>Saldo Kas</span><strong>{rupiah(balance)}</strong></div>
-        <div className="stat-card"><span>Laba Kotor</span><strong className="ok">{rupiah(grossProfit)}</strong></div>
-        <div className="stat-card"><span>Laba Bersih</span><strong className={netProfit >= 0 ? 'ok' : 'danger'}>{rupiah(netProfit)}</strong></div>
+        <div className="stat-card"><span>Laba</span><strong className={netProfit >= 0 ? 'ok' : 'danger'}>{rupiah(netProfit)}</strong></div>
       </div>
 
       <div className="finance-date-filter">
