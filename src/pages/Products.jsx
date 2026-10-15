@@ -5,7 +5,7 @@ import MoneyInput from '../components/MoneyInput.jsx'
 import CategorySelect from '../components/CategorySelect.jsx'
 import UnitSelect from '../components/UnitSelect.jsx'
 import Icon from '../components/Icon.jsx'
-import { availableQuantity, productPrice, quantityToPcs, saleUnitPrice, saleUnits, stockInPcs, unitFactor, stockLabel } from '../productUnits'
+import { availableQuantity, productPrice, purchaseCostUnit, quantityToPcs, saleUnitPrice, saleUnits, stockInPcs, unitFactor, stockLabel } from '../productUnits'
 
 const EMPTY = {
   name: '',
@@ -179,7 +179,7 @@ export default function Products() {
       return {
         ...current,
         unit,
-        cost: String(Math.round((Number(current.cost) || 0) * conversion)),
+        cost: current.cost,
         stock: String((Number(current.stock) || 0) / conversion)
       }
     })
@@ -321,7 +321,7 @@ export default function Products() {
       <div className="card table-card">
         <table className="products-table">
           <thead>
-            <tr><th>Produk</th><th>Kategori</th><th>Satuan</th><th>Harga Beli / unit</th><th>Harga Jual</th><th>Stok</th><th>Aksi</th></tr>
+            <tr><th>Produk</th><th>Kategori</th><th>Satuan</th><th>Harga Beli / satuan dasar</th><th>Harga Jual</th><th>Stok</th><th>Aksi</th></tr>
           </thead>
           <tbody>
             {filtered.length === 0 && (
@@ -337,7 +337,7 @@ export default function Products() {
                 </td>
                 <td>{p.category || '-'}</td>
                 <td>{p.unit || 'pcs'}</td>
-                <td>{rupiah(p.cost)}</td>
+                <td>{rupiah(p.cost)}/{purchaseCostUnit(p.unit)}</td>
                 <td className="product-price-cell">
                   {saleUnits(p.unit || 'pcs').map((unit) => (
                     <div className="product-price-row" key={unit}>
@@ -444,7 +444,7 @@ export default function Products() {
             )}
             <div className="grid-2 product-stock-fields">
               <div>
-                <label>Harga Beli per {form.unit}</label>
+                <label>Harga Beli per {purchaseCostUnit(form.unit)}</label>
                 <MoneyInput inputRef={costInputRef} value={form.cost} onChange={(cost) => setForm({ ...form, cost })} />
               </div>
               <div>
@@ -452,7 +452,7 @@ export default function Products() {
                 <input ref={stockInputRef} className="input" type="number" min="0" step="any" value={form.stock} onChange={(e) => setForm({ ...form, stock: e.target.value })} />
               </div>
             </div>
-            <p className="muted small product-stock-hint">Stok disimpan sebagai pcs agar penjualan dalam satuan berbeda mengurangi persediaan dengan tepat. Harga beli dan stok mengikuti satuan utama {form.unit}.</p>
+            <p className="muted small product-stock-hint">Untuk satuan pcs, lusin, dan kodi, harga beli dihitung per pcs dan stok dikonversi ke pcs. Untuk satuan khusus, harga beli mengikuti satuan produk.</p>
             <div className="modal-actions">
               {actionError && <p className="form-error" role="alert">{actionError}</p>}
               <button type="button" className="btn" disabled={saving} onClick={closeProductForm}>Batal</button>

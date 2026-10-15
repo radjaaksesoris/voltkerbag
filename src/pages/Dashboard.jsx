@@ -5,7 +5,7 @@ import DateRangeFilter from '../components/DateRangeFilter'
 import { hasDateRange, isInDateRange } from '../dateFilter'
 import TransactionDetails from '../components/TransactionDetails'
 import { getInvoiceNumber } from '../invoice'
-import { availableQuantity, stockInPcs, unitFactor } from '../productUnits'
+import { availableQuantity, stockCostValue } from '../productUnits'
 
 const TRANSACTIONS_PER_PAGE = 15
 
@@ -66,10 +66,7 @@ export default function Dashboard() {
   const currentPage = Math.min(transactionPage, pageCount)
   const pageStart = (currentPage - 1) * TRANSACTIONS_PER_PAGE
   const pageTransactions = visibleTx.slice(pageStart, pageStart + TRANSACTIONS_PER_PAGE)
-  const totalAsset = products.reduce(
-    (sum, product) => sum + (Number(product.cost) || 0) * stockInPcs(product) / unitFactor(product.unit),
-    0
-  )
+  const totalAsset = products.reduce((sum, product) => sum + stockCostValue(product), 0)
   const lowStock = products.filter((product) => availableQuantity(product, product.unit || 'pcs') <= 5)
 
   return (

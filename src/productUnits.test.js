@@ -1,6 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { availableQuantity, productPrice, quantityToPcs, saleUnitPrice, saleUnits, stockInPcs, stockLabel, unitCost, unitFactor } from './productUnits.js'
+import { availableQuantity, productPrice, purchaseCostUnit, quantityToPcs, saleUnitPrice, saleUnits, stockCostValue, stockInPcs, stockLabel, unitCost, unitFactor } from './productUnits.js'
 
 test('uses the standard conversion factors', () => {
   assert.equal(unitFactor('pcs'), 1)
@@ -24,6 +24,15 @@ test('reads legacy stock in the product main unit', () => {
   assert.equal(stockLabel({ unit: 'kodi', stock_pcs: 28 }), '1 kodi 8 pcs')
 })
 
+test('values standard-unit stock and sale costs using cost per piece', () => {
+  const product = { unit: 'kodi', stock_pcs: 68, cost: 40000 }
+  assert.equal(purchaseCostUnit(product.unit), 'pcs')
+  assert.equal(stockCostValue(product), 2720000)
+  assert.equal(unitCost(product, 'pcs'), 40000)
+  assert.equal(unitCost(product, 'lusin'), 480000)
+  assert.equal(unitCost(product, 'kodi'), 800000)
+})
+
 test('applies each sale-tier price per piece and multiplies it by the selected unit size', () => {
   const product = {
     unit: 'kodi',
@@ -39,13 +48,15 @@ test('applies each sale-tier price per piece and multiplies it by the selected u
   assert.equal(saleUnitPrice(product, 'pcs'), 50000)
   assert.equal(saleUnitPrice(product, 'lusin'), 570000)
   assert.equal(saleUnitPrice(product, 'kodi'), 900000)
-  assert.equal(unitCost(product, 'pcs'), 5000)
-  assert.equal(unitCost(product, 'lusin'), 60000)
-  assert.equal(unitCost(product, 'kodi'), 100000)
+  assert.equal(unitCost(product, 'pcs'), 100000)
+  assert.equal(unitCost(product, 'lusin'), 1200000)
+  assert.equal(unitCost(product, 'kodi'), 2000000)
 })
 
 test('keeps custom product units limited to their own sale unit', () => {
   assert.deepEqual(saleUnits('pak'), ['pak'])
+  assert.equal(purchaseCostUnit('pak'), 'pak')
   assert.equal(productPrice({ unit: 'pak', price: 25000 }, 'pak'), 25000)
   assert.equal(saleUnitPrice({ unit: 'pak', price: 25000 }, 'pak'), 25000)
+  assert.equal(stockCostValue({ unit: 'pak', stock: 3, cost: 5000 }), 15000)
 })

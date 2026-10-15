@@ -498,7 +498,7 @@ begin
       raise exception 'Harga produk "%" berubah. Muat ulang halaman sebelum menyimpan.', product_row.name;
     end if;
 
-    sale_cost := product_row.cost * sale_factor / base_factor;
+    sale_cost := product_row.cost * sale_factor;
     sale_total := sale_total + sale_unit_price * item_qty;
     saved_items := saved_items || jsonb_build_array(jsonb_build_object(
       'productId', product_row.id,

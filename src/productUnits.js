@@ -19,9 +19,19 @@ export function saleUnits(baseUnit) {
     : [String(baseUnit || 'pcs').trim()]
 }
 
+export function purchaseCostUnit(unit) {
+  return saleUnits(unit).length === STANDARD_UNITS.length
+    ? 'pcs'
+    : String(unit || 'pcs').trim()
+}
+
 export function stockInPcs(product) {
   if (product.stock_pcs != null) return Math.max(0, Number(product.stock_pcs) || 0)
   return Math.max(0, (Number(product.stock) || 0) * unitFactor(product.unit))
+}
+
+export function stockCostValue(product) {
+  return (Number(product.cost) || 0) * stockInPcs(product)
 }
 
 export function quantityToPcs(quantity, unit) {
@@ -49,7 +59,7 @@ export function saleUnitPrice(product, unit) {
 }
 
 export function unitCost(product, unit) {
-  return (Number(product.cost) || 0) * unitFactor(unit) / unitFactor(product.unit)
+  return (Number(product.cost) || 0) * unitFactor(unit)
 }
 
 export function stockLabel(product) {
