@@ -386,7 +386,7 @@ export default function Transactions() {
               <span>Total</span>
               <strong className="accent">{rupiah(total)}</strong>
             </div>
-            <label>{paymentType === 'cash' ? 'Uang tunai diterima' : 'Pembayaran awal / DP'}</label>
+            {paymentType === 'credit' && <label>Pembayaran awal / DP</label>}
             <MoneyInput value={pay} onChange={setPay}
               placeholder={paymentType === 'cash' ? total ? String(total) : '0' : '0 jika belum membayar'} />
             {paymentType === 'cash' ? (
