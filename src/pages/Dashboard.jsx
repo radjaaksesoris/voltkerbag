@@ -112,7 +112,7 @@ export default function Dashboard() {
                   <span className="transaction-invoice">{getInvoiceNumber(t)}</span>
                 </td>
                 <td>{dateTime(t.createdAt)}</td>
-                <td><span className={'badge ' + (t.paymentType === 'credit' ? 'badge-neutral' : 'badge-ok')}>
+                <td><span className={'badge ' + (t.paymentType === 'credit' ? 'badge-danger' : 'badge-ok')}>
                   {t.paymentType === 'credit' ? 'Kredit' : 'Tunai'}
                 </span></td>
                 <td className="right accent"><strong>{rupiah(t.total)}</strong></td>
