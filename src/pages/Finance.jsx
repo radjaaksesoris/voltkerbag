@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { getAll, remove, onRefresh } from '../db'
-import { rupiah, dateTime } from '../format'
+import { rupiah, dateOnly, dateTime } from '../format'
 import DateRangeFilter from '../components/DateRangeFilter.jsx'
 import { hasDateRange, isInDateRange } from '../dateFilter'
 
@@ -93,14 +93,17 @@ export default function Finance() {
         <div className="card table-card finance-ledger">
           <h3>Buku Kas</h3>
           <table className="finance-ledger-table">
-            <thead><tr><th>Waktu</th><th>Jenis</th><th>Kategori</th><th>Catatan</th><th className="right">Nominal</th><th></th></tr></thead>
+            <thead><tr><th><span className="finance-ledger-time-label">Waktu</span><span className="finance-ledger-date-label">Tanggal</span></th><th>Jenis</th><th>Kategori</th><th>Catatan</th><th>Nominal</th><th></th></tr></thead>
             <tbody>
               {sorted.length === 0 && <tr><td colSpan="6" className="muted center">
                 {hasFilter ? 'Tidak ada catatan pada rentang tanggal ini.' : 'Belum ada catatan.'}
               </td></tr>}
               {sorted.map((e) => (
                 <tr key={e.id}>
-                  <td>{dateTime(e.date || e.createdAt)}</td>
+                  <td>
+                    <span className="finance-ledger-datetime">{dateTime(e.date || e.createdAt)}</span>
+                    <span className="finance-ledger-date">{dateOnly(e.date || e.createdAt)}</span>
+                  </td>
                   <td><span className={'badge ' + TYPES[e.type].cls}>{TYPES[e.type].label}</span></td>
                   <td>{e.category || '-'}</td>
                   <td>{e.note || '-'}</td>
