@@ -607,6 +607,7 @@ select.input { appearance: none; }
 .badge { padding: 4px 9px; border-radius: 5px; font-size: 11px; font-weight: 700; }
 .badge-ok { background: #e4eee7; color: #3b765e; }
 .badge-danger { background: #f5e5e0; color: #a5222a; }
+.badge-partial { background: #fff0d6; color: #855400; }
 .badge-neutral { background: #eee9df; color: #766c63; }
 .form-error { margin: 0 0 12px; color: var(--danger); font-size: 12px; font-weight: 600; }
 

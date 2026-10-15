@@ -143,6 +143,7 @@ export default function Dashboard() {
               const balanceDue = getTransactionBalanceDue(t)
               const isCredit = t.paymentType === 'credit'
               const isPaid = isCredit && balanceDue === 0
+              const isPartiallyPaid = isCredit && !isPaid && getTransactionPaidAmount(t) > 0
               return (
                 <tr key={t.id}>
                   <td className="dashboard-row-number">{pageStart + index + 1}</td>
@@ -151,7 +152,7 @@ export default function Dashboard() {
                     <span className="transaction-invoice">{getInvoiceNumber(t)}</span>
                   </td>
                   <td>{dateTime(t.createdAt)}</td>
-                  <td><span className={'badge ' + (isCredit && !isPaid ? 'badge-danger' : 'badge-ok')}>
+                  <td><span className={'badge ' + (isPartiallyPaid ? 'badge-partial' : isCredit && !isPaid ? 'badge-danger' : 'badge-ok')}>
                     {isPaid ? 'Lunas' : isCredit ? 'Kredit' : 'Tunai'}
                   </span></td>
                   <td className="right accent"><strong>{rupiah(t.total)}</strong></td>
@@ -206,8 +207,12 @@ function getTransactionBalanceDue(transaction) {
     return Math.max(0, Number(transaction.balanceDue))
   }
   const total = Number(transaction.total) || 0
-  const paidAmount = transaction.paidAmount != null && Number.isFinite(Number(transaction.paidAmount))
-    ? Number(transaction.paidAmount)
-    : Math.min(total, Number(transaction.payment) || 0)
-  return Math.max(0, total - paidAmount)
+  return Math.max(0, total - getTransactionPaidAmount(transaction))
+}
+
+function getTransactionPaidAmount(transaction) {
+  if (transaction.paidAmount != null && Number.isFinite(Number(transaction.paidAmount))) {
+    return Number(transaction.paidAmount)
+  }
+  return Math.min(Number(transaction.total) || 0, Number(transaction.payment) || 0)
 }
