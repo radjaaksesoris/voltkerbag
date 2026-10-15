@@ -1080,6 +1080,8 @@ select.input { appearance: none; }
   .product-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 9px; }
   .product-card { padding: 10px; }
   .table-card { margin-inline: -2px; }
+  .products-table th:nth-child(3),
+  .products-table td:nth-child(3) { display: none; }
   table { font-size: 12px; }
   th { padding: 9px 8px; }
   td { padding: 11px 8px; }

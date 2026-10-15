@@ -321,7 +321,7 @@ export default function Products() {
       <div className="card table-card">
         <table className="products-table">
           <thead>
-            <tr><th>Produk</th><th>Kategori</th><th>Satuan</th><th>Harga Beli / satuan dasar</th><th>Harga Jual</th><th>Stok</th><th>Aksi</th></tr>
+            <tr><th>Produk</th><th>Kategori</th><th>Satuan</th><th>Harga Beli</th><th>Harga Jual</th><th>Stok</th><th>Aksi</th></tr>
           </thead>
           <tbody>
             {filtered.length === 0 && (
