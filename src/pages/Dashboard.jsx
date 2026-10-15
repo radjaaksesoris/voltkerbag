@@ -13,6 +13,7 @@ export default function Dashboard() {
   const [products, setProducts] = useState([])
   const [txs, setTxs] = useState([])
   const [dateRange, setDateRange] = useState({ from: '', to: '' })
+  const [paymentFilter, setPaymentFilter] = useState('all')
   const [transactionPage, setTransactionPage] = useState(1)
   const [selectedTransaction, setSelectedTransaction] = useState(null)
   const [loadError, setLoadError] = useState('')
@@ -53,9 +54,14 @@ export default function Dashboard() {
   const profit = selectedTx.reduce(
     (s, t) => s + t.items.reduce((a, i) => a + (i.price - (i.cost || 0)) * i.qty, 0), 0
   )
-  const visibleTx = hasFilter
+  const dateFilteredTx = hasFilter
     ? txs.filter((t) => isInDateRange(t.createdAt, dateRange))
     : txs
+  const visibleTx = dateFilteredTx.filter((transaction) => {
+    if (paymentFilter === 'cash') return transaction.paymentType !== 'credit'
+    if (paymentFilter === 'credit') return transaction.paymentType === 'credit'
+    return true
+  })
   const pageCount = Math.max(1, Math.ceil(visibleTx.length / TRANSACTIONS_PER_PAGE))
   const currentPage = Math.min(transactionPage, pageCount)
   const pageStart = (currentPage - 1) * TRANSACTIONS_PER_PAGE
@@ -105,11 +111,38 @@ export default function Dashboard() {
         <h3>Transaksi Terakhir</h3>
         <table className="dashboard-transaction-table">
           <thead>
-            <tr><th>No</th><th>Nama</th><th>Tanggal Transaksi</th><th>Pembayaran</th><th className="right">Nominal Transaksi</th><th className="right">Detail</th></tr>
+            <tr>
+              <th>No</th>
+              <th>Nama</th>
+              <th>Tanggal Transaksi</th>
+              <th>
+                <label className="dashboard-payment-filter">
+                  <span>Pembayaran</span>
+                  <select
+                    className="dashboard-payment-filter-select"
+                    aria-label="Filter metode pembayaran"
+                    value={paymentFilter}
+                    onChange={(event) => {
+                      setPaymentFilter(event.target.value)
+                      setTransactionPage(1)
+                    }}>
+                    <option value="all">Semua</option>
+                    <option value="credit">Kredit</option>
+                    <option value="cash">Tunai</option>
+                  </select>
+                </label>
+              </th>
+              <th className="right">Nominal Transaksi</th>
+              <th className="right">Detail</th>
+            </tr>
           </thead>
           <tbody>
             {visibleTx.length === 0 && <tr><td colSpan="6" className="muted center">
-              {hasFilter ? 'Tidak ada transaksi pada rentang tanggal ini.' : 'Belum ada transaksi.'}
+              {paymentFilter !== 'all'
+                ? hasFilter
+                  ? 'Tidak ada transaksi dengan metode pembayaran ini pada rentang tanggal tersebut.'
+                  : 'Tidak ada transaksi dengan metode pembayaran ini.'
+                : hasFilter ? 'Tidak ada transaksi pada rentang tanggal ini.' : 'Belum ada transaksi.'}
             </td></tr>}
             {pageTransactions.map((t, index) => {
               const balanceDue = getTransactionBalanceDue(t)
