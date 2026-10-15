@@ -1,9 +1,8 @@
 import { useEffect, useMemo, useState } from 'react'
-import { getAll, put, remove, onRefresh } from '../db'
+import { getAll, remove, onRefresh } from '../db'
 import { rupiah, dateTime } from '../format'
 import DateRangeFilter from '../components/DateRangeFilter.jsx'
 import { hasDateRange, isInDateRange } from '../dateFilter'
-import MoneyInput from '../components/MoneyInput.jsx'
 
 const TYPES = {
   income: { label: 'Pemasukan', cls: 'badge-ok' },
@@ -15,7 +14,6 @@ export default function Finance() {
   const [entries, setEntries] = useState([])
   const [txs, setTxs] = useState([])
   const [dateRange, setDateRange] = useState({ from: '', to: '' })
-  const [form, setForm] = useState({ type: 'expense', amount: '', note: '', category: '' })
   const [loadError, setLoadError] = useState('')
   const [actionError, setActionError] = useState('')
   const [loaded, setLoaded] = useState(false)
@@ -61,22 +59,6 @@ export default function Finance() {
   )
   const netProfit = grossProfit - expense
 
-  async function addEntry(e) {
-    e.preventDefault()
-    setActionError('')
-    if (!form.amount || Number(form.amount) <= 0) { setActionError('Nominal wajib lebih dari Rp0.'); return }
-    try {
-      await put('finance', {
-        type: form.type, amount: Number(form.amount),
-        note: form.note.trim(), category: form.category.trim(),
-        date: new Date().toISOString()
-      })
-      setForm({ type: 'expense', amount: '', note: '', category: '' })
-    } catch (error) {
-      setActionError(error.message || 'Gagal menyimpan catatan ke server.')
-    }
-  }
-
   if (!loaded) return <div className="page"><p className="muted">Memuat data keuangan dari server...</p></div>
   if (loadError) {
     return <div className="page"><p className="form-error" role="alert">{loadError}</p>
@@ -105,24 +87,6 @@ export default function Finance() {
       </div>
 
       <div className="finance-grid">
-        <form className="card" onSubmit={addEntry}>
-          <h3>Catat Manual</h3>
-          <label>Jenis</label>
-          <select className="input" value={form.type} onChange={(e) => setForm({ ...form, type: e.target.value })}>
-            <option value="expense">Pengeluaran (operasional, gaji, dll)</option>
-            <option value="capital">Modal (setoran pemilik)</option>
-            <option value="income">Pemasukan lain</option>
-          </select>
-          <label>Nominal</label>
-          <MoneyInput value={form.amount} onChange={(amount) => setForm({ ...form, amount })} />
-          <label>Kategori</label>
-          <input className="input" value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} placeholder="cth: Listrik, Sewa, Gaji" />
-          <label>Catatan</label>
-          <input className="input" value={form.note} onChange={(e) => setForm({ ...form, note: e.target.value })} placeholder="cth: Bayar listrik Oktober" />
-          {actionError && <p className="form-error" role="alert">{actionError}</p>}
-          <button type="submit" className="btn btn-primary btn-block">Simpan Catatan</button>
-        </form>
-
         <div className="card table-card">
           <h3>Buku Kas</h3>
           <table>
