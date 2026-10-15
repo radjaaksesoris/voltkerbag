@@ -913,6 +913,7 @@ select.input { appearance: none; }
 .product-modal .modal-actions { padding-top: 15px; border-top: 1px solid rgba(145, 32, 39, .12); }
 .modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 18px; }
 .success-icon { display: flex; align-items: center; justify-content: center; width: 64px; height: 64px; margin: 0 auto 16px; border-radius: 50%; background: #e4eee7; color: var(--ok); }
+.success-actions { display: flex; justify-content: center; gap: 12px; margin-top: 14px; }
 .transaction-details { max-width: 760px; }
 .transaction-details-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 14px; margin-bottom: 18px; }
 .transaction-details-heading h3 { margin: 0 0 4px; }

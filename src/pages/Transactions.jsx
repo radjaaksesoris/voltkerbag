@@ -412,11 +412,13 @@ export default function Transactions() {
             <p className="muted">Total {rupiah(done.total)} · Dibayar {rupiah(done.payment)}
               {done.paymentType === 'credit' ? ' · Sisa kredit ' + rupiah(done.balance) : ' · Kembali ' + rupiah(done.change)}
             </p>
-            <button className="btn btn-primary" onClick={() => {
-              const transaction = history.find((item) => item.id === done.id)
-              if (transaction) setPreviewTransaction(transaction)
-            }}>Cetak struk</button>
-            <button className="btn btn-primary" onClick={() => setDone(null)}>Tutup</button>
+            <div className="success-actions">
+              <button className="btn btn-primary" onClick={() => {
+                const transaction = history.find((item) => item.id === done.id)
+                if (transaction) setPreviewTransaction(transaction)
+              }}>Cetak struk</button>
+              <button className="btn btn-primary" onClick={() => setDone(null)}>Tutup</button>
+            </div>
           </div>
         </div>
       )}
