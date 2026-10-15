@@ -58,7 +58,11 @@ export default function Dashboard() {
     ? txs.filter((t) => isInDateRange(t.createdAt, dateRange))
     : txs
   const visibleTx = creditFirst
-    ? [...dateFilteredTx].sort((a, b) => Number(b.paymentType === 'credit') - Number(a.paymentType === 'credit'))
+    ? [...dateFilteredTx].sort((a, b) => {
+        const aHasOutstandingCredit = a.paymentType === 'credit' && getTransactionBalanceDue(a) > 0
+        const bHasOutstandingCredit = b.paymentType === 'credit' && getTransactionBalanceDue(b) > 0
+        return Number(bHasOutstandingCredit) - Number(aHasOutstandingCredit)
+      })
     : dateFilteredTx
   const pageCount = Math.max(1, Math.ceil(visibleTx.length / TRANSACTIONS_PER_PAGE))
   const currentPage = Math.min(transactionPage, pageCount)
@@ -118,7 +122,7 @@ export default function Dashboard() {
                   type="button"
                   className={'dashboard-payment-sort' + (creditFirst ? ' active' : '')}
                   aria-pressed={creditFirst}
-                  aria-label={creditFirst ? 'Urutkan kembali berdasarkan tanggal' : 'Tampilkan transaksi kredit di atas'}
+                  aria-label={creditFirst ? 'Urutkan kembali berdasarkan tanggal' : 'Tampilkan kredit yang belum lunas di atas'}
                   onClick={() => {
                     setCreditFirst((current) => !current)
                     setTransactionPage(1)
