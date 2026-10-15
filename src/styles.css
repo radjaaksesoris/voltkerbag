@@ -43,18 +43,7 @@ body {
   margin-inline: auto;
   padding: clamp(18px, 3vw, 36px);
   overflow-y: auto;
-  background: transparent;
-}
-.login-page::before {
-  position: fixed;
-  z-index: -1;
-  inset: 0;
-  background:
-    radial-gradient(ellipse at 88% 12%, rgba(181, 40, 46, .09), transparent 32%),
-    radial-gradient(ellipse at 45% 100%, rgba(145, 32, 39, .07), transparent 38%),
-    var(--bg);
-  content: '';
-  pointer-events: none;
+  background: var(--bg);
 }
 .login-brand {
   position: relative;
