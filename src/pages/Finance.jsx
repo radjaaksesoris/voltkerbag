@@ -51,6 +51,11 @@ export default function Finance() {
   const income = sum('income'), expense = sum('expense'), capital = sum('capital')
   const balance = income + capital - expense
 
+  const totalCredit = txs.reduce((total, transaction) => {
+    if (transaction.paymentType !== 'credit') return total
+    return total + getBalanceDue(transaction)
+  }, 0)
+
   const filteredTransactions = txs.filter((transaction) =>
     !hasFilter || isInDateRange(transaction.createdAt, dateRange)
   )
@@ -71,6 +76,7 @@ export default function Finance() {
       {actionError && <p className="form-error" role="alert">{actionError}</p>}
       <div className="stats-grid">
         <div className="stat-card"><span>Pemasukan Penjualan</span><strong className="ok">+{rupiah(income)}</strong></div>
+        <div className="stat-card"><span>Total Kredit</span><strong className="danger">{rupiah(totalCredit)}</strong></div>
         <div className="stat-card highlight"><span>Saldo Kas</span><strong>{rupiah(balance)}</strong></div>
         <div className="stat-card"><span>Laba Kotor</span><strong className="ok">{rupiah(grossProfit)}</strong></div>
         <div className="stat-card"><span>Laba Bersih</span><strong className={netProfit >= 0 ? 'ok' : 'danger'}>{rupiah(netProfit)}</strong></div>
@@ -121,4 +127,15 @@ export default function Finance() {
       </div>
     </div>
   )
+}
+
+function getBalanceDue(transaction) {
+  if (transaction.balanceDue != null && Number.isFinite(Number(transaction.balanceDue))) {
+    return Math.max(0, Number(transaction.balanceDue))
+  }
+  const total = Number(transaction.total) || 0
+  const paidAmount = transaction.paidAmount != null && Number.isFinite(Number(transaction.paidAmount))
+    ? Number(transaction.paidAmount)
+    : Math.min(total, Number(transaction.payment) || 0)
+  return Math.max(0, total - paidAmount)
 }
