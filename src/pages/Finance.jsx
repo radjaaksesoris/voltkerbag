@@ -90,9 +90,9 @@ export default function Finance() {
       </div>
 
       <div className="finance-grid">
-        <div className="card table-card">
+        <div className="card table-card finance-ledger">
           <h3>Buku Kas</h3>
-          <table>
+          <table className="finance-ledger-table">
             <thead><tr><th>Waktu</th><th>Jenis</th><th>Kategori</th><th>Catatan</th><th className="right">Nominal</th><th></th></tr></thead>
             <tbody>
               {sorted.length === 0 && <tr><td colSpan="6" className="muted center">
