@@ -319,9 +319,9 @@ export default function Products() {
         value={q} onChange={(e) => setQ(e.target.value)} />
 
       <div className="card table-card">
-        <table>
+        <table className="products-table">
           <thead>
-            <tr><th>Produk</th><th>Kategori</th><th>Satuan</th><th>Harga Beli / Satuan Stok</th><th>Harga Jual</th><th>Stok</th><th></th></tr>
+            <tr><th>Produk</th><th>Kategori</th><th>Satuan</th><th>Harga Beli / unit</th><th>Harga Jual</th><th>Stok</th><th>Aksi</th></tr>
           </thead>
           <tbody>
             {filtered.length === 0 && (
@@ -330,18 +330,21 @@ export default function Products() {
             {filtered.map((p) => (
               <tr key={p.id}>
                 <td className="product-name-cell">
-                  {p.image_path && <img src={getProductImageUrl(p.image_path)} alt="" />}
-                  <strong>{p.name}</strong>
+                  <div className="product-name-content">
+                    {p.image_path && <img src={getProductImageUrl(p.image_path)} alt="" />}
+                    <strong>{p.name}</strong>
+                  </div>
                 </td>
                 <td>{p.category || '-'}</td>
                 <td>{p.unit || 'pcs'}</td>
                 <td>{rupiah(p.cost)}</td>
                 <td className="product-price-cell">
                   {saleUnits(p.unit || 'pcs').map((unit) => (
-                    <span key={unit}>
-                      {unit}: <strong>{rupiah(productPrice(p, unit))}/pcs</strong>
-                      {unitFactor(unit) > 1 && <> · {rupiah(saleUnitPrice(p, unit))}/{unit}</>}
-                    </span>
+                    <div className="product-price-row" key={unit}>
+                      <span>{unit}</span>
+                      <strong>{rupiah(productPrice(p, unit))}/pcs</strong>
+                      {unitFactor(unit) > 1 && <span className="product-pack-price">{rupiah(saleUnitPrice(p, unit))}/{unit}</span>}
+                    </div>
                   ))}
                 </td>
                 <td>

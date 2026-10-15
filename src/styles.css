@@ -442,6 +442,28 @@ tr:last-child td { border-bottom: none; }
 tbody tr { transition: background .15s; }
 tbody tr:hover { background: #fbf5ed; }
 .row-actions { display: flex; justify-content: flex-end; gap: 7px; }
+.products-table { min-width: 950px; table-layout: fixed; }
+.products-table th:nth-child(1), .products-table td:nth-child(1) { width: 190px; }
+.products-table th:nth-child(2), .products-table td:nth-child(2) { width: 100px; }
+.products-table th:nth-child(3), .products-table td:nth-child(3) { width: 70px; }
+.products-table th:nth-child(4), .products-table td:nth-child(4) { width: 120px; }
+.products-table th:nth-child(5), .products-table td:nth-child(5) { width: 250px; }
+.products-table th:nth-child(6), .products-table td:nth-child(6) { width: 75px; }
+.products-table th:nth-child(7), .products-table td:nth-child(7) { width: 145px; }
+.products-table th { padding-inline: 9px; font-size: 9px; letter-spacing: .55px; }
+.products-table td { padding: 12px 9px; }
+.products-table .product-name-cell { min-width: 0; }
+.products-table .product-name-content { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.products-table .product-name-content img { display: block; flex: 0 0 42px; margin: 0; }
+.products-table .product-name-content strong { min-width: 0; overflow-wrap: anywhere; }
+.products-table .product-price-cell { min-width: 0; }
+.products-table .product-price-row { display: grid; grid-template-columns: 38px minmax(78px, auto) minmax(0, 1fr); align-items: baseline; gap: 5px; white-space: nowrap; }
+.products-table .product-price-row > span:first-child { color: var(--muted); font-size: 10px; }
+.products-table .product-price-cell strong { font-size: 10px; }
+.products-table .product-pack-price { color: var(--muted); font-size: 9px; text-align: right; }
+.products-table .badge { display: inline-block; white-space: nowrap; }
+.products-table .row-actions { display: table-cell; white-space: nowrap; text-align: right; }
+.products-table .row-actions .btn { margin-left: 4px; }
 
 /* Buttons and fields */
 .btn {
