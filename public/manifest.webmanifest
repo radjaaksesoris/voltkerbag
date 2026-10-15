@@ -1,0 +1,25 @@
+{
+  "id": "./",
+  "name": "VOLTKER — Toko Tas",
+  "short_name": "VOLTKER",
+  "description": "Aplikasi kasir dan pengelolaan toko VOLTKER.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f2eee5",
+  "theme_color": "#7b1e24",
+  "icons": [
+    {
+      "src": "./voltker-icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "./voltker-icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
