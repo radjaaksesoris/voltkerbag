@@ -457,10 +457,9 @@ tbody tr:hover { background: #fbf5ed; }
 .products-table .product-name-content img { display: block; flex: 0 0 42px; margin: 0; }
 .products-table .product-name-content strong { min-width: 0; overflow-wrap: anywhere; }
 .products-table .product-price-cell { min-width: 0; }
-.products-table .product-price-row { display: grid; grid-template-columns: 38px minmax(78px, auto) minmax(0, 1fr); align-items: baseline; gap: 5px; white-space: nowrap; }
+.products-table .product-price-row { display: grid; grid-template-columns: 38px minmax(78px, auto); align-items: baseline; gap: 5px; white-space: nowrap; }
 .products-table .product-price-row > span:first-child { color: var(--muted); font-size: 10px; }
 .products-table .product-price-cell strong { font-size: 10px; }
-.products-table .product-pack-price { color: var(--muted); font-size: 9px; text-align: right; }
 .products-table .badge { display: inline-block; white-space: nowrap; }
 .products-table .row-actions { display: table-cell; white-space: nowrap; text-align: right; }
 .products-table .row-actions .btn { margin-left: 4px; }

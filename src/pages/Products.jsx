@@ -343,7 +343,6 @@ export default function Products() {
                     <div className="product-price-row" key={unit}>
                       <span>{unit}</span>
                       <strong>{rupiah(productPrice(p, unit))}/pcs</strong>
-                      {unitFactor(unit) > 1 && <span className="product-pack-price">{rupiah(saleUnitPrice(p, unit))}/{unit}</span>}
                     </div>
                   ))}
                 </td>
