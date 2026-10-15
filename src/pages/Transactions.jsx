@@ -296,23 +296,28 @@ export default function Transactions() {
             {filtered.length === 0 && <p className="muted">Tidak ada produk. Tambahkan di menu Stok Barang.</p>}
             {filtered.map((p) => (
               <article key={p.id} className="product-card">
-                {p.image_path ? (
-                  <img className="product-card-image" src={getProductImageUrl(p.image_path)} alt="" />
-                ) : (
-                  <div className="product-illustration"><Icon name="bag" size={28} /></div>
-                )}
-                <strong>{p.name}</strong>
-                <span className="muted small">{p.category || 'Umum'} · stok {stockLabel(p)}</span>
+                <div className="product-card-heading">
+                  {p.image_path ? (
+                    <img className="product-card-image" src={getProductImageUrl(p.image_path)} alt="" />
+                  ) : (
+                    <div className="product-illustration"><Icon name="bag" size={22} /></div>
+                  )}
+                  <div className="product-card-info">
+                    <strong>{p.name}</strong>
+                    <span className="muted small">{p.category || 'Umum'} · stok {stockLabel(p)}</span>
+                  </div>
+                </div>
                 <div className="product-sale-options" aria-label={'Satuan dan harga ' + p.name}>
                   {saleUnits(p.unit || 'pcs').map((unit) => (
                     <button
                       key={unit}
                       className="product-sale-option"
                       type="button"
+                      aria-label={'Tambah 1 ' + unit + ' ' + p.name + ', ' + rupiah(saleUnitPrice(p, unit))}
                       disabled={!canAddOne(p.id, unit)}
                       onClick={() => addToCart(p, unit)}>
                       <span>+ {unit}</span>
-                      <strong>{rupiah(saleUnitPrice(p, unit))}/{unit}</strong>
+                      <strong>{rupiah(saleUnitPrice(p, unit))}</strong>
                     </button>
                   ))}
                 </div>
