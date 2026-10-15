@@ -322,7 +322,6 @@ export default function Transactions() {
         </div>
 
         <div className="card cart">
-          {cart.length === 0 && <p className="muted">Klik produk untuk menambahkan.</p>}
           {cart.map((c) => (
             <div key={c.productId + '-' + c.unit} className="cart-row">
               <div className="cart-info">
