@@ -13,7 +13,7 @@ export default function Dashboard() {
   const [products, setProducts] = useState([])
   const [txs, setTxs] = useState([])
   const [dateRange, setDateRange] = useState({ from: '', to: '' })
-  const [paymentFilter, setPaymentFilter] = useState('all')
+  const [creditFirst, setCreditFirst] = useState(false)
   const [transactionPage, setTransactionPage] = useState(1)
   const [selectedTransaction, setSelectedTransaction] = useState(null)
   const [loadError, setLoadError] = useState('')
@@ -57,11 +57,9 @@ export default function Dashboard() {
   const dateFilteredTx = hasFilter
     ? txs.filter((t) => isInDateRange(t.createdAt, dateRange))
     : txs
-  const visibleTx = dateFilteredTx.filter((transaction) => {
-    if (paymentFilter === 'cash') return transaction.paymentType !== 'credit'
-    if (paymentFilter === 'credit') return transaction.paymentType === 'credit'
-    return true
-  })
+  const visibleTx = creditFirst
+    ? [...dateFilteredTx].sort((a, b) => Number(b.paymentType === 'credit') - Number(a.paymentType === 'credit'))
+    : dateFilteredTx
   const pageCount = Math.max(1, Math.ceil(visibleTx.length / TRANSACTIONS_PER_PAGE))
   const currentPage = Math.min(transactionPage, pageCount)
   const pageStart = (currentPage - 1) * TRANSACTIONS_PER_PAGE
@@ -116,21 +114,18 @@ export default function Dashboard() {
               <th>Nama</th>
               <th>Tanggal Transaksi</th>
               <th>
-                <label className="dashboard-payment-filter">
+                <button
+                  type="button"
+                  className={'dashboard-payment-sort' + (creditFirst ? ' active' : '')}
+                  aria-pressed={creditFirst}
+                  aria-label={creditFirst ? 'Urutkan kembali berdasarkan tanggal' : 'Tampilkan transaksi kredit di atas'}
+                  onClick={() => {
+                    setCreditFirst((current) => !current)
+                    setTransactionPage(1)
+                  }}>
                   <span>Pembayaran</span>
-                  <select
-                    className="dashboard-payment-filter-select"
-                    aria-label="Filter metode pembayaran"
-                    value={paymentFilter}
-                    onChange={(event) => {
-                      setPaymentFilter(event.target.value)
-                      setTransactionPage(1)
-                    }}>
-                    <option value="all">Semua</option>
-                    <option value="credit">Kredit</option>
-                    <option value="cash">Tunai</option>
-                  </select>
-                </label>
+                  <span className="dashboard-payment-sort-indicator" aria-hidden="true">{creditFirst ? '↑' : '↕'}</span>
+                </button>
               </th>
               <th className="right">Nominal Transaksi</th>
               <th className="right">Detail</th>
@@ -138,11 +133,7 @@ export default function Dashboard() {
           </thead>
           <tbody>
             {visibleTx.length === 0 && <tr><td colSpan="6" className="muted center">
-              {paymentFilter !== 'all'
-                ? hasFilter
-                  ? 'Tidak ada transaksi dengan metode pembayaran ini pada rentang tanggal tersebut.'
-                  : 'Tidak ada transaksi dengan metode pembayaran ini.'
-                : hasFilter ? 'Tidak ada transaksi pada rentang tanggal ini.' : 'Belum ada transaksi.'}
+              {hasFilter ? 'Tidak ada transaksi pada rentang tanggal ini.' : 'Belum ada transaksi.'}
             </td></tr>}
             {pageTransactions.map((t, index) => {
               const balanceDue = getTransactionBalanceDue(t)

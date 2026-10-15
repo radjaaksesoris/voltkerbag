@@ -335,22 +335,10 @@ h3 { margin-bottom: 16px; color: var(--ink); font-size: 15px; font-weight: 700; 
   color: #fffaf4;
   text-align: center;
 }
-.dashboard-payment-filter { display: flex; flex-direction: column; align-items: center; gap: 4px; margin: 0; color: inherit; }
-.dashboard-payment-filter-select {
-  min-width: 78px;
-  padding: 3px 22px 3px 7px;
-  border: 1px solid rgba(255, 250, 244, .55);
-  border-radius: 5px;
-  background: rgba(255, 250, 244, .12);
-  color: inherit;
-  font: inherit;
-  font-size: 9px;
-  letter-spacing: .2px;
-  text-transform: none;
-  cursor: pointer;
-}
-.dashboard-payment-filter-select:focus-visible { outline: 2px solid #fffaf4; outline-offset: 2px; }
-.dashboard-payment-filter-select option { background: var(--card); color: var(--ink); }
+.dashboard-payment-sort { display: inline-flex; align-items: center; gap: 5px; padding: 0; border: 0; background: transparent; color: inherit; font: inherit; cursor: pointer; }
+.dashboard-payment-sort.active { color: #ffe0a6; }
+.dashboard-payment-sort-indicator { font-size: 12px; line-height: 1; }
+.dashboard-payment-sort:focus-visible { outline: 2px solid #fffaf4; outline-offset: 3px; border-radius: 2px; }
 .dashboard-transaction-table tbody td { text-align: center; }
 .dashboard-transaction-table tbody tr:last-child td { border-bottom: 1px solid #eee8de; }
 .dashboard-pagination { display: flex; align-items: center; justify-content: space-between; gap: 14px; padding-top: 14px; }
