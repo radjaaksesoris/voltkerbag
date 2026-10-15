@@ -365,17 +365,23 @@ export default function Transactions() {
           </div>
 
           <div className="cart-checkout">
-            <label>Nama pelanggan *</label>
-            <CustomerSelect
-              customers={customers}
-              value={customerName}
-              onChange={setCustomerName}
-            />
-            <label>Metode pembayaran</label>
-            <select className="input" value={paymentType} onChange={(e) => setPaymentType(e.target.value)}>
-              <option value="cash">Tunai</option>
-              <option value="credit">Kredit tanpa bunga</option>
-            </select>
+            <div className="cart-checkout-options">
+              <div>
+                <label>Nama pelanggan *</label>
+                <CustomerSelect
+                  customers={customers}
+                  value={customerName}
+                  onChange={setCustomerName}
+                />
+              </div>
+              <div>
+                <label>Metode pembayaran</label>
+                <select className="input" value={paymentType} onChange={(e) => setPaymentType(e.target.value)}>
+                  <option value="cash">Tunai</option>
+                  <option value="credit">Kredit tanpa bunga</option>
+                </select>
+              </div>
+            </div>
             <div className="cart-total">
               <span>Total</span>
               <strong className="accent">{rupiah(total)}</strong>
