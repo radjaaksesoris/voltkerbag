@@ -1,8 +1,8 @@
-import { useEffect, useMemo, useState } from 'react'
-import { getAll, put, remove, onRefresh } from '../db'
+import { useEffect, useRef, useState } from 'react'
+import { getFinanceData, put, remove, onRefresh } from '../db'
 import { rupiah, dateOnly, dateTime } from '../format'
 import DateRangeFilter from '../components/DateRangeFilter.jsx'
-import { hasDateRange, isInDateRange, localDateValue } from '../dateFilter'
+import { dateRangeTimestamps, hasDateRange, localDateValue } from '../dateFilter'
 import MoneyInput from '../components/MoneyInput.jsx'
 
 const TYPES = {
@@ -10,11 +10,20 @@ const TYPES = {
   expense: { label: 'Pengeluaran', cls: 'badge-danger' },
   capital: { label: 'Modal', cls: 'badge-neutral' }
 }
+const FINANCE_PAGE_SIZE = 20
 
 export default function Finance() {
-  const [entries, setEntries] = useState([])
-  const [txs, setTxs] = useState([])
+  const [report, setReport] = useState({
+    entries: [],
+    total_count: 0,
+    income: 0,
+    expense: 0,
+    capital: 0,
+    total_credit: 0,
+    gross_profit: 0
+  })
   const [dateRange, setDateRange] = useState({ from: '', to: '' })
+  const [page, setPage] = useState(1)
   const [loadError, setLoadError] = useState('')
   const [actionError, setActionError] = useState('')
   const [loaded, setLoaded] = useState(false)
@@ -26,52 +35,55 @@ export default function Finance() {
   const [entryNote, setEntryNote] = useState('')
   const [entryAmount, setEntryAmount] = useState('')
   const [savingEntry, setSavingEntry] = useState(false)
+  const requestId = useRef(0)
 
-  async function load() {
-    try {
-      const [financeRows, transactionRows] = await Promise.all([
-        getAll('finance'),
-        getAll('transactions')
-      ])
-      setEntries(financeRows)
-      setTxs(transactionRows)
-      setLoadError('')
-    } catch (error) {
-      setLoadError(error.message || 'Gagal memuat data keuangan dari server.')
-    } finally {
-      setLoaded(true)
-    }
-  }
   useEffect(() => {
+    let active = true
+
+    async function load() {
+      const currentRequest = ++requestId.current
+      setLoaded(false)
+      try {
+        const range = dateRangeTimestamps(dateRange)
+        const data = await getFinanceData({
+          ...range,
+          page,
+          pageSize: FINANCE_PAGE_SIZE
+        })
+        if (!active || currentRequest !== requestId.current) return
+        const pageCount = Math.max(1, Math.ceil(data.total_count / FINANCE_PAGE_SIZE))
+        if (page > pageCount) {
+          setPage(pageCount)
+          return
+        }
+        setReport(data)
+        setLoadError('')
+      } catch (error) {
+        if (!active || currentRequest !== requestId.current) return
+        setLoadError(error.message || 'Gagal memuat data keuangan dari server.')
+      } finally {
+        if (active && currentRequest === requestId.current) setLoaded(true)
+      }
+    }
+
     load()
-    return onRefresh(load)
-  }, [])
+    const unsubscribe = onRefresh(load)
+    return () => {
+      active = false
+      unsubscribe()
+    }
+  }, [dateRange, page])
 
-  const hasFilter = hasDateRange(dateRange)
-  const filteredEntries = useMemo(
-    () => entries.filter((entry) => !hasFilter || isInDateRange(entry.date || entry.createdAt, dateRange)),
-    [entries, hasFilter, dateRange]
-  )
-  const sorted = useMemo(
-    () => [...filteredEntries].sort((a, b) => new Date(b.date || b.createdAt) - new Date(a.date || a.createdAt)),
-    [filteredEntries]
-  )
-  const sum = (t) => filteredEntries.filter((e) => e.type === t).reduce((s, e) => s + Number(e.amount), 0)
-  const income = sum('income'), expense = sum('expense'), capital = sum('capital')
+  const income = Number(report.income)
+  const expense = Number(report.expense)
+  const capital = Number(report.capital)
   const balance = income + capital - expense
-
-  const totalCredit = txs.reduce((total, transaction) => {
-    if (transaction.paymentType !== 'credit') return total
-    return total + getBalanceDue(transaction)
-  }, 0)
-
-  const filteredTransactions = txs.filter((transaction) =>
-    !hasFilter || isInDateRange(transaction.createdAt, dateRange)
-  )
-  const grossProfit = filteredTransactions.reduce(
-    (s, t) => s + t.items.reduce((a, i) => a + (i.price - (i.cost || 0)) * i.qty, 0), 0
-  )
+  const totalCredit = Number(report.total_credit)
+  const grossProfit = Number(report.gross_profit)
   const netProfit = grossProfit - expense
+  const pageCount = Math.max(1, Math.ceil(report.total_count / FINANCE_PAGE_SIZE))
+  const pageStart = (page - 1) * FINANCE_PAGE_SIZE
+  const hasFilter = hasDateRange(dateRange)
 
   function openNewEntry() {
     setEditingEntry(null)
@@ -125,6 +137,7 @@ export default function Finance() {
         requestId: null,
         createdAt: editingEntry?.createdAt
       })
+      setPage(1)
       setShowEntryForm(false)
       setEditingEntry(null)
     } catch (error) {
@@ -166,7 +179,10 @@ export default function Finance() {
           <strong>Filter periode keuangan</strong>
           <span className="muted">Pemasukan, pengeluaran, saldo, dan laba mengikuti tanggal yang dipilih.</span>
         </div>
-        <DateRangeFilter value={dateRange} onChange={setDateRange} />
+        <DateRangeFilter value={dateRange} onChange={(range) => {
+          setDateRange(range)
+          setPage(1)
+        }} />
       </div>
 
       <div className="finance-grid">
@@ -178,10 +194,10 @@ export default function Finance() {
           <table className="finance-ledger-table">
             <thead><tr><th><span className="finance-ledger-time-label">Waktu</span><span className="finance-ledger-date-label">Tanggal</span></th><th>Jenis</th><th>Kategori</th><th>Catatan</th><th>Nominal</th><th></th></tr></thead>
             <tbody>
-              {sorted.length === 0 && <tr><td colSpan="6" className="muted center">
+              {report.entries.length === 0 && <tr><td colSpan="6" className="muted center">
                 {hasFilter ? 'Tidak ada catatan pada rentang tanggal ini.' : 'Belum ada catatan.'}
               </td></tr>}
-              {sorted.map((e) => (
+              {report.entries.map((e) => (
                 <tr key={e.id}>
                   <td>
                     <span className="finance-ledger-datetime">{dateTime(e.date || e.createdAt)}</span>
@@ -209,6 +225,20 @@ export default function Finance() {
               ))}
             </tbody>
           </table>
+          {report.total_count > 0 && (
+            <div className="dashboard-pagination">
+              <span className="muted small">
+                Menampilkan {pageStart + 1}–{Math.min(pageStart + FINANCE_PAGE_SIZE, report.total_count)} dari {report.total_count} catatan
+              </span>
+              {pageCount > 1 && (
+                <div className="dashboard-pagination-controls" aria-label="Navigasi halaman buku kas">
+                  <button className="btn btn-sm" type="button" disabled={page === 1} onClick={() => setPage(page - 1)}>Sebelumnya</button>
+                  <span className="small">Halaman {page} dari {pageCount}</span>
+                  <button className="btn btn-sm" type="button" disabled={page === pageCount} onClick={() => setPage(page + 1)}>Berikutnya</button>
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </div>
 
@@ -289,15 +319,4 @@ function isAutomaticEntry(entry) {
     || ['penjualan', 'dp kredit', 'cicilan kredit'].includes(category)
     || note.startsWith('Penjualan ·')
     || note.startsWith('Cicilan transaksi ')
-}
-
-function getBalanceDue(transaction) {
-  if (transaction.balanceDue != null && Number.isFinite(Number(transaction.balanceDue))) {
-    return Math.max(0, Number(transaction.balanceDue))
-  }
-  const total = Number(transaction.total) || 0
-  const paidAmount = transaction.paidAmount != null && Number.isFinite(Number(transaction.paidAmount))
-    ? Number(transaction.paidAmount)
-    : Math.min(total, Number(transaction.payment) || 0)
-  return Math.max(0, total - paidAmount)
 }

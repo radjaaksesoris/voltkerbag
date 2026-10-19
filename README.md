@@ -15,7 +15,7 @@ VOLTKER adalah aplikasi kasir React + Vite dengan Supabase sebagai sumber data u
 ## Setup Supabase
 1. Pastikan project Supabase yang dipakai adalah project VOLTKER yang benar.
 2. Di **Authentication → Users**, buat satu akun toko. Jangan aktifkan pendaftaran publik; hanya akun ini yang boleh digunakan.
-3. Jalankan seluruh `supabase/schema.sql` di **SQL Editor**. Skema ini menyiapkan tabel pelanggan, kebijakan Row Level Security, bucket `product-images`, serta tabel dan pilihan kategori/satuan produk. Skema juga memasang fungsi untuk menghapus catatan buku kas manual tanpa mengizinkan penghapusan catatan yang terhubung ke transaksi. Jalankan ulang skema sebelum deploy perubahan terkait; skema dapat dijalankan ulang dan migrasi mempertahankan data.
+3. Jalankan seluruh `supabase/schema.sql` di **SQL Editor**. Skema ini menyiapkan tabel pelanggan, kebijakan Row Level Security, bucket `product-images`, serta tabel dan pilihan kategori/satuan produk. Skema juga memasang fungsi laporan berhalaman untuk dashboard/buku kas dan fungsi untuk menghapus catatan buku kas manual tanpa mengizinkan penghapusan catatan yang terhubung ke transaksi. Jalankan ulang skema sebelum deploy perubahan terkait; skema dapat dijalankan ulang dan migrasi mempertahankan data.
 4. Jangan jalankan `supabase/clear-data.sql` untuk migrasi atau deploy. Jalankan hanya jika memang ingin menghapus permanen semua produk, transaksi, dan catatan keuangan di project tersebut serta memulai ulang ID.
 5. Salin Supabase anon/publishable key (bukan `service_role` atau secret key).
 6. Untuk GitHub Pages, simpan key sebagai repository Actions secret `VITE_SUPABASE_ANON_KEY`, lalu jalankan workflow deploy. Untuk lokal, isi `VITE_SUPABASE_ANON_KEY` dalam `.env.local`.
@@ -49,6 +49,7 @@ Workflow `.github/workflows/deploy.yml` membangun dan menerbitkan folder `dist` 
 - Anon/publishable key memang dikirim ke browser. Keamanan data bergantung pada Supabase Auth, RLS, dan fungsi database; jangan pernah menaruh service-role key pada aplikasi frontend.
 - Jika secret diubah, jalankan ulang build/deploy karena Vite memasukkan nilainya ke bundle pada waktu build.
 - Jika server tidak dapat dijangkau, aplikasi menampilkan kegagalan secara eksplisit dan operasi tidak disimpan secara lokal.
+- Dashboard dan buku kas mengambil maksimal 15/20 baris per halaman; ringkasan dan agregat laporan dihitung di database. Jalankan `supabase/schema.sql` sebelum deploy versi yang memakai RPC laporan ini.
 
 ## Printer struk
 Pilih ukuran kertas khusus **240 × 140 mm**, continuous form/tractor feed, orientasi landscape, skala 100%, dan matikan header/footer browser. Simpan ukuran tersebut di driver printer.

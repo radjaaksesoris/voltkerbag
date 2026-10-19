@@ -202,6 +202,10 @@ create unique index if not exists customer_names_owner_name_idx
   on public.customer_names (owner_id, lower(trim(name)));
 create index if not exists transactions_owner_id_idx on public.transactions (owner_id);
 create index if not exists finance_entries_owner_id_idx on public.finance_entries (owner_id);
+create index if not exists transactions_owner_created_id_idx
+  on public.transactions (owner_id, "createdAt" desc, id desc);
+create index if not exists finance_owner_effective_date_id_idx
+  on public.finance_entries (owner_id, (coalesce(date, "createdAt")) desc, id desc);
 create unique index if not exists transactions_owner_request_id_idx
   on public.transactions (owner_id, "requestId") where "requestId" is not null;
 create unique index if not exists finance_owner_request_id_idx
@@ -646,11 +650,215 @@ begin
 end;
 $$;
 
+create or replace function public.get_transaction_summary(
+  p_from timestamptz,
+  p_to timestamptz
+)
+returns jsonb
+language plpgsql
+security definer
+set search_path = public, pg_temp
+as $$
+declare
+  current_user_id uuid := auth.uid();
+  result_count bigint;
+  result_total numeric;
+begin
+  if current_user_id is null then raise exception 'Login diperlukan.'; end if;
+  if p_from is not null and p_to is not null and p_from >= p_to then
+    raise exception 'Rentang tanggal tidak valid.';
+  end if;
+
+  select count(*), coalesce(sum(t.total), 0)
+  into result_count, result_total
+  from public.transactions t
+  where t.owner_id = current_user_id
+    and (p_from is null or t."createdAt" >= p_from)
+    and (p_to is null or t."createdAt" < p_to);
+
+  return jsonb_build_object(
+    'transaction_count', result_count,
+    'total', result_total
+  );
+end;
+$$;
+
+create or replace function public.get_dashboard_data(
+  p_from timestamptz,
+  p_to timestamptz,
+  p_summary_from timestamptz,
+  p_summary_to timestamptz,
+  p_page integer,
+  p_page_size integer,
+  p_credit_first boolean
+)
+returns jsonb
+language plpgsql
+security definer
+set search_path = public, pg_temp
+as $$
+declare
+  current_user_id uuid := auth.uid();
+  result_count bigint;
+  summary_count bigint;
+  revenue_total numeric;
+  gross_profit numeric;
+  transaction_rows jsonb;
+begin
+  if current_user_id is null then raise exception 'Login diperlukan.'; end if;
+  if p_page is null or p_page < 1 or p_page_size is null or p_page_size < 1 or p_page_size > 100 then
+    raise exception 'Halaman transaksi tidak valid.';
+  end if;
+  if (p_from is not null and p_to is not null and p_from >= p_to)
+     or (p_summary_from is not null and p_summary_to is not null and p_summary_from >= p_summary_to) then
+    raise exception 'Rentang tanggal tidak valid.';
+  end if;
+
+  select count(*), coalesce(sum(t.total), 0),
+    coalesce(sum((
+      select coalesce(sum(
+        (coalesce(nullif(item.value ->> 'price', '')::numeric, 0)
+          - coalesce(nullif(item.value ->> 'cost', '')::numeric, 0))
+        * coalesce(nullif(item.value ->> 'qty', '')::numeric, 0)
+      ), 0)
+      from jsonb_array_elements(coalesce(t.items, '[]'::jsonb)) as item(value)
+    )), 0)
+  into summary_count, revenue_total, gross_profit
+  from public.transactions t
+  where t.owner_id = current_user_id
+    and (p_summary_from is null or t."createdAt" >= p_summary_from)
+    and (p_summary_to is null or t."createdAt" < p_summary_to);
+
+  select count(*)
+  into result_count
+  from public.transactions t
+  where t.owner_id = current_user_id
+    and (p_from is null or t."createdAt" >= p_from)
+    and (p_to is null or t."createdAt" < p_to);
+
+  select coalesce(jsonb_agg(to_jsonb(page_rows) - 'sort_rank'
+    order by page_rows.sort_rank, page_rows."createdAt" desc nulls last, page_rows.id desc), '[]'::jsonb)
+  into transaction_rows
+  from (
+    select t.*,
+      case
+        when coalesce(p_credit_first, false)
+          and t."paymentType" = 'credit'
+          and greatest(0, coalesce(t."balanceDue", t.total - coalesce(t."paidAmount", t.payment))) > 0
+        then 0 else 1
+      end as sort_rank
+    from public.transactions t
+    where t.owner_id = current_user_id
+      and (p_from is null or t."createdAt" >= p_from)
+      and (p_to is null or t."createdAt" < p_to)
+    order by sort_rank, t."createdAt" desc nulls last, t.id desc
+    limit p_page_size offset (p_page - 1) * p_page_size
+  ) as page_rows;
+
+  return jsonb_build_object(
+    'transactions', transaction_rows,
+    'total_count', result_count,
+    'summary_count', summary_count,
+    'revenue', revenue_total,
+    'gross_profit', gross_profit
+  );
+end;
+$$;
+
+create or replace function public.get_finance_data(
+  p_from timestamptz,
+  p_to timestamptz,
+  p_page integer,
+  p_page_size integer
+)
+returns jsonb
+language plpgsql
+security definer
+set search_path = public, pg_temp
+as $$
+declare
+  current_user_id uuid := auth.uid();
+  entry_count bigint;
+  entries jsonb;
+  income_total numeric;
+  expense_total numeric;
+  capital_total numeric;
+  credit_total numeric;
+  gross_profit numeric;
+begin
+  if current_user_id is null then raise exception 'Login diperlukan.'; end if;
+  if p_page is null or p_page < 1 or p_page_size is null or p_page_size < 1 or p_page_size > 100 then
+    raise exception 'Halaman buku kas tidak valid.';
+  end if;
+  if p_from is not null and p_to is not null and p_from >= p_to then
+    raise exception 'Rentang tanggal tidak valid.';
+  end if;
+
+  select count(*),
+    coalesce(sum(e.amount) filter (where e.type = 'income'), 0),
+    coalesce(sum(e.amount) filter (where e.type = 'expense'), 0),
+    coalesce(sum(e.amount) filter (where e.type = 'capital'), 0)
+  into entry_count, income_total, expense_total, capital_total
+  from public.finance_entries e
+  where e.owner_id = current_user_id
+    and (p_from is null or coalesce(e.date, e."createdAt") >= p_from)
+    and (p_to is null or coalesce(e.date, e."createdAt") < p_to);
+
+  select coalesce(sum(greatest(0, coalesce(t."balanceDue", t.total - coalesce(t."paidAmount", t.payment)))), 0)
+  into credit_total
+  from public.transactions t
+  where t.owner_id = current_user_id and t."paymentType" = 'credit';
+
+  select coalesce(sum((
+    select coalesce(sum(
+      (coalesce(nullif(item.value ->> 'price', '')::numeric, 0)
+        - coalesce(nullif(item.value ->> 'cost', '')::numeric, 0))
+      * coalesce(nullif(item.value ->> 'qty', '')::numeric, 0)
+    ), 0)
+    from jsonb_array_elements(coalesce(t.items, '[]'::jsonb)) as item(value)
+  )), 0)
+  into gross_profit
+  from public.transactions t
+  where t.owner_id = current_user_id
+    and (p_from is null or t."createdAt" >= p_from)
+    and (p_to is null or t."createdAt" < p_to);
+
+  select coalesce(jsonb_agg(to_jsonb(page_rows)
+    order by coalesce(page_rows.date, page_rows."createdAt") desc nulls last, page_rows.id desc), '[]'::jsonb)
+  into entries
+  from (
+    select e.*
+    from public.finance_entries e
+    where e.owner_id = current_user_id
+      and (p_from is null or coalesce(e.date, e."createdAt") >= p_from)
+      and (p_to is null or coalesce(e.date, e."createdAt") < p_to)
+    order by coalesce(e.date, e."createdAt") desc nulls last, e.id desc
+    limit p_page_size offset (p_page - 1) * p_page_size
+  ) as page_rows;
+
+  return jsonb_build_object(
+    'entries', entries,
+    'total_count', entry_count,
+    'income', income_total,
+    'expense', expense_total,
+    'capital', capital_total,
+    'total_credit', credit_total,
+    'gross_profit', gross_profit
+  );
+end;
+$$;
+
 revoke all on function public.complete_sale(text, text, double precision, jsonb, uuid) from public, anon;
 revoke all on function public.record_transaction_payment(bigint, double precision, uuid) from public, anon;
 revoke all on function public.delete_manual_finance_entry(bigint) from public, anon;
+revoke all on function public.get_transaction_summary(timestamptz, timestamptz) from public, anon;
+revoke all on function public.get_dashboard_data(timestamptz, timestamptz, timestamptz, timestamptz, integer, integer, boolean) from public, anon;
+revoke all on function public.get_finance_data(timestamptz, timestamptz, integer, integer) from public, anon;
 grant execute on function public.complete_sale(text, text, double precision, jsonb, uuid) to authenticated;
 grant execute on function public.record_transaction_payment(bigint, double precision, uuid) to authenticated;
 grant execute on function public.delete_manual_finance_entry(bigint) to authenticated;
+grant execute on function public.get_transaction_summary(timestamptz, timestamptz) to authenticated;
+grant execute on function public.get_dashboard_data(timestamptz, timestamptz, timestamptz, timestamptz, integer, integer, boolean) to authenticated;
+grant execute on function public.get_finance_data(timestamptz, timestamptz, integer, integer) to authenticated;
 revoke delete on public.finance_entries from public, anon, authenticated;
 grant select, insert, update on public.finance_entries to authenticated;

@@ -1,8 +1,8 @@
-import { useEffect, useState } from 'react'
-import { getAll, onRefresh } from '../db'
-import { rupiah, dateOnly, dateTime, isToday } from '../format'
+import { useEffect, useRef, useState } from 'react'
+import { getAll, getDashboardData, onRefresh } from '../db'
+import { rupiah, dateOnly, dateTime } from '../format'
 import DateRangeFilter from '../components/DateRangeFilter'
-import { hasDateRange, isInDateRange } from '../dateFilter'
+import { dateRangeTimestamps, hasDateRange, localDateValue } from '../dateFilter'
 import TransactionDetails from '../components/TransactionDetails'
 import { getInvoiceNumber } from '../invoice'
 import { availableQuantity, stockCostValue } from '../productUnits'
@@ -11,33 +11,69 @@ const TRANSACTIONS_PER_PAGE = 15
 
 export default function Dashboard() {
   const [products, setProducts] = useState([])
-  const [txs, setTxs] = useState([])
+  const [report, setReport] = useState({
+    transactions: [],
+    total_count: 0,
+    summary_count: 0,
+    revenue: 0,
+    gross_profit: 0
+  })
   const [dateRange, setDateRange] = useState({ from: '', to: '' })
   const [creditFirst, setCreditFirst] = useState(false)
   const [transactionPage, setTransactionPage] = useState(1)
   const [selectedTransaction, setSelectedTransaction] = useState(null)
   const [loadError, setLoadError] = useState('')
   const [loaded, setLoaded] = useState(false)
+  const requestId = useRef(0)
 
   useEffect(() => {
+    let active = true
+
     async function load() {
+      const currentRequest = ++requestId.current
+      setLoaded(false)
       try {
-        const [productRows, transactionRows] = await Promise.all([
+        const hasFilter = hasDateRange(dateRange)
+        const listRange = hasFilter
+          ? dateRangeTimestamps(dateRange)
+          : { from: null, to: null }
+        const summaryRange = hasFilter
+          ? listRange
+          : dateRangeTimestamps({ from: localDateValue(new Date()), to: localDateValue(new Date()) })
+        const [productRows, dashboardData] = await Promise.all([
           getAll('products'),
-          getAll('transactions')
+          getDashboardData({
+            ...listRange,
+            summaryFrom: summaryRange.from,
+            summaryTo: summaryRange.to,
+            page: transactionPage,
+            pageSize: TRANSACTIONS_PER_PAGE,
+            creditFirst
+          })
         ])
+        if (!active || currentRequest !== requestId.current) return
+        const pageCount = Math.max(1, Math.ceil(dashboardData.total_count / TRANSACTIONS_PER_PAGE))
+        if (transactionPage > pageCount) {
+          setTransactionPage(pageCount)
+          return
+        }
         setProducts(productRows)
-        setTxs(transactionRows.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)))
+        setReport(dashboardData)
         setLoadError('')
       } catch (error) {
+        if (!active || currentRequest !== requestId.current) return
         setLoadError(error.message || 'Gagal memuat data dashboard dari server.')
       } finally {
-        setLoaded(true)
+        if (active && currentRequest === requestId.current) setLoaded(true)
       }
     }
     load()
-    return onRefresh(load)
-  }, [])
+    const unsubscribe = onRefresh(load)
+    return () => {
+      active = false
+      unsubscribe()
+    }
+  }, [dateRange, transactionPage, creditFirst])
 
   if (!loaded) return <div className="page"><p className="muted">Memuat data dari server...</p></div>
   if (loadError) {
@@ -47,34 +83,20 @@ export default function Dashboard() {
   }
 
   const hasFilter = hasDateRange(dateRange)
-  const selectedTx = hasFilter
-    ? txs.filter((t) => isInDateRange(t.createdAt, dateRange))
-    : txs.filter((t) => isToday(t.createdAt))
-  const omzet = selectedTx.reduce((s, t) => s + t.total, 0)
-  const profit = selectedTx.reduce(
-    (s, t) => s + t.items.reduce((a, i) => a + (i.price - (i.cost || 0)) * i.qty, 0), 0
-  )
-  const dateFilteredTx = hasFilter
-    ? txs.filter((t) => isInDateRange(t.createdAt, dateRange))
-    : txs
-  const visibleTx = creditFirst
-    ? [...dateFilteredTx].sort((a, b) => {
-        const aHasOutstandingCredit = a.paymentType === 'credit' && getTransactionBalanceDue(a) > 0
-        const bHasOutstandingCredit = b.paymentType === 'credit' && getTransactionBalanceDue(b) > 0
-        return Number(bHasOutstandingCredit) - Number(aHasOutstandingCredit)
-      })
-    : dateFilteredTx
-  const pageCount = Math.max(1, Math.ceil(visibleTx.length / TRANSACTIONS_PER_PAGE))
+  const pageCount = Math.max(1, Math.ceil(report.total_count / TRANSACTIONS_PER_PAGE))
   const currentPage = Math.min(transactionPage, pageCount)
   const pageStart = (currentPage - 1) * TRANSACTIONS_PER_PAGE
-  const pageTransactions = visibleTx.slice(pageStart, pageStart + TRANSACTIONS_PER_PAGE)
+  const pageTransactions = report.transactions
   const totalAsset = products.reduce((sum, product) => sum + stockCostValue(product), 0)
   const lowStock = products.filter((product) => availableQuantity(product, product.unit || 'pcs') <= 5)
 
   function updateSelectedTransaction(updatedTransaction) {
-    setTxs((current) => current.map((transaction) =>
-      transaction.id === updatedTransaction.id ? updatedTransaction : transaction
-    ))
+    setReport((current) => ({
+      ...current,
+      transactions: current.transactions.map((transaction) =>
+        transaction.id === updatedTransaction.id ? updatedTransaction : transaction
+      )
+    }))
     setSelectedTransaction(updatedTransaction)
   }
 
@@ -93,9 +115,9 @@ export default function Dashboard() {
       <div className="stats-grid dashboard-stats-grid">
         <div className="stat-card highlight dashboard-revenue-card">
           <span>{hasFilter ? 'Omzet Periode' : 'Omzet Hari Ini'}</span>
-          <strong>{rupiah(omzet)}</strong>
+          <strong>{rupiah(report.revenue)}</strong>
         </div>
-        <div className="stat-card"><span>{hasFilter ? 'Laba Kotor Periode' : 'Laba Kotor Hari Ini'}</span><strong className="ok">{rupiah(profit)}</strong></div>
+        <div className="stat-card"><span>{hasFilter ? 'Laba Kotor Periode' : 'Laba Kotor Hari Ini'}</span><strong className="ok">{rupiah(report.gross_profit)}</strong></div>
         <div className="stat-card dashboard-stock-summary">
           <div className="dashboard-stock-metric">
             <span>Nilai Stok (Modal)</span>
@@ -136,7 +158,7 @@ export default function Dashboard() {
             </tr>
           </thead>
           <tbody>
-            {visibleTx.length === 0 && <tr><td colSpan="6" className="muted center">
+            {report.total_count === 0 && <tr><td colSpan="6" className="muted center">
               {hasFilter ? 'Tidak ada transaksi pada rentang tanggal ini.' : 'Belum ada transaksi.'}
             </td></tr>}
             {pageTransactions.map((t, index) => {
@@ -170,10 +192,10 @@ export default function Dashboard() {
             })}
           </tbody>
         </table>
-        {visibleTx.length > 0 && (
+        {report.total_count > 0 && (
           <div className="dashboard-pagination">
             <span className="muted small">
-              Menampilkan {pageStart + 1}–{Math.min(pageStart + TRANSACTIONS_PER_PAGE, visibleTx.length)} dari {visibleTx.length} transaksi
+              Menampilkan {pageStart + 1}–{Math.min(pageStart + TRANSACTIONS_PER_PAGE, report.total_count)} dari {report.total_count} transaksi
             </span>
             {pageCount > 1 && (
               <div className="dashboard-pagination-controls" aria-label="Navigasi halaman transaksi">

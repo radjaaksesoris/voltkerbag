@@ -33,6 +33,40 @@ export async function getAll(store) {
   }
 }
 
+export async function getDashboardData({ from, to, summaryFrom, summaryTo, page, pageSize, creditFirst }) {
+  const { data, error } = await getClient().rpc('get_dashboard_data', {
+    p_from: from,
+    p_to: to,
+    p_summary_from: summaryFrom,
+    p_summary_to: summaryTo,
+    p_page: page,
+    p_page_size: pageSize,
+    p_credit_first: creditFirst
+  })
+  throwIfError(error, 'Gagal memuat ringkasan dashboard')
+  return data
+}
+
+export async function getFinanceData({ from, to, page, pageSize }) {
+  const { data, error } = await getClient().rpc('get_finance_data', {
+    p_from: from,
+    p_to: to,
+    p_page: page,
+    p_page_size: pageSize
+  })
+  throwIfError(error, 'Gagal memuat ringkasan keuangan')
+  return data
+}
+
+export async function getTransactionSummary({ from, to }) {
+  const { data, error } = await getClient().rpc('get_transaction_summary', {
+    p_from: from,
+    p_to: to
+  })
+  throwIfError(error, 'Gagal memuat ringkasan transaksi')
+  return data
+}
+
 export async function getOne(store, id) {
   const { data, error } = await getClient().from(tableFor(store)).select('*').eq('id', id).maybeSingle()
   throwIfError(error, 'Gagal memuat data')

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { getAll, getProductImageUrl, completeSale, recordTransactionPayment, onRefresh } from '../db'
-import { rupiah, dateTime, isToday } from '../format'
+import { getAll, getProductImageUrl, getTransactionSummary, completeSale, recordTransactionPayment, onRefresh } from '../db'
+import { rupiah, dateTime } from '../format'
 import Receipt from '../components/Receipt'
 import Icon from '../components/Icon.jsx'
 import TransactionDetails from '../components/TransactionDetails'
@@ -8,11 +8,12 @@ import { getInvoiceNumber } from '../invoice'
 import MoneyInput from '../components/MoneyInput.jsx'
 import CustomerSelect from '../components/CustomerSelect.jsx'
 import { productPrice, saleUnitPrice, saleUnits, stockInPcs, stockLabel, unitCost, unitFactor } from '../productUnits'
+import { dateRangeTimestamps, localDateValue } from '../dateFilter'
 
 export default function Transactions() {
   const [products, setProducts] = useState([])
   const [customers, setCustomers] = useState([])
-  const [history, setHistory] = useState([])
+  const [todaySummary, setTodaySummary] = useState({ transaction_count: 0, total: 0 })
   const [cart, setCart] = useState([])
   const [q, setQ] = useState('')
   const [pay, setPay] = useState('')
@@ -35,14 +36,16 @@ export default function Transactions() {
 
   async function load() {
     try {
-      const [productRows, txs, customerRows] = await Promise.all([
+      const today = localDateValue(new Date())
+      const range = dateRangeTimestamps({ from: today, to: today })
+      const [productRows, summary, customerRows] = await Promise.all([
         getAll('products'),
-        getAll('transactions'),
+        getTransactionSummary(range),
         getAll('customers')
       ])
       setProducts(productRows)
       setCustomers(customerRows)
-      setHistory(txs.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)))
+      setTodaySummary(summary)
       setLoadError('')
     } catch (error) {
       setLoadError(error.message || 'Gagal memuat data kasir dari server.')
@@ -199,14 +202,14 @@ export default function Transactions() {
         invoiceNo: getInvoiceNumber({ ...sale, id: txId, createdAt: now }),
         createdAt: now
       }
-      setHistory((current) => [completedTransaction, ...current])
       setDone({
         id: txId,
         total,
         payment: initialPayment,
         change: paymentType === 'cash' ? change : 0,
         balance: remaining,
-        paymentType
+        paymentType,
+        transaction: completedTransaction
       })
       setCart([])
       setPay('')
@@ -258,13 +261,10 @@ export default function Transactions() {
     }
   }
 
-  const summaryTransactions = history.filter((t) => isToday(t.createdAt))
-  const summaryOmzet = summaryTransactions.reduce((s, t) => s + t.total, 0)
-
   return (
     <div className="page transactions-page">
       <div className="page-toolbar">
-        <p className="muted">Hari ini <strong>{summaryTransactions.length} transaksi</strong> · {rupiah(summaryOmzet)}</p>
+        <p className="muted">Hari ini <strong>{todaySummary.transaction_count} transaksi</strong> · {rupiah(todaySummary.total)}</p>
       </div>
 
       <div className="pos-grid">
@@ -419,8 +419,7 @@ export default function Transactions() {
             </p>
             <div className="success-actions">
               <button className="btn btn-primary" onClick={() => {
-                const transaction = history.find((item) => item.id === done.id)
-                if (transaction) setPreviewTransaction(transaction)
+                setPreviewTransaction(done.transaction)
               }}>Cetak struk</button>
               <button className="btn btn-primary" onClick={() => setDone(null)}>Tutup</button>
             </div>
