@@ -74,7 +74,7 @@ export default function Finance() {
   return (
     <div className="page">
       {actionError && <p className="form-error" role="alert">{actionError}</p>}
-      <div className="stats-grid">
+      <div className="stats-grid dashboard-stats-grid">
         <div className="stat-card"><span>Pemasukan Penjualan</span><strong className="ok">+{rupiah(income)}</strong></div>
         <div className="stat-card"><span>Total Kredit</span><strong className="danger">{rupiah(totalCredit)}</strong></div>
         <div className="stat-card highlight"><span>Saldo Kas</span><strong>{rupiah(balance)}</strong></div>
