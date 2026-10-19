@@ -331,7 +331,7 @@ export default function Products() {
               <tr key={p.id}>
                 <td className="product-name-cell">
                   <div className="product-name-content">
-                    {p.image_path && <img src={getProductImageUrl(p.image_path)} alt="" />}
+                    {p.image_path && <img src={getProductImageUrl(p.image_path)} width="42" height="42" alt="" />}
                     <div className="product-name-text">
                       <strong>{p.name}</strong>
                       <span className="product-category-mobile">{p.category || '-'}</span>
@@ -393,7 +393,7 @@ export default function Products() {
               <p className="muted small">JPG, PNG, atau WebP · maksimal 5 MB.</p>
               {(imagePreview || form.image_path) && (
                 <div className="product-image-preview">
-                  <img src={imagePreview || getProductImageUrl(form.image_path)} alt="Pratinjau gambar produk" />
+                  <img src={imagePreview || getProductImageUrl(form.image_path)} width="92" height="76" alt="Pratinjau gambar produk" />
                   <button className="btn btn-sm btn-danger" type="button" onClick={clearProductImage}>
                     <Icon name="trash" size={14} /> Hapus gambar
                   </button>

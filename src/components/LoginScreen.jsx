@@ -25,7 +25,13 @@ export default function LoginScreen({ configured, connectionError, onSignedIn, o
   return (
     <main className="login-page">
       <aside className="login-brand" aria-label="VOLTKER Toko Tas">
-        <img className="login-brand-logo" src={import.meta.env.BASE_URL + 'voltker-logo.png'} alt="VOLTKER Toko Tas" />
+        <img
+          className="login-brand-logo"
+          src={import.meta.env.BASE_URL + 'voltker-logo-480.png'}
+          width="480"
+          height="119"
+          alt="VOLTKER Toko Tas"
+        />
         <div className="login-brand-copy">
           <span>VOLTKER · SISTEM TOKO</span>
           <h2>Semua urusan toko, dalam satu tempat.</h2>

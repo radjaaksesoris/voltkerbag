@@ -1,13 +1,14 @@
-import { useEffect, useRef, useState } from 'react'
-import Dashboard from './pages/Dashboard.jsx'
-import Transactions from './pages/Transactions.jsx'
-import Products from './pages/Products.jsx'
-import Finance from './pages/Finance.jsx'
-import Settings from './pages/Settings.jsx'
+import { Suspense, lazy, useEffect, useRef, useState } from 'react'
 import LoginScreen from './components/LoginScreen.jsx'
 import SessionControl from './components/SessionControl.jsx'
 import Icon from './components/Icon.jsx'
 import { getAuthSession, isConfigured, onAuthStateChange } from './supabaseSync'
+
+const Dashboard = lazy(() => import('./pages/Dashboard.jsx'))
+const Transactions = lazy(() => import('./pages/Transactions.jsx'))
+const Products = lazy(() => import('./pages/Products.jsx'))
+const Finance = lazy(() => import('./pages/Finance.jsx'))
+const Settings = lazy(() => import('./pages/Settings.jsx'))
 
 const NAV = [
   { id: 'dashboard', label: 'Dashboard', description: 'Ringkasan performa tokomu hari ini.', icon: 'dashboard' },
@@ -111,7 +112,12 @@ export default function App() {
     <div className={'app ' + (navHidden ? 'nav-hidden' : '')}>
       <aside className="sidebar" id="primary-navigation" hidden={navHidden}>
         <div className="logo">
-          <img src={import.meta.env.BASE_URL + 'voltker-logo.png'} alt="VOLTKER Toko Tas" />
+          <img
+            src={import.meta.env.BASE_URL + 'voltker-logo-480.png'}
+            width="480"
+            height="119"
+            alt="VOLTKER Toko Tas"
+          />
         </div>
         <nav>
           {NAV.map((n) => (
@@ -148,11 +154,13 @@ export default function App() {
         </header>
 
         <div className="content" ref={contentRef}>
-          {page === 'dashboard' && <Dashboard />}
-          {page === 'pos' && <Transactions />}
-          {page === 'stok' && <Products />}
-          {page === 'finance' && <Finance />}
-          {page === 'settings' && <Settings />}
+          <Suspense fallback={<p className="login-loading">Memuat halaman...</p>}>
+            {page === 'dashboard' && <Dashboard />}
+            {page === 'pos' && <Transactions />}
+            {page === 'stok' && <Products />}
+            {page === 'finance' && <Finance />}
+            {page === 'settings' && <Settings />}
+          </Suspense>
         </div>
       </main>
     </div>
