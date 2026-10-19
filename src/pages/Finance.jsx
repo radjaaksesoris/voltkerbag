@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useState } from 'react'
-import { getAll, remove, onRefresh } from '../db'
+import { getAll, put, remove, onRefresh } from '../db'
 import { rupiah, dateOnly, dateTime } from '../format'
 import DateRangeFilter from '../components/DateRangeFilter.jsx'
-import { hasDateRange, isInDateRange } from '../dateFilter'
+import { hasDateRange, isInDateRange, localDateValue } from '../dateFilter'
+import MoneyInput from '../components/MoneyInput.jsx'
 
 const TYPES = {
   income: { label: 'Pemasukan', cls: 'badge-ok' },
@@ -17,6 +18,14 @@ export default function Finance() {
   const [loadError, setLoadError] = useState('')
   const [actionError, setActionError] = useState('')
   const [loaded, setLoaded] = useState(false)
+  const [showEntryForm, setShowEntryForm] = useState(false)
+  const [editingEntry, setEditingEntry] = useState(null)
+  const [entryType, setEntryType] = useState('expense')
+  const [entryDate, setEntryDate] = useState(() => localDateValue(new Date()))
+  const [entryCategory, setEntryCategory] = useState('')
+  const [entryNote, setEntryNote] = useState('')
+  const [entryAmount, setEntryAmount] = useState('')
+  const [savingEntry, setSavingEntry] = useState(false)
 
   async function load() {
     try {
@@ -64,6 +73,77 @@ export default function Finance() {
   )
   const netProfit = grossProfit - expense
 
+  function openNewEntry() {
+    setEditingEntry(null)
+    setEntryType('expense')
+    setEntryDate(localDateValue(new Date()))
+    setEntryCategory('')
+    setEntryNote('')
+    setEntryAmount('')
+    setActionError('')
+    setShowEntryForm(true)
+  }
+
+  function openEditEntry(entry) {
+    setEditingEntry(entry)
+    setEntryType(entry.type)
+    setEntryDate(localDateValue(entry.date || entry.createdAt))
+    setEntryCategory(entry.category || '')
+    setEntryNote(entry.note || '')
+    setEntryAmount(String(entry.amount))
+    setActionError('')
+    setShowEntryForm(true)
+  }
+
+  async function saveEntry(event) {
+    event.preventDefault()
+    setActionError('')
+    const amount = Number(entryAmount)
+    if (!['expense', 'capital'].includes(entryType)) {
+      setActionError('Pilih jenis pengeluaran atau modal.')
+      return
+    }
+    if (!Number.isFinite(amount) || amount <= 0) {
+      setActionError('Nominal harus lebih dari Rp0.')
+      return
+    }
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(entryDate) || Number.isNaN(new Date(entryDate + 'T12:00:00').getTime())) {
+      setActionError('Pilih tanggal yang valid.')
+      return
+    }
+
+    setSavingEntry(true)
+    try {
+      await put('finance', {
+        id: editingEntry?.id,
+        type: entryType,
+        category: entryCategory.trim() || null,
+        note: entryNote.trim() || null,
+        amount,
+        date: new Date(entryDate + 'T12:00:00').toISOString(),
+        refId: null,
+        requestId: null,
+        createdAt: editingEntry?.createdAt
+      })
+      setShowEntryForm(false)
+      setEditingEntry(null)
+    } catch (error) {
+      setActionError(error.message || 'Gagal menyimpan catatan keuangan.')
+    } finally {
+      setSavingEntry(false)
+    }
+  }
+
+  async function deleteEntry(entry) {
+    if (!confirm('Hapus catatan keuangan ini?')) return
+    setActionError('')
+    try {
+      await remove('finance', entry.id)
+    } catch (error) {
+      setActionError(error.message || 'Gagal menghapus catatan dari server.')
+    }
+  }
+
   if (!loaded) return <div className="page"><p className="muted">Memuat data keuangan dari server...</p></div>
   if (loadError) {
     return <div className="page"><p className="form-error" role="alert">{loadError}</p>
@@ -73,7 +153,7 @@ export default function Finance() {
 
   return (
     <div className="page">
-      {actionError && <p className="form-error" role="alert">{actionError}</p>}
+      {actionError && !showEntryForm && <p className="form-error" role="alert">{actionError}</p>}
       <div className="stats-grid dashboard-stats-grid">
         <div className="stat-card"><span>Pemasukan Penjualan</span><strong className="ok">+{rupiah(income)}</strong></div>
         <div className="stat-card"><span>Total Kredit</span><strong className="danger">{rupiah(totalCredit)}</strong></div>
@@ -91,7 +171,10 @@ export default function Finance() {
 
       <div className="finance-grid">
         <div className="card table-card finance-ledger">
-          <h3>Buku Kas</h3>
+          <div className="finance-ledger-heading">
+            <h3>Buku Kas</h3>
+            <button className="btn btn-primary" type="button" onClick={openNewEntry}>+ Tambah catatan</button>
+          </div>
           <table className="finance-ledger-table">
             <thead><tr><th><span className="finance-ledger-time-label">Waktu</span><span className="finance-ledger-date-label">Tanggal</span></th><th>Jenis</th><th>Kategori</th><th>Catatan</th><th>Nominal</th><th></th></tr></thead>
             <tbody>
@@ -110,16 +193,17 @@ export default function Finance() {
                   <td className={'right ' + (e.type === 'expense' ? 'danger' : 'ok')}>
                     {e.type === 'expense' ? '−' : '+'}{rupiah(e.amount)}
                   </td>
-                  <td>
-                    <button className="btn btn-sm btn-danger" onClick={async () => {
-                      if (!confirm('Hapus catatan ini?')) return
-                      try {
-                        await remove('finance', e.id)
-                        setActionError('')
-                      } catch (error) {
-                        setActionError(error.message || 'Gagal menghapus catatan dari server.')
-                      }
-                    }}>Hapus</button>
+                  <td className="finance-ledger-actions">
+                    {isAutomaticEntry(e) ? (
+                      <span className="muted small">Otomatis</span>
+                    ) : (
+                      <div>
+                        {['expense', 'capital'].includes(e.type) && (
+                          <button className="btn btn-sm" type="button" onClick={() => openEditEntry(e)}>Edit</button>
+                        )}
+                        <button className="btn btn-sm btn-danger" type="button" onClick={() => deleteEntry(e)}>Hapus</button>
+                      </div>
+                    )}
                   </td>
                 </tr>
               ))}
@@ -127,8 +211,84 @@ export default function Finance() {
           </table>
         </div>
       </div>
+
+      {showEntryForm && (
+        <div className="overlay" onClick={() => !savingEntry && setShowEntryForm(false)}>
+          <form
+            className="modal finance-entry-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="finance-entry-title"
+            onClick={(event) => event.stopPropagation()}
+            onSubmit={saveEntry}>
+            <h3 id="finance-entry-title">{editingEntry ? 'Edit catatan keuangan' : 'Tambah catatan keuangan'}</h3>
+            <label htmlFor="finance-entry-type">Jenis catatan</label>
+            <select
+              id="finance-entry-type"
+              className="input"
+              value={entryType}
+              onChange={(event) => setEntryType(event.target.value)}>
+              <option value="expense">Pengeluaran</option>
+              <option value="capital">Modal</option>
+            </select>
+            <label htmlFor="finance-entry-date">Tanggal</label>
+            <input
+              id="finance-entry-date"
+              className="input"
+              type="date"
+              value={entryDate}
+              onChange={(event) => setEntryDate(event.target.value)}
+              required
+            />
+            <label htmlFor="finance-entry-category">Kategori</label>
+            <input
+              id="finance-entry-category"
+              className="input"
+              value={entryCategory}
+              onChange={(event) => setEntryCategory(event.target.value)}
+              maxLength={100}
+              placeholder="Contoh: Belanja perlengkapan"
+            />
+            <label htmlFor="finance-entry-note">Catatan</label>
+            <textarea
+              id="finance-entry-note"
+              className="input"
+              value={entryNote}
+              onChange={(event) => setEntryNote(event.target.value)}
+              maxLength={500}
+              rows={3}
+              placeholder="Catatan tambahan (opsional)"
+            />
+            <label htmlFor="finance-entry-amount">Nominal</label>
+            <MoneyInput
+              id="finance-entry-amount"
+              value={entryAmount}
+              onChange={setEntryAmount}
+              placeholder="Masukkan nominal"
+              required
+            />
+            {actionError && <p className="form-error" role="alert">{actionError}</p>}
+            <div className="modal-actions">
+              <button className="btn" type="button" disabled={savingEntry} onClick={() => setShowEntryForm(false)}>Batal</button>
+              <button className="btn btn-primary" type="submit" disabled={savingEntry}>
+                {savingEntry ? 'Menyimpan...' : 'Simpan catatan'}
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
     </div>
   )
+}
+
+function isAutomaticEntry(entry) {
+  const category = String(entry.category || '').trim().toLocaleLowerCase('id-ID')
+  const note = String(entry.note || '')
+  return entry.refId != null
+    || entry.requestId != null
+    || ['penjualan', 'dp kredit', 'cicilan kredit'].includes(category)
+    || note.startsWith('Penjualan ·')
+    || note.startsWith('Cicilan transaksi ')
 }
 
 function getBalanceDue(transaction) {

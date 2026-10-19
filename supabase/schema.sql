@@ -615,7 +615,42 @@ begin
 end;
 $$;
 
+create or replace function public.delete_manual_finance_entry(p_entry_id bigint)
+returns void
+language plpgsql
+security definer
+set search_path = public, pg_temp
+as $$
+declare
+  current_user_id uuid := auth.uid();
+  entry_row public.finance_entries%rowtype;
+begin
+  if current_user_id is null then raise exception 'Login diperlukan.'; end if;
+
+  select * into entry_row
+  from public.finance_entries
+  where id = p_entry_id and owner_id = current_user_id
+  for update;
+  if not found then raise exception 'Catatan keuangan tidak ditemukan.'; end if;
+
+  if entry_row."refId" is not null
+     or entry_row."requestId" is not null
+     or lower(trim(coalesce(entry_row.category, ''))) in ('penjualan', 'dp kredit', 'cicilan kredit')
+     or coalesce(entry_row.note, '') like 'Penjualan ·%'
+     or coalesce(entry_row.note, '') like 'Cicilan transaksi %' then
+    raise exception 'Catatan yang berasal dari transaksi tidak dapat dihapus dari buku kas.';
+  end if;
+
+  delete from public.finance_entries
+  where id = p_entry_id and owner_id = current_user_id;
+end;
+$$;
+
 revoke all on function public.complete_sale(text, text, double precision, jsonb, uuid) from public, anon;
 revoke all on function public.record_transaction_payment(bigint, double precision, uuid) from public, anon;
+revoke all on function public.delete_manual_finance_entry(bigint) from public, anon;
 grant execute on function public.complete_sale(text, text, double precision, jsonb, uuid) to authenticated;
 grant execute on function public.record_transaction_payment(bigint, double precision, uuid) to authenticated;
+grant execute on function public.delete_manual_finance_entry(bigint) to authenticated;
+revoke delete on public.finance_entries from public, anon, authenticated;
+grant select, insert, update on public.finance_entries to authenticated;

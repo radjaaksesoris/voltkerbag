@@ -28,6 +28,7 @@ export default function Products() {
   const [showForm, setShowForm] = useState(false)
   const [imageFile, setImageFile] = useState(null)
   const [imagePreview, setImagePreview] = useState('')
+  const [imageRemoved, setImageRemoved] = useState(false)
   const [saving, setSaving] = useState(false)
   const [loadError, setLoadError] = useState('')
   const [actionError, setActionError] = useState('')
@@ -98,6 +99,7 @@ export default function Products() {
     })
     setImageFile(null)
     setImagePreview('')
+    setImageRemoved(false)
     if (imageInputRef.current) imageInputRef.current.value = ''
     setShowForm(true)
   }
@@ -107,6 +109,7 @@ export default function Products() {
     setForm(EMPTY)
     setImageFile(null)
     setImagePreview('')
+    setImageRemoved(false)
     if (imageInputRef.current) imageInputRef.current.value = ''
     setShowForm(true)
   }
@@ -116,6 +119,7 @@ export default function Products() {
     setShowForm(false)
     setImageFile(null)
     setImagePreview('')
+    setImageRemoved(false)
     if (imageInputRef.current) imageInputRef.current.value = ''
   }
 
@@ -135,11 +139,13 @@ export default function Products() {
     setActionError('')
     setImageFile(file)
     setImagePreview(URL.createObjectURL(file))
+    setImageRemoved(false)
   }
 
   function clearProductImage() {
     setImageFile(null)
     setImagePreview('')
+    setImageRemoved(true)
     setForm((current) => ({ ...current, image_path: null }))
     if (imageInputRef.current) imageInputRef.current.value = ''
   }
@@ -212,7 +218,7 @@ export default function Products() {
     }
     const stockPcs = quantityToPcs(baseStock, form.unit)
     const previousImagePath = originalImagePathRef.current
-    let imagePath = previousImagePath
+    let imagePath = imageRemoved ? null : previousImagePath
     let uploadedImagePath = null
     setSaving(true)
     try {
@@ -238,6 +244,7 @@ export default function Products() {
       setShowForm(false)
       setImageFile(null)
       setImagePreview('')
+      setImageRemoved(false)
       if (previousImagePath && previousImagePath !== imagePath) {
         try {
           await removeProductImage(previousImagePath)

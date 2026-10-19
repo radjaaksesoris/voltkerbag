@@ -9,12 +9,13 @@ VOLTKER adalah aplikasi kasir React + Vite dengan Supabase sebagai sumber data u
 - Kasir tunai/kredit dengan nama pelanggan wajib; checkout dan pengurangan stok diproses atomik di database.
 - Pembayaran cicilan atau pelunasan kredit dari detail transaksi, dengan validasi saldo dan pencatatan buku kas di server.
 - Cetak ulang dan pratinjau struk continuous form 24 × 14 cm.
-- CRUD stok produk dan buku kas online.
+- CRUD stok produk dan pencatatan pengeluaran/modal di buku kas online.
+- Catatan buku kas yang berasal dari penjualan atau cicilan ditandai otomatis dan tidak dapat dihapus sebagai catatan manual.
 
 ## Setup Supabase
 1. Pastikan project Supabase yang dipakai adalah project VOLTKER yang benar.
 2. Di **Authentication → Users**, buat satu akun toko. Jangan aktifkan pendaftaran publik; hanya akun ini yang boleh digunakan.
-3. Jalankan seluruh `supabase/schema.sql` di **SQL Editor**. Skema ini menyiapkan tabel pelanggan, kebijakan Row Level Security, bucket `product-images`, serta tabel dan pilihan kategori/satuan produk. Skema dapat dijalankan ulang; migrasi mempertahankan data dan mengisi daftar nama pelanggan dari riwayat transaksi yang sudah ada.
+3. Jalankan seluruh `supabase/schema.sql` di **SQL Editor**. Skema ini menyiapkan tabel pelanggan, kebijakan Row Level Security, bucket `product-images`, serta tabel dan pilihan kategori/satuan produk. Skema juga memasang fungsi untuk menghapus catatan buku kas manual tanpa mengizinkan penghapusan catatan yang terhubung ke transaksi. Jalankan ulang skema sebelum deploy perubahan terkait; skema dapat dijalankan ulang dan migrasi mempertahankan data.
 4. Jangan jalankan `supabase/clear-data.sql` untuk migrasi atau deploy. Jalankan hanya jika memang ingin menghapus permanen semua produk, transaksi, dan catatan keuangan di project tersebut serta memulai ulang ID.
 5. Salin Supabase anon/publishable key (bukan `service_role` atau secret key).
 6. Untuk GitHub Pages, simpan key sebagai repository Actions secret `VITE_SUPABASE_ANON_KEY`, lalu jalankan workflow deploy. Untuk lokal, isi `VITE_SUPABASE_ANON_KEY` dalam `.env.local`.

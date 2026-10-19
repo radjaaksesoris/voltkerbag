@@ -128,6 +128,14 @@ export async function remove(store, id) {
     notifyRefresh()
     return
   }
+  if (store === 'finance') {
+    const { error } = await getClient().rpc('delete_manual_finance_entry', {
+      p_entry_id: id
+    })
+    throwIfError(error, 'Gagal menghapus catatan keuangan')
+    notifyRefresh()
+    return
+  }
   const { error } = await getClient().from(tableFor(store)).delete().eq('id', id)
   throwIfError(error, 'Gagal menghapus data')
   notifyRefresh()
