@@ -1,5 +1,4 @@
 import { useState } from 'react'
-import { signOut } from '../supabaseSync'
 
 export default function SessionControl({ email, onSignedOut }) {
   const [busy, setBusy] = useState(false)
@@ -9,6 +8,7 @@ export default function SessionControl({ email, onSignedOut }) {
     setBusy(true)
     setError('')
     try {
+      const { signOut } = await import('../supabaseSync')
       await signOut()
       onSignedOut()
     } catch (err) {

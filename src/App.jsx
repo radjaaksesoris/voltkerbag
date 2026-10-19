@@ -2,7 +2,6 @@ import { Suspense, lazy, useEffect, useRef, useState } from 'react'
 import LoginScreen from './components/LoginScreen.jsx'
 import SessionControl from './components/SessionControl.jsx'
 import Icon from './components/Icon.jsx'
-import { getAuthSession, isConfigured, onAuthStateChange } from './supabaseSync'
 
 const Dashboard = lazy(() => import('./pages/Dashboard.jsx'))
 const Transactions = lazy(() => import('./pages/Transactions.jsx'))
@@ -30,6 +29,8 @@ export default function App() {
 
   useEffect(() => {
     let active = true
+    let unsubscribe = () => {}
+    let authListenerInitialized = false
 
     async function verifyConnection() {
       if (!navigator.onLine) {
@@ -40,7 +41,26 @@ export default function App() {
         }
         return
       }
+      if (!import.meta.env.VITE_SUPABASE_ANON_KEY) {
+        if (active) {
+          setSession(null)
+          setConnectionError('')
+          setCheckingSession(false)
+        }
+        return
+      }
       try {
+        const { getAuthSession, onAuthStateChange } = await import('./supabaseSync')
+        if (!active) return
+        if (!authListenerInitialized) {
+          unsubscribe = onAuthStateChange((event) => {
+            if (event === 'SIGNED_OUT') {
+              setSession(null)
+              setConnectionError('')
+            }
+          })
+          authListenerInitialized = true
+        }
         const currentSession = await getAuthSession()
         if (!active) return
         setSession(currentSession)
@@ -54,14 +74,6 @@ export default function App() {
       }
     }
 
-    const unsubscribe = isConfigured()
-      ? onAuthStateChange((event) => {
-        if (event === 'SIGNED_OUT') {
-          setSession(null)
-          setConnectionError('')
-        }
-      })
-      : () => {}
     const onOnline = () => { setCheckingSession(true); verifyConnection() }
     const onOffline = () => {
       setSession(null)
@@ -93,7 +105,7 @@ export default function App() {
   if (!session || connectionError) {
     return (
       <LoginScreen
-        configured={isConfigured()}
+        configured={Boolean(import.meta.env.VITE_SUPABASE_ANON_KEY)}
         connectionError={connectionError}
         onSignedIn={(nextSession) => {
           setSession(nextSession)
@@ -113,9 +125,9 @@ export default function App() {
       <aside className="sidebar" id="primary-navigation" hidden={navHidden}>
         <div className="logo">
           <img
-            src={import.meta.env.BASE_URL + 'voltker-logo-480.png'}
-            width="480"
-            height="119"
+            src={import.meta.env.BASE_URL + 'voltker-logo-320.png'}
+            width="320"
+            height="79"
             alt="VOLTKER Toko Tas"
           />
         </div>

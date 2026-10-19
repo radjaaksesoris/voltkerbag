@@ -1,5 +1,4 @@
 import { useState } from 'react'
-import { signIn } from '../supabaseSync'
 
 export default function LoginScreen({ configured, connectionError, onSignedIn, onRetry }) {
   const [email, setEmail] = useState('')
@@ -12,6 +11,7 @@ export default function LoginScreen({ configured, connectionError, onSignedIn, o
     setBusy(true)
     setError('')
     try {
+      const { signIn } = await import('../supabaseSync')
       const session = await signIn(email.trim(), password)
       setPassword('')
       onSignedIn(session)
@@ -27,9 +27,9 @@ export default function LoginScreen({ configured, connectionError, onSignedIn, o
       <aside className="login-brand" aria-label="VOLTKER Toko Tas">
         <img
           className="login-brand-logo"
-          src={import.meta.env.BASE_URL + 'voltker-logo-480.png'}
-          width="480"
-          height="119"
+          src={import.meta.env.BASE_URL + 'voltker-logo-320.png'}
+          width="320"
+          height="79"
           alt="VOLTKER Toko Tas"
         />
         <div className="login-brand-copy">
