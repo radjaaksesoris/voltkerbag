@@ -306,7 +306,7 @@ export default function Transactions() {
             <input
               ref={productSearchRef}
               className="input search"
-              placeholder="Cari tas... (stok 0 disembunyikan)"
+              placeholder="Cari Item Barang..."
               aria-label="Cari produk"
               value={q}
               onChange={(e) => setQ(e.target.value)}
