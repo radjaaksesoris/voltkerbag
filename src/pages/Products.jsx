@@ -59,6 +59,22 @@ export default function Products() {
     }
   }, [imagePreview])
 
+  useEffect(() => {
+    if (!showForm && !stockProduct) return
+
+    function preventBackgroundScroll(event) {
+      if (event.target instanceof Element && event.target.closest('.modal')) return
+      event.preventDefault()
+    }
+
+    document.addEventListener('touchmove', preventBackgroundScroll, { passive: false })
+    document.addEventListener('wheel', preventBackgroundScroll, { passive: false })
+    return () => {
+      document.removeEventListener('touchmove', preventBackgroundScroll)
+      document.removeEventListener('wheel', preventBackgroundScroll)
+    }
+  }, [showForm, stockProduct])
+
   async function load() {
     try {
       const [productRows, categoryRows, unitRows] = await Promise.all([
