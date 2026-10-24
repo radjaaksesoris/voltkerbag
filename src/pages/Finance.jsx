@@ -25,7 +25,8 @@ export default function Finance() {
     expense: 0,
     capital: 0,
     total_credit: 0,
-    gross_profit: 0
+    gross_profit: 0,
+    credit_balances: []
   })
   const [dateRange, setDateRange] = useState(getTodayDateRange)
   const [page, setPage] = useState(1)
@@ -56,6 +57,9 @@ export default function Finance() {
           pageSize: FINANCE_PAGE_SIZE
         })
         if (!active || currentRequest !== requestId.current) return
+        if (!Array.isArray(data.credit_balances)) {
+          throw new Error('Daftar hutang pelanggan belum tersedia. Terapkan pembaruan supabase/schema.sql di Supabase, lalu muat ulang.')
+        }
         const pageCount = Math.max(1, Math.ceil(data.total_count / FINANCE_PAGE_SIZE))
         if (page > pageCount) {
           setPage(pageCount)
@@ -179,6 +183,28 @@ export default function Finance() {
         <div className="stat-card highlight"><span>Saldo Kas</span><strong>{rupiah(balance)}</strong></div>
         <div className="stat-card"><span>Laba</span><strong className={netProfit >= 0 ? 'ok' : 'danger'}>{rupiah(netProfit)}</strong></div>
       </div>
+
+      <section className="card credit-balances" aria-labelledby="credit-balances-title">
+        <div className="credit-balances-heading">
+          <div>
+            <h3 id="credit-balances-title">Pelanggan dengan hutang</h3>
+            <p className="muted small">Menampilkan sisa hutang yang masih berjalan, tidak dibatasi periode.</p>
+          </div>
+          <strong className="credit-balances-total">{rupiah(totalCredit)}</strong>
+        </div>
+        {report.credit_balances.length === 0 ? (
+          <p className="credit-balances-empty muted">Tidak ada pelanggan dengan hutang saat ini.</p>
+        ) : (
+          <ul className="credit-balances-list">
+            {report.credit_balances.map((debt) => (
+              <li key={debt.customer_name}>
+                <span>{debt.customer_name}</span>
+                <strong>{rupiah(Number(debt.balance_due))}</strong>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
 
       <div className="finance-date-filter">
         <div className="date-filter-caption">

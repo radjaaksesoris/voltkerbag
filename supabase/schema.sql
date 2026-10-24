@@ -784,6 +784,7 @@ declare
   expense_total numeric;
   capital_total numeric;
   credit_total numeric;
+  credit_balances jsonb;
   gross_profit numeric;
 begin
   if current_user_id is null then raise exception 'Login diperlukan.'; end if;
@@ -808,6 +809,23 @@ begin
   into credit_total
   from public.transactions t
   where t.owner_id = current_user_id and t."paymentType" = 'credit';
+
+  select coalesce(jsonb_agg(
+    jsonb_build_object(
+      'customer_name', debt.customer_name,
+      'balance_due', debt.balance_due
+    ) order by debt.balance_due desc, debt.customer_name
+  ), '[]'::jsonb)
+  into credit_balances
+  from (
+    select
+      coalesce(nullif(btrim(t."customerName"), ''), 'Pelanggan lama') as customer_name,
+      sum(greatest(0, coalesce(t."balanceDue", t.total - coalesce(t."paidAmount", t.payment)))) as balance_due
+    from public.transactions t
+    where t.owner_id = current_user_id and t."paymentType" = 'credit'
+    group by coalesce(nullif(btrim(t."customerName"), ''), 'Pelanggan lama')
+    having sum(greatest(0, coalesce(t."balanceDue", t.total - coalesce(t."paidAmount", t.payment)))) > 0
+  ) as debt;
 
   select coalesce(sum((
     select coalesce(sum(
@@ -843,6 +861,7 @@ begin
     'expense', expense_total,
     'capital', capital_total,
     'total_credit', credit_total,
+    'credit_balances', credit_balances,
     'gross_profit', gross_profit
   );
 end;

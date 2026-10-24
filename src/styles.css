@@ -826,6 +826,16 @@ select.input { appearance: none; }
 .payment-history li + li { margin-top: 4px; }
 .installment-balance { display: flex; justify-content: space-between; margin: 15px 0; color: var(--muted); }
 .installment-balance strong { color: var(--accent); font-variant-numeric: tabular-nums; }
+.credit-balances { margin-bottom: 20px; }
+.credit-balances-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 14px; margin-bottom: 14px; }
+.credit-balances-heading h3 { margin: 0 0 4px; color: var(--ink); }
+.credit-balances-heading p { margin: 0; }
+.credit-balances-total { flex: 0 0 auto; color: var(--danger); font-size: 17px; font-variant-numeric: tabular-nums; }
+.credit-balances-list { display: grid; max-height: 360px; overflow-y: auto; list-style: none; }
+.credit-balances-list li { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 2px; border-top: 1px solid var(--border); font-size: 12px; }
+.credit-balances-list li span { min-width: 0; overflow-wrap: anywhere; }
+.credit-balances-list li strong { flex: 0 0 auto; color: var(--danger); font-variant-numeric: tabular-nums; }
+.credit-balances-empty { padding: 10px 0 2px; font-size: 12px; }
 .receipt-button { display: block; margin-bottom: 6px; white-space: nowrap; }
 .print-receipt { display: none; }
 .receipt-preview-overlay { z-index: 70; }
