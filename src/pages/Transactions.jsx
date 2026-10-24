@@ -15,6 +15,7 @@ export default function Transactions() {
   const [customers, setCustomers] = useState([])
   const [todaySummary, setTodaySummary] = useState({ transaction_count: 0, total: 0 })
   const [cart, setCart] = useState([])
+  const [mobileCartOpen, setMobileCartOpen] = useState(false)
   const [expandedProductIds, setExpandedProductIds] = useState(() => new Set())
   const [q, setQ] = useState('')
   const [pay, setPay] = useState('')
@@ -32,6 +33,8 @@ export default function Transactions() {
   const saleRequest = useRef(null)
   const installmentRequest = useRef(null)
   const productSearchRef = useRef(null)
+  const transactionsPageRef = useRef(null)
+  const productScrollTop = useRef(0)
   const [loadError, setLoadError] = useState('')
   const [loaded, setLoaded] = useState(false)
 
@@ -77,6 +80,16 @@ export default function Transactions() {
   function canAddOne(productId, unit) {
     const existingQty = cart.find((item) => item.productId === productId && item.unit === unit)?.qty || 0
     return maxCartQuantity(productId, unit) > existingQty
+  }
+
+  function switchMobileView(showCart) {
+    setMobileCartOpen(showCart)
+    if (!window.matchMedia('(max-width: 640px)').matches) return
+    const content = transactionsPageRef.current?.closest('.content')
+    if (showCart && content) productScrollTop.current = content.scrollTop
+    requestAnimationFrame(() => {
+      if (content) content.scrollTop = showCart ? 0 : productScrollTop.current
+    })
   }
 
   if (!loaded) return <div className="page"><p className="muted">Memuat data dari server...</p></div>
@@ -216,6 +229,7 @@ export default function Transactions() {
       setPay('')
       setCustomerName('')
       setPaymentType('cash')
+      switchMobileView(false)
     } catch (error) {
       setCheckoutError('Transaksi gagal disimpan: ' + error.message)
     } finally {
@@ -263,13 +277,23 @@ export default function Transactions() {
   }
 
   return (
-    <div className="page transactions-page">
+    <div className="page transactions-page" ref={transactionsPageRef}>
       <div className="page-toolbar">
         <p className="muted">Hari ini <strong>{todaySummary.transaction_count} transaksi</strong> · {rupiah(todaySummary.total)}</p>
+        <button
+          className="btn btn-primary mobile-cart-toggle"
+          type="button"
+          aria-label={mobileCartOpen ? 'Kembali ke daftar produk' : 'Buka keranjang, ' + cart.length + ' item'}
+          aria-expanded={mobileCartOpen}
+          onClick={() => switchMobileView(!mobileCartOpen)}>
+          <Icon name={mobileCartOpen ? 'bag' : 'cart'} size={17} />
+          <span>{mobileCartOpen ? 'Produk' : 'Keranjang'}</span>
+          {!mobileCartOpen && <span className="mobile-cart-count">{cart.length}</span>}
+        </button>
       </div>
 
-      <div className="pos-grid">
-        <div>
+      <div className={'pos-grid' + (mobileCartOpen ? ' mobile-cart-open' : '')}>
+        <div className="pos-products">
           <div className="search-field">
             <input
               ref={productSearchRef}
@@ -345,11 +369,19 @@ export default function Transactions() {
         </div>
 
         <div className="card cart">
+          <div className="cart-view-header">
+            <button className="btn cart-back-button" type="button" onClick={() => switchMobileView(false)}>
+              <Icon name="bag" size={16} />
+              Pilih produk
+            </button>
+            <strong>{cart.length} item · {rupiah(total)}</strong>
+          </div>
           <div className="cart-items">
             <div className="cart-items-heading">
               <strong>Item transaksi</strong>
               <span>{cart.length} item</span>
             </div>
+            {cart.length > 4 && <p className="cart-items-scroll-hint">Gulir daftar ini untuk melihat semua item</p>}
             <div className="cart-items-list">
               {cart.length === 0 ? (
                 <p className="cart-empty">Belum ada item. Pilih produk untuk memulai transaksi.</p>
