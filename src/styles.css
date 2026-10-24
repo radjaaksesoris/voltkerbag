@@ -1007,6 +1007,7 @@ select.input { appearance: none; }
 .finance-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 22px; align-items: start; }
 .grid-3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
 .overlay { position: fixed; z-index: 50; inset: 0; display: flex; align-items: center; justify-content: center; padding: 20px; background: rgba(24, 22, 21, .6); overscroll-behavior: contain; backdrop-filter: blur(5px); }
+.product-form-overlay { justify-content: flex-end; padding-right: clamp(20px, 4vw, 64px); }
 .modal { width: 100%; max-width: 460px; max-height: 90vh; overflow-y: auto; overscroll-behavior: contain; padding: 26px; border: 1px solid var(--border); border-radius: 17px; background: var(--card); box-shadow: 0 24px 70px rgba(26, 19, 15, .24); }
 .product-modal {
   position: relative;
@@ -1138,6 +1139,7 @@ select.input { appearance: none; }
   .dashboard-stats-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 @media (max-width: 640px) {
+  .product-form-overlay { justify-content: center; padding: 12px; }
   .app { display: flex; padding-bottom: 0; }
   .main { width: 100%; }
   .sidebar {
