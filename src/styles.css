@@ -337,13 +337,13 @@ button:focus-visible, input:focus-visible, select:focus-visible {
   position: absolute;
   z-index: -1;
   inset: 0;
-  background-image: var(--brand-watermark), var(--brand-watermark);
-  background-position: 26px 38px, 156px 113px;
-  background-repeat: repeat;
-  background-size: 210px auto, 145px auto;
+  background-image: var(--brand-watermark);
+  background-position: center 30%;
+  background-repeat: no-repeat;
+  background-size: min(68vw, 560px) auto;
   content: '';
   filter: brightness(0) saturate(100%) invert(17%) sepia(57%) saturate(2440%) hue-rotate(326deg) brightness(88%) contrast(96%);
-  opacity: .045;
+  opacity: .035;
   pointer-events: none;
 }
 
