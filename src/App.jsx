@@ -1,6 +1,7 @@
 import { Suspense, lazy, useEffect, useRef, useState } from 'react'
 import LoginScreen from './components/LoginScreen.jsx'
 import SessionControl from './components/SessionControl.jsx'
+import PageErrorBoundary from './components/PageErrorBoundary.jsx'
 import Icon from './components/Icon.jsx'
 
 const Dashboard = lazy(() => import('./pages/Dashboard.jsx'))
@@ -342,13 +343,15 @@ export default function App() {
         )}
 
         <div className="content" ref={contentRef}>
-          <Suspense fallback={<p className="login-loading">Memuat halaman...</p>}>
-            {page === 'dashboard' && <Dashboard />}
-            {page === 'pos' && <Transactions />}
-            {page === 'stok' && <Products />}
-            {page === 'finance' && <Finance />}
-            {page === 'settings' && <Settings />}
-          </Suspense>
+          <PageErrorBoundary key={page}>
+            <Suspense fallback={<p className="login-loading">Memuat halaman...</p>}>
+              {page === 'dashboard' && <Dashboard />}
+              {page === 'pos' && <Transactions />}
+              {page === 'stok' && <Products />}
+              {page === 'finance' && <Finance />}
+              {page === 'settings' && <Settings />}
+            </Suspense>
+          </PageErrorBoundary>
         </div>
       </main>
       {showInstallInstructions && !isInstalled && (
