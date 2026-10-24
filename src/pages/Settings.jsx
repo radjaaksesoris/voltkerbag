@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { getAll, onRefresh, put, remove } from '../db'
+import { createBackupArchive, getAll, onRefresh, put, remove } from '../db'
 import Icon from '../components/Icon.jsx'
 
 export default function Settings() {
@@ -9,6 +9,9 @@ export default function Settings() {
   const [actionError, setActionError] = useState('')
   const [loaded, setLoaded] = useState(false)
   const [saving, setSaving] = useState(false)
+  const [backupSaving, setBackupSaving] = useState(false)
+  const [backupStatus, setBackupStatus] = useState('')
+  const [backupError, setBackupError] = useState('')
 
   async function load() {
     try {
@@ -57,6 +60,23 @@ export default function Settings() {
       await remove('customers', customer.id)
     } catch (error) {
       setActionError(error.message || 'Gagal menghapus nama pelanggan.')
+    }
+  }
+
+  async function createBackup() {
+    setBackupSaving(true)
+    setBackupError('')
+    setBackupStatus('')
+    try {
+      const backup = await createBackupArchive()
+      setBackupStatus(
+        'Tersimpan di store-backups/' + backup.path + ' · ' + backup.recordCount + ' baris data, ' +
+        new Intl.NumberFormat('id-ID', { maximumFractionDigits: 1 }).format(backup.size / 1024 / 1024) + ' MB).'
+      )
+    } catch (error) {
+      setBackupError(error.message || 'Gagal membuat backup ke Supabase Storage.')
+    } finally {
+      setBackupSaving(false)
     }
   }
 
@@ -128,6 +148,21 @@ export default function Settings() {
           </div>
         </div>
         <p className="settings-storage-note">Format JPG, PNG, atau WebP · maksimal 5 MB per gambar.</p>
+      </section>
+
+      <section className="card settings-section backup-section">
+        <div className="settings-section-heading">
+          <div>
+            <h3>Backup data</h3>
+            <p className="muted small">Simpan seluruh data toko dan foto produk sebagai file ZIP privat di Supabase Storage.</p>
+          </div>
+        </div>
+        {backupError && <p className="form-error" role="alert">{backupError}</p>}
+        {backupStatus && <p className="backup-success" role="status">{backupStatus}</p>}
+        <button className="btn btn-primary" type="button" disabled={backupSaving} onClick={createBackup}>
+          <Icon name="sync" size={16} />
+          {backupSaving ? 'Membuat backup...' : 'Buat backup sekarang'}
+        </button>
       </section>
     </div>
   )

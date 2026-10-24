@@ -1135,6 +1135,8 @@ select.input { appearance: none; }
 .settings-empty { display: grid; gap: 4px; padding: 18px 2px 2px; color: var(--muted); font-size: 12px; }
 .settings-empty span:first-child { color: var(--ink); font-weight: 600; }
 .settings-storage-note { padding: 10px 12px; border-left: 3px solid var(--accent); border-radius: 0 7px 7px 0; background: var(--bg-soft); color: var(--muted); font-size: 11px; }
+.backup-section > .btn { display: inline-flex; align-items: center; gap: 7px; }
+.backup-success { margin-bottom: 12px; color: var(--ok); font-size: 12px; font-weight: 600; }
 .product-modal .modal-actions { padding-top: 15px; border-top: 1px solid rgba(145, 32, 39, .12); }
 .add-stock-modal h3 { margin-bottom: 4px; }
 .add-stock-modal > .muted { margin-bottom: 14px; }

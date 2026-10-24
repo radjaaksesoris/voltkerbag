@@ -283,6 +283,11 @@ create policy "Users can access their own transactions" on public.transactions
   for select to authenticated
   using ((select auth.uid()) = owner_id);
 
+drop policy if exists "Users can read their own stock adjustments" on public.product_stock_adjustments;
+create policy "Users can read their own stock adjustments" on public.product_stock_adjustments
+  for select to authenticated
+  using ((select auth.uid()) = owner_id);
+
 drop policy if exists "Users can access their own finance entries" on public.finance_entries;
 create policy "Users can access their own finance entries" on public.finance_entries
   for all to authenticated
@@ -321,6 +326,7 @@ grant select, insert on public.product_units to authenticated;
 revoke update, delete on public.product_units from anon, authenticated;
 grant select, insert, delete on public.customer_names to authenticated;
 revoke update on public.customer_names from anon, authenticated;
+grant select on public.product_stock_adjustments to authenticated;
 
 insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
 values ('product-images', 'product-images', true, 5242880, array['image/jpeg', 'image/png', 'image/webp'])
@@ -352,6 +358,28 @@ create policy "Users can delete their own product images" on storage.objects
   for delete to authenticated
   using (
     bucket_id = 'product-images'
+    and (storage.foldername(name))[1] = (select auth.uid())::text
+  );
+
+insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+values ('store-backups', 'store-backups', false, null, array['application/zip'])
+on conflict (id) do update
+set public = false,
+    file_size_limit = null,
+    allowed_mime_types = excluded.allowed_mime_types;
+
+drop policy if exists "Users can upload their own store backups" on storage.objects;
+create policy "Users can upload their own store backups" on storage.objects
+  for insert to authenticated
+  with check (
+    bucket_id = 'store-backups'
+    and (storage.foldername(name))[1] = (select auth.uid())::text
+  );
+drop policy if exists "Users can read their own store backups" on storage.objects;
+create policy "Users can read their own store backups" on storage.objects
+  for select to authenticated
+  using (
+    bucket_id = 'store-backups'
     and (storage.foldername(name))[1] = (select auth.uid())::text
   );
 

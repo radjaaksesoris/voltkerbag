@@ -1,4 +1,5 @@
 import { getClient } from './supabaseSync'
+import JSZip from 'jszip'
 
 const TABLES = {
   products: 'products',
@@ -31,6 +32,75 @@ export async function getAll(store) {
     rows.push(...(data || []))
     if (!data || data.length < pageSize) return rows
   }
+}
+
+export async function createBackupArchive() {
+  const client = getClient()
+  const { data: { user }, error: userError } = await client.auth.getUser()
+  throwIfError(userError, 'Gagal memeriksa akun untuk backup')
+  if (!user) throw new Error('Sesi login tidak ditemukan. Silakan masuk kembali.')
+
+  const tables = {
+    products: 'products',
+    categories: 'product_categories',
+    units: 'product_units',
+    customers: 'customer_names',
+    transactions: 'transactions',
+    finance: 'finance_entries',
+    stockAdjustments: 'product_stock_adjustments'
+  }
+  const records = {}
+  for (const [key, table] of Object.entries(tables)) {
+    const rows = []
+    const pageSize = 1000
+    for (let from = 0; ; from += pageSize) {
+      const { data, error } = await client.from(table).select('*').order('id').range(from, from + pageSize - 1)
+      throwIfError(error, 'Gagal membuat backup tabel ' + table)
+      rows.push(...(data || []))
+      if (!data || data.length < pageSize) break
+    }
+    records[key] = rows
+  }
+
+  const archive = new JSZip()
+  const imagePaths = [...new Set(records.products.map((product) => product.image_path).filter(Boolean))]
+  const images = []
+  for (const path of imagePaths) {
+    if (!path.startsWith(user.id + '/')) {
+      throw new Error('Backup dihentikan karena gambar produk tidak sesuai dengan akun toko.')
+    }
+    const { data, error } = await client.storage.from('product-images').download(path)
+    throwIfError(error, 'Gagal mengambil gambar produk untuk backup')
+    if (!data) throw new Error('Gambar produk tidak ditemukan saat membuat backup: ' + path)
+    const archivePath = 'images/' + path
+    archive.file(archivePath, data)
+    images.push({ storagePath: path, archivePath })
+  }
+
+  archive.file('data.json', JSON.stringify({
+    format: 'voltker-backup',
+    version: 1,
+    generatedAt: new Date().toISOString(),
+    ownerId: user.id,
+    records,
+    images
+  }, null, 2))
+
+  const blob = await archive.generateAsync({
+    type: 'blob',
+    mimeType: 'application/zip',
+    compression: 'DEFLATE',
+    compressionOptions: { level: 6 }
+  })
+  const timestamp = new Date().toISOString().replace(/[:.]/g, '-')
+  const path = user.id + '/backup-' + timestamp + '.zip'
+  const { error: uploadError } = await client.storage.from('store-backups').upload(path, blob, {
+    cacheControl: '3600',
+    contentType: 'application/zip',
+    upsert: false
+  })
+  throwIfError(uploadError, 'Gagal menyimpan backup ke Supabase Storage')
+  return { path, size: blob.size, recordCount: Object.values(records).reduce((count, rows) => count + rows.length, 0) }
 }
 
 export async function getDashboardData({ from, to, summaryFrom, summaryTo, page, pageSize, creditFirst }) {
