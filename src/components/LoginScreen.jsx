@@ -1,8 +1,7 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 
 export default function LoginScreen({ configured, connectionError, onSignedIn, onRetry }) {
   const defaultEmail = import.meta.env.VITE_LOGIN_EMAIL?.trim() || ''
-  const passwordInput = useRef(null)
   const [isMobile, setIsMobile] = useState(() => window.matchMedia('(max-width: 1024px)').matches)
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -15,10 +14,6 @@ export default function LoginScreen({ configured, connectionError, onSignedIn, o
     mobileQuery.addEventListener('change', updateMobile)
     return () => mobileQuery.removeEventListener('change', updateMobile)
   }, [])
-
-  useEffect(() => {
-    if (isMobile && configured && !connectionError) passwordInput.current?.focus()
-  }, [configured, connectionError, isMobile])
 
   async function submit(event) {
     event.preventDefault()
@@ -44,6 +39,11 @@ export default function LoginScreen({ configured, connectionError, onSignedIn, o
     } finally {
       setBusy(false)
     }
+  }
+
+  function enterDigit(digit) {
+    setPassword((current) => current + digit)
+    setError('')
   }
 
   return (
@@ -90,12 +90,27 @@ export default function LoginScreen({ configured, connectionError, onSignedIn, o
                 value={email} onChange={(event) => setEmail(event.target.value)} />
             </div>
             <label htmlFor="login-password">Kata sandi</label>
-            <input id="login-password" ref={passwordInput} className="input" type="password"
-              autoComplete="current-password" inputMode={isMobile ? 'numeric' : undefined}
-              pattern={isMobile ? '[0-9]*' : undefined} required
+            <input id="login-password" className="input" type="password" autoComplete="current-password"
+              inputMode={isMobile ? 'none' : undefined} readOnly={isMobile} required
               value={password} onChange={(event) => setPassword(
                 isMobile ? event.target.value.replace(/\D/g, '') : event.target.value
               )} />
+            {isMobile && (
+              <div className="login-keypad" role="group" aria-label="Keypad kata sandi">
+                {['1', '2', '3', '4', '5', '6', '7', '8', '9'].map((digit) => (
+                  <button key={digit} className="login-keypad-button" type="button"
+                    onClick={() => enterDigit(digit)} disabled={busy}>{digit}</button>
+                ))}
+                <button className="login-keypad-button login-keypad-action" type="button"
+                  onClick={() => { setPassword(''); setError('') }} disabled={busy}
+                  aria-label="Hapus semua angka">Hapus</button>
+                <button className="login-keypad-button" type="button"
+                  onClick={() => enterDigit('0')} disabled={busy}>0</button>
+                <button className="login-keypad-button login-keypad-action" type="button"
+                  onClick={() => { setPassword((current) => current.slice(0, -1)); setError('') }}
+                  disabled={busy} aria-label="Hapus angka terakhir">⌫</button>
+              </div>
+            )}
             {error && <p className="form-error" role="alert">{error}</p>}
             <button className="btn btn-primary btn-block btn-lg" disabled={busy}>
               {busy ? 'Memverifikasi akun...' : 'Masuk'}
