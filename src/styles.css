@@ -824,7 +824,8 @@ select.input { appearance: none; }
 .cart-items-heading > span { color: var(--muted); font-size: 10px; }
 .cart-items-scroll-hint { flex: 0 0 auto; padding: 6px 0 2px; color: var(--muted); font-size: 10px; }
 .cart-items-list { min-height: 0; flex: 1 1 auto; overflow-y: auto; overscroll-behavior: contain; scrollbar-gutter: stable; }
-.cart-empty { padding: 12px 0; color: var(--muted); font-size: 11px; }
+.cart-items-list-empty { display: grid; place-items: center; }
+.cart-empty { display: grid; min-height: 120px; place-items: center; color: var(--muted); }
 .cart-row { display: grid; gap: 5px 8px; padding: 8px 0; border-bottom: 1px solid var(--border); }
 .cart-info { display: grid; min-width: 0; gap: 3px; }
 .cart-info > strong { color: var(--ink); font-size: 12px; line-height: 1.25; overflow-wrap: anywhere; }

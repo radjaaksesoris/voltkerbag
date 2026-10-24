@@ -388,9 +388,11 @@ export default function Transactions() {
               <span>{cart.length} item</span>
             </div>
             {cart.length > 4 && <p className="cart-items-scroll-hint">Gulir daftar ini untuk melihat semua item</p>}
-            <div className="cart-items-list">
+            <div className={'cart-items-list' + (cart.length === 0 ? ' cart-items-list-empty' : '')}>
               {cart.length === 0 ? (
-                <p className="cart-empty">Belum ada item. Pilih produk untuk memulai transaksi.</p>
+                <div className="cart-empty" role="img" aria-label="Keranjang kosong">
+                  <Icon name="cart" size={42} />
+                </div>
               ) : cart.map((c) => (
                 <div key={c.productId + '-' + c.unit} className="cart-row">
                   <div className="cart-info">
