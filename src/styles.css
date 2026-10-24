@@ -613,6 +613,7 @@ tbody tr:hover { background: #fbf5ed; }
 .products-table .row-actions .btn { margin-left: 4px; }
 .product-stock-action { color: var(--accent-dark); }
 .product-stock-action .icon { width: 13px; height: 13px; }
+.products-search { width: 100%; max-width: none; }
 
 /* Buttons and fields */
 .btn {

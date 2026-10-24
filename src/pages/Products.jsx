@@ -406,7 +406,7 @@ export default function Products() {
         <button className="btn btn-primary" onClick={openAdd}>+ Tambah Produk</button>
       </div>
 
-      <input className="input search" placeholder="Cari produk atau kategori..."
+      <input className="input search products-search" placeholder="Cari produk atau kategori..."
         value={q} onChange={(e) => setQ(e.target.value)} />
 
       <div className="card table-card products-table-card">
