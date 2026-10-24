@@ -1110,7 +1110,7 @@ select.input { appearance: none; }
   .cart-submit-bar {
     position: sticky;
     z-index: 5;
-    bottom: 76px;
+    bottom: 8px;
     padding: 8px 0;
     background: var(--card);
   }
