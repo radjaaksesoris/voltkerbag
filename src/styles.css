@@ -613,7 +613,6 @@ tbody tr:hover { background: #fbf5ed; }
 .products-table .row-actions .btn { margin-left: 4px; }
 .product-stock-action { color: var(--accent-dark); }
 .product-stock-action .icon { width: 13px; height: 13px; }
-.products-search { width: 100%; max-width: none; }
 
 /* Buttons and fields */
 .btn {
@@ -745,6 +744,7 @@ tbody tr:hover { background: #fbf5ed; }
 .category-error { margin: 8px 4px 3px; }
 .customer-select-empty { padding: 11px; color: var(--muted); font-size: 11px; }
 .search { max-width: 440px; }
+.search.products-search { max-width: none; }
 label { display: block; margin-bottom: 6px; color: var(--muted); font-size: 11px; font-weight: 700; }
 select.input { appearance: none; }
 .badge { padding: 4px 9px; border-radius: 5px; font-size: 11px; font-weight: 700; }
