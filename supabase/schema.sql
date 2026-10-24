@@ -326,7 +326,6 @@ grant select, insert on public.product_units to authenticated;
 revoke update, delete on public.product_units from anon, authenticated;
 grant select, insert, delete on public.customer_names to authenticated;
 revoke update on public.customer_names from anon, authenticated;
-grant select on public.product_stock_adjustments to authenticated;
 
 insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
 values ('product-images', 'product-images', true, 5242880, array['image/jpeg', 'image/png', 'image/webp'])
@@ -553,9 +552,83 @@ begin
 end;
 $$;
 
-revoke all on public.product_stock_adjustments from public, anon, authenticated;
+revoke all on public.product_stock_adjustments from public, anon;
+revoke insert, update, delete on public.product_stock_adjustments from authenticated;
+grant select on public.product_stock_adjustments to authenticated;
 revoke all on function public.add_product_stock(bigint, integer, double precision, uuid) from public, anon;
 grant execute on function public.add_product_stock(bigint, integer, double precision, uuid) to authenticated;
+
+create or replace function public.restore_store_backup(p_records jsonb)
+returns void
+language plpgsql
+security definer
+set search_path = public, pg_temp
+as $$
+declare
+  current_user_id uuid := auth.uid();
+  table_name text;
+  max_id bigint;
+  sequence_name text;
+begin
+  if current_user_id is null then raise exception 'Login diperlukan.'; end if;
+  if jsonb_typeof(p_records) <> 'object' then raise exception 'Format data backup tidak valid.'; end if;
+
+  if jsonb_typeof(p_records->'products') <> 'array'
+    or jsonb_typeof(p_records->'categories') <> 'array'
+    or jsonb_typeof(p_records->'units') <> 'array'
+    or jsonb_typeof(p_records->'customers') <> 'array'
+    or jsonb_typeof(p_records->'transactions') <> 'array'
+    or jsonb_typeof(p_records->'finance') <> 'array'
+    or jsonb_typeof(p_records->'stockAdjustments') <> 'array' then
+    raise exception 'Isi file backup tidak lengkap atau rusak.';
+  end if;
+
+  delete from public.product_stock_adjustments where owner_id = current_user_id;
+  delete from public.finance_entries where owner_id = current_user_id;
+  delete from public.transactions where owner_id = current_user_id;
+  delete from public.customer_names where owner_id = current_user_id;
+  delete from public.product_categories where owner_id = current_user_id;
+  delete from public.product_units where owner_id = current_user_id;
+  delete from public.products where owner_id = current_user_id;
+
+  insert into public.products
+  select (jsonb_populate_record(null::public.products, row_data || jsonb_build_object('owner_id', current_user_id))).*
+  from jsonb_array_elements(p_records->'products') as rows(row_data);
+  insert into public.product_categories
+  select (jsonb_populate_record(null::public.product_categories, row_data || jsonb_build_object('owner_id', current_user_id))).*
+  from jsonb_array_elements(p_records->'categories') as rows(row_data);
+  insert into public.product_units
+  select (jsonb_populate_record(null::public.product_units, row_data || jsonb_build_object('owner_id', current_user_id))).*
+  from jsonb_array_elements(p_records->'units') as rows(row_data);
+  insert into public.customer_names
+  select (jsonb_populate_record(null::public.customer_names, row_data || jsonb_build_object('owner_id', current_user_id))).*
+  from jsonb_array_elements(p_records->'customers') as rows(row_data);
+  insert into public.transactions
+  select (jsonb_populate_record(null::public.transactions, row_data || jsonb_build_object('owner_id', current_user_id))).*
+  from jsonb_array_elements(p_records->'transactions') as rows(row_data);
+  insert into public.finance_entries
+  select (jsonb_populate_record(null::public.finance_entries, row_data || jsonb_build_object('owner_id', current_user_id))).*
+  from jsonb_array_elements(p_records->'finance') as rows(row_data);
+  insert into public.product_stock_adjustments
+  select (jsonb_populate_record(null::public.product_stock_adjustments, row_data || jsonb_build_object('owner_id', current_user_id))).*
+  from jsonb_array_elements(p_records->'stockAdjustments') as rows(row_data);
+
+  foreach table_name in array array[
+    'products', 'product_categories', 'product_units', 'customer_names',
+    'transactions', 'finance_entries', 'product_stock_adjustments'
+  ] loop
+    execute format('select max(id) from public.%I', table_name)
+      into max_id;
+    sequence_name := pg_get_serial_sequence('public.' || table_name, 'id');
+    if sequence_name is not null then
+      perform setval(sequence_name, coalesce(max_id, 1), max_id is not null);
+    end if;
+  end loop;
+end;
+$$;
+
+revoke all on function public.restore_store_backup(jsonb) from public, anon;
+grant execute on function public.restore_store_backup(jsonb) to authenticated;
 
 revoke insert, update, delete on public.transactions from anon, authenticated;
 grant select on public.transactions to authenticated;

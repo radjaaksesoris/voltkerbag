@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react'
-import { createBackupArchive, getAll, onRefresh, put, remove } from '../db'
+import { useEffect, useRef, useState } from 'react'
+import { createBackupArchive, getAll, onRefresh, put, remove, restoreBackupArchive } from '../db'
 import Icon from '../components/Icon.jsx'
 
 export default function Settings() {
@@ -12,6 +12,10 @@ export default function Settings() {
   const [backupSaving, setBackupSaving] = useState(false)
   const [backupStatus, setBackupStatus] = useState('')
   const [backupError, setBackupError] = useState('')
+  const [restoreSaving, setRestoreSaving] = useState(false)
+  const [restoreStatus, setRestoreStatus] = useState('')
+  const [restoreError, setRestoreError] = useState('')
+  const restoreInputRef = useRef(null)
 
   async function load() {
     try {
@@ -77,6 +81,29 @@ export default function Settings() {
       setBackupError(error.message || 'Gagal membuat backup ke Supabase Storage.')
     } finally {
       setBackupSaving(false)
+    }
+  }
+
+  async function restoreBackup(event) {
+    const file = event.target.files?.[0]
+    event.target.value = ''
+    if (!file) return
+    if (!confirm('Pulihkan backup ini? Seluruh data toko saat ini akan diganti dengan isi backup. Tindakan ini tidak dapat dibatalkan.')) return
+
+    setRestoreSaving(true)
+    setRestoreError('')
+    setRestoreStatus('Menyiapkan pemulihan...')
+    try {
+      const result = await restoreBackupArchive(file, setRestoreStatus)
+      setRestoreStatus(
+        'Pemulihan selesai: ' + result.recordCount + ' baris data dan ' + result.imageCount + ' foto.' +
+        (result.warning ? ' ' + result.warning : '')
+      )
+    } catch (error) {
+      setRestoreError(error.message || 'Gagal memulihkan data dari backup.')
+      setRestoreStatus('')
+    } finally {
+      setRestoreSaving(false)
     }
   }
 
@@ -159,10 +186,30 @@ export default function Settings() {
         </div>
         {backupError && <p className="form-error" role="alert">{backupError}</p>}
         {backupStatus && <p className="backup-success" role="status">{backupStatus}</p>}
-        <button className="btn btn-primary" type="button" disabled={backupSaving} onClick={createBackup}>
+        <div className="backup-actions">
+          <button className="btn btn-primary" type="button" disabled={backupSaving || restoreSaving} onClick={createBackup}>
           <Icon name="sync" size={16} />
           {backupSaving ? 'Membuat backup...' : 'Buat backup sekarang'}
-        </button>
+          </button>
+          <button
+            className="btn"
+            type="button"
+            disabled={backupSaving || restoreSaving}
+            onClick={() => restoreInputRef.current?.click()}>
+            <Icon name="sync" size={16} />
+            {restoreSaving ? 'Memulihkan backup...' : 'Pulihkan dari file ZIP'}
+          </button>
+          <input
+            ref={restoreInputRef}
+            className="backup-file-input"
+            type="file"
+            accept=".zip,application/zip"
+            aria-label="Pilih file backup ZIP"
+            onChange={restoreBackup}
+          />
+        </div>
+        {restoreError && <p className="form-error" role="alert">{restoreError}</p>}
+        {restoreStatus && <p className="backup-success" role="status">{restoreStatus}</p>}
       </section>
     </div>
   )

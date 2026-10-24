@@ -103,6 +103,134 @@ export async function createBackupArchive() {
   return { path, size: blob.size, recordCount: Object.values(records).reduce((count, rows) => count + rows.length, 0) }
 }
 
+export async function restoreBackupArchive(file, onProgress = () => {}) {
+  if (!file || !/\.zip$/i.test(file.name)) throw new Error('Pilih file backup dengan format ZIP.')
+
+  const client = getClient()
+  const { data: { user }, error: userError } = await client.auth.getUser()
+  throwIfError(userError, 'Gagal memeriksa akun untuk restore')
+  if (!user) throw new Error('Sesi login tidak ditemukan. Silakan masuk kembali.')
+
+  onProgress('Membaca file backup...')
+  let archive
+  try {
+    archive = await JSZip.loadAsync(file)
+  } catch {
+    throw new Error('File ZIP tidak dapat dibaca atau rusak.')
+  }
+  const manifestFile = archive.file('data.json')
+  if (!manifestFile) throw new Error('File backup tidak berisi data.json.')
+
+  let backup
+  try {
+    backup = JSON.parse(await manifestFile.async('text'))
+  } catch {
+    throw new Error('Data backup tidak valid atau rusak.')
+  }
+  if (backup.format !== 'voltker-backup' || backup.version !== 1) {
+    throw new Error('Format atau versi file backup tidak didukung.')
+  }
+  if (backup.ownerId !== user.id) {
+    throw new Error('File backup hanya dapat dipulihkan ke akun toko yang membuatnya.')
+  }
+
+  const recordKeys = ['products', 'categories', 'units', 'customers', 'transactions', 'finance', 'stockAdjustments']
+  if (!backup.records || recordKeys.some((key) => !Array.isArray(backup.records[key]))) {
+    throw new Error('Data pada file backup tidak lengkap.')
+  }
+  if (!Array.isArray(backup.images)) throw new Error('Daftar foto pada file backup tidak valid.')
+
+  const expectedImages = [...new Set(backup.records.products.map((product) => product.image_path).filter(Boolean))]
+  const imageEntries = new Map()
+  for (const image of backup.images) {
+    if (!image || typeof image.storagePath !== 'string' || typeof image.archivePath !== 'string') {
+      throw new Error('Daftar foto pada file backup tidak valid.')
+    }
+    if (!image.storagePath.startsWith(user.id + '/') || image.storagePath.split('/').length !== 2
+      || image.archivePath !== 'images/' + image.storagePath) {
+      throw new Error('Lokasi foto dalam file backup tidak valid.')
+    }
+    if (imageEntries.has(image.storagePath)) throw new Error('File backup memiliki entri foto ganda.')
+    const imageFile = archive.file(image.archivePath)
+    if (!imageFile) throw new Error('Foto produk tidak ditemukan dalam file backup: ' + image.storagePath)
+    imageEntries.set(image.storagePath, imageFile)
+  }
+  if (expectedImages.length !== imageEntries.size || expectedImages.some((path) => !imageEntries.has(path))) {
+    throw new Error('Daftar foto produk tidak cocok dengan data backup.')
+  }
+
+  const { data: existingProducts, error: productsError } = await client
+    .from('products')
+    .select('image_path')
+  throwIfError(productsError, 'Gagal memeriksa gambar produk saat ini')
+  const oldImagePaths = [...new Set((existingProducts || []).map((product) => product.image_path).filter(Boolean))]
+  const restoreId = crypto.randomUUID()
+  const uploadedPaths = []
+  const restoredImagePaths = new Map()
+
+  try {
+    for (const [index, [originalPath, imageFile]] of [...imageEntries.entries()].entries()) {
+      onProgress('Mengunggah foto produk ' + (index + 1) + ' dari ' + imageEntries.size + '...')
+      const extension = originalPath.split('.').pop().toLowerCase()
+      const contentTypes = { jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png', webp: 'image/webp' }
+      const contentType = contentTypes[extension]
+      if (!contentType) throw new Error('Format foto dalam backup tidak didukung: ' + originalPath)
+      const imageBlob = await imageFile.async('blob')
+      if (imageBlob.size === 0 || imageBlob.size > 5 * 1024 * 1024) {
+        throw new Error('Ukuran foto dalam backup tidak valid: ' + originalPath)
+      }
+
+      const filename = originalPath.split('/').pop()
+      const restoredPath = user.id + '/restore-' + restoreId + '/' + filename
+      const { error } = await client.storage.from('product-images').upload(restoredPath, imageBlob, {
+        cacheControl: '3600',
+        contentType,
+        upsert: false
+      })
+      throwIfError(error, 'Gagal mengunggah foto produk dari backup')
+      uploadedPaths.push(restoredPath)
+      restoredImagePaths.set(originalPath, restoredPath)
+    }
+
+    onProgress('Memulihkan data toko...')
+    const records = {
+      ...backup.records,
+      products: backup.records.products.map((product) => ({
+        ...product,
+        image_path: product.image_path ? restoredImagePaths.get(product.image_path) : null
+      }))
+    }
+    const { error: restoreError } = await client.rpc('restore_store_backup', { p_records: records })
+    throwIfError(restoreError, 'Gagal memulihkan data dari backup')
+  } catch (error) {
+    if (uploadedPaths.length) {
+      const { error: cleanupError } = await client.storage.from('product-images').remove(uploadedPaths)
+      if (cleanupError) {
+        throw new Error(error.message + ' Foto sementara gagal dibersihkan: ' + cleanupError.message)
+      }
+    }
+    throw error
+  }
+
+  const currentImagePaths = new Set(restoredImagePaths.values())
+  const obsoleteImagePaths = oldImagePaths.filter((path) => !currentImagePaths.has(path))
+  let warning = ''
+  for (let index = 0; index < obsoleteImagePaths.length; index += 100) {
+    const { error } = await client.storage.from('product-images').remove(obsoleteImagePaths.slice(index, index + 100))
+    if (error) {
+      warning = 'Data sudah dipulihkan, tetapi beberapa foto lama gagal dibersihkan: ' + error.message
+      break
+    }
+  }
+
+  notifyRefresh()
+  return {
+    recordCount: Object.values(backup.records).reduce((count, rows) => count + rows.length, 0),
+    imageCount: restoredImagePaths.size,
+    warning
+  }
+}
+
 export async function getDashboardData({ from, to, summaryFrom, summaryTo, page, pageSize, creditFirst }) {
   const { data, error } = await getClient().rpc('get_dashboard_data', {
     p_from: from,
