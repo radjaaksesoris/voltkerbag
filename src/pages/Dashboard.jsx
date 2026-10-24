@@ -124,16 +124,19 @@ export default function Dashboard() {
         </div>
         <div className="stat-card"><span>{isTodayRange ? 'Laba Kotor Hari Ini' : 'Laba Kotor Periode'}</span><strong className="ok">{rupiah(report.gross_profit)}</strong></div>
         <div className="stat-card dashboard-stock-summary">
+          <span>Nilai Stok (Modal)</span>
+          <strong>{rupiah(totalAsset)}</strong>
+        </div>
+        <div className="stat-card dashboard-stock-counts">
           <div className="dashboard-stock-metric">
-            <span>Nilai Stok (Modal)</span>
-            <strong>{rupiah(totalAsset)}</strong>
+            <span>Stok Menipis</span>
+            <strong className={lowStock.length ? 'danger' : ''}>{lowStock.length}</strong>
           </div>
           <div className="dashboard-stock-metric">
             <span>Total Produk</span>
             <strong>{products.length}</strong>
           </div>
         </div>
-        <div className="stat-card"><span>Stok Menipis</span><strong className={lowStock.length ? 'danger' : ''}>{lowStock.length}</strong></div>
       </div>
 
       <div className="card table-card dashboard-transactions">
