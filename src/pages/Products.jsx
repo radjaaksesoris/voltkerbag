@@ -523,7 +523,6 @@ export default function Products() {
             {saleUnits(form.unit).length === 3 ? (
               <div className="product-sale-prices">
                 <label>Tarif per pcs saat dijual dalam satuan berikut *</label>
-                <p className="muted small product-price-hint">Harga transaksi dikalikan isi satuan: 1 lusin = 12 pcs, 1 kodi = 20 pcs.</p>
                 <div className="grid-3">
                   {['pcs', 'lusin', 'kodi'].map((unit) => (
                     <div key={unit}>
