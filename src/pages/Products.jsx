@@ -1,11 +1,11 @@
 import { useEffect, useRef, useState } from 'react'
-import { addProductStock, getAll, getProductImageUrl, put, remove, removeProductImage, uploadProductImage, onRefresh } from '../db'
+import { addProductStock, getAll, getProductImageUrl, put, remove, removeProductImage, updateProductDetails, uploadProductImage, onRefresh } from '../db'
 import { rupiah } from '../format'
 import MoneyInput from '../components/MoneyInput.jsx'
 import CategorySelect from '../components/CategorySelect.jsx'
 import UnitSelect from '../components/UnitSelect.jsx'
 import Icon from '../components/Icon.jsx'
-import { availableQuantity, productPrice, purchaseCostUnit, quantityToPcs, saleUnitPrice, saleUnits, stockInPcs, unitFactor, stockLabel } from '../productUnits'
+import { availableQuantity, productPrice, purchaseCostUnit, quantityToPcs, saleUnitPrice, saleUnits, stockCostValue, stockInPcs, stockReceiptValuation, unitFactor, stockLabel } from '../productUnits'
 
 const EMPTY = {
   name: '',
@@ -28,6 +28,7 @@ export default function Products() {
   const [showForm, setShowForm] = useState(false)
   const [stockProduct, setStockProduct] = useState(null)
   const [stockAmount, setStockAmount] = useState('')
+  const [stockUnitCost, setStockUnitCost] = useState('')
   const [stockSaving, setStockSaving] = useState(false)
   const [stockError, setStockError] = useState('')
   const [imageFile, setImageFile] = useState(null)
@@ -84,6 +85,14 @@ export default function Products() {
     (p.name + ' ' + (p.category || '')).toLowerCase().includes(q.toLowerCase())
   )
   const lowStock = items.filter((p) => availableQuantity(p, p.unit || 'pcs') <= 5)
+  const stockReceiptPreview = stockProduct && Number(stockAmount) > 0 && stockUnitCost !== '' && Number(stockUnitCost) >= 0
+    ? stockReceiptValuation({
+        stockPcs: stockInPcs(stockProduct),
+        stockValue: stockCostValue(stockProduct),
+        receiptPcs: quantityToPcs(Number(stockAmount), stockProduct.unit || 'pcs'),
+        receiptUnitCost: Number(stockUnitCost)
+      })
+    : null
 
   function openEdit(p) {
     setEditId(p.id)
@@ -122,6 +131,7 @@ export default function Products() {
   function openAddStock(product) {
     setStockProduct(product)
     setStockAmount('')
+    setStockUnitCost('')
     setStockError('')
   }
 
@@ -131,9 +141,14 @@ export default function Products() {
     setStockError('')
 
     const amount = Number(stockAmount)
+    const unitCost = Number(stockUnitCost)
     const unit = stockProduct.unit || 'pcs'
     if (!Number.isFinite(amount) || amount <= 0 || !Number.isInteger(amount)) {
       setStockError('Masukkan jumlah stok berupa bilangan bulat yang lebih dari nol.')
+      return
+    }
+    if (!Number.isFinite(unitCost) || unitCost < 0) {
+      setStockError('Masukkan harga modal yang valid dan tidak kurang dari Rp0.')
       return
     }
 
@@ -145,11 +160,11 @@ export default function Products() {
     setStockSaving(true)
     try {
       const quantityPcs = quantityToPcs(amount, unit)
-      const requestFingerprint = stockProduct.id + ':' + quantityPcs
+      const requestFingerprint = stockProduct.id + ':' + quantityPcs + ':' + unitCost
       if (stockRequest.current?.fingerprint !== requestFingerprint) {
         stockRequest.current = { fingerprint: requestFingerprint, id: crypto.randomUUID() }
       }
-      await addProductStock(stockProduct.id, quantityPcs, stockRequest.current.id)
+      await addProductStock(stockProduct.id, quantityPcs, unitCost, stockRequest.current.id)
       stockRequest.current = null
       setStockProduct(null)
     } catch (error) {
@@ -225,6 +240,7 @@ export default function Products() {
   }
 
   function changeBaseUnit(unit) {
+    if (editId) return
     setForm((current) => {
       const conversion = unitFactor(unit) / unitFactor(current.unit)
       return {
@@ -272,7 +288,6 @@ export default function Products() {
         imagePath = uploadedImagePath
       }
       const productRecord = {
-        id: editId || undefined,
         name: form.name.trim(),
         category: form.category.trim(),
         unit: form.unit.trim(),
@@ -280,14 +295,19 @@ export default function Products() {
         price_pcs: isStandard ? prices.pcs : 0,
         price_lusin: isStandard ? prices.lusin : 0,
         price_kodi: isStandard ? prices.kodi : 0,
-        cost: Number(form.cost) || 0,
         image_path: imagePath
       }
       if (!editId) {
+        productRecord.cost = Number(form.cost) || 0
         productRecord.stock = stockPcs / unitFactor(form.unit)
         productRecord.stock_pcs = stockPcs
+        productRecord.stock_cost_value = productRecord.cost * stockPcs
       }
-      await put('products', productRecord)
+      if (editId) {
+        await updateProductDetails(editId, productRecord)
+      } else {
+        await put('products', productRecord)
+      }
       originalImagePathRef.current = imagePath
       setShowForm(false)
       setImageFile(null)
@@ -376,7 +396,7 @@ export default function Products() {
       <div className="card table-card products-table-card">
         <table className="products-table">
           <thead>
-            <tr><th>Produk</th><th>Kategori</th><th>Satuan</th><th>Harga Beli</th><th>Harga Jual</th><th>Stok</th><th>Aksi</th></tr>
+            <tr><th>Produk</th><th>Kategori</th><th>Satuan</th><th>Modal Rata-rata</th><th>Harga Jual</th><th>Stok</th><th>Aksi</th></tr>
           </thead>
           <tbody>
             {filtered.length === 0 && (
@@ -480,6 +500,7 @@ export default function Products() {
                   onAdd={addUnit}
                   onDelete={deleteUnit}
                   triggerRef={unitInputRef}
+                  disabled={Boolean(editId)}
                 />
               </div>
             </div>
@@ -509,8 +530,8 @@ export default function Products() {
             )}
             <div className="grid-2 product-stock-fields">
               <div>
-                <label>Harga Beli per {purchaseCostUnit(form.unit)}</label>
-                <MoneyInput inputRef={costInputRef} value={form.cost} onChange={(cost) => setForm({ ...form, cost })} />
+                <label>{editId ? 'Modal rata-rata per' : 'Harga modal awal per'} {purchaseCostUnit(form.unit)}</label>
+                <MoneyInput inputRef={costInputRef} value={form.cost} onChange={(cost) => setForm({ ...form, cost })} disabled={Boolean(editId)} />
               </div>
               <div>
                 <label>Stok ({form.unit})</label>
@@ -519,7 +540,7 @@ export default function Products() {
             </div>
             <p className="muted small product-stock-hint">
               {editId
-                ? 'Untuk mengubah stok, gunakan tombol Tambah Stok di daftar produk. Stok tidak berubah saat detail produk diedit.'
+                ? 'Stok dan modal rata-rata mengikuti persediaan. Untuk menambah barang produksi baru dengan modal berbeda, gunakan tombol Tambah Stok.'
                 : 'Untuk satuan pcs, lusin, dan kodi, harga beli dihitung per pcs dan stok dikonversi ke pcs. Untuk satuan khusus, harga beli mengikuti satuan produk.'}
             </p>
             <div className="modal-actions">
@@ -539,6 +560,7 @@ export default function Products() {
             <h3>Tambah Stok</h3>
             <p className="muted small">{stockProduct.name}</p>
             <p className="add-stock-current">Stok saat ini <strong>{stockLabel(stockProduct)}</strong></p>
+            <p className="add-stock-current">Nilai modal saat ini <strong>{rupiah(stockProduct.stock_cost_value ?? stockProduct.cost * stockInPcs(stockProduct))}</strong></p>
             <label htmlFor="add-stock-amount">Jumlah yang ditambahkan ({stockProduct.unit || 'pcs'}) *</label>
             <input
               id="add-stock-amount"
@@ -552,10 +574,31 @@ export default function Products() {
               required
               autoFocus
             />
+            <label htmlFor="add-stock-unit-cost">Harga modal barang baru per {purchaseCostUnit(stockProduct.unit)} *</label>
+            <MoneyInput
+              id="add-stock-unit-cost"
+              value={stockUnitCost}
+              onChange={setStockUnitCost}
+              placeholder="Masukkan harga modal"
+              required
+            />
+            {stockReceiptPreview && (
+              <>
+                <p className="add-stock-current">
+                  Nilai modal setelah tambah stok
+                  <strong>{rupiah(stockReceiptPreview.stockValue)}</strong>
+                </p>
+                <p className="add-stock-current">
+                  Modal rata-rata baru per {purchaseCostUnit(stockProduct.unit)}
+                  <strong>{rupiah(stockReceiptPreview.averageUnitCost)}</strong>
+                </p>
+              </>
+            )}
+            <p className="muted small">Nilai modal stok baru ditambahkan ke nilai stok yang ada. Saat penjualan, modal berkurang secara proporsional berdasarkan modal rata-rata. Harga jual tetap mengikuti tarif terbaru produk.</p>
             {stockError && <p className="form-error" role="alert">{stockError}</p>}
             <div className="modal-actions">
               <button type="button" className="btn" disabled={stockSaving} onClick={() => setStockProduct(null)}>Batal</button>
-              <button type="submit" className="btn btn-primary" disabled={stockSaving || !stockAmount}>
+              <button type="submit" className="btn btn-primary" disabled={stockSaving || !stockAmount || !stockUnitCost}>
                 {stockSaving ? 'Menyimpan…' : 'Tambah Stok'}
               </button>
             </div>

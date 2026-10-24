@@ -14,6 +14,7 @@ create table if not exists public.products (
   cost double precision not null default 0,
   stock integer not null default 0,
   stock_pcs integer not null default 0,
+  stock_cost_value double precision not null default 0,
   image_path text,
   "createdAt" timestamptz,
   "updatedAt" timestamptz
@@ -82,6 +83,7 @@ create table if not exists public.product_stock_adjustments (
   product_name text not null,
   quantity_pcs integer not null check (quantity_pcs > 0),
   stock_after_pcs integer not null,
+  unit_cost double precision,
   request_id uuid not null,
   "createdAt" timestamptz not null default now()
 );
@@ -95,6 +97,7 @@ alter table public.products add column if not exists price_pcs double precision;
 alter table public.products add column if not exists price_lusin double precision;
 alter table public.products add column if not exists price_kodi double precision;
 alter table public.products add column if not exists stock_pcs integer;
+alter table public.products add column if not exists stock_cost_value double precision;
 alter table public.products add column if not exists image_path text;
 update public.products set unit = 'pcs' where unit is null;
 alter table public.products alter column unit set default 'pcs';
@@ -125,6 +128,17 @@ set stock_pcs = round(coalesce(stock, 0) * case lower(trim(unit))
       else 1 end)
 where stock_pcs is null;
 
+update public.products
+set stock_cost_value = coalesce(cost, 0) * coalesce(stock_pcs, 0)
+where stock_cost_value is null;
+
+alter table public.product_stock_adjustments add column if not exists unit_cost double precision;
+update public.product_stock_adjustments adjustment
+set unit_cost = coalesce(product.cost, 0)
+from public.products product
+where adjustment.product_id = product.id and adjustment.unit_cost is null;
+alter table public.products alter column stock_cost_value set default 0;
+alter table public.products alter column stock_cost_value set not null;
 alter table public.products alter column price_pcs set default 0;
 alter table public.products alter column price_lusin set default 0;
 alter table public.products alter column price_kodi set default 0;
@@ -422,9 +436,12 @@ $$;
 
 revoke all on function public.product_unit_factor(text) from public, anon, authenticated;
 
+drop function if exists public.add_product_stock(bigint, integer, uuid);
+
 create or replace function public.add_product_stock(
   p_product_id bigint,
   p_quantity_pcs integer,
+  p_unit_cost double precision,
   p_request_id uuid
 )
 returns integer
@@ -437,11 +454,15 @@ declare
   product_row public.products%rowtype;
   prior_adjustment public.product_stock_adjustments%rowtype;
   next_stock_pcs bigint;
+  next_stock_cost_value double precision;
 begin
   if current_user_id is null then raise exception 'Login diperlukan.'; end if;
   if p_product_id is null then raise exception 'Produk tidak valid.'; end if;
   if p_quantity_pcs is null or p_quantity_pcs <= 0 then
     raise exception 'Jumlah stok harus lebih dari nol.';
+  end if;
+  if p_unit_cost is null or p_unit_cost < 0 or p_unit_cost::text in ('NaN', 'Infinity', '-Infinity') then
+    raise exception 'Harga modal stok tidak valid.';
   end if;
   if p_request_id is null then raise exception 'ID permintaan penambahan stok wajib diisi.'; end if;
 
@@ -450,7 +471,8 @@ begin
   where owner_id = current_user_id and request_id = p_request_id;
   if found then
     if prior_adjustment.product_id <> p_product_id
-       or prior_adjustment.quantity_pcs <> p_quantity_pcs then
+       or prior_adjustment.quantity_pcs <> p_quantity_pcs
+       or (prior_adjustment.unit_cost is not null and prior_adjustment.unit_cost <> p_unit_cost) then
       raise exception 'ID permintaan penambahan stok sudah digunakan.';
     end if;
     return prior_adjustment.stock_after_pcs;
@@ -467,7 +489,8 @@ begin
   where owner_id = current_user_id and request_id = p_request_id;
   if found then
     if prior_adjustment.product_id <> p_product_id
-       or prior_adjustment.quantity_pcs <> p_quantity_pcs then
+       or prior_adjustment.quantity_pcs <> p_quantity_pcs
+       or (prior_adjustment.unit_cost is not null and prior_adjustment.unit_cost <> p_unit_cost) then
       raise exception 'ID permintaan penambahan stok sudah digunakan.';
     end if;
     return prior_adjustment.stock_after_pcs;
@@ -477,18 +500,25 @@ begin
   if next_stock_pcs > 2147483647 then
     raise exception 'Jumlah stok melebihi batas yang dapat disimpan.';
   end if;
+  next_stock_cost_value := coalesce(product_row.stock_cost_value, product_row.cost * product_row.stock_pcs)
+    + p_unit_cost * p_quantity_pcs;
+  if next_stock_cost_value::text in ('NaN', 'Infinity', '-Infinity') then
+    raise exception 'Nilai modal stok melebihi batas yang dapat disimpan.';
+  end if;
 
   update public.products
   set stock_pcs = next_stock_pcs::integer,
       stock = next_stock_pcs::double precision / public.product_unit_factor(product_row.unit),
+      stock_cost_value = next_stock_cost_value,
+      cost = next_stock_cost_value / next_stock_pcs,
       "updatedAt" = clock_timestamp()
   where id = p_product_id and owner_id = current_user_id;
 
   insert into public.product_stock_adjustments (
-    owner_id, product_id, product_name, quantity_pcs, stock_after_pcs, request_id
+    owner_id, product_id, product_name, quantity_pcs, stock_after_pcs, unit_cost, request_id
   ) values (
     current_user_id, p_product_id, product_row.name, p_quantity_pcs,
-    next_stock_pcs::integer, p_request_id
+    next_stock_pcs::integer, p_unit_cost, p_request_id
   );
 
   return next_stock_pcs::integer;
@@ -496,8 +526,8 @@ end;
 $$;
 
 revoke all on public.product_stock_adjustments from public, anon, authenticated;
-revoke all on function public.add_product_stock(bigint, integer, uuid) from public, anon;
-grant execute on function public.add_product_stock(bigint, integer, uuid) to authenticated;
+revoke all on function public.add_product_stock(bigint, integer, double precision, uuid) from public, anon;
+grant execute on function public.add_product_stock(bigint, integer, double precision, uuid) to authenticated;
 
 revoke insert, update, delete on public.transactions from anon, authenticated;
 grant select on public.transactions to authenticated;
@@ -530,6 +560,7 @@ declare
   sale_unit_price double precision;
   sale_cost double precision;
   sale_total double precision := 0;
+  next_stock_cost_value double precision;
   saved_items jsonb := '[]'::jsonb;
   initial_payment double precision;
   operation_time timestamptz := clock_timestamp();
@@ -593,8 +624,18 @@ begin
       raise exception 'Harga produk "%" berubah. Muat ulang halaman sebelum menyimpan.', product_row.name;
     end if;
 
-    sale_cost := product_row.cost * sale_factor;
+    sale_cost := case
+      when product_row.stock_pcs > 0
+        then coalesce(product_row.stock_cost_value, product_row.cost * product_row.stock_pcs)
+          / product_row.stock_pcs * sale_factor
+      else product_row.cost * sale_factor
+    end;
     sale_total := sale_total + sale_unit_price * item_qty;
+    next_stock_cost_value := greatest(
+      0,
+      coalesce(product_row.stock_cost_value, product_row.cost * product_row.stock_pcs)
+        - sale_cost * item_qty
+    );
     saved_items := saved_items || jsonb_build_array(jsonb_build_object(
       'productId', product_row.id,
       'name', product_row.name,
@@ -606,6 +647,12 @@ begin
     update public.products
     set stock_pcs = stock_pcs - stock_deduction,
         stock = (stock_pcs - stock_deduction)::double precision / base_factor,
+        stock_cost_value = next_stock_cost_value,
+        cost = case
+          when stock_pcs - stock_deduction > 0
+            then next_stock_cost_value / (stock_pcs - stock_deduction)
+          else cost
+        end,
         "updatedAt" = operation_time
     where id = product_row.id and owner_id = current_user_id;
   end loop;
@@ -833,7 +880,7 @@ begin
     'low_stock_count', count(*) filter (
       where floor(p.stock_pcs::numeric / public.product_unit_factor(p.unit)) <= 5
     ),
-    'total_asset', coalesce(sum(p.cost * p.stock_pcs), 0)
+    'total_asset', coalesce(sum(p.stock_cost_value), 0)
   )
   into inventory_summary
   from public.products p

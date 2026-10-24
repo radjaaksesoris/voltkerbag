@@ -12,7 +12,8 @@ export default function ManagedOptionSelect({
   placeholder,
   emptyLabel,
   allowEmpty = true,
-  canManage = true
+  canManage = true,
+  disabled = false
 }) {
   const [open, setOpen] = useState(false)
   const [draft, setDraft] = useState('')
@@ -67,6 +68,7 @@ export default function ManagedOptionSelect({
   }
 
   function handleTriggerKeyDown(event) {
+    if (disabled) return
     if (event.key !== 'ArrowDown' && event.key !== 'ArrowUp') return
     event.preventDefault()
     const optionNames = [...(allowEmpty ? [''] : []), ...options.map((option) => option.name)]
@@ -97,10 +99,11 @@ export default function ManagedOptionSelect({
         aria-controls={listId}
         aria-autocomplete="none"
         aria-expanded={open}
+        disabled={disabled}
         tabIndex={0}
         ref={triggerRef}
         onKeyDown={handleTriggerKeyDown}
-        onClick={() => setOpen((isOpen) => !isOpen)}>
+        onClick={() => !disabled && setOpen((isOpen) => !isOpen)}>
         <span className={selected ? '' : 'category-placeholder'}>{selected?.name || placeholder}</span>
         <Icon name={open ? 'chevronUp' : 'chevronDown'} size={17} />
       </button>

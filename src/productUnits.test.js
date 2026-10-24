@@ -1,6 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { availableQuantity, productPrice, purchaseCostUnit, quantityToPcs, saleUnitPrice, saleUnits, stockCostValue, stockInPcs, stockLabel, unitCost, unitFactor } from './productUnits.js'
+import { availableQuantity, productPrice, purchaseCostUnit, quantityToPcs, saleUnitPrice, saleUnits, stockCostValue, stockInPcs, stockIssueValuation, stockLabel, stockReceiptValuation, unitCost, unitFactor } from './productUnits.js'
 
 test('uses the standard conversion factors', () => {
   assert.equal(unitFactor('pcs'), 1)
@@ -31,6 +31,48 @@ test('values standard-unit stock and sale costs using cost per piece', () => {
   assert.equal(unitCost(product, 'pcs'), 40000)
   assert.equal(unitCost(product, 'lusin'), 480000)
   assert.equal(unitCost(product, 'kodi'), 800000)
+})
+
+test('keeps the existing stock value when a new production batch has a different cost', () => {
+  const receipt = stockReceiptValuation({
+    stockPcs: 2000,
+    stockValue: 40000000,
+    receiptPcs: 1000,
+    receiptUnitCost: 25000
+  })
+
+  assert.deepEqual(receipt, {
+    stockPcs: 3000,
+    stockValue: 65000000,
+    averageUnitCost: 65000000 / 3000
+  })
+})
+
+test('reduces stock value proportionally at weighted average cost when goods are sold', () => {
+  const issue = stockIssueValuation({
+    stockPcs: 3000,
+    stockValue: 65000000,
+    issuePcs: 1000
+  })
+
+  assert.equal(issue.stockPcs, 2000)
+  assert.equal(issue.issuedValue, 65000000 / 3)
+  assert.equal(issue.stockValue, 65000000 - 65000000 / 3)
+})
+
+test('uses stored inventory value instead of recalculating historic stock at the latest average price', () => {
+  assert.equal(stockCostValue({
+    unit: 'pcs',
+    stock_pcs: 2000,
+    cost: 25000,
+    stock_cost_value: 40000000
+  }), 40000000)
+  assert.equal(stockCostValue({
+    unit: 'pcs',
+    stock_pcs: 2000,
+    cost: 20000,
+    stock_cost_value: null
+  }), 40000000)
 })
 
 test('applies each sale-tier price per piece and multiplies it by the selected unit size', () => {

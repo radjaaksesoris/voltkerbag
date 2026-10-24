@@ -31,7 +31,31 @@ export function stockInPcs(product) {
 }
 
 export function stockCostValue(product) {
+  const storedValue = Number(product.stock_cost_value)
+  if (product.stock_cost_value != null && Number.isFinite(storedValue)) {
+    return Math.max(0, storedValue)
+  }
   return (Number(product.cost) || 0) * stockInPcs(product)
+}
+
+export function stockReceiptValuation({ stockPcs, stockValue, receiptPcs, receiptUnitCost }) {
+  const nextStockPcs = stockPcs + receiptPcs
+  const nextStockValue = stockValue + receiptPcs * receiptUnitCost
+  return {
+    stockPcs: nextStockPcs,
+    stockValue: nextStockValue,
+    averageUnitCost: nextStockPcs > 0 ? nextStockValue / nextStockPcs : 0
+  }
+}
+
+export function stockIssueValuation({ stockPcs, stockValue, issuePcs }) {
+  const averageUnitCost = stockPcs > 0 ? stockValue / stockPcs : 0
+  const issuedValue = Math.min(stockValue, averageUnitCost * issuePcs)
+  return {
+    stockPcs: Math.max(0, stockPcs - issuePcs),
+    stockValue: Math.max(0, stockValue - issuedValue),
+    issuedValue
+  }
 }
 
 export function quantityToPcs(quantity, unit) {

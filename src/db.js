@@ -91,6 +91,18 @@ export async function put(store, value) {
   return data.id
 }
 
+export async function updateProductDetails(id, value) {
+  const { data, error } = await getClient()
+    .from(tableFor('products'))
+    .update({ ...value, updatedAt: new Date().toISOString() })
+    .eq('id', id)
+    .select('id')
+    .single()
+  throwIfError(error, 'Gagal memperbarui produk')
+  notifyRefresh()
+  return data.id
+}
+
 export async function completeSale(transaction, cart, requestId) {
   const { data, error } = await getClient().rpc('complete_sale', {
     p_customer_name: transaction.customerName,
@@ -104,10 +116,11 @@ export async function completeSale(transaction, cart, requestId) {
   return data
 }
 
-export async function addProductStock(productId, quantityPcs, requestId) {
+export async function addProductStock(productId, quantityPcs, unitCost, requestId) {
   const { data, error } = await getClient().rpc('add_product_stock', {
     p_product_id: productId,
     p_quantity_pcs: quantityPcs,
+    p_unit_cost: unitCost,
     p_request_id: requestId || crypto.randomUUID()
   })
   throwIfError(error, 'Gagal menambahkan stok produk')
