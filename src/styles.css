@@ -1217,7 +1217,8 @@ select.input { appearance: none; }
   .finance-ledger-table th:nth-child(6), .finance-ledger-table td:nth-child(6) { width: 18%; }
   .finance-ledger-table .badge { padding: 3px 4px; font-size: 7px; white-space: normal; }
   .finance-ledger-table .btn-sm { min-height: 0; padding: 4px 3px; font-size: 8px; }
-  .finance-ledger-actions > div { display: grid; gap: 3px; }
+  .finance-ledger-actions > div { display: flex; align-items: center; justify-content: center; gap: 4px; }
+  .finance-ledger-actions .btn-sm { padding: 4px 5px; }
   .finance-ledger-time-label, .finance-ledger-datetime { display: none; }
   .finance-ledger-date-label, .finance-ledger-date { display: inline; }
   table { font-size: 12px; }
