@@ -395,12 +395,15 @@ h2, .page-head h2 {
   letter-spacing: -.8px;
   line-height: 1.12;
   text-wrap: balance;
+}
+@media (max-width: 640px) {
   .page-toolbar .date-filter { width: 100%; }
-  .date-filter { align-items: stretch; gap: 8px; }
-  .date-filter-field { flex: 1 1 135px; min-width: 0; }
+  .date-filter { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: stretch; gap: 8px; }
+  .date-filter-field { min-width: 0; }
   .date-filter-field .input { width: 100%; min-width: 0; }
-  .date-filter-reset { align-self: flex-end; }
+  .date-filter-reset { grid-column: 1 / -1; justify-self: end; }
   .dashboard-filter-row, .finance-date-filter { align-items: stretch; }
+  .dashboard-filter-row .date-filter { width: 100%; }
   .finance-date-filter { padding: 14px; }
 }
 h3 { margin-bottom: 16px; color: var(--ink); font-size: 15px; font-weight: 700; }

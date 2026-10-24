@@ -1,5 +1,11 @@
-export default function DateRangeFilter({ value, onChange }) {
+export default function DateRangeFilter({
+  value,
+  onChange,
+  resetValue = { from: '', to: '' },
+  resetLabel = 'Hapus filter'
+}) {
   const invalidRange = value.from && value.to && value.from > value.to
+  const isResetValue = value.from === resetValue.from && value.to === resetValue.to
 
   function update(field, nextValue) {
     onChange({ ...value, [field]: nextValue })
@@ -30,9 +36,9 @@ export default function DateRangeFilter({ value, onChange }) {
       <button
         className="btn date-filter-reset"
         type="button"
-        disabled={!value.from && !value.to}
-        onClick={() => onChange({ from: '', to: '' })}>
-        Hapus filter
+        disabled={isResetValue}
+        onClick={() => onChange(resetValue)}>
+        {resetLabel}
       </button>
       {invalidRange && <p className="form-error date-filter-error" role="alert">Tanggal awal tidak boleh melewati tanggal akhir.</p>}
     </section>

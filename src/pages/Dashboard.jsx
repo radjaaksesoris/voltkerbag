@@ -18,7 +18,10 @@ export default function Dashboard() {
     revenue: 0,
     gross_profit: 0
   })
-  const [dateRange, setDateRange] = useState({ from: '', to: '' })
+  const [dateRange, setDateRange] = useState(() => {
+    const today = localDateValue(new Date())
+    return { from: today, to: today }
+  })
   const [creditFirst, setCreditFirst] = useState(false)
   const [transactionPage, setTransactionPage] = useState(1)
   const [selectedTransaction, setSelectedTransaction] = useState(null)
@@ -82,6 +85,8 @@ export default function Dashboard() {
     </div>
   }
 
+  const today = localDateValue(new Date())
+  const isTodayRange = dateRange.from === today && dateRange.to === today
   const hasFilter = hasDateRange(dateRange)
   const pageCount = Math.max(1, Math.ceil(report.total_count / TRANSACTIONS_PER_PAGE))
   const currentPage = Math.min(transactionPage, pageCount)
@@ -104,20 +109,20 @@ export default function Dashboard() {
     <div className="page">
       <div className="dashboard-filter-row">
         <div className="date-filter-caption">
-          <strong>{hasFilter ? 'Ringkasan periode' : 'Ringkasan hari ini'}</strong>
-          <span className="muted">{hasFilter ? 'Sesuaikan rentang untuk melihat performa.' : 'Pilih rentang tanggal untuk melihat laporan lain.'}</span>
+          <strong>{isTodayRange ? 'Ringkasan hari ini' : 'Ringkasan periode'}</strong>
+          <span className="muted">{isTodayRange ? 'Pilih rentang tanggal untuk melihat laporan lain.' : 'Sesuaikan rentang untuk melihat performa.'}</span>
         </div>
         <DateRangeFilter value={dateRange} onChange={(range) => {
           setDateRange(range)
           setTransactionPage(1)
-        }} />
+        }} resetValue={{ from: today, to: today }} resetLabel="Hari ini" />
       </div>
       <div className="stats-grid dashboard-stats-grid">
         <div className="stat-card highlight dashboard-revenue-card">
-          <span>{hasFilter ? 'Omzet Periode' : 'Omzet Hari Ini'}</span>
+          <span>{isTodayRange ? 'Omzet Hari Ini' : 'Omzet Periode'}</span>
           <strong>{rupiah(report.revenue)}</strong>
         </div>
-        <div className="stat-card"><span>{hasFilter ? 'Laba Kotor Periode' : 'Laba Kotor Hari Ini'}</span><strong className="ok">{rupiah(report.gross_profit)}</strong></div>
+        <div className="stat-card"><span>{isTodayRange ? 'Laba Kotor Hari Ini' : 'Laba Kotor Periode'}</span><strong className="ok">{rupiah(report.gross_profit)}</strong></div>
         <div className="stat-card dashboard-stock-summary">
           <div className="dashboard-stock-metric">
             <span>Nilai Stok (Modal)</span>
