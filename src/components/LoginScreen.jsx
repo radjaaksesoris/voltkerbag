@@ -1,18 +1,42 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 
 export default function LoginScreen({ configured, connectionError, onSignedIn, onRetry }) {
+  const defaultEmail = import.meta.env.VITE_LOGIN_EMAIL?.trim() || ''
+  const passwordInput = useRef(null)
+  const [isMobile, setIsMobile] = useState(() => window.matchMedia('(max-width: 1024px)').matches)
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
 
+  useEffect(() => {
+    const mobileQuery = window.matchMedia('(max-width: 1024px)')
+    const updateMobile = () => setIsMobile(mobileQuery.matches)
+    mobileQuery.addEventListener('change', updateMobile)
+    return () => mobileQuery.removeEventListener('change', updateMobile)
+  }, [])
+
+  useEffect(() => {
+    if (isMobile && configured && !connectionError) passwordInput.current?.focus()
+  }, [configured, connectionError, isMobile])
+
   async function submit(event) {
     event.preventDefault()
+    const loginEmail = isMobile ? defaultEmail : email.trim()
+    const loginPassword = isMobile ? password.replace(/\D/g, '') : password
+    if (!loginEmail) {
+      setError('Email login mobile belum dikonfigurasi. Atur VITE_LOGIN_EMAIL lalu build ulang aplikasi.')
+      return
+    }
+    if (!loginPassword) {
+      setError('Masukkan kata sandi berupa angka.')
+      return
+    }
     setBusy(true)
     setError('')
     try {
       const { signIn } = await import('../supabaseSync')
-      const session = await signIn(email.trim(), password)
+      const session = await signIn(loginEmail, loginPassword)
       setPassword('')
       onSignedIn(session)
     } catch (err) {
@@ -60,12 +84,18 @@ export default function LoginScreen({ configured, connectionError, onSignedIn, o
           </div>
         ) : (
           <form onSubmit={submit}>
-            <label htmlFor="login-email">Email</label>
-            <input id="login-email" className="input" type="email" autoComplete="username" required
-              value={email} onChange={(event) => setEmail(event.target.value)} />
+            <div className="login-email-field">
+              <label htmlFor="login-email">Email</label>
+              <input id="login-email" className="input" type="email" autoComplete="username" required={!isMobile}
+                value={email} onChange={(event) => setEmail(event.target.value)} />
+            </div>
             <label htmlFor="login-password">Kata sandi</label>
-            <input id="login-password" className="input" type="password" autoComplete="current-password" required
-              value={password} onChange={(event) => setPassword(event.target.value)} />
+            <input id="login-password" ref={passwordInput} className="input" type="password"
+              autoComplete="current-password" inputMode={isMobile ? 'numeric' : undefined}
+              pattern={isMobile ? '[0-9]*' : undefined} required
+              value={password} onChange={(event) => setPassword(
+                isMobile ? event.target.value.replace(/\D/g, '') : event.target.value
+              )} />
             {error && <p className="form-error" role="alert">{error}</p>}
             <button className="btn btn-primary btn-block btn-lg" disabled={busy}>
               {busy ? 'Memverifikasi akun...' : 'Masuk'}

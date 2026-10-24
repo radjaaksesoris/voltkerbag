@@ -18,7 +18,7 @@ VOLTKER adalah aplikasi kasir React + Vite dengan Supabase sebagai sumber data u
 3. Jalankan seluruh `supabase/schema.sql` di **SQL Editor**. Skema ini menyiapkan tabel pelanggan, kebijakan Row Level Security, bucket `product-images`, serta tabel dan pilihan kategori/satuan produk. Skema juga memasang fungsi laporan berhalaman untuk dashboard/buku kas dan fungsi untuk menghapus catatan buku kas manual tanpa mengizinkan penghapusan catatan yang terhubung ke transaksi. Jalankan ulang skema sebelum deploy perubahan terkait; skema dapat dijalankan ulang dan migrasi mempertahankan data.
 4. Jangan jalankan `supabase/clear-data.sql` untuk migrasi atau deploy. Jalankan hanya jika memang ingin menghapus permanen semua produk, transaksi, dan catatan keuangan di project tersebut serta memulai ulang ID.
 5. Salin Supabase anon/publishable key (bukan `service_role` atau secret key).
-6. Untuk GitHub Pages, simpan key sebagai repository Actions secret `VITE_SUPABASE_ANON_KEY`, lalu jalankan workflow deploy. Untuk lokal, isi `VITE_SUPABASE_ANON_KEY` dalam `.env.local`.
+6. Untuk GitHub Pages, simpan key sebagai repository Actions secret `VITE_SUPABASE_ANON_KEY` dan alamat email akun toko sebagai repository Actions variable `VITE_LOGIN_EMAIL`, lalu jalankan workflow deploy. Untuk lokal, isi `VITE_SUPABASE_ANON_KEY` dan `VITE_LOGIN_EMAIL` dalam `.env.local`.
 
 `schema.sql` menyiapkan tabel, Row Level Security, dan fungsi database untuk checkout serta pembayaran cicilan. Database kosong setelah `clear-data.sql`; data di browser lama tidak akan dipindahkan. Jangan jalankan `clear-data.sql` lagi setelah mulai memasukkan data toko.
 
@@ -44,6 +44,7 @@ Workflow `.github/workflows/deploy.yml` membangun dan menerbitkan folder `dist` 
 
 ## Online-only dan akses akun
 - Login divalidasi ke server sebelum aplikasi ditampilkan; status jaringan dipantau dan login ulang dibutuhkan jika koneksi server gagal.
+- Pada layar hingga 1024px, email login disembunyikan dan menggunakan alamat `VITE_LOGIN_EMAIL`; kolom kata sandi difokuskan otomatis dan input dibatasi ke angka untuk memunculkan keyboard numerik. Atur kata sandi akun toko menjadi angka saja agar login mobile dapat digunakan; di desktop email tetap dimasukkan manual dan kata sandi tidak dibatasi ke angka.
 - Seluruh baca/tulis data dilakukan langsung ke Supabase. Data yang sempat terlihat tidak disimpan sebagai cache aplikasi untuk penggunaan offline.
 - RLS membatasi setiap akun ke baris dengan `owner_id` akun tersebut. Buat hanya satu akun toko melalui Supabase Auth dan nonaktifkan sign-up publik.
 - Anon/publishable key memang dikirim ke browser. Keamanan data bergantung pada Supabase Auth, RLS, dan fungsi database; jangan pernah menaruh service-role key pada aplikasi frontend.
