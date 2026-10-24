@@ -402,9 +402,11 @@ export default function Transactions() {
               <div className="change credit-balance">Sisa kredit: <strong>{rupiah(Math.max(0, total - paidNow))}</strong></div>
             )}
             {checkoutError && <p className="form-error" role="alert">{checkoutError}</p>}
-            <button className="btn btn-primary btn-block btn-lg" onClick={checkout} disabled={cart.length === 0 || !customerName || saving}>
-              {saving ? 'Menyimpan…' : <><Icon name="bolt" size={17} /> Simpan Transaksi</>}
-            </button>
+            <div className="cart-submit-bar">
+              <button className="btn btn-primary btn-block btn-lg" onClick={checkout} disabled={cart.length === 0 || !customerName || saving}>
+                {saving ? 'Menyimpan…' : <><Icon name="bolt" size={17} /> Simpan Transaksi</>}
+              </button>
+            </div>
           </div>
         </div>
       </div>

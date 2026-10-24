@@ -1106,7 +1106,14 @@ select.input { appearance: none; }
   .card { padding: 16px; border-radius: 13px; }
   .finance-grid { gap: 14px; }
   .pos-grid { gap: 15px; }
-  .cart { height: min(620px, calc(100dvh - 150px)); min-height: 420px; }
+  .cart { height: min(620px, calc(100dvh - 150px)); min-height: 420px; overflow: visible; }
+  .cart-submit-bar {
+    position: sticky;
+    z-index: 5;
+    bottom: 76px;
+    padding: 8px 0;
+    background: var(--card);
+  }
   .product-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 9px; }
   .product-card { padding: 10px; }
   .table-card { margin-inline: -2px; }
