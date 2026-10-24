@@ -402,8 +402,11 @@ h2, .page-head h2 {
   .date-filter-field { min-width: 0; }
   .date-filter-field .input { width: 100%; min-width: 0; }
   .date-filter-reset { grid-column: 1 / -1; justify-self: end; }
-  .dashboard-filter-row, .finance-date-filter { align-items: stretch; }
+  .dashboard-filter-row { position: relative; display: grid; grid-template-columns: minmax(0, 1fr); align-items: stretch; gap: 10px; }
   .dashboard-filter-row .date-filter { width: 100%; }
+  .dashboard-filter-row .date-filter-reset { position: absolute; top: 0; right: 0; grid-column: auto; }
+  .dashboard-filter-row .date-filter-caption { padding-right: 100px; }
+  .finance-date-filter { align-items: stretch; }
   .finance-date-filter { padding: 14px; }
 }
 h3 { margin-bottom: 16px; color: var(--ink); font-size: 15px; font-weight: 700; }
