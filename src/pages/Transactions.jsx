@@ -15,8 +15,9 @@ export default function Transactions() {
   const [customers, setCustomers] = useState([])
   const [todaySummary, setTodaySummary] = useState({ transaction_count: 0, total: 0 })
   const [cart, setCart] = useState([])
+  const [cartNotification, setCartNotification] = useState(null)
   const [mobileCartOpen, setMobileCartOpen] = useState(false)
-  const [expandedProductIds, setExpandedProductIds] = useState(() => new Set())
+  const [expandedProductId, setExpandedProductId] = useState(null)
   const [q, setQ] = useState('')
   const [pay, setPay] = useState('')
   const [customerName, setCustomerName] = useState('')
@@ -35,8 +36,11 @@ export default function Transactions() {
   const productSearchRef = useRef(null)
   const transactionsPageRef = useRef(null)
   const productScrollTop = useRef(0)
+  const cartNotificationTimeout = useRef(null)
   const [loadError, setLoadError] = useState('')
   const [loaded, setLoaded] = useState(false)
+
+  useEffect(() => () => window.clearTimeout(cartNotificationTimeout.current), [])
 
   async function load() {
     try {
@@ -116,6 +120,7 @@ export default function Transactions() {
       setCheckoutError('Stok "' + p.name + '" tidak cukup untuk jumlah tersebut.')
       return
     }
+    const nextQuantity = (found?.qty || 0) + 1
     if (found) {
       setCart(cart.map((c) => (c.productId === p.id && c.unit === unit ? { ...c, qty: c.qty + 1 } : c)))
     } else {
@@ -129,6 +134,9 @@ export default function Transactions() {
         saleUnits: saleUnits(p.unit || 'pcs')
       }])
     }
+    setCartNotification({ name: p.name, qty: nextQuantity, unit })
+    window.clearTimeout(cartNotificationTimeout.current)
+    cartNotificationTimeout.current = window.setTimeout(() => setCartNotification(null), 2400)
     setCheckoutError('')
   }
   function setQty(productId, unit, qty) {
@@ -335,19 +343,14 @@ export default function Transactions() {
                 <button
                   className="product-units-toggle"
                   type="button"
-                  aria-expanded={expandedProductIds.has(p.id)}
+                  aria-expanded={expandedProductId === p.id}
                   aria-controls={'product-sale-options-' + p.id}
-                  onClick={() => setExpandedProductIds((current) => {
-                    const next = new Set(current)
-                    if (next.has(p.id)) next.delete(p.id)
-                    else next.add(p.id)
-                    return next
-                  })}>
+                  onClick={() => setExpandedProductId((current) => current === p.id ? null : p.id)}>
                   <span>Pilih satuan</span>
                   <Icon name="chevronDown" size={16} />
                 </button>
                 <div
-                  className={'product-sale-options ' + (expandedProductIds.has(p.id) ? 'is-expanded' : 'is-collapsed')}
+                  className={'product-sale-options ' + (expandedProductId === p.id ? 'is-expanded' : 'is-collapsed')}
                   id={'product-sale-options-' + p.id}
                   aria-label={'Satuan dan harga ' + p.name}>
                   {saleUnits(p.unit || 'pcs').map((unit) => (
@@ -357,7 +360,10 @@ export default function Transactions() {
                       type="button"
                       aria-label={'Tambah 1 ' + unit + ' ' + p.name + ', ' + rupiah(saleUnitPrice(p, unit))}
                       disabled={!canAddOne(p.id, unit)}
-                      onClick={() => addToCart(p, unit)}>
+                      onClick={() => {
+                        addToCart(p, unit)
+                        setExpandedProductId(null)
+                      }}>
                       <span>+ {unit}</span>
                       <strong>{rupiah(saleUnitPrice(p, unit))}</strong>
                     </button>
@@ -471,6 +477,13 @@ export default function Transactions() {
           </div>
         </div>
       </div>
+
+      {cartNotification && (
+        <div className="cart-notification" role="status" aria-live="polite">
+          <Icon name="check" size={17} />
+          <span><strong>{cartNotification.name}</strong> · {cartNotification.qty} {cartNotification.unit} di keranjang</span>
+        </div>
+      )}
 
       {done && (
         <div className="overlay" onClick={() => setDone(null)}>
