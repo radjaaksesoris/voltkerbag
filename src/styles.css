@@ -1152,6 +1152,18 @@ select.input { appearance: none; }
 @media (max-width: 640px) {
   .product-form-overlay { align-items: center; justify-content: center; padding: 12px; }
   .product-modal { height: auto; max-height: 90dvh; border-radius: 17px; }
+  .app {
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    user-select: none;
+  }
+  .app input,
+  .app textarea,
+  .app [contenteditable="true"] {
+    -webkit-touch-callout: default;
+    -webkit-user-select: text;
+    user-select: text;
+  }
   .app { display: flex; padding-bottom: 0; }
   .main { width: 100%; }
   .sidebar {
