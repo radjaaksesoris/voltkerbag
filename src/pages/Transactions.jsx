@@ -391,9 +391,12 @@ export default function Transactions() {
               <span>Total</span>
               <strong className="accent">{rupiah(total)}</strong>
             </div>
-            {paymentType === 'credit' && <label>Pembayaran awal / DP</label>}
-            <MoneyInput value={pay} onChange={setPay}
-              placeholder={paymentType === 'cash' ? total ? String(total) : '0' : '0 jika belum membayar'} />
+            <label>{paymentType === 'cash' ? 'Total tunai diterima *' : 'Pembayaran awal / DP'}</label>
+            <MoneyInput
+              value={pay}
+              onChange={setPay}
+              placeholder={paymentType === 'cash' ? 'Masukkan jumlah tunai' : 'Opsional'}
+            />
             {paymentType === 'cash' ? (
               <div className={'change ' + (change < 0 ? 'negative' : '')}>
                 Kembalian: <strong>{rupiah(change < 0 ? 0 : change)}</strong>
@@ -403,7 +406,7 @@ export default function Transactions() {
             )}
             {checkoutError && <p className="form-error" role="alert">{checkoutError}</p>}
             <div className="cart-submit-bar">
-              <button className="btn btn-primary btn-block btn-lg" onClick={checkout} disabled={cart.length === 0 || !customerName || saving}>
+              <button className="btn btn-primary btn-block btn-lg" onClick={checkout} disabled={cart.length === 0 || !customerName || (paymentType === 'cash' && pay === '') || saving}>
                 {saving ? 'Menyimpan…' : <><Icon name="bolt" size={17} /> Simpan Transaksi</>}
               </button>
             </div>

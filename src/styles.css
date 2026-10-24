@@ -1107,12 +1107,15 @@ select.input { appearance: none; }
   .finance-grid { gap: 14px; }
   .pos-grid { gap: 15px; }
   .cart { height: min(620px, calc(100dvh - 150px)); min-height: 420px; overflow: visible; }
+  .cart-checkout { padding-bottom: 84px; }
   .cart-submit-bar {
-    position: sticky;
-    z-index: 5;
-    bottom: 8px;
+    position: fixed;
+    z-index: 19;
+    right: 31px;
+    bottom: 76px;
+    left: 31px;
     padding: 8px 0;
-    background: var(--card);
+    background: var(--bg);
   }
   .product-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 9px; }
   .product-card { padding: 10px; }
