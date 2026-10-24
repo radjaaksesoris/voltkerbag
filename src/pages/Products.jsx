@@ -538,11 +538,11 @@ export default function Products() {
                 <input ref={stockInputRef} className="input" type="number" min="0" step="any" value={form.stock} onChange={(e) => setForm({ ...form, stock: e.target.value })} disabled={Boolean(editId)} />
               </div>
             </div>
-            <p className="muted small product-stock-hint">
-              {editId
-                ? 'Stok dan modal rata-rata mengikuti persediaan. Untuk menambah barang produksi baru dengan modal berbeda, gunakan tombol Tambah Stok.'
-                : 'Untuk satuan pcs, lusin, dan kodi, harga beli dihitung per pcs dan stok dikonversi ke pcs. Untuk satuan khusus, harga beli mengikuti satuan produk.'}
-            </p>
+            {editId && (
+              <p className="muted small product-stock-hint">
+                Stok dan modal rata-rata mengikuti persediaan. Untuk menambah barang produksi baru dengan modal berbeda, gunakan tombol Tambah Stok.
+              </p>
+            )}
             <div className="modal-actions">
               {actionError && <p className="form-error" role="alert">{actionError}</p>}
               <button type="button" className="btn" disabled={saving} onClick={closeProductForm}>Batal</button>
