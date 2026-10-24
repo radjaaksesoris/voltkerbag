@@ -27,6 +27,14 @@ const Products = lazyPage(() => import('./pages/Products.jsx'))
 const Finance = lazyPage(() => import('./pages/Finance.jsx'))
 const Settings = lazyPage(() => import('./pages/Settings.jsx'))
 
+const PAGES = {
+  dashboard: Dashboard,
+  pos: Transactions,
+  stok: Products,
+  finance: Finance,
+  settings: Settings
+}
+
 const NAV = [
   { id: 'dashboard', label: 'Dashboard', description: 'Ringkasan performa tokomu hari ini.', icon: 'dashboard' },
   { id: 'pos', label: 'Transaksi', description: 'Pilih produk, atur pembayaran, dan simpan transaksi.', icon: 'cart' },
@@ -37,6 +45,7 @@ const NAV = [
 
 export default function App() {
   const [page, setPage] = useState('dashboard')
+  const [visitedPages, setVisitedPages] = useState(() => new Set(['dashboard']))
   const [navHidden, setNavHidden] = useState(false)
   const [session, setSession] = useState(null)
   const [checkingSession, setCheckingSession] = useState(true)
@@ -53,6 +62,14 @@ export default function App() {
   const currentPage = NAV.find((n) => n.id === page)
   const contentRef = useRef(null)
   const serviceWorkerRegistration = useRef(null)
+
+  function navigateToPage(nextPage) {
+    setVisitedPages((visited) => {
+      if (visited.has(nextPage)) return visited
+      return new Set([...visited, nextPage])
+    })
+    setPage(nextPage)
+  }
 
   useEffect(() => {
     function captureInstallPrompt(event) {
@@ -294,7 +311,7 @@ export default function App() {
           {NAV.map((n) => (
             <button key={n.id}
               className={'nav-item ' + (page === n.id ? 'active' : '')}
-              onClick={() => setPage(n.id)}>
+              onClick={() => navigateToPage(n.id)}>
               <span className="nav-icon"><Icon name={n.icon} size={19} /></span> {n.label}
             </button>
           ))}
@@ -360,15 +377,18 @@ export default function App() {
         )}
 
         <div className="content" ref={contentRef}>
-          <PageErrorBoundary key={page}>
-            <Suspense fallback={<p className="login-loading">Memuat halaman...</p>}>
-              {page === 'dashboard' && <Dashboard />}
-              {page === 'pos' && <Transactions />}
-              {page === 'stok' && <Products />}
-              {page === 'finance' && <Finance />}
-              {page === 'settings' && <Settings />}
-            </Suspense>
-          </PageErrorBoundary>
+          {NAV.filter(({ id }) => visitedPages.has(id)).map(({ id }) => {
+            const Page = PAGES[id]
+            return (
+              <div key={id} hidden={page !== id}>
+                <PageErrorBoundary>
+                  <Suspense fallback={<p className="login-loading">Memuat halaman...</p>}>
+                    <Page />
+                  </Suspense>
+                </PageErrorBoundary>
+              </div>
+            )
+          })}
         </div>
       </main>
       {showInstallInstructions && !isInstalled && (
