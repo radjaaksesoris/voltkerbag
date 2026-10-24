@@ -15,10 +15,9 @@ export default function LoginScreen({ configured, connectionError, onSignedIn, o
     return () => mobileQuery.removeEventListener('change', updateMobile)
   }, [])
 
-  async function submit(event) {
-    event.preventDefault()
+  async function loginWithPassword(value) {
     const loginEmail = isMobile ? defaultEmail : email.trim()
-    const loginPassword = isMobile ? password.replace(/\D/g, '') : password
+    const loginPassword = isMobile ? value.replace(/\D/g, '') : value
     if (!loginEmail) {
       setError('Email login mobile belum dikonfigurasi. Atur VITE_LOGIN_EMAIL lalu build ulang aplikasi.')
       return
@@ -41,9 +40,17 @@ export default function LoginScreen({ configured, connectionError, onSignedIn, o
     }
   }
 
+  function submit(event) {
+    event.preventDefault()
+    loginWithPassword(password)
+  }
+
   function enterDigit(digit) {
-    setPassword((current) => current + digit)
+    const nextPassword = password + digit
+    if (nextPassword.length > 6) return
+    setPassword(nextPassword)
     setError('')
+    if (nextPassword.length === 6) loginWithPassword(nextPassword)
   }
 
   return (
