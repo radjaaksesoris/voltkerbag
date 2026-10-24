@@ -485,7 +485,6 @@ export default function Products() {
                 disabled={saving}
                 onChange={selectProductImage}
               />
-              <p className="muted small">JPG, PNG, atau WebP · maksimal 5 MB.</p>
               {(imagePreview || form.image_path) && (
                 <div className="product-image-preview">
                   <img src={imagePreview || getProductImageUrl(form.image_path)} width="92" height="76" alt="Pratinjau gambar produk" />
@@ -522,7 +521,6 @@ export default function Products() {
             </div>
             {saleUnits(form.unit).length === 3 ? (
               <div className="product-sale-prices">
-                <label>Tarif per pcs saat dijual dalam satuan berikut *</label>
                 <div className="grid-3">
                   {['pcs', 'lusin', 'kodi'].map((unit) => (
                     <div key={unit}>
