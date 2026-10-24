@@ -205,7 +205,7 @@ export default function Transactions() {
       setDone({
         id: txId,
         total,
-        payment: initialPayment,
+        payment: paidNow,
         change: paymentType === 'cash' ? change : 0,
         balance: remaining,
         paymentType,
