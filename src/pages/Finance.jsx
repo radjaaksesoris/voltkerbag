@@ -48,7 +48,6 @@ export default function Finance() {
 
     async function load() {
       const currentRequest = ++requestId.current
-      setLoaded(false)
       try {
         const range = dateRangeTimestamps(dateRange)
         const data = await getFinanceData({
