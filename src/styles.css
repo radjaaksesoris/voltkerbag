@@ -338,12 +338,12 @@ button:focus-visible, input:focus-visible, select:focus-visible {
   z-index: -1;
   inset: 0;
   background-image: var(--brand-watermark);
-  background-position: center 30%;
-  background-repeat: no-repeat;
-  background-size: min(68vw, 560px) auto;
+  background-position: 12px 12px;
+  background-repeat: repeat;
+  background-size: 150px 159px;
   content: '';
   filter: brightness(0) saturate(100%) invert(17%) sepia(57%) saturate(2440%) hue-rotate(326deg) brightness(88%) contrast(96%);
-  opacity: .035;
+  opacity: .04;
   pointer-events: none;
 }
 
