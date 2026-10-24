@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react'
 import { recordTransactionPayment } from '../db'
-import { rupiah, dateTime } from '../format'
+import { rupiah, dateTime, dateOnly } from '../format'
 import { getInvoiceNumber } from '../invoice'
 import MoneyInput from './MoneyInput'
 
@@ -81,7 +81,7 @@ export default function TransactionDetails({ transaction, onClose, onTransaction
 
         <dl className="transaction-details-meta">
           <div><dt>Nama pelanggan</dt><dd>{transaction.customerName || 'Pelanggan lama'}</dd></div>
-          <div><dt>Tanggal transaksi</dt><dd>{dateTime(transaction.createdAt)}</dd></div>
+          <div><dt>Tanggal transaksi</dt><dd>{dateOnly(transaction.createdAt)}</dd></div>
           <div><dt>Metode pembayaran</dt><dd>{transaction.paymentType === 'credit' ? 'Kredit' : 'Tunai'}</dd></div>
         </dl>
 
