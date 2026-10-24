@@ -1007,7 +1007,14 @@ select.input { appearance: none; }
 .finance-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 22px; align-items: start; }
 .grid-3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
 .overlay { position: fixed; z-index: 50; inset: 0; display: flex; align-items: center; justify-content: center; padding: 20px; background: rgba(24, 22, 21, .6); overscroll-behavior: contain; backdrop-filter: blur(5px); }
-.product-form-overlay { justify-content: flex-end; padding-right: clamp(20px, 4vw, 64px); }
+.product-form-overlay {
+  justify-content: flex-end;
+  padding-right: clamp(20px, 4vw, 64px);
+  animation: product-form-backdrop-in .22s ease-out both;
+}
+.product-form-overlay .product-modal { animation: product-form-slide-in .28s cubic-bezier(.2, .75, .25, 1) both; }
+@keyframes product-form-backdrop-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes product-form-slide-in { from { transform: translateX(36px); opacity: .75; } to { transform: translateX(0); opacity: 1; } }
 .modal { width: 100%; max-width: 460px; max-height: 90vh; overflow-y: auto; overscroll-behavior: contain; padding: 26px; border: 1px solid var(--border); border-radius: 17px; background: var(--card); box-shadow: 0 24px 70px rgba(26, 19, 15, .24); }
 .product-modal {
   position: relative;
