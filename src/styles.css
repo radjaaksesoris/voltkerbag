@@ -1031,8 +1031,11 @@ select.input { appearance: none; }
 .transaction-details-meta div { min-width: 0; padding: 12px; border-radius: 9px; background: var(--bg-soft); }
 .transaction-details-meta dt { margin-bottom: 4px; color: var(--muted); font-size: 10px; font-weight: 700; }
 .transaction-details-meta dd { overflow-wrap: anywhere; color: var(--ink); font-size: 12px; font-weight: 600; }
-.transaction-details-items { overflow-x: auto; }
-.transaction-details-items table { min-width: 500px; }
+.transaction-details-items { overflow-x: hidden; }
+.transaction-details-items table { width: 100%; min-width: 0; table-layout: fixed; }
+.transaction-details-items th,
+.transaction-details-items td { padding-inline: 7px; white-space: normal; overflow-wrap: anywhere; }
+.transaction-details-items tbody td:first-child strong { overflow-wrap: anywhere; }
 .transaction-details-items tfoot th, .transaction-details-items tfoot td { padding-top: 9px; padding-bottom: 9px; }
 .transaction-details-items tfoot tr:first-child th { border-top: 2px solid var(--border); color: var(--ink); }
 .transaction-details-payments { margin-top: 18px; }
@@ -1196,9 +1199,17 @@ select.input { appearance: none; }
   .settings-add-form .btn { justify-content: center; }
   .customer-list li { padding: 8px 9px; font-size: 12px; }
   .settings-section-heading { gap: 9px; }
-  .transaction-details-meta { grid-template-columns: 1fr; gap: 7px; }
+  .transaction-details-meta { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 7px; }
+  .transaction-details-meta > div:nth-child(3) { grid-column: 1 / -1; }
   .transaction-details-meta div { padding: 9px 11px; }
   .transaction-details-heading { margin-bottom: 12px; }
+  .transaction-details-items th,
+  .transaction-details-items td { padding: 8px 3px; font-size: 10px; letter-spacing: 0; }
+  .transaction-details-items thead th:first-child { width: 34%; }
+  .transaction-details-items thead th:nth-child(2) { width: 18%; }
+  .transaction-details-items thead th:nth-child(3) { width: 23%; }
+  .transaction-details-items thead th:nth-child(4) { width: 25%; }
+  .transaction-details-items th { white-space: normal; }
 }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
