@@ -12,6 +12,11 @@ const TYPES = {
 }
 const FINANCE_PAGE_SIZE = 20
 
+function getTodayDateRange() {
+  const today = localDateValue(new Date())
+  return { from: today, to: today }
+}
+
 export default function Finance() {
   const [report, setReport] = useState({
     entries: [],
@@ -22,7 +27,7 @@ export default function Finance() {
     total_credit: 0,
     gross_profit: 0
   })
-  const [dateRange, setDateRange] = useState({ from: '', to: '' })
+  const [dateRange, setDateRange] = useState(getTodayDateRange)
   const [page, setPage] = useState(1)
   const [loadError, setLoadError] = useState('')
   const [actionError, setActionError] = useState('')
@@ -84,6 +89,7 @@ export default function Finance() {
   const pageCount = Math.max(1, Math.ceil(report.total_count / FINANCE_PAGE_SIZE))
   const pageStart = (page - 1) * FINANCE_PAGE_SIZE
   const hasFilter = hasDateRange(dateRange)
+  const todayDateRange = getTodayDateRange()
 
   function openNewEntry() {
     setEditingEntry(null)
@@ -182,7 +188,7 @@ export default function Finance() {
         <DateRangeFilter value={dateRange} onChange={(range) => {
           setDateRange(range)
           setPage(1)
-        }} />
+        }} resetValue={todayDateRange} resetLabel="Hari ini" />
       </div>
 
       <div className="finance-grid">

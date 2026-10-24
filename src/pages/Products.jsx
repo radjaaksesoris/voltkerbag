@@ -26,6 +26,10 @@ export default function Products() {
   const [form, setForm] = useState(EMPTY)
   const [editId, setEditId] = useState(null)
   const [showForm, setShowForm] = useState(false)
+  const [stockProduct, setStockProduct] = useState(null)
+  const [stockAmount, setStockAmount] = useState('')
+  const [stockSaving, setStockSaving] = useState(false)
+  const [stockError, setStockError] = useState('')
   const [imageFile, setImageFile] = useState(null)
   const [imagePreview, setImagePreview] = useState('')
   const [imageRemoved, setImageRemoved] = useState(false)
@@ -112,6 +116,47 @@ export default function Products() {
     setImageRemoved(false)
     if (imageInputRef.current) imageInputRef.current.value = ''
     setShowForm(true)
+  }
+
+  function openAddStock(product) {
+    setStockProduct(product)
+    setStockAmount('')
+    setStockError('')
+  }
+
+  async function addStock(event) {
+    event.preventDefault()
+    if (!stockProduct || stockSaving) return
+    setStockError('')
+
+    const amount = Number(stockAmount)
+    const unit = stockProduct.unit || 'pcs'
+    if (!Number.isFinite(amount) || amount <= 0 || !Number.isInteger(amount)) {
+      setStockError('Masukkan jumlah stok berupa bilangan bulat yang lebih dari nol.')
+      return
+    }
+
+    const nextStockPcs = stockInPcs(stockProduct) + quantityToPcs(amount, unit)
+    if (!Number.isSafeInteger(nextStockPcs) || nextStockPcs > 2147483647) {
+      setStockError('Jumlah stok melebihi batas yang dapat disimpan.')
+      return
+    }
+    setStockSaving(true)
+    try {
+      await put('products', {
+        ...stockProduct,
+        stock: nextStockPcs / unitFactor(unit),
+        stock_pcs: nextStockPcs
+      })
+      setItems((current) => current.map((product) => product.id === stockProduct.id
+        ? { ...product, stock: nextStockPcs / unitFactor(unit), stock_pcs: nextStockPcs }
+        : product))
+      setStockProduct(null)
+    } catch (error) {
+      setStockError(error.message || 'Gagal menambahkan stok produk.')
+    } finally {
+      setStockSaving(false)
+    }
   }
 
   function closeProductForm() {
@@ -364,6 +409,10 @@ export default function Products() {
                 </td>
                 <td className="row-actions">
                   <div className="product-row-actions">
+                    <button className="btn btn-sm product-stock-action" onClick={() => openAddStock(p)}>
+                      <Icon name="plus" size={13} />
+                      <span>Tambah Stok</span>
+                    </button>
                     <button className="btn btn-sm" onClick={() => openEdit(p)}>Edit</button>
                     <button className="btn btn-sm btn-danger" onClick={() => del(p)}>Hapus</button>
                   </div>
@@ -471,6 +520,36 @@ export default function Products() {
               <button type="button" className="btn" disabled={saving} onClick={closeProductForm}>Batal</button>
               <button type="submit" className="btn btn-primary" disabled={saving}>
                 {saving ? 'Menyimpan...' : 'Simpan'}
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
+
+      {stockProduct && (
+        <div className="overlay" onClick={() => !stockSaving && setStockProduct(null)}>
+          <form className="modal add-stock-modal" onClick={(event) => event.stopPropagation()} onSubmit={addStock}>
+            <h3>Tambah Stok</h3>
+            <p className="muted small">{stockProduct.name}</p>
+            <p className="add-stock-current">Stok saat ini <strong>{stockLabel(stockProduct)}</strong></p>
+            <label htmlFor="add-stock-amount">Jumlah yang ditambahkan ({stockProduct.unit || 'pcs'}) *</label>
+            <input
+              id="add-stock-amount"
+              className="input"
+              type="number"
+              min="0"
+              step="1"
+              value={stockAmount}
+              onChange={(event) => setStockAmount(event.target.value)}
+              placeholder={'Jumlah ' + (stockProduct.unit || 'pcs')}
+              required
+              autoFocus
+            />
+            {stockError && <p className="form-error" role="alert">{stockError}</p>}
+            <div className="modal-actions">
+              <button type="button" className="btn" disabled={stockSaving} onClick={() => setStockProduct(null)}>Batal</button>
+              <button type="submit" className="btn btn-primary" disabled={stockSaving || !stockAmount}>
+                {stockSaving ? 'Menyimpan…' : 'Tambah Stok'}
               </button>
             </div>
           </form>
