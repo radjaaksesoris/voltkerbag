@@ -4,11 +4,28 @@ import SessionControl from './components/SessionControl.jsx'
 import PageErrorBoundary from './components/PageErrorBoundary.jsx'
 import Icon from './components/Icon.jsx'
 
-const Dashboard = lazy(() => import('./pages/Dashboard.jsx'))
-const Transactions = lazy(() => import('./pages/Transactions.jsx'))
-const Products = lazy(() => import('./pages/Products.jsx'))
-const Finance = lazy(() => import('./pages/Finance.jsx'))
-const Settings = lazy(() => import('./pages/Settings.jsx'))
+const CHUNK_RELOAD_KEY = 'voltker:chunk-reload-attempted'
+
+function lazyPage(importPage) {
+  return lazy(() => importPage()
+    .then((module) => {
+      sessionStorage.removeItem(CHUNK_RELOAD_KEY)
+      return module
+    })
+    .catch((error) => {
+      if (!sessionStorage.getItem(CHUNK_RELOAD_KEY)) {
+        sessionStorage.setItem(CHUNK_RELOAD_KEY, '1')
+        window.location.reload()
+      }
+      throw error
+    }))
+}
+
+const Dashboard = lazyPage(() => import('./pages/Dashboard.jsx'))
+const Transactions = lazyPage(() => import('./pages/Transactions.jsx'))
+const Products = lazyPage(() => import('./pages/Products.jsx'))
+const Finance = lazyPage(() => import('./pages/Finance.jsx'))
+const Settings = lazyPage(() => import('./pages/Settings.jsx'))
 
 const NAV = [
   { id: 'dashboard', label: 'Dashboard', description: 'Ringkasan performa tokomu hari ini.', icon: 'dashboard' },
