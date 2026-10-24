@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { getAll, getProductImageUrl, put, remove, removeProductImage, uploadProductImage, onRefresh } from '../db'
+import { addProductStock, getAll, getProductImageUrl, put, remove, removeProductImage, uploadProductImage, onRefresh } from '../db'
 import { rupiah } from '../format'
 import MoneyInput from '../components/MoneyInput.jsx'
 import CategorySelect from '../components/CategorySelect.jsx'
@@ -50,6 +50,7 @@ export default function Products() {
   const costInputRef = useRef(null)
   const stockInputRef = useRef(null)
   const imageInputRef = useRef(null)
+  const stockRequest = useRef(null)
 
   useEffect(() => {
     return () => {
@@ -143,14 +144,13 @@ export default function Products() {
     }
     setStockSaving(true)
     try {
-      await put('products', {
-        ...stockProduct,
-        stock: nextStockPcs / unitFactor(unit),
-        stock_pcs: nextStockPcs
-      })
-      setItems((current) => current.map((product) => product.id === stockProduct.id
-        ? { ...product, stock: nextStockPcs / unitFactor(unit), stock_pcs: nextStockPcs }
-        : product))
+      const quantityPcs = quantityToPcs(amount, unit)
+      const requestFingerprint = stockProduct.id + ':' + quantityPcs
+      if (stockRequest.current?.fingerprint !== requestFingerprint) {
+        stockRequest.current = { fingerprint: requestFingerprint, id: crypto.randomUUID() }
+      }
+      await addProductStock(stockProduct.id, quantityPcs, stockRequest.current.id)
+      stockRequest.current = null
       setStockProduct(null)
     } catch (error) {
       setStockError(error.message || 'Gagal menambahkan stok produk.')
@@ -257,7 +257,7 @@ export default function Products() {
       return
     }
     const baseStock = Number(form.stock)
-    if (!Number.isFinite(baseStock) || baseStock < 0) {
+    if (!editId && (!Number.isFinite(baseStock) || baseStock < 0)) {
       setActionError('Stok harus berupa angka nol atau lebih.')
       return
     }
@@ -271,7 +271,7 @@ export default function Products() {
         uploadedImagePath = await uploadProductImage(imageFile)
         imagePath = uploadedImagePath
       }
-      await put('products', {
+      const productRecord = {
         id: editId || undefined,
         name: form.name.trim(),
         category: form.category.trim(),
@@ -281,10 +281,13 @@ export default function Products() {
         price_lusin: isStandard ? prices.lusin : 0,
         price_kodi: isStandard ? prices.kodi : 0,
         cost: Number(form.cost) || 0,
-        stock: stockPcs / unitFactor(form.unit),
-        stock_pcs: stockPcs,
         image_path: imagePath
-      })
+      }
+      if (!editId) {
+        productRecord.stock = stockPcs / unitFactor(form.unit)
+        productRecord.stock_pcs = stockPcs
+      }
+      await put('products', productRecord)
       originalImagePathRef.current = imagePath
       setShowForm(false)
       setImageFile(null)
@@ -511,10 +514,14 @@ export default function Products() {
               </div>
               <div>
                 <label>Stok ({form.unit})</label>
-                <input ref={stockInputRef} className="input" type="number" min="0" step="any" value={form.stock} onChange={(e) => setForm({ ...form, stock: e.target.value })} />
+                <input ref={stockInputRef} className="input" type="number" min="0" step="any" value={form.stock} onChange={(e) => setForm({ ...form, stock: e.target.value })} disabled={Boolean(editId)} />
               </div>
             </div>
-            <p className="muted small product-stock-hint">Untuk satuan pcs, lusin, dan kodi, harga beli dihitung per pcs dan stok dikonversi ke pcs. Untuk satuan khusus, harga beli mengikuti satuan produk.</p>
+            <p className="muted small product-stock-hint">
+              {editId
+                ? 'Untuk mengubah stok, gunakan tombol Tambah Stok di daftar produk. Stok tidak berubah saat detail produk diedit.'
+                : 'Untuk satuan pcs, lusin, dan kodi, harga beli dihitung per pcs dan stok dikonversi ke pcs. Untuk satuan khusus, harga beli mengikuti satuan produk.'}
+            </p>
             <div className="modal-actions">
               {actionError && <p className="form-error" role="alert">{actionError}</p>}
               <button type="button" className="btn" disabled={saving} onClick={closeProductForm}>Batal</button>

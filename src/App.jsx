@@ -115,32 +115,31 @@ export default function App() {
     let active = true
     let unsubscribe = () => {}
     let authListenerInitialized = false
+    let checkingConnection = false
 
     async function verifyConnection() {
-      if (!navigator.onLine) {
-        if (active) {
-          setSession(null)
-          setConnectionError('Koneksi internet tidak tersedia. VOLTKER hanya dapat digunakan saat online.')
-          setCheckingSession(false)
-        }
-        return
-      }
+      if (checkingConnection) return
+      checkingConnection = true
       if (!import.meta.env.VITE_SUPABASE_ANON_KEY) {
         if (active) {
           setSession(null)
           setConnectionError('')
           setCheckingSession(false)
         }
+        checkingConnection = false
         return
       }
       try {
-        const { getAuthSession, onAuthStateChange } = await import('./supabaseSync')
+        const { getAuthSession, onAuthStateChange, verifyAuthSession } = await import('./supabaseSync')
         if (!active) return
         if (!authListenerInitialized) {
-          unsubscribe = onAuthStateChange((event) => {
+          unsubscribe = onAuthStateChange((event, nextSession) => {
             if (event === 'SIGNED_OUT') {
               setSession(null)
               setConnectionError('')
+            } else if (nextSession) {
+              setSession(nextSession)
+              setConnectionError(navigator.onLine ? '' : 'Koneksi internet tidak tersedia. Data terbaru tidak dapat disimpan.')
             }
           })
           authListenerInitialized = true
@@ -148,33 +147,42 @@ export default function App() {
         const currentSession = await getAuthSession()
         if (!active) return
         setSession(currentSession)
-        setConnectionError('')
+        if (!navigator.onLine) {
+          setConnectionError('Koneksi internet tidak tersedia. Data terbaru tidak dapat disimpan.')
+        } else if (currentSession) {
+          const verifiedSession = await verifyAuthSession()
+          if (!active) return
+          setSession(verifiedSession)
+          setConnectionError(verifiedSession ? '' : 'Sesi login berakhir. Silakan masuk kembali.')
+        } else {
+          setConnectionError('')
+        }
       } catch (error) {
         if (!active) return
-        setSession(null)
-        setConnectionError(error.message || 'Tidak dapat menghubungi database server.')
+        setConnectionError(error.message || 'Tidak dapat menghubungi database server. Periksa koneksi lalu coba lagi.')
       } finally {
+        checkingConnection = false
         if (active) setCheckingSession(false)
       }
     }
 
-    const onOnline = () => { setCheckingSession(true); verifyConnection() }
+    const onOnline = () => verifyConnection()
+    const onFocus = () => verifyConnection()
     const onOffline = () => {
-      setSession(null)
-      setConnectionError('Koneksi internet tidak tersedia. VOLTKER hanya dapat digunakan saat online.')
+      setConnectionError('Koneksi internet tidak tersedia. Data terbaru tidak dapat disimpan.')
       setCheckingSession(false)
     }
 
     verifyConnection()
     window.addEventListener('online', onOnline)
+    window.addEventListener('focus', onFocus)
     window.addEventListener('offline', onOffline)
-    const heartbeat = window.setInterval(verifyConnection, 30000)
     return () => {
       active = false
       unsubscribe()
       window.removeEventListener('online', onOnline)
+      window.removeEventListener('focus', onFocus)
       window.removeEventListener('offline', onOffline)
-      window.clearInterval(heartbeat)
     }
   }, [authCheckKey])
 
@@ -235,7 +243,7 @@ export default function App() {
     return <main className="login-page"><p className="login-loading">Memeriksa koneksi dan sesi VOLTKER...</p></main>
   }
 
-  if (!session || connectionError) {
+  if (!session) {
     return (
       <LoginScreen
         configured={Boolean(import.meta.env.VITE_SUPABASE_ANON_KEY)}
@@ -303,6 +311,18 @@ export default function App() {
           )}
           <SessionControl email={session.user.email} onSignedOut={() => setSession(null)} />
         </header>
+
+        {connectionError && (
+          <div className="connection-banner" role="status" aria-live="polite">
+            <span>{connectionError}</span>
+            <button
+              className="btn btn-sm"
+              type="button"
+              onClick={() => setAuthCheckKey((key) => key + 1)}>
+              Coba sambungkan
+            </button>
+          </div>
+        )}
 
         {updateReady && (
           <div className="pwa-update-banner" role="status" aria-live="polite">

@@ -353,6 +353,18 @@ button:focus-visible, input:focus-visible, select:focus-visible {
 .session-email { max-width: 230px; overflow: hidden; color: var(--muted); font-size: 11px; text-overflow: ellipsis; white-space: nowrap; }
 .session-error { position: absolute; top: calc(100% + 6px); right: 0; max-width: 320px; color: var(--danger); font-size: 11px; }
 .topbar { position: relative; }
+.connection-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 9px clamp(16px, 3vw, 38px);
+  border-bottom: 1px solid #e6b6a9;
+  background: #fff0eb;
+  color: #762e24;
+  font-size: 12px;
+}
+.connection-banner .btn { flex: 0 0 auto; border-color: #d6a097; color: #762e24; }
 .pwa-update-banner {
   display: flex;
   align-items: center;
@@ -371,6 +383,7 @@ button:focus-visible, input:focus-visible, select:focus-visible {
   .session-online { font-size: 0; }
   .session-control .btn { padding: 7px 9px; }
   .topbar .pwa-install-button { gap: 3px; padding: 7px 8px; font-size: 10px; }
+  .connection-banner { align-items: flex-start; flex-direction: column; gap: 8px; font-size: 11px; }
   .pwa-update-banner { align-items: flex-start; flex-direction: column; gap: 8px; font-size: 11px; }
 }
 

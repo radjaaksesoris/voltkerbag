@@ -27,8 +27,14 @@ export async function getAuthSession() {
   const supabase = getClient()
   const { data: { session }, error: sessionError } = await supabase.auth.getSession()
   if (sessionError) throw new Error('Gagal memeriksa sesi: ' + sessionError.message)
+  return session
+}
+
+export async function verifyAuthSession() {
+  const session = await getAuthSession()
   if (!session) return null
 
+  const supabase = getClient()
   const { data: { user }, error } = await supabase.auth.getUser()
   if (error?.status === 401) {
     await supabase.auth.signOut({ scope: 'local' })

@@ -1,22 +1,21 @@
 import { useEffect, useRef, useState } from 'react'
-import { getAll, getDashboardData, onRefresh } from '../db'
+import { getDashboardData, onRefresh } from '../db'
 import { rupiah, dateOnly, dateTime } from '../format'
 import DateRangeFilter from '../components/DateRangeFilter'
 import { dateRangeTimestamps, hasDateRange, localDateValue } from '../dateFilter'
 import TransactionDetails from '../components/TransactionDetails'
 import { getInvoiceNumber } from '../invoice'
-import { availableQuantity, stockCostValue } from '../productUnits'
 
 const TRANSACTIONS_PER_PAGE = 15
 
 export default function Dashboard() {
-  const [products, setProducts] = useState([])
   const [report, setReport] = useState({
     transactions: [],
     total_count: 0,
     summary_count: 0,
     revenue: 0,
-    gross_profit: 0
+    gross_profit: 0,
+    inventory: { product_count: 0, low_stock_count: 0, total_asset: 0 }
   })
   const [dateRange, setDateRange] = useState(() => {
     const today = localDateValue(new Date())
@@ -43,24 +42,23 @@ export default function Dashboard() {
         const summaryRange = hasFilter
           ? listRange
           : dateRangeTimestamps({ from: localDateValue(new Date()), to: localDateValue(new Date()) })
-        const [productRows, dashboardData] = await Promise.all([
-          getAll('products'),
-          getDashboardData({
-            ...listRange,
-            summaryFrom: summaryRange.from,
-            summaryTo: summaryRange.to,
-            page: transactionPage,
-            pageSize: TRANSACTIONS_PER_PAGE,
-            creditFirst
-          })
-        ])
+        const dashboardData = await getDashboardData({
+          ...listRange,
+          summaryFrom: summaryRange.from,
+          summaryTo: summaryRange.to,
+          page: transactionPage,
+          pageSize: TRANSACTIONS_PER_PAGE,
+          creditFirst
+        })
         if (!active || currentRequest !== requestId.current) return
+        if (!dashboardData.inventory) {
+          throw new Error('Ringkasan stok belum tersedia. Jalankan pembaruan supabase/schema.sql, lalu muat ulang.')
+        }
         const pageCount = Math.max(1, Math.ceil(dashboardData.total_count / TRANSACTIONS_PER_PAGE))
         if (transactionPage > pageCount) {
           setTransactionPage(pageCount)
           return
         }
-        setProducts(productRows)
         setReport(dashboardData)
         setLoadError('')
       } catch (error) {
@@ -92,8 +90,9 @@ export default function Dashboard() {
   const currentPage = Math.min(transactionPage, pageCount)
   const pageStart = (currentPage - 1) * TRANSACTIONS_PER_PAGE
   const pageTransactions = report.transactions
-  const totalAsset = products.reduce((sum, product) => sum + stockCostValue(product), 0)
-  const lowStock = products.filter((product) => availableQuantity(product, product.unit || 'pcs') <= 5)
+  const totalAsset = Number(report.inventory?.total_asset || 0)
+  const lowStockCount = Number(report.inventory?.low_stock_count || 0)
+  const productCount = Number(report.inventory?.product_count || 0)
 
   function updateSelectedTransaction(updatedTransaction) {
     setReport((current) => ({
@@ -130,11 +129,11 @@ export default function Dashboard() {
         <div className="stat-card dashboard-stock-counts">
           <div className="dashboard-stock-metric">
             <span>Stok Menipis</span>
-            <strong className={lowStock.length ? 'danger' : ''}>{lowStock.length}</strong>
+            <strong className={lowStockCount ? 'danger' : ''}>{lowStockCount}</strong>
           </div>
           <div className="dashboard-stock-metric">
             <span>Total Produk</span>
-            <strong>{products.length}</strong>
+            <strong>{productCount}</strong>
           </div>
         </div>
       </div>

@@ -104,6 +104,17 @@ export async function completeSale(transaction, cart, requestId) {
   return data
 }
 
+export async function addProductStock(productId, quantityPcs, requestId) {
+  const { data, error } = await getClient().rpc('add_product_stock', {
+    p_product_id: productId,
+    p_quantity_pcs: quantityPcs,
+    p_request_id: requestId || crypto.randomUUID()
+  })
+  throwIfError(error, 'Gagal menambahkan stok produk')
+  notifyRefresh()
+  return data
+}
+
 export async function recordTransactionPayment(transactionId, amount, requestId) {
   const { data, error } = await getClient().rpc('record_transaction_payment', {
     p_transaction_id: transactionId,
