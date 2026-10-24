@@ -340,7 +340,7 @@ button:focus-visible, input:focus-visible, select:focus-visible {
   background-image: var(--brand-watermark);
   background-position: 12px 12px;
   background-repeat: repeat;
-  background-size: 150px 159px;
+  background-size: 200px 209px;
   content: '';
   filter: brightness(0) saturate(100%) invert(17%) sepia(57%) saturate(2440%) hue-rotate(326deg) brightness(88%) contrast(96%);
   opacity: .04;

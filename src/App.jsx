@@ -299,7 +299,7 @@ export default function App() {
   return (
     <div
       className={'app ' + (navHidden ? 'nav-hidden' : '')}
-      style={{ '--brand-watermark': 'url("' + import.meta.env.BASE_URL + 'voltker-watermark.png")' }}>
+      style={{ '--brand-watermark': 'url("' + import.meta.env.BASE_URL + 'voltker-watermark-tile.png")' }}>
       <aside className="sidebar" id="primary-navigation" hidden={navHidden}>
         <div className="logo">
           <img
