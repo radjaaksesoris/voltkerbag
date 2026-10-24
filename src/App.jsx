@@ -24,8 +24,92 @@ export default function App() {
   const [checkingSession, setCheckingSession] = useState(true)
   const [connectionError, setConnectionError] = useState('')
   const [authCheckKey, setAuthCheckKey] = useState(0)
+  const [installPrompt, setInstallPrompt] = useState(null)
+  const [isInstalled, setIsInstalled] = useState(() =>
+    window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true
+  )
+  const [showInstallInstructions, setShowInstallInstructions] = useState(false)
+  const [installError, setInstallError] = useState('')
+  const [updateReady, setUpdateReady] = useState(false)
+  const [applyingUpdate, setApplyingUpdate] = useState(false)
   const currentPage = NAV.find((n) => n.id === page)
   const contentRef = useRef(null)
+  const serviceWorkerRegistration = useRef(null)
+
+  useEffect(() => {
+    function captureInstallPrompt(event) {
+      event.preventDefault()
+      setInstallPrompt(event)
+    }
+    function markInstalled() {
+      setIsInstalled(true)
+      setInstallPrompt(null)
+      setShowInstallInstructions(false)
+    }
+
+    window.addEventListener('beforeinstallprompt', captureInstallPrompt)
+    window.addEventListener('appinstalled', markInstalled)
+    return () => {
+      window.removeEventListener('beforeinstallprompt', captureInstallPrompt)
+      window.removeEventListener('appinstalled', markInstalled)
+    }
+  }, [])
+
+  useEffect(() => {
+    if (!('serviceWorker' in navigator)) return
+
+    let isActive = true
+    let registration
+    let installingWorker
+
+    function checkWaitingWorker() {
+      if (registration?.waiting && navigator.serviceWorker.controller) {
+        setUpdateReady(true)
+      }
+    }
+
+    function observeInstallingWorker() {
+      installingWorker?.removeEventListener('statechange', onWorkerStateChange)
+      installingWorker = registration?.installing
+      installingWorker?.addEventListener('statechange', onWorkerStateChange)
+    }
+
+    function onWorkerStateChange() {
+      if (installingWorker?.state === 'installed') checkWaitingWorker()
+    }
+
+    function onServiceWorkerMessage(event) {
+      if (event.data?.type === 'UPDATE_READY') setUpdateReady(true)
+    }
+
+    async function trackServiceWorker() {
+      try {
+        await navigator.serviceWorker.ready
+        if (!isActive) return
+        registration = await navigator.serviceWorker.getRegistration()
+        if (!registration) return
+        serviceWorkerRegistration.current = registration
+        registration.addEventListener('updatefound', observeInstallingWorker)
+        observeInstallingWorker()
+        checkWaitingWorker()
+      } catch (error) {
+        console.error('Gagal memeriksa pembaruan aplikasi:', error)
+      }
+    }
+
+    navigator.serviceWorker.addEventListener('message', onServiceWorkerMessage)
+    trackServiceWorker()
+
+    return () => {
+      isActive = false
+      installingWorker?.removeEventListener('statechange', onWorkerStateChange)
+      registration?.removeEventListener('updatefound', observeInstallingWorker)
+      navigator.serviceWorker.removeEventListener('message', onServiceWorkerMessage)
+      if (serviceWorkerRegistration.current === registration) {
+        serviceWorkerRegistration.current = null
+      }
+    }
+  }, [])
 
   useEffect(() => {
     let active = true
@@ -98,6 +182,55 @@ export default function App() {
     contentRef.current?.scrollTo({ top: 0 })
   }, [page])
 
+  async function installApp() {
+    if (!installPrompt) {
+      setInstallError('')
+      setShowInstallInstructions(true)
+      return
+    }
+
+    try {
+      await installPrompt.prompt()
+      const { outcome } = await installPrompt.userChoice
+      setInstallPrompt(null)
+      if (outcome === 'accepted') setIsInstalled(true)
+      else setShowInstallInstructions(true)
+    } catch (error) {
+      setInstallError(error.message || 'Prompt instalasi tidak dapat dibuka. Gunakan menu browser untuk memasang aplikasi.')
+      setInstallPrompt(null)
+      setShowInstallInstructions(true)
+    }
+  }
+
+  function applyAppUpdate() {
+    const waitingWorker = serviceWorkerRegistration.current?.waiting
+    if (!waitingWorker) {
+      window.location.reload()
+      return
+    }
+
+    setApplyingUpdate(true)
+    const reloadWhenActivated = () => {
+      if (waitingWorker.state === 'activated') {
+        waitingWorker.removeEventListener('statechange', reloadWhenActivated)
+        window.location.reload()
+      } else if (waitingWorker.state === 'redundant') {
+        waitingWorker.removeEventListener('statechange', reloadWhenActivated)
+        setApplyingUpdate(false)
+        setUpdateReady(false)
+      }
+    }
+    waitingWorker.addEventListener('statechange', reloadWhenActivated)
+    waitingWorker.postMessage({ type: 'SKIP_WAITING' })
+    reloadWhenActivated()
+  }
+
+  const installInstructions = /iphone|ipad|ipod/i.test(navigator.userAgent)
+    ? 'Ketuk tombol Bagikan di browser, lalu pilih “Tambahkan ke Layar Utama”.'
+    : /android/i.test(navigator.userAgent)
+      ? 'Buka menu browser ⋮, lalu pilih “Instal aplikasi” atau “Tambahkan ke layar utama”.'
+      : 'Gunakan menu browser, lalu pilih “Instal aplikasi” atau “Install VOLTKER”.'
+
   if (checkingSession && !session && !connectionError) {
     return <main className="login-page"><p className="login-loading">Memeriksa koneksi dan sesi VOLTKER...</p></main>
   }
@@ -162,8 +295,31 @@ export default function App() {
               <span>{currentPage.description}</span>
             </div>
           </div>
+          {!isInstalled && (
+            <button className="btn btn-sm pwa-install-button" type="button" onClick={installApp}>
+              <Icon name="plus" size={15} />
+              <span>Install</span>
+            </button>
+          )}
           <SessionControl email={session.user.email} onSignedOut={() => setSession(null)} />
         </header>
+
+        {updateReady && (
+          <div className="pwa-update-banner" role="status" aria-live="polite">
+            <span>
+              {applyingUpdate
+                ? 'Menerapkan pembaruan...'
+                : 'Pembaruan VOLTKER siap. Muat ulang untuk menggunakan versi terbaru.'}
+            </span>
+            <button
+              className="btn btn-sm btn-primary"
+              type="button"
+              onClick={applyAppUpdate}
+              disabled={applyingUpdate}>
+              {applyingUpdate ? 'Memperbarui...' : 'Perbarui sekarang'}
+            </button>
+          </div>
+        )}
 
         <div className="content" ref={contentRef}>
           <Suspense fallback={<p className="login-loading">Memuat halaman...</p>}>
@@ -175,6 +331,23 @@ export default function App() {
           </Suspense>
         </div>
       </main>
+      {showInstallInstructions && !isInstalled && (
+        <div className="overlay" onClick={() => setShowInstallInstructions(false)}>
+          <section
+            className="modal pwa-install-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="pwa-install-title"
+            onClick={(event) => event.stopPropagation()}>
+            <h3 id="pwa-install-title">Pasang VOLTKER</h3>
+            {installError && <p className="form-error" role="alert">{installError}</p>}
+            <p className="muted">{installInstructions}</p>
+            <div className="modal-actions">
+              <button className="btn btn-primary" type="button" onClick={() => setShowInstallInstructions(false)}>Mengerti</button>
+            </div>
+          </section>
+        </div>
+      )}
     </div>
   )
 }

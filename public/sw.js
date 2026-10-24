@@ -12,20 +12,21 @@ self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then((cache) => cache.addAll(APP_SHELL))
-      .then(() => self.skipWaiting())
   )
 })
 
-self.addEventListener('activate', (event) => {
-  event.waitUntil(
-    caches.keys()
-      .then((cacheNames) => Promise.all(
-        cacheNames
-          .filter((cacheName) => cacheName.startsWith('voltker-app-') && cacheName !== CACHE_NAME)
-          .map((cacheName) => caches.delete(cacheName))
-      ))
-      .then(() => self.clients.claim())
-  )
+self.addEventListener('message', (event) => {
+  if (event.data?.type !== 'SKIP_WAITING') return
+
+  event.waitUntil((async () => {
+    const clients = await self.clients.matchAll({ type: 'window', includeUncontrolled: true })
+    for (const client of clients) {
+      if (client.id !== event.source?.id) {
+        client.postMessage({ type: 'UPDATE_READY' })
+      }
+    }
+    await self.skipWaiting()
+  })())
 })
 
 self.addEventListener('fetch', (event) => {
@@ -42,14 +43,14 @@ self.addEventListener('fetch', (event) => {
           caches.open(CACHE_NAME).then((cache) => cache.put('./index.html', copy))
           return response
         })
-        .catch(async () => (await caches.match('./index.html')) || Response.error())
+        .catch(async () => (await caches.open(CACHE_NAME)).match('./index.html') || Response.error())
     )
     return
   }
 
   if (['script', 'style', 'image', 'font'].includes(request.destination)) {
     event.respondWith(
-      caches.match(request).then(async (cached) => {
+      caches.open(CACHE_NAME).then((cache) => cache.match(request)).then(async (cached) => {
         if (cached) return cached
         const response = await fetch(request)
         if (response.ok) {

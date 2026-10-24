@@ -41,6 +41,7 @@ npm run build
 
 ## Deploy ke GitHub Pages
 Workflow `.github/workflows/deploy.yml` membangun dan menerbitkan folder `dist` dari branch `main`. Pastikan secret `VITE_SUPABASE_ANON_KEY` sudah tersedia sebelum deploy; tanpa key, aplikasi menampilkan instruksi konfigurasi dan tidak membuka fitur toko.
+- Service worker menunggu persetujuan sebelum mengaktifkan pembaruan. Aplikasi menampilkan tombol **Perbarui sekarang**; tab lain diberi tahu dan dapat dimuat ulang sendiri. Cache lama tidak dihapus saat aktivasi agar tab yang belum diperbarui tetap dapat menggunakan asetnya.
 
 ## Online-only dan akses akun
 - Login divalidasi ke server sebelum aplikasi ditampilkan; status jaringan dipantau dan login ulang dibutuhkan jika koneksi server gagal.
