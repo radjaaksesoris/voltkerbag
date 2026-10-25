@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { getAll, getProductImageUrl, getTransactionSummary, completeSale, recordTransactionPayment, onRefresh } from '../db'
 import { rupiah, dateTime } from '../format'
-import Receipt from '../components/Receipt'
+import ReceiptPreview from '../components/ReceiptPreview'
 import Icon from '../components/Icon.jsx'
 import TransactionDetails from '../components/TransactionDetails'
 import { getInvoiceNumber } from '../invoice'
@@ -526,29 +526,7 @@ export default function Transactions() {
       )}
 
       {previewTransaction && (
-        <div className="overlay receipt-preview-overlay" onClick={() => setPreviewTransaction(null)}>
-          <section
-            className="receipt-preview-modal"
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="receipt-preview-title"
-            onClick={(event) => event.stopPropagation()}>
-            <header className="receipt-preview-heading">
-              <div>
-                <h3 id="receipt-preview-title">Pratinjau struk</h3>
-                <p className="muted small">Ukuran cetak 24 × 14 cm · continuous form</p>
-              </div>
-              <button className="btn" onClick={() => setPreviewTransaction(null)}>Tutup</button>
-            </header>
-            <div className="receipt-preview-paper">
-              <Receipt transaction={previewTransaction} />
-            </div>
-            <footer className="receipt-preview-actions">
-              <button className="btn" onClick={() => setPreviewTransaction(null)}>Batal</button>
-              <button className="btn btn-primary" onClick={() => window.print()}>Cetak</button>
-            </footer>
-          </section>
-        </div>
+        <ReceiptPreview transaction={previewTransaction} onClose={() => setPreviewTransaction(null)} />
       )}
       {selectedTransaction && (
         <TransactionDetails transaction={selectedTransaction} onClose={() => setSelectedTransaction(null)} />

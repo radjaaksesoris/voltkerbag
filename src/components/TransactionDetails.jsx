@@ -3,8 +3,11 @@ import { recordTransactionPayment } from '../db'
 import { rupiah, dateTime, dateOnly } from '../format'
 import { getInvoiceNumber } from '../invoice'
 import MoneyInput from './MoneyInput'
+import ReceiptPreview from './ReceiptPreview'
+import Icon from './Icon.jsx'
 
 export default function TransactionDetails({ transaction, onClose, onTransactionUpdated }) {
+  const [showReceipt, setShowReceipt] = useState(false)
   const payments = transaction.payments || []
   const paidAmount = transaction.paidAmount != null
     ? Number(transaction.paidAmount)
@@ -76,7 +79,13 @@ export default function TransactionDetails({ transaction, onClose, onTransaction
             <h3 id="transaction-details-title">Detail transaksi</h3>
             <p className="muted small">{getInvoiceNumber(transaction)}</p>
           </div>
-          <button className="btn" onClick={onClose}>Tutup</button>
+          <div className="transaction-details-heading-actions">
+            <button className="btn btn-primary" type="button" onClick={() => setShowReceipt(true)}>
+              <Icon name="print" size={15} />
+              PRINT
+            </button>
+            <button className="btn" type="button" onClick={onClose}>Tutup</button>
+          </div>
         </div>
 
         <dl className="transaction-details-meta">
@@ -140,6 +149,9 @@ export default function TransactionDetails({ transaction, onClose, onTransaction
           </form>
         )}
       </section>
+      {showReceipt && (
+        <ReceiptPreview transaction={transaction} onClose={() => setShowReceipt(false)} />
+      )}
     </div>
   )
 }
