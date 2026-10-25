@@ -1,7 +1,8 @@
+import { createPortal } from 'react-dom'
 import Receipt from './Receipt'
 
 export default function ReceiptPreview({ transaction, onClose }) {
-  return (
+  return createPortal(
     <div className="overlay receipt-preview-overlay" onClick={onClose}>
       <section
         className="receipt-preview-modal"
@@ -24,6 +25,7 @@ export default function ReceiptPreview({ transaction, onClose }) {
           <button className="btn btn-primary" type="button" onClick={() => window.print()}>Cetak</button>
         </footer>
       </section>
-    </div>
+    </div>,
+    document.body
   )
 }
