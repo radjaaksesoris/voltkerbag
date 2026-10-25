@@ -18,13 +18,10 @@ export default function Receipt({ transaction }) {
   return (
     <article className="print-receipt" aria-label="Struk transaksi">
       <header className="receipt-header">
-        <img
-          className="receipt-brand-logo"
-          src={import.meta.env.BASE_URL + 'voltker-logo-320.png'}
-          width="320"
-          height="79"
-          alt="VOLTKER Toko Tas"
-        />
+        <div className="receipt-brand-copy">
+          <strong>VOLTKER</strong>
+          <span>TOKO TAS</span>
+        </div>
         <div className="receipt-heading-copy">
           <strong>FAKTUR PENJUALAN</strong>
           <span>Bukti pembayaran resmi</span>

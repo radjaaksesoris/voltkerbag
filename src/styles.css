@@ -966,6 +966,13 @@ select.input { appearance: none; }
   display: flex;
   align-items: center;
   justify-content: space-between;
+  min-height: 17mm;
+  gap: 8mm;
+  margin: -7mm -8mm 0;
+  padding: 3mm 8mm;
+  border-bottom: 1px solid #000;
+  background: #fff;
+  color: #000;
 }
 .receipt-preview-paper .receipt-footer {
   display: flex;
@@ -974,47 +981,31 @@ select.input { appearance: none; }
   gap: 1mm;
   text-align: center;
 }
-.receipt-preview-paper .receipt-header {
-  position: relative;
-  min-height: 20mm;
-  gap: 8mm;
-  margin: -7mm -8mm 0;
-  padding: 4mm 8mm;
-  overflow: hidden;
-  background: linear-gradient(115deg, #741d25, #a92730 72%, #b9343a);
-  color: #fffaf3;
+.receipt-preview-paper .receipt-brand-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  line-height: 1.1;
 }
-.receipt-preview-paper .receipt-header::after {
-  position: absolute;
-  top: -23mm;
-  right: -4mm;
-  width: 58mm;
-  aspect-ratio: 1;
-  border: 1px solid rgba(255, 248, 237, .18);
-  border-radius: 50%;
-  box-shadow: 0 0 0 5mm rgba(255, 248, 237, .045), 0 0 0 11mm rgba(255, 248, 237, .035);
-  content: '';
-  pointer-events: none;
+.receipt-preview-paper .receipt-brand-copy strong {
+  font-size: 18pt;
+  font-weight: 900;
+  letter-spacing: 1.3pt;
 }
-.receipt-preview-paper .receipt-brand-logo {
-  position: relative;
-  z-index: 1;
-  display: block;
-  width: min(52mm, 56%);
-  height: auto;
-  object-fit: contain;
+.receipt-preview-paper .receipt-brand-copy span {
+  font-size: 7pt;
+  font-weight: 700;
+  letter-spacing: 2pt;
 }
 .receipt-preview-paper .receipt-heading-copy {
-  position: relative;
-  z-index: 1;
   display: flex;
   flex-direction: column;
   align-items: flex-end;
   gap: 1mm;
   text-align: right;
 }
-.receipt-preview-paper .receipt-heading-copy strong { font-size: 12pt; letter-spacing: .7pt; }
-.receipt-preview-paper .receipt-heading-copy span { color: rgba(255, 250, 243, .78); font-size: 8pt; font-weight: 600; letter-spacing: .35pt; }
+.receipt-preview-paper .receipt-heading-copy strong { font-size: 11pt; letter-spacing: .5pt; }
+.receipt-preview-paper .receipt-heading-copy span { color: #333; font-size: 8pt; font-weight: 600; }
 .receipt-preview-paper .receipt-meta {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -1521,32 +1512,33 @@ select.input { appearance: none; }
     display: flex;
     align-items: center;
     justify-content: space-between;
-    min-height: 18mm;
-    gap: 6mm;
+    min-height: 17mm;
+    gap: 8mm;
     margin: 0;
     padding: 3mm 4mm;
-    border-bottom: 1.5pt solid #912027;
+    border-bottom: 1px solid #000;
     background: #fff;
-    color: #241b18;
+    color: #000;
   }
-  .receipt-preview-paper .receipt-brand-logo {
-    display: block;
-    width: 48mm;
-    max-width: 56%;
-    height: auto;
-    filter: brightness(0);
-    object-fit: contain;
+  .receipt-preview-paper .receipt-brand-copy {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    color: #000;
+    line-height: 1.1;
   }
+  .receipt-preview-paper .receipt-brand-copy strong { font-size: 18pt; font-weight: 900; letter-spacing: 1.3pt; }
+  .receipt-preview-paper .receipt-brand-copy span { font-size: 7pt; font-weight: 700; letter-spacing: 2pt; }
   .receipt-preview-paper .receipt-heading-copy {
     display: flex;
     flex-direction: column;
     align-items: flex-end;
     gap: 1mm;
-    color: #912027;
+    color: #000;
     text-align: right;
   }
-  .receipt-preview-paper .receipt-heading-copy strong { color: #912027; font-size: 12pt; letter-spacing: .5pt; }
-  .receipt-preview-paper .receipt-heading-copy span { color: #5f5b55; font-size: 8pt; font-weight: 700; }
+  .receipt-preview-paper .receipt-heading-copy strong { color: #000; font-size: 11pt; letter-spacing: .5pt; }
+  .receipt-preview-paper .receipt-heading-copy span { color: #333; font-size: 8pt; font-weight: 700; }
   .receipt-meta {
     display: grid;
     grid-template-columns: 1fr 1fr;
