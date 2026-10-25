@@ -526,7 +526,13 @@ export default function Transactions() {
       )}
 
       {previewTransaction && (
-        <ReceiptPreview transaction={previewTransaction} onClose={() => setPreviewTransaction(null)} />
+        <ReceiptPreview
+          transaction={previewTransaction}
+          onClose={() => {
+            setPreviewTransaction(null)
+            if (done && previewTransaction === done.transaction) setDone(null)
+          }}
+        />
       )}
       {selectedTransaction && (
         <TransactionDetails transaction={selectedTransaction} onClose={() => setSelectedTransaction(null)} />
