@@ -33,6 +33,7 @@ body {
   isolation: isolate;
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-content: center;
   align-items: stretch;
   gap: 0;
   width: min(100%, 1040px);
@@ -52,7 +53,7 @@ body {
   display: flex;
   flex-direction: column;
   justify-content: center;
-  min-height: 560px;
+  min-height: 500px;
   overflow: hidden;
   padding: clamp(32px, 4vw, 52px);
   border: 1px solid rgba(255, 248, 237, .18);
@@ -68,17 +69,17 @@ body {
 .login-brand::before { right: -200px; bottom: -260px; width: 600px; aspect-ratio: 1; box-shadow: 0 0 0 18px rgba(255, 248, 237, .035), 0 0 0 42px rgba(255, 248, 237, .025), 0 0 0 72px rgba(255, 248, 237, .018); }
 .login-brand::after { top: -230px; left: -220px; width: 440px; aspect-ratio: 1; box-shadow: 0 0 0 16px rgba(255, 248, 237, .03), 0 0 0 38px rgba(255, 248, 237, .02); }
 .login-brand-logo { position: relative; display: block; width: min(230px, 76%); max-height: 76px; filter: brightness(0) invert(1); object-fit: contain; }
-.login-brand-copy { position: relative; max-width: 470px; margin-block: clamp(48px, 9vh, 104px) 0; padding-left: 20px; border-left: 2px solid #e7b897; }
-.login-brand-copy > span { display: block; margin-bottom: 16px; color: #e8c5a7; font-size: 9px; font-weight: 800; letter-spacing: 1.5px; }
-.login-brand-copy h2 { max-width: 11ch; margin-bottom: 15px; color: #fff8ed; font-family: 'Playfair Display', Georgia, serif; font-size: clamp(36px, 4.2vw, 54px); letter-spacing: -1.5px; line-height: 1.04; text-wrap: balance; }
+.login-brand-copy { position: relative; max-width: 470px; margin-block: clamp(32px, 6vh, 64px) 0; padding-left: 20px; border-left: 2px solid #e7b897; }
+.login-brand-copy > span { display: block; margin-bottom: 12px; color: #e8c5a7; font-size: 9px; font-weight: 800; letter-spacing: 1.5px; }
+.login-brand-copy h2 { max-width: 14ch; margin-bottom: 12px; color: #fff8ed; font-family: 'Playfair Display', Georgia, serif; font-size: clamp(34px, 3.6vw, 46px); letter-spacing: -1.5px; line-height: 1.04; text-wrap: balance; }
 .login-brand-copy p { max-width: 34ch; color: rgba(255, 248, 237, .76); font-size: 14px; line-height: 1.7; }
-.login-brand-foot { position: relative; display: flex; align-items: center; gap: 10px; margin-top: clamp(44px, 8vh, 88px); color: rgba(255, 248, 237, .72); font-size: 10px; letter-spacing: .25px; }
+.login-brand-foot { position: relative; display: flex; align-items: center; gap: 10px; margin-top: clamp(28px, 5vh, 52px); color: rgba(255, 248, 237, .72); font-size: 10px; letter-spacing: .25px; }
 .login-brand-rule { width: 22px; height: 1px; background: #e8c5a7; }
 .login-panel {
   position: relative;
   z-index: 1;
   width: 100%;
-  min-height: 560px;
+  min-height: 500px;
   display: flex;
   flex-direction: column;
   justify-content: center;
