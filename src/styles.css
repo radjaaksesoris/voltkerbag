@@ -962,6 +962,8 @@ select.input { appearance: none; }
   color: #000;
   font: 11pt/1.4 "Courier New", Courier, monospace;
 }
+.receipt-preview-paper .print-receipt,
+.receipt-preview-paper .print-receipt * { color: #000; }
 .receipt-preview-paper .receipt-header {
   display: flex;
   align-items: center;
@@ -970,7 +972,7 @@ select.input { appearance: none; }
   gap: 8mm;
   margin: -7mm -8mm 0;
   padding: 3mm 8mm;
-  border-bottom: 1px solid #000;
+  border-bottom: 3px double #000;
   background: #fff;
   color: #000;
 }
@@ -1005,13 +1007,13 @@ select.input { appearance: none; }
   text-align: right;
 }
 .receipt-preview-paper .receipt-heading-copy strong { font-size: 11pt; letter-spacing: .5pt; }
-.receipt-preview-paper .receipt-heading-copy span { color: #333; font-size: 8pt; font-weight: 600; }
+.receipt-preview-paper .receipt-heading-copy span { font-size: 8pt; font-weight: 600; }
 .receipt-preview-paper .receipt-meta {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 2mm 12mm;
   padding: 3mm 0;
-  border-bottom: 1px solid #aaa;
+  border-bottom: 3px double #000;
 }
 .receipt-preview-paper .receipt-meta div,
 .receipt-preview-paper .receipt-totals > div {
@@ -1019,8 +1021,6 @@ select.input { appearance: none; }
   justify-content: space-between;
   gap: 6mm;
 }
-.receipt-preview-paper .receipt-meta span,
-.receipt-preview-paper .receipt-totals > div > span { color: #5f5b55; }
 .receipt-preview-paper .receipt-meta strong,
 .receipt-preview-paper .receipt-totals strong { font-weight: 700; text-align: right; }
 .receipt-preview-paper .receipt-items {
@@ -1040,12 +1040,11 @@ select.input { appearance: none; }
   white-space: normal;
 }
 .receipt-preview-paper .receipt-items th {
-  color: #4b4741;
   font-size: 9pt;
   font-weight: 700;
 }
-.receipt-preview-paper .receipt-items thead { border-bottom: 1px solid #555; }
-.receipt-preview-paper .receipt-items tbody tr + tr { border-top: 1px solid #e4e0d9; }
+.receipt-preview-paper .receipt-items thead { border-bottom: 3px double #000; }
+.receipt-preview-paper .receipt-items tbody tr + tr { border-top: 1px solid #000; }
 .receipt-preview-paper .receipt-qty { width: 12mm; text-align: center; }
 .receipt-preview-paper .receipt-money { width: 34mm; text-align: right; white-space: nowrap !important; }
 .receipt-preview-paper .receipt-totals {
@@ -1053,11 +1052,11 @@ select.input { appearance: none; }
   flex-direction: column;
   gap: 2mm;
   padding-top: 3mm;
-  border-top: 1px solid #777;
+  border-top: 3px double #000;
 }
 .receipt-preview-paper .receipt-total {
   padding-bottom: 2mm;
-  border-bottom: 1px solid #aaa;
+  border-bottom: 3px double #000;
   font-size: 14pt;
   font-weight: 700;
 }
@@ -1067,8 +1066,7 @@ select.input { appearance: none; }
   gap: 1.5mm;
   margin-top: 4mm;
   padding-top: 3mm;
-  border-top: 1px solid #aaa;
-  color: #555;
+  border-top: 3px double #000;
   font-size: 9pt;
 }
 
@@ -1508,6 +1506,8 @@ select.input { appearance: none; }
     color: #000;
     font: 10pt/1.25 "Courier New", Courier, monospace;
   }
+  .print-receipt,
+  .print-receipt * { color: #000 !important; }
   .receipt-preview-paper .receipt-header {
     display: flex;
     align-items: center;
@@ -1516,7 +1516,7 @@ select.input { appearance: none; }
     gap: 8mm;
     margin: 0;
     padding: 3mm 4mm;
-    border-bottom: 1px solid #000;
+    border-bottom: 3px double #000;
     background: #fff;
     color: #000;
   }
@@ -1538,13 +1538,13 @@ select.input { appearance: none; }
     text-align: right;
   }
   .receipt-preview-paper .receipt-heading-copy strong { color: #000; font-size: 11pt; letter-spacing: .5pt; }
-  .receipt-preview-paper .receipt-heading-copy span { color: #333; font-size: 8pt; font-weight: 700; }
+  .receipt-preview-paper .receipt-heading-copy span { color: #000; font-size: 8pt; font-weight: 700; }
   .receipt-meta {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 1mm 8mm;
     padding: 2mm 0;
-    border-bottom: 1px dashed #000;
+    border-bottom: 3px double #000;
   }
   .receipt-meta div, .receipt-totals > div {
     display: flex;
@@ -1561,7 +1561,7 @@ select.input { appearance: none; }
     text-transform: none;
     white-space: normal;
   }
-  .receipt-items thead { border-bottom: 1px solid #000; }
+  .receipt-items thead { border-bottom: 3px double #000; }
   .receipt-items tbody tr:hover { background: transparent; }
   .receipt-qty { width: 12mm; text-align: center; }
   .receipt-money { width: 34mm; text-align: right; white-space: nowrap !important; }
@@ -1570,11 +1570,11 @@ select.input { appearance: none; }
     flex-direction: column;
     gap: 1mm;
     padding-top: 2mm;
-    border-top: 1px dashed #000;
+    border-top: 3px double #000;
   }
   .receipt-totals .receipt-total {
     padding-bottom: 1mm;
-    border-bottom: 1px solid #000;
+    border-bottom: 3px double #000;
     font-size: 11pt;
     font-weight: 700;
   }
@@ -1587,7 +1587,7 @@ select.input { appearance: none; }
     gap: 1mm;
     margin-top: 3mm;
     padding-top: 2mm;
-    border-top: 1px dashed #000;
+    border-top: 3px double #000;
     text-align: center;
   }
 }
