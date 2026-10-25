@@ -222,6 +222,26 @@ export default function App() {
   }, [authCheckKey])
 
   useEffect(() => {
+    if (!session) return
+
+    function refreshVisiblePage() {
+      if (document.visibilityState === 'visible') {
+        window.dispatchEvent(new CustomEvent('voltker:refresh'))
+      }
+    }
+
+    window.addEventListener('focus', refreshVisiblePage)
+    document.addEventListener('visibilitychange', refreshVisiblePage)
+    window.addEventListener('online', refreshVisiblePage)
+
+    return () => {
+      window.removeEventListener('focus', refreshVisiblePage)
+      document.removeEventListener('visibilitychange', refreshVisiblePage)
+      window.removeEventListener('online', refreshVisiblePage)
+    }
+  }, [session])
+
+  useEffect(() => {
     contentRef.current?.scrollTo({ top: 0 })
   }, [page])
 

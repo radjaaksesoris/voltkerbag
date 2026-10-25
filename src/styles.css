@@ -437,6 +437,9 @@ button:focus-visible, input:focus-visible, select:focus-visible {
   gap: 14px;
   margin-bottom: 18px;
 }
+.dashboard-transactions-heading { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 12px; }
+.dashboard-transactions-heading h3 { margin: 0; }
+.dashboard-transactions-heading .btn { display: inline-flex; align-items: center; gap: 5px; }
 .date-filter-caption { display: flex; flex-direction: column; gap: 3px; }
 .date-filter-caption strong { color: var(--ink); font-size: 13px; }
 .date-filter-caption span { font-size: 11px; }

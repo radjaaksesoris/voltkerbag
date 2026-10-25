@@ -5,6 +5,7 @@ import DateRangeFilter from '../components/DateRangeFilter'
 import { dateRangeTimestamps, hasDateRange, localDateValue } from '../dateFilter'
 import TransactionDetails from '../components/TransactionDetails'
 import { getInvoiceNumber } from '../invoice'
+import Icon from '../components/Icon.jsx'
 
 const TRANSACTIONS_PER_PAGE = 15
 
@@ -26,6 +27,7 @@ export default function Dashboard() {
   const [selectedTransaction, setSelectedTransaction] = useState(null)
   const [loadError, setLoadError] = useState('')
   const [loaded, setLoaded] = useState(false)
+  const [refreshing, setRefreshing] = useState(false)
   const requestId = useRef(0)
 
   useEffect(() => {
@@ -33,6 +35,7 @@ export default function Dashboard() {
 
     async function load() {
       const currentRequest = ++requestId.current
+      setRefreshing(true)
       try {
         const hasFilter = hasDateRange(dateRange)
         const listRange = hasFilter
@@ -64,7 +67,10 @@ export default function Dashboard() {
         if (!active || currentRequest !== requestId.current) return
         setLoadError(error.message || 'Gagal memuat data dashboard dari server.')
       } finally {
-        if (active && currentRequest === requestId.current) setLoaded(true)
+        if (active && currentRequest === requestId.current) {
+          setLoaded(true)
+          setRefreshing(false)
+        }
       }
     }
     load()
@@ -138,7 +144,18 @@ export default function Dashboard() {
       </div>
 
       <div className="card table-card dashboard-transactions">
-        <h3>Transaksi Terakhir</h3>
+        <div className="dashboard-transactions-heading">
+          <h3>Transaksi Terakhir</h3>
+          <button
+            className="btn btn-sm"
+            type="button"
+            disabled={refreshing}
+            aria-label={refreshing ? 'Memuat data dashboard' : 'Refresh data dashboard'}
+            onClick={() => window.dispatchEvent(new CustomEvent('voltker:refresh'))}>
+            <Icon name="sync" size={14} />
+            {refreshing ? 'Memuat...' : 'Refresh'}
+          </button>
+        </div>
         <table className="dashboard-transaction-table">
           <thead>
             <tr>
