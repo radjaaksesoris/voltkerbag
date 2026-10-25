@@ -1,4 +1,4 @@
-import { Suspense, lazy, useEffect, useRef, useState } from 'react'
+import { memo, Suspense, lazy, useEffect, useRef, useState } from 'react'
 import LoginScreen from './components/LoginScreen.jsx'
 import SessionControl from './components/SessionControl.jsx'
 import PageErrorBoundary from './components/PageErrorBoundary.jsx'
@@ -21,11 +21,11 @@ function lazyPage(importPage) {
     }))
 }
 
-const Dashboard = lazyPage(() => import('./pages/Dashboard.jsx'))
-const Transactions = lazyPage(() => import('./pages/Transactions.jsx'))
-const Products = lazyPage(() => import('./pages/Products.jsx'))
-const Finance = lazyPage(() => import('./pages/Finance.jsx'))
-const Settings = lazyPage(() => import('./pages/Settings.jsx'))
+const Dashboard = memo(lazyPage(() => import('./pages/Dashboard.jsx')))
+const Transactions = memo(lazyPage(() => import('./pages/Transactions.jsx')))
+const Products = memo(lazyPage(() => import('./pages/Products.jsx')))
+const Finance = memo(lazyPage(() => import('./pages/Finance.jsx')))
+const Settings = memo(lazyPage(() => import('./pages/Settings.jsx')))
 
 const PAGES = {
   dashboard: Dashboard,
@@ -242,7 +242,7 @@ export default function App() {
   }, [session])
 
   useEffect(() => {
-    contentRef.current?.scrollTo({ top: 0 })
+    if (contentRef.current) contentRef.current.scrollTop = 0
   }, [page])
 
   async function installApp() {
