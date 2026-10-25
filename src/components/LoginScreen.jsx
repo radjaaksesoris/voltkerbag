@@ -64,20 +64,20 @@ export default function LoginScreen({ configured, connectionError, onSignedIn, o
           alt="VOLTKER Toko Tas"
         />
         <div className="login-brand-copy">
-          <span>VOLTKER · SISTEM TOKO</span>
-          <h2>Semua urusan toko, dalam satu tempat.</h2>
-          <p>Kelola penjualan, stok, dan keuangan dengan lebih mudah.</p>
+          <span>OPERASIONAL TOKO · RADJA AKSESORIS</span>
+          <h2>Jalankan toko dengan lebih terarah.</h2>
+          <p>Penjualan, stok, dan keuangan tersusun dalam satu sistem.</p>
         </div>
         <div className="login-brand-foot">
-          <span className="login-brand-dot" />
-          <span>Sistem kasir untuk Radja Aksesoris</span>
+          <span className="login-brand-rule" />
+          <span>Ruang kerja administrator</span>
         </div>
       </aside>
       <section className="login-panel" aria-labelledby="login-title">
         <div className="login-panel-heading">
-          <p className="login-eyebrow">Selamat datang kembali</p>
-          <h1 id="login-title">Masuk ke akunmu</h1>
-          <p className="login-description">Gunakan akun administrator toko untuk melanjutkan.</p>
+          <p className="login-eyebrow">AKSES ADMINISTRATOR</p>
+          <h1 id="login-title">Selamat datang kembali.</h1>
+          <p className="login-description">Masuk untuk melanjutkan pengelolaan toko.</p>
         </div>
 
         {!configured ? (

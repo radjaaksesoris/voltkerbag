@@ -32,33 +32,35 @@ body {
   position: relative;
   isolation: isolate;
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: minmax(0, .88fr) minmax(0, 1.12fr);
   align-items: center;
   gap: 0;
-  width: min(100%, 1120px);
+  width: min(100%, 1080px);
   min-height: 100vh;
   min-height: 100dvh;
   margin-inline: auto;
-  padding: clamp(18px, 3vw, 36px);
+  padding: clamp(20px, 4vw, 52px);
   overflow-y: auto;
-  background: var(--bg);
+  background:
+    radial-gradient(ellipse at 50% 100%, rgba(142, 86, 63, .06), transparent 42%),
+    #f2eee5;
 }
 .login-brand {
   position: relative;
   isolation: isolate;
   display: flex;
-  height: min(620px, calc(100dvh - clamp(36px, 6vw, 72px)));
+  height: min(640px, calc(100dvh - clamp(40px, 8vw, 104px)));
   flex-direction: column;
   justify-content: space-between;
   overflow: hidden;
-  padding: clamp(24px, 3vw, 44px);
-  border: 1px solid rgba(255, 244, 232, .2);
-  border-radius: 24px 0 0 24px;
+  padding: clamp(28px, 4vw, 48px);
+  border: 1px solid rgba(255, 244, 232, .16);
+  border-radius: 20px 0 0 20px;
   background:
-    radial-gradient(ellipse at 8% 5%, rgba(244, 184, 140, .2), transparent 40%),
-    linear-gradient(145deg, #711b23 0%, #8d2029 48%, #b5282e 100%);
+    radial-gradient(ellipse at 8% 8%, rgba(244, 184, 140, .12), transparent 38%),
+    linear-gradient(155deg, #701d25 0%, #85212a 58%, #9f2930 100%);
   color: #fff8ed;
-  box-shadow: 0 26px 70px rgba(104, 25, 31, .2);
+  box-shadow: 0 26px 70px rgba(104, 25, 31, .16);
 }
 .login-brand::before,
 .login-brand::after {
@@ -70,60 +72,67 @@ body {
   pointer-events: none;
 }
 .login-brand::before {
-  right: -170px;
-  bottom: -190px;
-  width: 560px;
+  right: -210px;
+  bottom: -250px;
+  width: 620px;
   aspect-ratio: 1;
-  box-shadow: 0 0 0 22px rgba(255, 248, 237, .035), 0 0 0 48px rgba(255, 248, 237, .03), 0 0 0 82px rgba(255, 248, 237, .025);
+  box-shadow: 0 0 0 18px rgba(255, 248, 237, .035), 0 0 0 42px rgba(255, 248, 237, .025), 0 0 0 72px rgba(255, 248, 237, .018);
 }
 .login-brand::after {
-  top: -210px;
-  left: -180px;
-  width: 420px;
+  top: -240px;
+  left: -220px;
+  width: 440px;
   aspect-ratio: 1;
-  box-shadow: 0 0 0 18px rgba(255, 248, 237, .035), 0 0 0 42px rgba(255, 248, 237, .025);
+  box-shadow: 0 0 0 16px rgba(255, 248, 237, .03), 0 0 0 38px rgba(255, 248, 237, .02);
 }
-.login-brand-logo { display: block; width: min(230px, 70%); max-height: 90px; object-fit: contain; }
-.login-brand-copy { position: relative; max-width: 620px; margin-block: auto; padding-block: 26px; }
-.login-brand-copy > span { display: block; margin-bottom: 16px; color: #f4c8a7; font-size: 11px; font-weight: 800; letter-spacing: 1.8px; }
-.login-brand-copy h2 { max-width: 12ch; margin-bottom: 16px; color: #fff8ed; font-family: 'Playfair Display', Georgia, serif; font-size: clamp(34px, 3.6vw, 52px); letter-spacing: -1.4px; line-height: 1.04; text-wrap: balance; }
-.login-brand-copy p { max-width: 36ch; color: rgba(255, 248, 237, .76); font-size: clamp(14px, 1.3vw, 17px); line-height: 1.7; }
-.login-brand-foot { display: flex; align-items: center; gap: 10px; color: rgba(255, 248, 237, .7); font-size: 11px; }
-.login-brand-dot { width: 7px; height: 7px; border-radius: 50%; background: #e4c08e; box-shadow: 0 0 0 5px rgba(228, 192, 142, .14); }
+.login-brand-logo { position: relative; display: block; width: min(210px, 76%); max-height: 72px; object-fit: contain; }
+.login-brand-copy { position: relative; max-width: 440px; margin-block: auto; padding-block: 26px; }
+.login-brand-copy > span { display: block; margin-bottom: 18px; color: #e8c5a7; font-size: 9px; font-weight: 800; letter-spacing: 1.5px; }
+.login-brand-copy h2 { max-width: 11ch; margin-bottom: 15px; color: #fff8ed; font-family: 'Playfair Display', Georgia, serif; font-size: clamp(34px, 3.6vw, 48px); letter-spacing: -1.3px; line-height: 1.06; text-wrap: balance; }
+.login-brand-copy p { max-width: 32ch; color: rgba(255, 248, 237, .76); font-size: 14px; line-height: 1.7; }
+.login-brand-foot { position: relative; display: flex; align-items: center; gap: 11px; color: rgba(255, 248, 237, .72); font-size: 10px; letter-spacing: .25px; }
+.login-brand-rule { width: 26px; height: 1px; background: #e8c5a7; }
 .login-panel {
+  position: relative;
+  z-index: 1;
   width: 100%;
-  height: min(620px, calc(100dvh - clamp(36px, 6vw, 72px)));
+  height: min(640px, calc(100dvh - clamp(40px, 8vw, 104px)));
   min-height: 0;
   display: flex;
   flex-direction: column;
   justify-content: center;
-  padding: clamp(30px, 4vw, 54px);
+  padding: clamp(34px, 5vw, 68px);
   border: 1px solid var(--border);
   border-left: 0;
-  border-radius: 0 24px 24px 0;
-  background: var(--card);
-  box-shadow: 0 24px 68px rgba(56, 39, 27, .1), 0 2px 8px rgba(56, 39, 27, .035);
+  border-radius: 0 20px 20px 0;
+  background: #fffdf9;
+  box-shadow: 0 24px 68px rgba(56, 39, 27, .085), 0 2px 8px rgba(56, 39, 27, .025);
 }
+.login-panel > * { width: min(100%, 390px); margin-inline: auto; }
 .login-panel-heading { margin-bottom: 30px; }
-.login-eyebrow { margin-bottom: 8px; color: var(--accent); font-size: 10px; font-weight: 800; letter-spacing: 1.4px; text-transform: uppercase; }
-.login-panel h1 { margin-bottom: 8px; color: var(--ink); font-family: 'Playfair Display', Georgia, serif; font-size: clamp(28px, 3vw, 36px); letter-spacing: -.6px; line-height: 1.15; }
-.login-description { max-width: 35ch; color: var(--muted); font-size: 13px; line-height: 1.6; }
+.login-eyebrow { margin-bottom: 11px; color: var(--accent); font-size: 9px; font-weight: 800; letter-spacing: 1.45px; text-transform: uppercase; }
+.login-panel h1 { max-width: 14ch; margin-bottom: 10px; color: var(--ink); font-family: 'Playfair Display', Georgia, serif; font-size: clamp(30px, 3.2vw, 39px); letter-spacing: -.8px; line-height: 1.1; text-wrap: balance; }
+.login-description { max-width: 35ch; color: var(--muted); font-size: 13px; line-height: 1.65; }
 .login-panel form { display: grid; }
-.login-panel form label { margin-bottom: 7px; color: #655b52; }
-.login-panel form .input { margin-bottom: 19px; padding: 13px 14px; border-radius: 9px; background: #fffefa; }
-.login-panel form .btn { margin-top: 5px; border-radius: 9px; }
-.login-footnote { margin-top: 18px; color: var(--muted); font-size: 11px; line-height: 1.55; text-align: center; }
-.login-message { padding: 14px; border: 1px solid var(--border); border-radius: 10px; font-size: 13px; }
+.login-panel form label { margin-bottom: 7px; color: #51463f; font-size: 11px; font-weight: 700; }
+.login-panel form .input { min-height: 46px; margin-bottom: 19px; padding: 12px 13px; border: 1px solid #ddd2c3; border-radius: 7px; background: #fffefa; transition: border-color .18s, box-shadow .18s; }
+.login-panel form .input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(181, 40, 46, .1); }
+.login-panel form .btn { min-height: 46px; margin-top: 5px; border-radius: 7px; }
+.login-panel form .btn-primary { box-shadow: 0 5px 12px rgba(145, 32, 39, .12); }
+.login-panel form .btn-primary:hover:not(:disabled) { box-shadow: 0 8px 18px rgba(145, 32, 39, .18); transform: translateY(-1px); }
+.login-footnote { max-width: 40ch; margin-top: 17px; color: #786f66; font-size: 10px; line-height: 1.6; text-align: center; }
+.login-message { padding: 14px; border: 1px solid var(--border); border-radius: 8px; font-size: 13px; line-height: 1.55; }
 .login-message.error { border-color: #dfb0aa; background: #fbefeb; color: var(--danger); }
 .login-loading { color: var(--muted); font-size: 13px; }
 @media (max-width: 1024px) {
-  .login-page { grid-template-columns: minmax(0, 1fr); align-content: safe center; justify-items: center; gap: 0; padding: 16px; }
-  .login-brand { width: min(100%, 560px); height: auto; min-height: 210px; padding: 22px 25px; border-radius: 18px 18px 0 0; }
-  .login-brand-logo { width: min(175px, 55%); max-height: 58px; }
-  .login-brand-copy { padding-block: 22px 18px; }
-  .login-brand-copy > span { margin-bottom: 7px; font-size: 9px; }
-  .login-brand-copy h2 { max-width: 18ch; margin-bottom: 7px; font-size: clamp(25px, 6vw, 34px); letter-spacing: -.6px; }
-  .login-brand-copy p { max-width: 42ch; font-size: 12px; }
+  .login-page { grid-template-columns: minmax(0, 1fr); align-content: safe center; justify-items: center; gap: 0; padding: 18px; }
+  .login-brand { width: min(100%, 500px); height: auto; min-height: 0; padding: 23px 27px; border-radius: 16px 16px 0 0; }
+  .login-brand-logo { width: min(150px, 48%); max-height: 52px; }
+  .login-brand-copy { margin-block: 15px 10px; padding: 0; }
+  .login-brand-copy > span { margin-bottom: 7px; font-size: 8px; }
+  .login-brand-copy h2 { max-width: 22ch; margin-bottom: 0; font-size: clamp(25px, 5vw, 32px); letter-spacing: -.5px; }
+  .login-brand-copy p { display: none; }
+  .login-brand-foot { font-size: 9px; }
   .login-brand-copy p,
   .login-description { display: none; }
   .login-email-field { display: none; }
@@ -133,19 +142,18 @@ body {
   .login-keypad-button:active:not(:disabled) { transform: scale(.97); }
   .login-keypad-button:disabled { cursor: not-allowed; opacity: .55; }
   .login-keypad-action { color: var(--accent-dark); font-size: 13px; }
-  .login-brand-foot { font-size: 10px; }
-  .login-panel { width: min(100%, 560px); height: auto; min-height: 0; padding: clamp(24px, 6vw, 38px); border: 1px solid var(--border); border-top: 0; border-radius: 0 0 18px 18px; }
-  .login-panel-heading { margin-bottom: 22px; }
+  .login-panel { width: min(100%, 500px); height: auto; min-height: 0; padding: clamp(25px, 6vw, 38px); border: 1px solid var(--border); border-top: 0; border-radius: 0 0 16px 16px; }
+  .login-panel-heading { margin-bottom: 21px; }
 }
 @media (max-width: 480px) {
   .login-page { padding: 12px; }
-  .login-brand { min-height: 190px; padding: 18px 20px; }
-  .login-brand-copy { padding-block: 18px 14px; }
-  .login-panel { padding: 25px 21px; }
+  .login-brand { padding: 18px 20px; }
+  .login-panel { padding: 23px 21px; }
+  .login-panel h1 { font-size: 30px; }
+  .login-footnote { margin-top: 13px; }
 }
 @media (max-height: 700px) and (min-width: 1025px) {
-  .login-brand { height: 540px; }
-  .login-panel { height: 540px; }
+  .login-brand, .login-panel { height: 540px; }
 }
 button, input, select { font: inherit; }
 button { cursor: pointer; }
