@@ -504,7 +504,8 @@ export default function Settings() {
                         onClick={() => startEditingCustomer(customer)}
                         disabled={saving}
                         aria-label={'Edit ' + customer.name}>
-                        Edit
+                        <Icon name="edit" size={14} />
+                        <span className="settings-action-label">Edit</span>
                       </button>
                       <button
                         className="btn btn-sm btn-danger"
@@ -512,7 +513,8 @@ export default function Settings() {
                         aria-label={'Hapus ' + customer.name}
                         onClick={() => deleteCustomer(customer)}
                         disabled={saving}>
-                        <Icon name="trash" size={14} /> Hapus
+                        <Icon name="trash" size={14} />
+                        <span className="settings-action-label">Hapus</span>
                       </button>
                     </div>
                   </>
@@ -590,7 +592,8 @@ export default function Settings() {
                         onClick={() => startEditingVendor(vendor)}
                         disabled={saving}
                         aria-label={'Edit ' + vendor.name}>
-                        Edit
+                        <Icon name="edit" size={14} />
+                        <span className="settings-action-label">Edit</span>
                       </button>
                       <button
                         className="btn btn-sm btn-danger"
@@ -598,7 +601,8 @@ export default function Settings() {
                         aria-label={'Hapus ' + vendor.name}
                         onClick={() => deleteVendor(vendor)}
                         disabled={saving}>
-                        <Icon name="trash" size={14} /> Hapus
+                        <Icon name="trash" size={14} />
+                        <span className="settings-action-label">Hapus</span>
                       </button>
                     </div>
                   </>
@@ -676,7 +680,8 @@ export default function Settings() {
                         onClick={() => startEditingExpedition(expedition)}
                         disabled={saving}
                         aria-label={'Edit ' + expedition.name}>
-                        Edit
+                        <Icon name="edit" size={14} />
+                        <span className="settings-action-label">Edit</span>
                       </button>
                       <button
                         className="btn btn-sm btn-danger"
@@ -684,7 +689,8 @@ export default function Settings() {
                         aria-label={'Hapus ' + expedition.name}
                         onClick={() => deleteExpedition(expedition)}
                         disabled={saving}>
-                        <Icon name="trash" size={14} /> Hapus
+                        <Icon name="trash" size={14} />
+                        <span className="settings-action-label">Hapus</span>
                       </button>
                     </div>
                   </>

@@ -1210,6 +1210,7 @@ select.input { appearance: none; }
 .customer-list { display: grid; gap: 7px; max-height: 380px; margin-top: 14px; overflow-y: auto; list-style: none; }
 .customer-list li { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 12px; border: 1px solid var(--border); border-radius: 9px; background: rgba(255, 255, 255, .55); font-size: 13px; }
 .customer-list .btn { display: inline-flex; align-items: center; justify-content: center; gap: 5px; }
+.settings-action-label { display: inline; }
 .customer-info { display: grid; min-width: 0; gap: 2px; }
 .customer-info strong { color: var(--ink); font-weight: 600; }
 .customer-contact { color: var(--muted); font-size: 11px; overflow-wrap: anywhere; }
@@ -1501,7 +1502,9 @@ select.input { appearance: none; }
   .customer-edit-form .settings-customer-fields { grid-template-columns: 1fr; gap: 8px; }
   .customer-edit-form .customer-actions { justify-content: flex-end; }
   .customer-list li:not(:has(.customer-edit-form)) { align-items: flex-start; }
-  .customer-list li:not(:has(.customer-edit-form)) .customer-actions { flex-direction: column; }
+  .customer-list li:not(:has(.customer-edit-form)) .customer-actions { flex-direction: row; gap: 5px; }
+  .customer-list li:not(:has(.customer-edit-form)) .customer-actions .btn { width: 40px; min-width: 40px; min-height: 40px; padding: 0; }
+  .settings-action-label { display: none; }
   .settings-section-heading { gap: 9px; }
   .transaction-details-meta { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 7px; }
   .transaction-details-meta > div:nth-child(3) { grid-column: 1 / -1; }
