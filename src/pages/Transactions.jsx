@@ -10,6 +10,7 @@ import CustomerSelect from '../components/CustomerSelect.jsx'
 import CustomerIdentity from '../components/CustomerIdentity.jsx'
 import { saleUnitPrice, saleUnits, stockInPcs, stockLabel, unitCost, unitFactor } from '../productUnits'
 import { dateRangeTimestamps, localDateValue } from '../dateFilter'
+import { downloadInvoicePdf } from '../invoicePdf'
 
 export default function Transactions() {
   const [products, setProducts] = useState([])
@@ -25,6 +26,9 @@ export default function Transactions() {
   const [paymentType, setPaymentType] = useState('cash')
   const [checkoutError, setCheckoutError] = useState('')
   const [done, setDone] = useState(null)
+  const [invoiceDownloading, setInvoiceDownloading] = useState(false)
+  const [invoiceDownloadError, setInvoiceDownloadError] = useState('')
+  const [invoiceDownloadStatus, setInvoiceDownloadStatus] = useState('')
   const [installmentTransaction, setInstallmentTransaction] = useState(null)
   const [installmentAmount, setInstallmentAmount] = useState('')
   const [installmentError, setInstallmentError] = useState('')
@@ -177,6 +181,20 @@ export default function Transactions() {
     setCheckoutError('')
   }
 
+  async function downloadInvoice(transaction) {
+    setInvoiceDownloading(true)
+    setInvoiceDownloadError('')
+    setInvoiceDownloadStatus('')
+    try {
+      await downloadInvoicePdf(transaction)
+      setInvoiceDownloadStatus('Faktur berhasil diunduh.')
+    } catch (error) {
+      setInvoiceDownloadError(error.message || 'Gagal mengunduh faktur.')
+    } finally {
+      setInvoiceDownloading(false)
+    }
+  }
+
   async function checkout() {
     if (operationLock.current) return
     setCheckoutError('')
@@ -184,6 +202,7 @@ export default function Transactions() {
       setCheckoutError('Pilih nama pelanggan yang masih tersedia dari tab Setting.')
       return
     }
+
     if (cart.length === 0) { setCheckoutError('Keranjang masih kosong.'); return }
     if (paymentType === 'cash' && change < 0) { setCheckoutError('Uang tunai kurang dari total belanja.'); return }
     if (paymentType === 'credit' && (paidNow < 0 || paidNow > total)) {
@@ -505,10 +524,15 @@ export default function Transactions() {
             <p className="muted">Total {rupiah(done.total)} · Dibayar {rupiah(done.payment)}
               {done.paymentType === 'credit' ? ' · Sisa kredit ' + rupiah(done.balance) : ' · Kembali ' + rupiah(done.change)}
             </p>
+            {invoiceDownloadError && <p className="form-error" role="alert">{invoiceDownloadError}</p>}
+            {invoiceDownloadStatus && <p className="backup-success" role="status">{invoiceDownloadStatus}</p>}
             <div className="success-actions">
               <button className="btn btn-primary" onClick={() => {
                 setPreviewTransaction(done.transaction)
               }}>Cetak struk</button>
+              <button className="btn" type="button" disabled={invoiceDownloading} onClick={() => downloadInvoice(done.transaction)}>
+                <Icon name="download" size={15} /> {invoiceDownloading ? 'Menyiapkan...' : 'Download faktur'}
+              </button>
               <button className="btn btn-primary" onClick={() => setDone(null)}>Tutup</button>
             </div>
           </div>

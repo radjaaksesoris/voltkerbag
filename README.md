@@ -13,6 +13,7 @@ VOLTKER adalah aplikasi kasir React + Vite dengan Supabase sebagai sumber data u
 - Penambahan stok dikunci dan dicatat atomik di database, termasuk harga modal per batch. Nilai aset stok menghitung setiap batch; penjualan mengurangi nilai modal berdasarkan rata-rata tertimbang, bukan FIFO.
 - Pelunasan hutang pelanggan secara penuh atau sebagian dari tab Keuangan; pembayaran dialokasikan ke saldo hutang lama terlebih dahulu, lalu ke transaksi kredit tertua, dan dicatat di buku kas.
 - Cetak ulang dan pratinjau struk continuous form 24 × 14 cm.
+- Unduh faktur penjualan PDF berwarna dengan logo VOLTKER setelah transaksi berhasil.
 - CRUD stok produk dan pencatatan pengeluaran/modal di buku kas online.
 - Catatan buku kas yang berasal dari penjualan atau cicilan ditandai otomatis dan tidak dapat dihapus sebagai catatan manual.
 
