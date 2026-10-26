@@ -1511,7 +1511,13 @@ begin
   where p.owner_id = current_user_id;
 
   select coalesce(jsonb_agg(to_jsonb(page_rows) - 'sort_rank'
-    order by page_rows.sort_rank, page_rows."createdAt" desc nulls last, page_rows.id desc), '[]'::jsonb)
+    order by
+      page_rows.sort_rank,
+      case when coalesce(p_name_sort, 'date') = 'asc' then lower(trim(page_rows."customerName")) end asc,
+      case when coalesce(p_name_sort, 'date') = 'desc' then lower(trim(page_rows."customerName")) end desc,
+      page_rows."createdAt" desc nulls last,
+      page_rows.id desc
+  ), '[]'::jsonb)
   into transaction_rows
   from (
     select t.*,
