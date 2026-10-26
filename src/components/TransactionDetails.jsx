@@ -1,4 +1,5 @@
 import { useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { recordTransactionPayment } from '../db'
 import { rupiah, dateTime, dateOnly } from '../format'
 import { getInvoiceNumber } from '../invoice'
@@ -67,7 +68,7 @@ export default function TransactionDetails({ transaction, onClose, onTransaction
     }
   }
 
-  return (
+  return createPortal(
     <div className="overlay" onClick={onClose}>
       <section
         className="modal transaction-details"
@@ -158,6 +159,7 @@ export default function TransactionDetails({ transaction, onClose, onTransaction
       {showReceipt && (
         <ReceiptPreview transaction={transaction} onClose={() => setShowReceipt(false)} />
       )}
-    </div>
+    </div>,
+    document.body
   )
 }
