@@ -1156,9 +1156,7 @@ select.input { appearance: none; }
 .product-modal .input,
 .product-modal .category-select-trigger { background-color: rgba(255, 255, 255, .8); }
 .product-modal .category-menu {
-  position: static;
-  max-height: none;
-  margin-top: 4px;
+  max-height: min(280px, 40dvh);
   box-shadow: 0 5px 16px rgba(56, 39, 27, .1);
 }
 .product-modal .category-options { max-height: min(174px, 25dvh); }
