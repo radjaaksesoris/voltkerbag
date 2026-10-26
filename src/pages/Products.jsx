@@ -11,7 +11,7 @@ import { availableQuantity, productPrice, purchaseCostFactor, purchaseCostPerPie
 const EMPTY = {
   name: '',
   category: '',
-  unit: 'pcs',
+  unit: 'lusin',
   price: '',
   prices: { pcs: '', lusin: '' },
   cost: '',
