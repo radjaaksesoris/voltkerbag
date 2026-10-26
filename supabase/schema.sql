@@ -318,6 +318,8 @@ create index if not exists manual_customer_credits_owner_customer_idx
   where balance_due > 0;
 create index if not exists transactions_owner_created_id_idx
   on public.transactions (owner_id, "createdAt" desc, id desc);
+create index if not exists transactions_owner_invoice_no_idx
+  on public.transactions (owner_id, "invoiceNo" text_pattern_ops);
 create index if not exists finance_owner_effective_date_id_idx
   on public.finance_entries (owner_id, (coalesce(date, "createdAt")) desc, id desc);
 create index if not exists finance_owner_pending_idx
@@ -1091,6 +1093,7 @@ begin
     into invoice_sequence
   from public.transactions
   where owner_id = current_user_id
+    and "invoiceNo" like ('INV-' || invoice_date || '-%')
     and "invoiceNo" ~ ('^INV-' || invoice_date || '-[0-9]+$');
 
   invoice_number := 'INV-' || invoice_date || '-' || lpad(invoice_sequence::text, 2, '0');
