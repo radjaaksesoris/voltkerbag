@@ -1226,7 +1226,7 @@ select.input { appearance: none; }
 .add-stock-modal > .muted { margin-bottom: 14px; }
 .add-stock-current { display: flex; justify-content: space-between; gap: 10px; margin-bottom: 16px; padding: 11px 12px; border-radius: 9px; background: var(--bg-soft); color: var(--muted); font-size: 12px; }
 .add-stock-current strong { color: var(--ink); text-align: right; }
-.add-stock-modal > .input { margin-bottom: 0; }
+.add-stock-modal > .input { margin-bottom: 14px; }
 .add-stock-modal .form-error { margin: 10px 0 0; }
 .modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 18px; }
 .pwa-install-modal h3 { margin-bottom: 8px; }
