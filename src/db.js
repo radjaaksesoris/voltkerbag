@@ -259,6 +259,21 @@ export async function getFinanceData({ from, to, page, pageSize }) {
   return data
 }
 
+export async function getPurchaseEntries(page, pageSize) {
+  const from = (page - 1) * pageSize
+  const to = from + pageSize - 1
+  const { data, count, error } = await getClient()
+    .from(tableFor('finance'))
+    .select('*', { count: 'exact' })
+    .eq('type', 'expense')
+    .eq('category', 'Pembelian bahan produksi')
+    .order('date', { ascending: false, nullsFirst: false })
+    .order('id', { ascending: false })
+    .range(from, to)
+  throwIfError(error, 'Gagal memuat riwayat pembelian bahan')
+  return { entries: data || [], totalCount: count || 0 }
+}
+
 export async function getTransactionSummary({ from, to }) {
   const { data, error } = await getClient().rpc('get_transaction_summary', {
     p_from: from,
