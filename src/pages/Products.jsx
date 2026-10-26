@@ -133,7 +133,7 @@ export default function Products() {
         pcs: productPrice(p, 'pcs'),
         lusin: productPrice(p, 'lusin')
       },
-      cost: (Number(p.cost) || 0) * purchaseCostFactor(editUnit),
+      cost: Math.round((Number(p.cost) || 0) * purchaseCostFactor(editUnit)),
       stock: String(saleUnits(editUnit).length === 2
         ? stockInPcs(p)
         : stockInPcs(p) / unitFactor(stockEntryUnit(editUnit))),

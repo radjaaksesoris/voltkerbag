@@ -1,9 +1,5 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
-
-function formatAmount(value) {
-  const digits = String(value ?? '').replace(/\D/g, '')
-  return digits.replace(/\B(?=(\d{3})+(?!\d))/g, '.')
-}
+import { formatMoneyInput } from '../moneyInput'
 
 function rawAmount(value) {
   return String(value ?? '').replace(/\D/g, '')
@@ -12,10 +8,10 @@ function rawAmount(value) {
 export default function MoneyInput({ value, onChange, className = 'input', inputRef: externalInputRef, ...props }) {
   const inputRef = useRef(null)
   const pendingDigitOffset = useRef(null)
-  const [displayValue, setDisplayValue] = useState(() => formatAmount(value))
+  const [displayValue, setDisplayValue] = useState(() => formatMoneyInput(value))
 
   useEffect(() => {
-    setDisplayValue(formatAmount(value))
+    setDisplayValue(formatMoneyInput(value))
   }, [value])
 
   useLayoutEffect(() => {
@@ -36,12 +32,12 @@ export default function MoneyInput({ value, onChange, className = 'input', input
     const offset = rawAmount(input.value.slice(0, input.selectionStart ?? input.value.length)).length
     const nextValue = rawAmount(input.value)
     pendingDigitOffset.current = offset
-    setDisplayValue(formatAmount(nextValue))
+    setDisplayValue(formatMoneyInput(nextValue))
     onChange(nextValue)
   }
 
   const placeholder = /^\d+$/.test(String(props.placeholder ?? ''))
-    ? formatAmount(props.placeholder)
+    ? formatMoneyInput(props.placeholder)
     : props.placeholder
 
   return (
