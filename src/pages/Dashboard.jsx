@@ -217,12 +217,14 @@ export default function Dashboard() {
                 <tr key={t.id}>
                   <td className="dashboard-row-number">{pageStart + index + 1}</td>
                   <td>
-                    <CustomerIdentity
-                      name={t.customerName}
-                      customer={customers.find((customer) => customer.name === t.customerName)}
-                      className="transaction-customer"
-                    />
-                    <span className="transaction-invoice">{getInvoiceNumber(t)}</span>
+                    <div className="dashboard-customer-cell">
+                      <CustomerIdentity
+                        name={t.customerName}
+                        customer={customers.find((customer) => customer.name === t.customerName)}
+                        className="transaction-customer"
+                      />
+                      <span className="transaction-invoice">{getInvoiceNumber(t)}</span>
+                    </div>
                   </td>
                   <td>
                     <span className="dashboard-date-desktop">{dateTime(t.createdAt)}</span>
