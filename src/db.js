@@ -356,6 +356,12 @@ export async function addManualCustomerCredit(customerName, amount, requestId) {
   return data
 }
 
+export async function resetStoreData() {
+  const { error } = await getClient().rpc('reset_store_data')
+  throwIfError(error, 'Gagal menghapus data toko')
+  notifyRefresh()
+}
+
 export async function uploadProductImage(file) {
   const allowedTypes = {
     'image/jpeg': 'jpg',

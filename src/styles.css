@@ -1183,6 +1183,13 @@ select.input { appearance: none; }
 .backup-actions .btn { display: inline-flex; align-items: center; gap: 7px; }
 .backup-file-input { display: none; }
 .backup-success { margin-bottom: 12px; color: var(--ok); font-size: 12px; font-weight: 600; }
+.reset-section { border-color: #e6c7c1; }
+.reset-description { max-width: 72ch; margin: -5px 0 14px; color: var(--muted); font-size: 12px; line-height: 1.6; }
+.reset-section > .btn { display: inline-flex; align-items: center; gap: 6px; }
+.reset-modal h3 { margin-bottom: 8px; }
+.reset-modal > p { margin-bottom: 16px; line-height: 1.6; }
+.reset-modal > label { display: block; margin-bottom: 6px; color: var(--text); font-size: 12px; }
+.reset-modal > .input { margin: 0; }
 .product-modal .modal-actions { padding-top: 15px; border-top: 1px solid rgba(145, 32, 39, .12); }
 .add-stock-modal h3 { margin-bottom: 4px; }
 .add-stock-modal > .muted { margin-bottom: 14px; }

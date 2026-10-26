@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { createBackupArchive, getAll, onRefresh, put, remove, restoreBackupArchive } from '../db'
+import { createBackupArchive, getAll, onRefresh, put, remove, resetStoreData, restoreBackupArchive } from '../db'
 import Icon from '../components/Icon.jsx'
 
 export default function Settings() {
@@ -21,6 +21,11 @@ export default function Settings() {
   const [restoreSaving, setRestoreSaving] = useState(false)
   const [restoreStatus, setRestoreStatus] = useState('')
   const [restoreError, setRestoreError] = useState('')
+  const [showResetDialog, setShowResetDialog] = useState(false)
+  const [resetConfirmation, setResetConfirmation] = useState('')
+  const [resetSaving, setResetSaving] = useState(false)
+  const [resetError, setResetError] = useState('')
+  const [resetStatus, setResetStatus] = useState('')
   const restoreInputRef = useRef(null)
 
   async function load() {
@@ -163,6 +168,33 @@ export default function Settings() {
       setRestoreStatus('')
     } finally {
       setRestoreSaving(false)
+    }
+  }
+
+  async function resetStore() {
+    if (resetConfirmation !== 'HAPUS DATA') return
+
+    setResetSaving(true)
+    setResetError('')
+    setResetStatus('')
+    try {
+      await resetStoreData()
+      setCustomers([])
+      setName('')
+      setPhone('')
+      setAddress('')
+      setEditingCustomer(null)
+      setEditName('')
+      setEditPhone('')
+      setEditAddress('')
+      setActionError('')
+      setResetStatus('Data operasional berhasil dibersihkan. Akun, backup, dan foto produk tetap tersimpan.')
+      setResetConfirmation('')
+      setShowResetDialog(false)
+    } catch (error) {
+      setResetError(error.message || 'Gagal membersihkan data toko.')
+    } finally {
+      setResetSaving(false)
     }
   }
 
@@ -354,6 +386,78 @@ export default function Settings() {
         {restoreError && <p className="form-error" role="alert">{restoreError}</p>}
         {restoreStatus && <p className="backup-success" role="status">{restoreStatus}</p>}
       </section>
+
+      <section className="card settings-section reset-section">
+        <div className="settings-section-heading">
+          <div>
+            <h3>Reset data toko</h3>
+            <p className="muted small">Hapus data operasional agar toko dapat dimulai kembali dari awal.</p>
+          </div>
+        </div>
+        <p className="reset-description">
+          Produk dan stok, transaksi, data keuangan dan hutang, daftar pelanggan, kategori, serta satuan akan dihapus.
+          Akun login, file backup, dan foto produk di penyimpanan tetap dipertahankan.
+        </p>
+        {resetError && !showResetDialog && <p className="form-error" role="alert">{resetError}</p>}
+        {resetStatus && <p className="backup-success" role="status">{resetStatus}</p>}
+        <button
+          className="btn btn-danger"
+          type="button"
+          disabled={saving || backupSaving || restoreSaving || resetSaving}
+          onClick={() => {
+            setResetError('')
+            setResetConfirmation('')
+            setShowResetDialog(true)
+          }}>
+          <Icon name="trash" size={15} /> Reset semua data toko
+        </button>
+      </section>
+
+      {showResetDialog && (
+        <div className="overlay" onClick={() => !resetSaving && setShowResetDialog(false)}>
+          <section
+            className="modal reset-modal"
+            role="alertdialog"
+            aria-modal="true"
+            aria-labelledby="reset-dialog-title"
+            aria-describedby="reset-dialog-description"
+            onClick={(event) => event.stopPropagation()}>
+            <h3 id="reset-dialog-title">Hapus semua data toko?</h3>
+            <p id="reset-dialog-description" className="muted">
+              Tindakan ini permanen untuk data operasional akun ini. Akun login, backup, dan foto produk tidak akan dihapus.
+              Buat backup terlebih dahulu jika data ini mungkin diperlukan lagi.
+            </p>
+            <label htmlFor="reset-confirmation">Ketik <strong>HAPUS DATA</strong> untuk melanjutkan</label>
+            <input
+              id="reset-confirmation"
+              className="input"
+              value={resetConfirmation}
+              onChange={(event) => setResetConfirmation(event.target.value)}
+              autoFocus
+              autoComplete="off"
+              spellCheck="false"
+              disabled={resetSaving}
+            />
+            {resetError && <p className="form-error" role="alert">{resetError}</p>}
+            <div className="modal-actions">
+              <button
+                className="btn"
+                type="button"
+                onClick={() => setShowResetDialog(false)}
+                disabled={resetSaving}>
+                Batal
+              </button>
+              <button
+                className="btn btn-danger"
+                type="button"
+                onClick={resetStore}
+                disabled={resetSaving || resetConfirmation !== 'HAPUS DATA'}>
+                {resetSaving ? 'Menghapus data...' : 'Hapus semua data'}
+              </button>
+            </div>
+          </section>
+        </div>
+      )}
     </div>
   )
 }

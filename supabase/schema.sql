@@ -1149,6 +1149,28 @@ begin
 end;
 $$;
 
+create or replace function public.reset_store_data()
+returns void
+language plpgsql
+security definer
+set search_path = public, pg_temp
+as $$
+declare
+  current_user_id uuid := auth.uid();
+begin
+  if current_user_id is null then raise exception 'Login diperlukan.'; end if;
+
+  delete from public.finance_entries where owner_id = current_user_id;
+  delete from public.transactions where owner_id = current_user_id;
+  delete from public.manual_customer_credits where owner_id = current_user_id;
+  delete from public.product_stock_adjustments where owner_id = current_user_id;
+  delete from public.products where owner_id = current_user_id;
+  delete from public.product_categories where owner_id = current_user_id;
+  delete from public.product_units where owner_id = current_user_id;
+  delete from public.customer_names where owner_id = current_user_id;
+end;
+$$;
+
 create or replace function public.get_transaction_summary(
   p_from timestamptz,
   p_to timestamptz
@@ -1401,6 +1423,7 @@ revoke all on function public.add_manual_customer_credit(text, double precision,
 revoke all on function public.record_transaction_payment(bigint, double precision, uuid) from public, anon;
 revoke all on function public.record_customer_credit_payment(text, double precision, uuid) from public, anon;
 revoke all on function public.delete_manual_finance_entry(bigint) from public, anon;
+revoke all on function public.reset_store_data() from public, anon;
 revoke all on function public.get_transaction_summary(timestamptz, timestamptz) from public, anon;
 revoke all on function public.get_dashboard_data(timestamptz, timestamptz, timestamptz, timestamptz, integer, integer, boolean) from public, anon;
 revoke all on function public.get_finance_data(timestamptz, timestamptz, integer, integer) from public, anon;
@@ -1409,6 +1432,7 @@ grant execute on function public.add_manual_customer_credit(text, double precisi
 grant execute on function public.record_transaction_payment(bigint, double precision, uuid) to authenticated;
 grant execute on function public.record_customer_credit_payment(text, double precision, uuid) to authenticated;
 grant execute on function public.delete_manual_finance_entry(bigint) to authenticated;
+grant execute on function public.reset_store_data() to authenticated;
 grant execute on function public.get_transaction_summary(timestamptz, timestamptz) to authenticated;
 grant execute on function public.get_dashboard_data(timestamptz, timestamptz, timestamptz, timestamptz, integer, integer, boolean) to authenticated;
 grant execute on function public.get_finance_data(timestamptz, timestamptz, integer, integer) to authenticated;
