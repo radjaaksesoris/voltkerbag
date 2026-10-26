@@ -842,6 +842,8 @@ declare
   existing_id bigint;
   transaction_id bigint;
   invoice_number text;
+  invoice_date text;
+  invoice_sequence bigint;
   item jsonb;
   product_row public.products%rowtype;
   item_qty integer;
@@ -869,6 +871,9 @@ begin
     raise exception 'Keranjang masih kosong.';
   end if;
   if jsonb_array_length(p_cart) = 0 then raise exception 'Keranjang masih kosong.'; end if;
+
+  invoice_date := to_char(operation_time at time zone 'Asia/Jakarta', 'YYYYMMDD');
+  perform pg_advisory_xact_lock(hashtextextended(current_user_id::text, 0));
 
   select id into existing_id
   from public.transactions
@@ -980,8 +985,13 @@ begin
     p_request_id, operation_time, operation_time
   ) returning id into transaction_id;
 
-  invoice_number := 'INV-' || to_char(operation_time at time zone 'Asia/Jakarta', 'YYYYMMDD')
-    || '-' || lpad(transaction_id::text, 2, '0');
+  select coalesce(max(substring("invoiceNo" from ('^INV-' || invoice_date || '-([0-9]+)$'))::bigint), 0) + 1
+    into invoice_sequence
+  from public.transactions
+  where owner_id = current_user_id
+    and "invoiceNo" ~ ('^INV-' || invoice_date || '-[0-9]+$');
+
+  invoice_number := 'INV-' || invoice_date || '-' || lpad(invoice_sequence::text, 2, '0');
   update public.transactions set "invoiceNo" = invoice_number where id = transaction_id;
 
   if initial_payment > 0 then
@@ -1266,6 +1276,8 @@ declare
   current_user_id uuid := auth.uid();
 begin
   if current_user_id is null then raise exception 'Login diperlukan.'; end if;
+
+  perform pg_advisory_xact_lock(hashtextextended(current_user_id::text, 0));
 
   delete from public.finance_entries where owner_id = current_user_id;
   delete from public.transactions where owner_id = current_user_id;
