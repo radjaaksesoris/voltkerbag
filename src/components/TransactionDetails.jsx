@@ -126,6 +126,7 @@ export default function TransactionDetails({ transaction, onClose, onTransaction
               customer={{ phone: transaction.customerPhone, address: transaction.customerAddress }}
             />
           </dd></div>
+          {transaction.expedition && <div><dt>Ekspedisi</dt><dd>{transaction.expedition}</dd></div>}
           <div><dt>Tanggal transaksi</dt><dd>{dateOnly(transaction.createdAt)}</dd></div>
           <div><dt>Metode pembayaran</dt><dd>{transaction.paymentType === 'credit' ? 'Kredit' : 'Tunai'}</dd></div>
         </dl>

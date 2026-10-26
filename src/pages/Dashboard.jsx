@@ -239,7 +239,8 @@ export default function Dashboard() {
                     <button className="btn btn-sm btn-primary" onClick={() => setSelectedTransaction({
                       ...t,
                       customerPhone: customers.find((customer) => customer.name === t.customerName)?.phone || '',
-                      customerAddress: customers.find((customer) => customer.name === t.customerName)?.address || ''
+                      customerAddress: customers.find((customer) => customer.name === t.customerName)?.address || '',
+                      expedition: t.expedition || ''
                     })}>Detail</button>
                   </td>
                 </tr>

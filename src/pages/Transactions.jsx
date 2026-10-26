@@ -15,6 +15,7 @@ import { downloadInvoiceJpeg } from '../invoiceJpeg'
 export default function Transactions() {
   const [products, setProducts] = useState([])
   const [customers, setCustomers] = useState([])
+  const [expeditions, setExpeditions] = useState([])
   const [todaySummary, setTodaySummary] = useState({ transaction_count: 0, total: 0 })
   const [cart, setCart] = useState([])
   const [cartNotification, setCartNotification] = useState(null)
@@ -23,6 +24,7 @@ export default function Transactions() {
   const [q, setQ] = useState('')
   const [pay, setPay] = useState('')
   const [customerName, setCustomerName] = useState('')
+  const [expeditionName, setExpeditionName] = useState('')
   const [paymentType, setPaymentType] = useState('cash')
   const [checkoutError, setCheckoutError] = useState('')
   const [done, setDone] = useState(null)
@@ -51,13 +53,15 @@ export default function Transactions() {
     try {
       const today = localDateValue(new Date())
       const range = dateRangeTimestamps({ from: today, to: today })
-      const [productRows, summary, customerRows] = await Promise.all([
+      const [productRows, summary, customerRows, expeditionRows] = await Promise.all([
         getAll('products'),
         getTransactionSummary(range),
-        getAll('customers')
+        getAll('customers'),
+        getAll('expeditions')
       ])
       setProducts(productRows)
       setCustomers(customerRows)
+      setExpeditions(expeditionRows)
       setTodaySummary(summary)
       setLoadError('')
     } catch (error) {
@@ -202,6 +206,10 @@ export default function Transactions() {
       setCheckoutError('Pilih nama pelanggan yang masih tersedia dari tab Setting.')
       return
     }
+    if (expeditionName && !expeditions.some((expedition) => expedition.name === expeditionName)) {
+      setCheckoutError('Pilih ekspedisi yang masih tersedia dari tab Setting.')
+      return
+    }
 
     if (cart.length === 0) { setCheckoutError('Keranjang masih kosong.'); return }
     if (paymentType === 'cash' && change < 0) { setCheckoutError('Uang tunai kurang dari total belanja.'); return }
@@ -217,6 +225,7 @@ export default function Transactions() {
       customerName: customerName.trim(),
       customerPhone: customers.find((customer) => customer.name === customerName)?.phone || '',
       customerAddress: customers.find((customer) => customer.name === customerName)?.address || '',
+      expedition: expeditionName,
       paymentType,
       items: cart.map((c) => ({ productId: c.productId, name: c.name, unit: c.unit, price: c.price, cost: c.cost, qty: c.qty })),
       total,
@@ -228,6 +237,7 @@ export default function Transactions() {
     }
     const requestFingerprint = JSON.stringify({
       customerName: sale.customerName,
+      expedition: sale.expedition,
       paymentType,
       payment: paidNow,
       cart: cart.map(({ productId, unit, price, qty }) => [productId, unit, price, qty])
@@ -258,6 +268,7 @@ export default function Transactions() {
       setCart([])
       setPay('')
       setCustomerName('')
+      setExpeditionName('')
       setPaymentType('cash')
       switchMobileView(false)
     } catch (error) {
@@ -474,13 +485,6 @@ export default function Transactions() {
                   value={customerName}
                   onChange={setCustomerName}
                 />
-                {customerName && (
-                  <CustomerIdentity
-                    name={customerName}
-                    customer={customers.find((customer) => customer.name === customerName)}
-                    className="checkout-customer-identity"
-                  />
-                )}
               </div>
               <div>
                 <label>Metode pembayaran</label>
@@ -490,6 +494,29 @@ export default function Transactions() {
                 </select>
               </div>
             </div>
+            {customerName && (
+              <div className="checkout-customer-row">
+                <CustomerIdentity
+                  name={customerName}
+                  customer={customers.find((customer) => customer.name === customerName)}
+                  className="checkout-customer-identity"
+                />
+                <div className="checkout-expedition-field">
+                  <label htmlFor="checkout-expedition">Ekspedisi</label>
+                  <select
+                    id="checkout-expedition"
+                    className="input"
+                    value={expeditionName}
+                    disabled={expeditions.length === 0}
+                    onChange={(event) => setExpeditionName(event.target.value)}>
+                    <option value="">{expeditions.length ? 'Pilih' : 'Atur di Setting'}</option>
+                    {expeditions.map((expedition) => (
+                      <option key={expedition.id} value={expedition.name}>{expedition.name}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+            )}
             <div className="cart-total">
               <span>Total</span>
               <strong className="accent">{rupiah(total)}</strong>

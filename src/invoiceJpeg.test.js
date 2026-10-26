@@ -7,6 +7,7 @@ test('creates a branded JPEG source with invoice and sale details', () => {
     id: 14,
     createdAt: '2026-10-26T12:00:00.000Z',
     customerName: 'Agus Salim',
+    expedition: 'JNE',
     paymentType: 'cash',
     items: [{ name: 'Tas Slingbag Tactical', qty: 1, unit: 'pcs', price: 15000 }],
     total: 15000,
@@ -18,6 +19,7 @@ test('creates a branded JPEG source with invoice and sale details', () => {
   assert.match(svg, /<svg[^>]+width="1240"/)
   assert.match(svg, /FAKTUR PENJUALAN/)
   assert.match(svg, /INV-20261026-14/)
+  assert.doesNotMatch(svg, /Ekspedisi|JNE/)
   assert.match(svg, /Tas Slingbag Tactical/)
   assert.match(svg, /Tunai diterima/)
   assert.match(svg, /Kembalian/)

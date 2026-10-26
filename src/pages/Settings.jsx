@@ -5,6 +5,7 @@ import Icon from '../components/Icon.jsx'
 export default function Settings() {
   const [customers, setCustomers] = useState([])
   const [vendors, setVendors] = useState([])
+  const [expeditions, setExpeditions] = useState([])
   const [name, setName] = useState('')
   const [phone, setPhone] = useState('')
   const [address, setAddress] = useState('')
@@ -15,9 +16,13 @@ export default function Settings() {
   const [vendorName, setVendorName] = useState('')
   const [editingVendor, setEditingVendor] = useState(null)
   const [editVendorName, setEditVendorName] = useState('')
+  const [expeditionName, setExpeditionName] = useState('')
+  const [editingExpedition, setEditingExpedition] = useState(null)
+  const [editExpeditionName, setEditExpeditionName] = useState('')
   const [loadError, setLoadError] = useState('')
   const [actionError, setActionError] = useState('')
   const [vendorActionError, setVendorActionError] = useState('')
+  const [expeditionActionError, setExpeditionActionError] = useState('')
   const [loaded, setLoaded] = useState(false)
   const [saving, setSaving] = useState(false)
   const [backupSaving, setBackupSaving] = useState(false)
@@ -35,15 +40,17 @@ export default function Settings() {
 
   async function load() {
     try {
-      const [customerRows, vendorRows] = await Promise.all([
+      const [customerRows, vendorRows, expeditionRows] = await Promise.all([
         getAll('customers'),
-        getAll('vendors')
+        getAll('vendors'),
+        getAll('expeditions')
       ])
       setCustomers(customerRows)
       setVendors(vendorRows)
+      setExpeditions(expeditionRows)
       setLoadError('')
     } catch (error) {
-      setLoadError(error.message || 'Gagal memuat data pelanggan dan vendor.')
+      setLoadError(error.message || 'Gagal memuat data pelanggan, vendor, dan ekspedisi.')
     } finally {
       setLoaded(true)
     }
@@ -213,6 +220,78 @@ export default function Settings() {
     }
   }
 
+  async function addExpedition(event) {
+    event.preventDefault()
+    const normalizedName = expeditionName.trim()
+    if (!normalizedName) {
+      setExpeditionActionError('Nama ekspedisi wajib diisi.')
+      return
+    }
+    if (expeditions.some((expedition) => expedition.name.toLocaleLowerCase('id-ID') === normalizedName.toLocaleLowerCase('id-ID'))) {
+      setExpeditionActionError('Nama ekspedisi tersebut sudah ada.')
+      return
+    }
+
+    setSaving(true)
+    setExpeditionActionError('')
+    try {
+      await put('expeditions', { name: normalizedName })
+      setExpeditionName('')
+    } catch (error) {
+      setExpeditionActionError(error.message || 'Gagal menambahkan nama ekspedisi.')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  function startEditingExpedition(expedition) {
+    setExpeditionActionError('')
+    setEditingExpedition(expedition)
+    setEditExpeditionName(expedition.name)
+  }
+
+  function cancelEditingExpedition() {
+    setEditingExpedition(null)
+    setEditExpeditionName('')
+  }
+
+  async function saveExpedition(event) {
+    event.preventDefault()
+    const normalizedName = editExpeditionName.trim()
+    if (!normalizedName) {
+      setExpeditionActionError('Nama ekspedisi wajib diisi.')
+      return
+    }
+    if (expeditions.some((expedition) =>
+      expedition.id !== editingExpedition.id
+      && expedition.name.toLocaleLowerCase('id-ID') === normalizedName.toLocaleLowerCase('id-ID')
+    )) {
+      setExpeditionActionError('Nama ekspedisi tersebut sudah ada.')
+      return
+    }
+
+    setSaving(true)
+    setExpeditionActionError('')
+    try {
+      await put('expeditions', { ...editingExpedition, name: normalizedName })
+      cancelEditingExpedition()
+    } catch (error) {
+      setExpeditionActionError(error.message || 'Gagal memperbarui nama ekspedisi.')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  async function deleteExpedition(expedition) {
+    if (!confirm('Hapus nama ekspedisi "' + expedition.name + '" dari daftar? Riwayat transaksi tidak akan diubah.')) return
+    setExpeditionActionError('')
+    try {
+      await remove('expeditions', expedition.id)
+    } catch (error) {
+      setExpeditionActionError(error.message || 'Gagal menghapus nama ekspedisi.')
+    }
+  }
+
   async function createBackup() {
     setBackupSaving(true)
     setBackupError('')
@@ -263,6 +342,7 @@ export default function Settings() {
       await resetStoreData()
       setCustomers([])
       setVendors([])
+      setExpeditions([])
       setName('')
       setPhone('')
       setAddress('')
@@ -273,8 +353,12 @@ export default function Settings() {
       setVendorName('')
       setEditingVendor(null)
       setEditVendorName('')
+      setExpeditionName('')
+      setEditingExpedition(null)
+      setEditExpeditionName('')
       setActionError('')
       setVendorActionError('')
+      setExpeditionActionError('')
       setResetStatus('Data operasional berhasil dibersihkan. Akun, backup, dan foto produk tetap tersimpan.')
       setResetConfirmation('')
       setShowResetDialog(false)
@@ -285,7 +369,7 @@ export default function Settings() {
     }
   }
 
-  if (!loaded) return <div className="page"><p className="muted">Memuat data pelanggan dan vendor...</p></div>
+  if (!loaded) return <div className="page"><p className="muted">Memuat data pelanggan, vendor, dan ekspedisi...</p></div>
   if (loadError) {
     return <div className="page"><p className="form-error" role="alert">{loadError}</p>
       <button className="btn" onClick={() => window.dispatchEvent(new CustomEvent('voltker:refresh'))}>Coba lagi</button>
@@ -513,6 +597,92 @@ export default function Settings() {
                         type="button"
                         aria-label={'Hapus ' + vendor.name}
                         onClick={() => deleteVendor(vendor)}
+                        disabled={saving}>
+                        <Icon name="trash" size={14} /> Hapus
+                      </button>
+                    </div>
+                  </>
+                )}
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
+
+      <section className="card settings-section">
+        <div className="settings-section-heading">
+          <div>
+            <h3>Nama ekspedisi</h3>
+            <p className="muted small">Kelola pilihan ekspedisi yang tersedia saat checkout transaksi.</p>
+          </div>
+          <span className="settings-count">{expeditions.length} nama</span>
+        </div>
+
+        {expeditionActionError && <p className="form-error" role="alert">{expeditionActionError}</p>}
+
+        <form className="settings-add-form settings-vendor-add-form" onSubmit={addExpedition}>
+          <div>
+            <label htmlFor="new-expedition-name">Nama ekspedisi baru</label>
+            <input
+              id="new-expedition-name"
+              className="input"
+              value={expeditionName}
+              maxLength={120}
+              onChange={(event) => setExpeditionName(event.target.value)}
+              placeholder="Masukkan nama ekspedisi"
+            />
+          </div>
+          <button className="btn btn-primary" type="submit" disabled={saving || !expeditionName.trim()}>
+            <Icon name="plus" size={16} /> {saving ? 'Menyimpan...' : 'Tambah nama'}
+          </button>
+        </form>
+
+        {expeditions.length === 0 ? (
+          <div className="settings-empty">
+            <span>Daftar ekspedisi masih kosong.</span>
+            <span>Tambahkan nama di atas agar bisa dipilih saat checkout.</span>
+          </div>
+        ) : (
+          <ul className="customer-list">
+            {expeditions.map((expedition) => (
+              <li key={expedition.id}>
+                {editingExpedition?.id === expedition.id ? (
+                  <form className="customer-edit-form settings-vendor-edit-form" onSubmit={saveExpedition}>
+                    <div>
+                      <label htmlFor={'edit-expedition-name-' + expedition.id}>Nama ekspedisi</label>
+                      <input
+                        id={'edit-expedition-name-' + expedition.id}
+                        className="input"
+                        value={editExpeditionName}
+                        maxLength={120}
+                        onChange={(event) => setEditExpeditionName(event.target.value)}
+                        required
+                      />
+                    </div>
+                    <div className="customer-actions">
+                      <button className="btn btn-sm" type="button" onClick={cancelEditingExpedition} disabled={saving}>Batal</button>
+                      <button className="btn btn-sm btn-primary" type="submit" disabled={saving || !editExpeditionName.trim()}>
+                        {saving ? 'Menyimpan...' : 'Simpan'}
+                      </button>
+                    </div>
+                  </form>
+                ) : (
+                  <>
+                    <div className="customer-info"><strong>{expedition.name}</strong></div>
+                    <div className="customer-actions">
+                      <button
+                        className="btn btn-sm"
+                        type="button"
+                        onClick={() => startEditingExpedition(expedition)}
+                        disabled={saving}
+                        aria-label={'Edit ' + expedition.name}>
+                        Edit
+                      </button>
+                      <button
+                        className="btn btn-sm btn-danger"
+                        type="button"
+                        aria-label={'Hapus ' + expedition.name}
+                        onClick={() => deleteExpedition(expedition)}
                         disabled={saving}>
                         <Icon name="trash" size={14} /> Hapus
                       </button>
