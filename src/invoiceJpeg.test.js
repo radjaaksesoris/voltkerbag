@@ -13,10 +13,9 @@ test('creates a branded JPEG source with invoice and sale details', () => {
     paidAmount: 15000,
     payment: 20000,
     change: 5000
-  }, 'data:image/png;base64,bG9nbw==')
+  })
 
   assert.match(svg, /<svg[^>]+width="1240"/)
-  assert.match(svg, /data:image\/png;base64,bG9nbw==/)
   assert.match(svg, /FAKTUR PENJUALAN/)
   assert.match(svg, /INV-20261026-14/)
   assert.match(svg, /Tas Slingbag Tactical/)
@@ -35,7 +34,7 @@ test('escapes customer and item text in the generated invoice', () => {
     paidAmount: 5000,
     balanceDue: 15000,
     payments: [{ date: '2026-10-26T12:00:00.000Z', amount: 5000 }]
-  }, 'data:image/png;base64,bG9nbw==')
+  })
 
   assert.match(svg, /&lt;script&gt;alert\(&quot;x&quot;\)&lt;\/script&gt;/)
   assert.match(svg, /Tas &amp; Dompet/)

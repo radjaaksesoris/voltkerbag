@@ -59,7 +59,7 @@ function multilineText(x, y, lines, { size = 24, color = COLORS.ink, weight = 40
   ).join('')}</text>`
 }
 
-export function createInvoiceSvg(transaction, logoDataUrl) {
+export function createInvoiceSvg(transaction) {
   const invoiceNumber = getInvoiceNumber(transaction)
   const items = Array.isArray(transaction.items) ? transaction.items : []
   const rows = items.map((item) => {
@@ -96,7 +96,6 @@ export function createInvoiceSvg(transaction, logoDataUrl) {
     `<path d="M0 0h${WIDTH}v226H0z" fill="${COLORS.darkRed}"/>`,
     `<circle cx="1160" cy="-55" r="230" fill="none" stroke="#ffffff" stroke-opacity=".08" stroke-width="34"/>`,
     `<circle cx="1160" cy="-55" r="180" fill="none" stroke="#ffffff" stroke-opacity=".06" stroke-width="2"/>`,
-    `<image href="${logoDataUrl}" x="${MARGIN}" y="67" width="400" height="99" preserveAspectRatio="xMinYMid meet"/>`,
     text(WIDTH - MARGIN, 87, 'FAKTUR PENJUALAN', { size: 34, color: COLORS.white, weight: 700, anchor: 'end' }),
     text(WIDTH - MARGIN, 133, invoiceNumber, { size: 24, color: '#ffdfd6', anchor: 'end' }),
     text(WIDTH - MARGIN, 171, dateTime(transaction.createdAt), { size: 21, color: '#ffdfd6', anchor: 'end' }),
@@ -172,26 +171,32 @@ function loadImage(url) {
   })
 }
 
-function loadLogoDataUrl() {
+async function loadLogo() {
   return fetch(import.meta.env.BASE_URL + 'voltker-logo-320.png')
     .then((response) => {
       if (!response.ok) throw new Error('Logo Voltker gagal dimuat untuk faktur.')
       return response.blob()
     })
-    .then((blob) => new Promise((resolve, reject) => {
-      const reader = new FileReader()
-      reader.onload = () => resolve(reader.result)
-      reader.onerror = () => reject(new Error('Logo Voltker gagal disiapkan untuk faktur.'))
-      reader.readAsDataURL(blob)
-    }))
+}
+
+async function loadImageFromBlob(blob) {
+  const imageUrl = URL.createObjectURL(blob)
+  try {
+    return await loadImage(imageUrl)
+  } finally {
+    URL.revokeObjectURL(imageUrl)
+  }
 }
 
 export async function downloadInvoiceJpeg(transaction) {
-  const logoDataUrl = await loadLogoDataUrl()
-  const svgBlob = new Blob([createInvoiceSvg(transaction, logoDataUrl)], { type: 'image/svg+xml;charset=utf-8' })
+  const logoBlob = await loadLogo()
+  const svgBlob = new Blob([createInvoiceSvg(transaction)], { type: 'image/svg+xml;charset=utf-8' })
   const svgUrl = URL.createObjectURL(svgBlob)
   try {
-    const image = await loadImage(svgUrl)
+    const [image, logo] = await Promise.all([
+      loadImage(svgUrl),
+      loadImageFromBlob(logoBlob)
+    ])
     const canvas = document.createElement('canvas')
     canvas.width = WIDTH
     canvas.height = image.height
@@ -200,6 +205,7 @@ export async function downloadInvoiceJpeg(transaction) {
     context.fillStyle = COLORS.white
     context.fillRect(0, 0, canvas.width, canvas.height)
     context.drawImage(image, 0, 0)
+    context.drawImage(logo, MARGIN, 67, 400, 99)
     const jpegBlob = await new Promise((resolve, reject) => {
       canvas.toBlob((blob) => {
         if (blob) resolve(blob)
