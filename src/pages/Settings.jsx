@@ -4,6 +4,7 @@ import Icon from '../components/Icon.jsx'
 
 export default function Settings() {
   const [customers, setCustomers] = useState([])
+  const [vendors, setVendors] = useState([])
   const [name, setName] = useState('')
   const [phone, setPhone] = useState('')
   const [address, setAddress] = useState('')
@@ -11,8 +12,12 @@ export default function Settings() {
   const [editName, setEditName] = useState('')
   const [editPhone, setEditPhone] = useState('')
   const [editAddress, setEditAddress] = useState('')
+  const [vendorName, setVendorName] = useState('')
+  const [editingVendor, setEditingVendor] = useState(null)
+  const [editVendorName, setEditVendorName] = useState('')
   const [loadError, setLoadError] = useState('')
   const [actionError, setActionError] = useState('')
+  const [vendorActionError, setVendorActionError] = useState('')
   const [loaded, setLoaded] = useState(false)
   const [saving, setSaving] = useState(false)
   const [backupSaving, setBackupSaving] = useState(false)
@@ -30,10 +35,15 @@ export default function Settings() {
 
   async function load() {
     try {
-      setCustomers(await getAll('customers'))
+      const [customerRows, vendorRows] = await Promise.all([
+        getAll('customers'),
+        getAll('vendors')
+      ])
+      setCustomers(customerRows)
+      setVendors(vendorRows)
       setLoadError('')
     } catch (error) {
-      setLoadError(error.message || 'Gagal memuat daftar nama pelanggan.')
+      setLoadError(error.message || 'Gagal memuat data pelanggan dan vendor.')
     } finally {
       setLoaded(true)
     }
@@ -131,6 +141,78 @@ export default function Settings() {
     }
   }
 
+  async function addVendor(event) {
+    event.preventDefault()
+    const normalizedName = vendorName.trim()
+    if (!normalizedName) {
+      setVendorActionError('Nama vendor wajib diisi.')
+      return
+    }
+    if (vendors.some((vendor) => vendor.name.toLocaleLowerCase('id-ID') === normalizedName.toLocaleLowerCase('id-ID'))) {
+      setVendorActionError('Nama vendor tersebut sudah ada.')
+      return
+    }
+
+    setSaving(true)
+    setVendorActionError('')
+    try {
+      await put('vendors', { name: normalizedName })
+      setVendorName('')
+    } catch (error) {
+      setVendorActionError(error.message || 'Gagal menambahkan nama vendor.')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  function startEditingVendor(vendor) {
+    setVendorActionError('')
+    setEditingVendor(vendor)
+    setEditVendorName(vendor.name)
+  }
+
+  function cancelEditingVendor() {
+    setEditingVendor(null)
+    setEditVendorName('')
+  }
+
+  async function saveVendor(event) {
+    event.preventDefault()
+    const normalizedName = editVendorName.trim()
+    if (!normalizedName) {
+      setVendorActionError('Nama vendor wajib diisi.')
+      return
+    }
+    if (vendors.some((vendor) =>
+      vendor.id !== editingVendor.id
+      && vendor.name.toLocaleLowerCase('id-ID') === normalizedName.toLocaleLowerCase('id-ID')
+    )) {
+      setVendorActionError('Nama vendor tersebut sudah ada.')
+      return
+    }
+
+    setSaving(true)
+    setVendorActionError('')
+    try {
+      await put('vendors', { ...editingVendor, name: normalizedName })
+      cancelEditingVendor()
+    } catch (error) {
+      setVendorActionError(error.message || 'Gagal memperbarui nama vendor.')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  async function deleteVendor(vendor) {
+    if (!confirm('Hapus nama vendor "' + vendor.name + '" dari daftar? Riwayat pembelian tidak akan dihapus.')) return
+    setVendorActionError('')
+    try {
+      await remove('vendors', vendor.id)
+    } catch (error) {
+      setVendorActionError(error.message || 'Gagal menghapus nama vendor.')
+    }
+  }
+
   async function createBackup() {
     setBackupSaving(true)
     setBackupError('')
@@ -180,6 +262,7 @@ export default function Settings() {
     try {
       await resetStoreData()
       setCustomers([])
+      setVendors([])
       setName('')
       setPhone('')
       setAddress('')
@@ -187,7 +270,11 @@ export default function Settings() {
       setEditName('')
       setEditPhone('')
       setEditAddress('')
+      setVendorName('')
+      setEditingVendor(null)
+      setEditVendorName('')
       setActionError('')
+      setVendorActionError('')
       setResetStatus('Data operasional berhasil dibersihkan. Akun, backup, dan foto produk tetap tersimpan.')
       setResetConfirmation('')
       setShowResetDialog(false)
@@ -198,7 +285,7 @@ export default function Settings() {
     }
   }
 
-  if (!loaded) return <div className="page"><p className="muted">Memuat daftar pelanggan...</p></div>
+  if (!loaded) return <div className="page"><p className="muted">Memuat data pelanggan dan vendor...</p></div>
   if (loadError) {
     return <div className="page"><p className="form-error" role="alert">{loadError}</p>
       <button className="btn" onClick={() => window.dispatchEvent(new CustomEvent('voltker:refresh'))}>Coba lagi</button>
@@ -340,6 +427,92 @@ export default function Settings() {
                         type="button"
                         aria-label={'Hapus ' + customer.name}
                         onClick={() => deleteCustomer(customer)}
+                        disabled={saving}>
+                        <Icon name="trash" size={14} /> Hapus
+                      </button>
+                    </div>
+                  </>
+                )}
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
+
+      <section className="card settings-section">
+        <div className="settings-section-heading">
+          <div>
+            <h3>Nama vendor</h3>
+            <p className="muted small">Kelola pilihan vendor yang tersedia saat mencatat pembelian.</p>
+          </div>
+          <span className="settings-count">{vendors.length} nama</span>
+        </div>
+
+        {vendorActionError && <p className="form-error" role="alert">{vendorActionError}</p>}
+
+        <form className="settings-add-form settings-vendor-add-form" onSubmit={addVendor}>
+          <div>
+            <label htmlFor="new-vendor-name">Nama vendor baru</label>
+            <input
+              id="new-vendor-name"
+              className="input"
+              value={vendorName}
+              maxLength={120}
+              onChange={(event) => setVendorName(event.target.value)}
+              placeholder="Masukkan nama vendor"
+            />
+          </div>
+          <button className="btn btn-primary" type="submit" disabled={saving || !vendorName.trim()}>
+            <Icon name="plus" size={16} /> {saving ? 'Menyimpan...' : 'Tambah nama'}
+          </button>
+        </form>
+
+        {vendors.length === 0 ? (
+          <div className="settings-empty">
+            <span>Daftar vendor masih kosong.</span>
+            <span>Tambahkan nama di atas agar bisa dipilih saat mencatat pembelian.</span>
+          </div>
+        ) : (
+          <ul className="customer-list">
+            {vendors.map((vendor) => (
+              <li key={vendor.id}>
+                {editingVendor?.id === vendor.id ? (
+                  <form className="customer-edit-form settings-vendor-edit-form" onSubmit={saveVendor}>
+                    <div>
+                      <label htmlFor={'edit-vendor-name-' + vendor.id}>Nama vendor</label>
+                      <input
+                        id={'edit-vendor-name-' + vendor.id}
+                        className="input"
+                        value={editVendorName}
+                        maxLength={120}
+                        onChange={(event) => setEditVendorName(event.target.value)}
+                        required
+                      />
+                    </div>
+                    <div className="customer-actions">
+                      <button className="btn btn-sm" type="button" onClick={cancelEditingVendor} disabled={saving}>Batal</button>
+                      <button className="btn btn-sm btn-primary" type="submit" disabled={saving || !editVendorName.trim()}>
+                        {saving ? 'Menyimpan...' : 'Simpan'}
+                      </button>
+                    </div>
+                  </form>
+                ) : (
+                  <>
+                    <div className="customer-info"><strong>{vendor.name}</strong></div>
+                    <div className="customer-actions">
+                      <button
+                        className="btn btn-sm"
+                        type="button"
+                        onClick={() => startEditingVendor(vendor)}
+                        disabled={saving}
+                        aria-label={'Edit ' + vendor.name}>
+                        Edit
+                      </button>
+                      <button
+                        className="btn btn-sm btn-danger"
+                        type="button"
+                        aria-label={'Hapus ' + vendor.name}
+                        onClick={() => deleteVendor(vendor)}
                         disabled={saving}>
                         <Icon name="trash" size={14} /> Hapus
                       </button>

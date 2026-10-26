@@ -576,7 +576,7 @@ function isAutomaticEntry(entry) {
   const note = String(entry.note || '')
   return entry.refId != null
     || entry.requestId != null
-    || ['penjualan', 'dp kredit', 'cicilan kredit'].includes(category)
+    || ['penjualan', 'dp kredit', 'cicilan kredit', 'pembelian bahan produksi'].includes(category)
     || note.startsWith('Penjualan ·')
     || note.startsWith('Cicilan transaksi ')
 }

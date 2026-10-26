@@ -8,9 +8,11 @@ export default function ManagedOptionSelect({
   onAdd,
   onDelete,
   triggerRef,
+  id,
   fieldName,
   placeholder,
   emptyLabel,
+  emptyMessage,
   allowEmpty = true,
   canManage = true,
   disabled = false
@@ -92,6 +94,7 @@ export default function ManagedOptionSelect({
     <div className="category-select category-select-inline" ref={rootRef}>
       <button
         className="input category-select-trigger"
+        id={id}
         type="button"
         role="combobox"
         aria-label={fieldName}
@@ -122,7 +125,9 @@ export default function ManagedOptionSelect({
               </button>
             )}
             {!allowEmpty && options.length === 0 && (
-              <p className="customer-select-empty">Belum ada pilihan. Tambahkan nama pelanggan di tab Setting.</p>
+              <p className="customer-select-empty">
+                {emptyMessage || 'Belum ada pilihan. Tambahkan nama pelanggan di tab Setting.'}
+              </p>
             )}
             {options.map((option) => (
               <div className="category-option-row" key={option.id}>

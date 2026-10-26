@@ -6,6 +6,7 @@ const TABLES = {
   categories: 'product_categories',
   units: 'product_units',
   customers: 'customer_names',
+  vendors: 'vendor_names',
   transactions: 'transactions',
   finance: 'finance_entries'
 }
@@ -45,6 +46,7 @@ export async function createBackupArchive() {
     categories: 'product_categories',
     units: 'product_units',
     customers: 'customer_names',
+    vendors: 'vendor_names',
     transactions: 'transactions',
     finance: 'finance_entries',
     manualCredits: 'manual_customer_credits',
@@ -137,7 +139,8 @@ export async function restoreBackupArchive(file, onProgress = () => {}) {
 
   const requiredRecordKeys = ['products', 'categories', 'units', 'customers', 'transactions', 'finance', 'stockAdjustments']
   if (!backup.records || requiredRecordKeys.some((key) => !Array.isArray(backup.records[key]))
-    || (backup.records.manualCredits != null && !Array.isArray(backup.records.manualCredits))) {
+    || (backup.records.manualCredits != null && !Array.isArray(backup.records.manualCredits))
+    || (backup.records.vendors != null && !Array.isArray(backup.records.vendors))) {
     throw new Error('Data pada file backup tidak lengkap.')
   }
   if (!Array.isArray(backup.images)) throw new Error('Daftar foto pada file backup tidak valid.')
@@ -198,6 +201,7 @@ export async function restoreBackupArchive(file, onProgress = () => {}) {
     const records = {
       ...backup.records,
       manualCredits: backup.records.manualCredits || [],
+      vendors: backup.records.vendors || [],
       products: backup.records.products.map((product) => ({
         ...product,
         image_path: product.image_path ? restoredImagePaths.get(product.image_path) : null

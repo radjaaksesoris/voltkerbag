@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState } from 'react'
-import { getPurchaseEntries, onRefresh, put } from '../db'
+import { getAll, getPurchaseEntries, onRefresh, put } from '../db'
 import { dateOnly, rupiah } from '../format'
 import { dateRangeTimestamps, localDateValue } from '../dateFilter'
 import MoneyInput from '../components/MoneyInput.jsx'
+import VendorSelect from '../components/VendorSelect.jsx'
 import { formatPurchaseNote, parsePurchaseNote } from '../purchaseNote.js'
 
 const PURCHASE_CATEGORY = 'Pembelian bahan produksi'
@@ -14,14 +15,17 @@ export default function Purchases() {
   const [page, setPage] = useState(1)
   const [loaded, setLoaded] = useState(false)
   const [loadError, setLoadError] = useState('')
+  const [vendorLoadError, setVendorLoadError] = useState('')
   const [actionError, setActionError] = useState('')
   const [status, setStatus] = useState('')
   const [materialName, setMaterialName] = useState('')
   const [supplier, setSupplier] = useState('')
+  const [vendors, setVendors] = useState([])
   const [amount, setAmount] = useState('')
   const [purchaseDate, setPurchaseDate] = useState(() => localDateValue(new Date()))
   const [saving, setSaving] = useState(false)
   const requestId = useRef(0)
+  const vendorRequestId = useRef(0)
   const savingLock = useRef(false)
 
   useEffect(() => {
@@ -49,13 +53,35 @@ export default function Purchases() {
       }
     }
 
+    async function loadVendors() {
+      const request = ++vendorRequestId.current
+      try {
+        const rows = await getAll('vendors')
+        if (!active || request !== vendorRequestId.current) return
+        setVendors(rows)
+        setVendorLoadError('')
+      } catch (error) {
+        if (active && request === vendorRequestId.current) {
+          setVendorLoadError(error.message || 'Gagal memuat daftar vendor.')
+        }
+      }
+    }
+
     load()
-    const unsubscribe = onRefresh(load)
+    loadVendors()
+    const unsubscribe = onRefresh(() => {
+      load()
+      loadVendors()
+    })
     return () => {
       active = false
       unsubscribe()
     }
   }, [page])
+
+  useEffect(() => {
+    if (supplier && !vendors.some((vendor) => vendor.name === supplier)) setSupplier('')
+  }, [supplier, vendors])
 
   async function savePurchase(event) {
     event.preventDefault()
@@ -69,6 +95,14 @@ export default function Purchases() {
 
     if (!cleanMaterialName) {
       setActionError('Nama pembelian wajib diisi.')
+      return
+    }
+    if (vendorLoadError) {
+      setActionError('Daftar vendor gagal dimuat. Muat ulang halaman sebelum menyimpan.')
+      return
+    }
+    if (!vendors.some((vendor) => vendor.name === cleanSupplier)) {
+      setActionError('Pilih vendor dari master vendor di tab Setting.')
       return
     }
     if (!Number.isFinite(numericAmount) || numericAmount <= 0) {
@@ -150,15 +184,23 @@ export default function Purchases() {
               />
             </div>
             <div className="purchase-field">
-              <label htmlFor="purchase-supplier">Vendor (opsional)</label>
-              <input
-                id="purchase-supplier"
-                className="input"
-                value={supplier}
-                onChange={(event) => setSupplier(event.target.value)}
-                maxLength={120}
-                placeholder="Nama vendor"
-              />
+              <label htmlFor="purchase-vendor">Vendor *</label>
+              {vendorLoadError ? (
+                <p className="form-error" role="alert">{vendorLoadError}</p>
+              ) : (
+                <VendorSelect
+                  vendors={vendors}
+                  id="purchase-vendor"
+                  value={supplier}
+                  onChange={setSupplier}
+                  fieldName="Vendor"
+                  placeholder="Pilih vendor"
+                  disabled={saving || vendors.length === 0}
+                />
+              )}
+              {vendors.length === 0 && !vendorLoadError && (
+                <p className="muted small purchase-vendor-hint">Tambahkan vendor terlebih dahulu di tab Setting.</p>
+              )}
             </div>
             <div className="purchase-field">
               <label htmlFor="purchase-amount">Nominal *</label>
@@ -200,7 +242,7 @@ export default function Purchases() {
         </div>
         <table className="purchase-table">
           <thead>
-            <tr><th>Pembelian</th><th>Vendor</th><th className="right">Nominal</th><th>Tanggal</th></tr>
+            <tr><th>Pembelian</th><th>Tanggal</th><th>Nominal</th><th>Vendor</th></tr>
           </thead>
           <tbody>
             {entries.length === 0 ? (
@@ -210,9 +252,9 @@ export default function Purchases() {
               return (
                 <tr key={entry.id}>
                   <td className="purchase-details">{purchase.purchase}</td>
-                  <td className="purchase-details">{purchase.vendor}</td>
-                  <td className="right danger">{rupiah(entry.amount)}</td>
                   <td>{dateOnly(entry.date || entry.createdAt)}</td>
+                  <td className="danger">{rupiah(entry.amount)}</td>
+                  <td className="purchase-details">{purchase.vendor}</td>
                 </tr>
               )
             })}

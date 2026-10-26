@@ -479,9 +479,9 @@ h2 {
   .purchase-submit { width: 100%; }
   .purchase-table th, .purchase-table td { padding: 8px 5px; font-size: 9px; letter-spacing: 0; }
   .purchase-table th:nth-child(1), .purchase-table td:nth-child(1) { width: 34%; }
-  .purchase-table th:nth-child(2), .purchase-table td:nth-child(2) { width: 24%; }
+  .purchase-table th:nth-child(2), .purchase-table td:nth-child(2) { width: 18%; }
   .purchase-table th:nth-child(3), .purchase-table td:nth-child(3) { width: 24%; }
-  .purchase-table th:nth-child(4), .purchase-table td:nth-child(4) { width: 18%; }
+  .purchase-table th:nth-child(4), .purchase-table td:nth-child(4) { width: 24%; }
   .purchase-history-heading { margin-inline: 2px; }
 }
 h3 { margin-bottom: 16px; color: var(--ink); font-size: 15px; font-weight: 700; }
@@ -530,10 +530,11 @@ h3 { margin-bottom: 16px; color: var(--ink); font-size: 15px; font-weight: 700; 
 .purchase-history-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 14px; }
 .purchase-history-heading h3 { margin: 0 0 4px; }
 .purchase-table { width: 100%; min-width: 0; table-layout: fixed; }
+.purchase-table th, .purchase-table td { text-align: center; }
 .purchase-table th:nth-child(1), .purchase-table td:nth-child(1) { width: 34%; }
-.purchase-table th:nth-child(2), .purchase-table td:nth-child(2) { width: 25%; }
-.purchase-table th:nth-child(3), .purchase-table td:nth-child(3) { width: 23%; }
-.purchase-table th:nth-child(4), .purchase-table td:nth-child(4) { width: 18%; }
+.purchase-table th:nth-child(2), .purchase-table td:nth-child(2) { width: 18%; }
+.purchase-table th:nth-child(3), .purchase-table td:nth-child(3) { width: 24%; }
+.purchase-table th:nth-child(4), .purchase-table td:nth-child(4) { width: 24%; }
 .purchase-table td { overflow-wrap: anywhere; }
 .purchase-details { color: var(--text); }
 .purchase-table td.danger { font-weight: 700; }
@@ -1196,6 +1197,9 @@ select.input { appearance: none; }
 .settings-add-form label { margin-bottom: 6px; }
 .settings-add-form .input { margin: 0; }
 .settings-add-form .btn { display: inline-flex; align-items: center; gap: 7px; min-height: 42px; }
+.settings-vendor-edit-form > div:first-child { min-width: 0; }
+.settings-vendor-edit-form > div:first-child label { margin-bottom: 6px; }
+.settings-vendor-edit-form > div:first-child .input { margin: 0; }
 .settings-customer-fields { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
 .settings-customer-fields > div { min-width: 0; }
 .customer-list { display: grid; gap: 7px; max-height: 380px; margin-top: 14px; overflow-y: auto; list-style: none; }
