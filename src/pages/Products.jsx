@@ -470,7 +470,6 @@ export default function Products() {
                 <td className="product-price-cell">
                   {saleUnits(p.unit || 'pcs').map((unit) => (
                     <div className="product-price-row" key={unit}>
-                      <span>{unit}</span>
                       <strong>{rupiah(saleUnitPrice(p, unit))}/{unit}</strong>
                     </div>
                   ))}

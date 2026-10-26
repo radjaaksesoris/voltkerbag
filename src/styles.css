@@ -668,8 +668,7 @@ tbody tr:hover { background: #fbf5ed; }
 .products-table .product-stock-mobile { display: none; }
 .products-table .product-name-content strong { min-width: 0; overflow-wrap: anywhere; }
 .products-table .product-price-cell { min-width: 0; }
-.products-table .product-price-row { display: grid; grid-template-columns: 34px minmax(0, 1fr); align-items: baseline; justify-content: stretch; gap: 5px; white-space: normal; }
-.products-table .product-price-row > span:first-child { color: var(--muted); font-size: 10px; }
+.products-table .product-price-row { white-space: normal; }
 .products-table .product-price-cell strong { font-size: 10px; overflow-wrap: anywhere; }
 .products-table .badge { display: inline-block; white-space: normal; }
 .products-table .row-actions { display: table-cell; text-align: right; }
@@ -1280,7 +1279,6 @@ select.input { appearance: none; }
   .products-table th:nth-child(6), .products-table td:nth-child(6) { width: 13%; }
   .products-table th:nth-child(7), .products-table td:nth-child(7) { width: 21%; }
   .products-table .product-category-mobile { display: block; color: var(--muted); font-size: 10px; }
-  .products-table .product-price-row { grid-template-columns: 30px minmax(0, 1fr); gap: 3px; }
   .products-table .row-actions { white-space: normal; }
 }
 @media (min-width: 641px) and (max-width: 850px) {
@@ -1418,8 +1416,6 @@ select.input { appearance: none; }
   .products-table .product-name-text { display: grid; gap: 2px; }
   .products-table .product-name-content strong { font-size: 8px; line-height: 1.2; }
   .products-table .product-category-mobile { display: block; color: var(--muted); font-size: 7px; }
-  .products-table .product-price-row { display: grid; grid-template-columns: 22px minmax(0, 1fr); gap: 2px; justify-content: stretch; white-space: normal; }
-  .products-table .product-price-row > span:first-child { font-size: 7px; }
   .products-table .product-price-cell strong { font-size: 7px; overflow-wrap: anywhere; }
   .products-table .badge { padding: 3px 2px; font-size: 6px; white-space: nowrap; }
   .products-table .product-stock-desktop { display: none; }
