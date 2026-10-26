@@ -1,6 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { availableQuantity, productPrice, purchaseCostFactor, purchaseCostPerPiece, purchaseCostUnit, quantityToPcs, saleUnitPrice, saleUnits, stockCostValue, stockEntryUnit, stockInPcs, stockIssueValuation, stockLabel, stockReceiptValuation, unitCost, unitFactor } from './productUnits.js'
+import { availableQuantity, productPrice, purchaseCostFactor, purchaseCostPerPiece, purchaseCostUnit, quantityToPcs, salePricePerPiece, saleUnitPrice, saleUnits, stockCostValue, stockEntryUnit, stockInPcs, stockIssueValuation, stockLabel, stockReceiptValuation, unitCost, unitFactor } from './productUnits.js'
 
 test('uses the standard conversion factors', () => {
   assert.equal(unitFactor('pcs'), 1)
@@ -90,6 +90,12 @@ test('uses stored inventory value instead of recalculating historic stock at the
 })
 
 test('applies each sale-tier price per piece and multiplies it by the selected unit size', () => {
+  assert.equal(salePricePerPiece(360000, 'lusin'), 30000)
+  assert.equal(salePricePerPiece(30000, 'pcs'), 30000)
+  assert.equal(
+    saleUnitPrice({ price_lusin: salePricePerPiece(360000, 'lusin') }, 'lusin'),
+    360000
+  )
   const product = {
     unit: 'kodi',
     price: 900000,

@@ -98,6 +98,10 @@ export function saleUnitPrice(product, unit) {
   return productPrice(product, unit) * unitFactor(unit)
 }
 
+export function salePricePerPiece(price, unit) {
+  return (Number(price) || 0) / unitFactor(unit)
+}
+
 export function unitCost(product, unit) {
   return (Number(product.cost) || 0) * unitFactor(unit)
 }

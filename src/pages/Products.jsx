@@ -6,7 +6,7 @@ import MoneyInput from '../components/MoneyInput.jsx'
 import CategorySelect from '../components/CategorySelect.jsx'
 import UnitSelect from '../components/UnitSelect.jsx'
 import Icon from '../components/Icon.jsx'
-import { availableQuantity, productPrice, purchaseCostFactor, purchaseCostPerPiece, purchaseCostUnit, quantityToPcs, saleUnitPrice, saleUnits, stockCostValue, stockEntryUnit, stockInPcs, stockReceiptValuation, unitFactor, stockLabel } from '../productUnits'
+import { availableQuantity, productPrice, purchaseCostFactor, purchaseCostPerPiece, purchaseCostUnit, quantityToPcs, salePricePerPiece, saleUnitPrice, saleUnits, stockCostValue, stockEntryUnit, stockInPcs, stockReceiptValuation, unitFactor, stockLabel } from '../productUnits'
 
 const EMPTY = {
   name: '',
@@ -122,7 +122,7 @@ export default function Products() {
       price: p.price || '',
       prices: {
         pcs: productPrice(p, 'pcs'),
-        lusin: productPrice(p, 'lusin')
+        lusin: saleUnitPrice(p, 'lusin')
       },
       cost: (Number(p.cost) || 0) * purchaseCostFactor(editUnit),
       stock: String(stockInPcs(p) / unitFactor(stockEntryUnit(editUnit))),
@@ -309,9 +309,9 @@ export default function Products() {
         name: form.name.trim(),
         category: form.category.trim(),
         unit: form.unit.trim(),
-        price: isStandard ? basePrice * unitFactor(form.unit) : basePrice,
+        price: basePrice,
         price_pcs: isStandard ? prices.pcs : 0,
-        price_lusin: isStandard ? prices.lusin : 0,
+        price_lusin: isStandard ? salePricePerPiece(prices.lusin, 'lusin') : 0,
         price_kodi: 0,
         image_path: imagePath
       }
@@ -438,7 +438,7 @@ export default function Products() {
                   {saleUnits(p.unit || 'pcs').map((unit) => (
                     <div className="product-price-row" key={unit}>
                       <span>{unit}</span>
-                      <strong>{rupiah(productPrice(p, unit))}/pcs</strong>
+                      <strong>{rupiah(saleUnitPrice(p, unit))}/{unit}</strong>
                     </div>
                   ))}
                 </td>
@@ -527,7 +527,7 @@ export default function Products() {
                 <div className="product-sale-price-fields">
                   {['pcs', 'lusin'].map((unit) => (
                     <div key={unit}>
-                      <label htmlFor={'product-price-' + unit}>{unit} (/pcs)</label>
+                      <label htmlFor={'product-price-' + unit}>Harga per {unit}</label>
                       <MoneyInput
                         inputRef={priceInputRefs[unit]}
                         id={'product-price-' + unit}
