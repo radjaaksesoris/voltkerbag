@@ -645,11 +645,6 @@ export default function Products() {
                 </div>
               </div>
             )}
-            {editId && (
-              <p className="muted small product-stock-hint">
-                Stok dan modal rata-rata mengikuti persediaan. Untuk menambah barang produksi baru dengan modal berbeda, gunakan tombol Tambah Stok.
-              </p>
-            )}
             <div className="modal-actions">
               {actionError && <p className="form-error" role="alert">{actionError}</p>}
               <button type="button" className="btn" disabled={saving} onClick={closeProductForm}>Batal</button>
