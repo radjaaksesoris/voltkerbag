@@ -209,16 +209,6 @@ export default function Settings() {
         )}
       </section>
 
-      <section className="card settings-section">
-        <div className="settings-section-heading">
-          <div>
-            <h3>Gambar produk</h3>
-            <p className="muted small">Unggah foto pada formulir Tambah/Edit Produk di Stok Barang. Gambar akan disimpan di Supabase Storage.</p>
-          </div>
-        </div>
-        <p className="settings-storage-note">Format JPG, PNG, atau WebP · maksimal 5 MB per gambar.</p>
-      </section>
-
       <section className="card settings-section backup-section">
         <div className="settings-section-heading">
           <div>
