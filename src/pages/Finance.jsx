@@ -5,6 +5,7 @@ import DateRangeFilter from '../components/DateRangeFilter.jsx'
 import { dateRangeTimestamps, hasDateRange, localDateValue } from '../dateFilter'
 import MoneyInput from '../components/MoneyInput.jsx'
 import CustomerIdentity from '../components/CustomerIdentity.jsx'
+import SelectInput from '../components/SelectInput.jsx'
 
 const TYPES = {
   income: { label: 'Pemasukan', cls: 'badge-ok' },
@@ -412,18 +413,19 @@ export default function Finance() {
             onSubmit={saveManualDebt}>
             <h3 id="manual-debt-title">Tambah hutang lama</h3>
             <label htmlFor="manual-debt-customer">Nama pelanggan</label>
-            <select
+            <SelectInput
               id="manual-debt-customer"
-              className="input"
+              className="finance-customer-select"
+              ariaLabel="Nama pelanggan"
               value={manualDebtCustomer}
-              onChange={(event) => setManualDebtCustomer(event.target.value)}
+              onChange={setManualDebtCustomer}
               required
-              disabled={customers.length === 0 || savingManualDebt}>
-              <option value="" disabled>Pilih pelanggan</option>
-              {customers.map((customer) => (
-                <option key={customer.id} value={customer.name}>{customer.name}</option>
-              ))}
-            </select>
+              disabled={customers.length === 0 || savingManualDebt}
+              placeholder="Pilih pelanggan"
+              options={customers.map((customer) => ({
+                value: customer.name,
+                label: customer.name
+              }))} />
             {customers.length === 0 && (
               <p className="muted small">Belum ada pelanggan di master. Tambahkan pelanggan terlebih dahulu di tab Setting.</p>
             )}
@@ -457,14 +459,16 @@ export default function Finance() {
             onSubmit={saveEntry}>
             <h3 id="finance-entry-title">{editingEntry ? 'Edit catatan keuangan' : 'Tambah catatan keuangan'}</h3>
             <label htmlFor="finance-entry-type">Jenis catatan</label>
-            <select
+            <SelectInput
               id="finance-entry-type"
-              className="input"
+              className="finance-entry-type-select"
+              ariaLabel="Jenis catatan"
               value={entryType}
-              onChange={(event) => setEntryType(event.target.value)}>
-              <option value="expense">Pengeluaran</option>
-              <option value="capital">Modal</option>
-            </select>
+              onChange={setEntryType}
+              options={[
+                { value: 'expense', label: 'Pengeluaran' },
+                { value: 'capital', label: 'Modal' }
+              ]} />
             <label htmlFor="finance-entry-date">Tanggal</label>
             <input
               id="finance-entry-date"

@@ -7,6 +7,7 @@ import TransactionDetails from '../components/TransactionDetails'
 import { getInvoiceNumber } from '../invoice'
 import MoneyInput from '../components/MoneyInput.jsx'
 import CustomerSelect from '../components/CustomerSelect.jsx'
+import SelectInput from '../components/SelectInput.jsx'
 import CustomerIdentity from '../components/CustomerIdentity.jsx'
 import { saleUnitPrice, saleUnits, stockInPcs, stockLabel, unitCost, unitFactor } from '../productUnits'
 import { dateRangeTimestamps, localDateValue } from '../dateFilter'
@@ -440,20 +441,16 @@ export default function Transactions() {
                     <strong>{c.name}</strong>
                     <div className="cart-item-meta">
                       <span className="muted small">{rupiah(c.price)} / {c.unit}</span>
-                      <select
-                        className="input cart-unit-select"
-                        aria-label={'Satuan jual ' + c.name}
+                      <SelectInput
+                        className="cart-unit-select"
+                        ariaLabel={'Satuan jual ' + c.name}
                         value={c.unit}
-                        onChange={(event) => changeCartUnit(c.productId, c.unit, event.target.value)}>
-                        {c.saleUnits.map((unit) => (
-                          <option
-                            key={unit}
-                            value={unit}
-                            disabled={unit !== c.unit && maxCartQuantity(c.productId, unit, c.unit) < c.qty}>
-                            {unit}
-                          </option>
-                        ))}
-                      </select>
+                        onChange={(unit) => changeCartUnit(c.productId, c.unit, unit)}
+                        options={c.saleUnits.map((unit) => ({
+                          value: unit,
+                          label: unit,
+                          disabled: unit !== c.unit && maxCartQuantity(c.productId, unit, c.unit) < c.qty
+                        }))} />
                     </div>
                   </div>
                   <div className="cart-item-bottom">
@@ -488,10 +485,14 @@ export default function Transactions() {
               </div>
               <div>
                 <label>Metode pembayaran</label>
-                <select className="input" value={paymentType} onChange={(e) => setPaymentType(e.target.value)}>
-                  <option value="cash">Tunai</option>
-                  <option value="credit">Kredit</option>
-                </select>
+                <SelectInput
+                  ariaLabel="Metode pembayaran"
+                  value={paymentType}
+                  onChange={setPaymentType}
+                  options={[
+                    { value: 'cash', label: 'Tunai' },
+                    { value: 'credit', label: 'Kredit' }
+                  ]} />
               </div>
             </div>
             {customerName && (
@@ -503,17 +504,21 @@ export default function Transactions() {
                 />
                 <div className="checkout-expedition-field">
                   <label htmlFor="checkout-expedition">Ekspedisi</label>
-                  <select
+                  <SelectInput
                     id="checkout-expedition"
-                    className="input"
+                    ariaLabel="Ekspedisi"
+                    className="checkout-expedition-select"
                     value={expeditionName}
                     disabled={expeditions.length === 0}
-                    onChange={(event) => setExpeditionName(event.target.value)}>
-                    <option value="">{expeditions.length ? 'Pilih' : 'Atur di Setting'}</option>
-                    {expeditions.map((expedition) => (
-                      <option key={expedition.id} value={expedition.name}>{expedition.name}</option>
-                    ))}
-                  </select>
+                    onChange={setExpeditionName}
+                    placeholder={expeditions.length ? 'Pilih' : 'Atur di Setting'}
+                    options={[
+                      { value: '', label: 'Pilih' },
+                      ...expeditions.map((expedition) => ({
+                        value: expedition.name,
+                        label: expedition.name
+                      }))
+                    ]} />
                 </div>
               </div>
             )}
