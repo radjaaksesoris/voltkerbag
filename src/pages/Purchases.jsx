@@ -3,6 +3,7 @@ import { getPurchaseEntries, onRefresh, put } from '../db'
 import { dateOnly, rupiah } from '../format'
 import { dateRangeTimestamps, localDateValue } from '../dateFilter'
 import MoneyInput from '../components/MoneyInput.jsx'
+import { formatPurchaseNote, parsePurchaseNote } from '../purchaseNote.js'
 
 const PURCHASE_CATEGORY = 'Pembelian bahan produksi'
 const PURCHASE_PAGE_SIZE = 20
@@ -17,8 +18,6 @@ export default function Purchases() {
   const [status, setStatus] = useState('')
   const [materialName, setMaterialName] = useState('')
   const [supplier, setSupplier] = useState('')
-  const [quantity, setQuantity] = useState('')
-  const [unit, setUnit] = useState('')
   const [amount, setAmount] = useState('')
   const [purchaseDate, setPurchaseDate] = useState(() => localDateValue(new Date()))
   const [saving, setSaving] = useState(false)
@@ -66,16 +65,10 @@ export default function Purchases() {
 
     const cleanMaterialName = materialName.trim()
     const cleanSupplier = supplier.trim()
-    const cleanUnit = unit.trim()
-    const numericQuantity = Number(quantity.replace(',', '.'))
     const numericAmount = Number(amount)
 
     if (!cleanMaterialName) {
-      setActionError('Nama bahan produksi wajib diisi.')
-      return
-    }
-    if (!Number.isFinite(numericQuantity) || numericQuantity <= 0 || !cleanUnit) {
-      setActionError('Masukkan jumlah pembelian dan satuannya dengan benar.')
+      setActionError('Nama pembelian wajib diisi.')
       return
     }
     if (!Number.isFinite(numericAmount) || numericAmount <= 0) {
@@ -89,18 +82,13 @@ export default function Purchases() {
       return
     }
 
-    const details = [
-      'Bahan: ' + cleanMaterialName,
-      'Jumlah: ' + quantity.trim() + ' ' + cleanUnit,
-      cleanSupplier ? 'Pemasok: ' + cleanSupplier : ''
-    ].filter(Boolean).join(' · ')
     savingLock.current = true
     setSaving(true)
     try {
       await put('finance', {
         type: 'expense',
         category: PURCHASE_CATEGORY,
-        note: details,
+        note: formatPurchaseNote(cleanMaterialName, cleanSupplier),
         amount: numericAmount,
         date: new Date(purchaseDate + 'T12:00:00').toISOString(),
         refId: null,
@@ -108,8 +96,6 @@ export default function Purchases() {
       })
       setMaterialName('')
       setSupplier('')
-      setQuantity('')
-      setUnit('')
       setAmount('')
       setPurchaseDate(localDateValue(new Date()))
       setPage(1)
@@ -142,8 +128,8 @@ export default function Purchases() {
       <section className="card purchase-form-card">
         <div className="purchase-heading">
           <div>
-            <h2>Pembelian bahan produksi</h2>
-            <p className="muted">Catat bahan yang dibeli dan masukkan nilainya ke pengeluaran keuangan.</p>
+            <h2>Pembelian</h2>
+            <p className="muted">Catat pembelian bahan produksi sebagai pengeluaran keuangan.</p>
           </div>
         </div>
         <p className="purchase-stock-notice">
@@ -151,67 +137,41 @@ export default function Purchases() {
         </p>
         <form className="purchase-form" onSubmit={savePurchase}>
           <div className="purchase-form-grid">
-            <div className="purchase-field purchase-material-field">
-              <label htmlFor="purchase-material">Nama bahan *</label>
+            <div className="purchase-field">
+              <label htmlFor="purchase-material">Pembelian *</label>
               <input
                 id="purchase-material"
                 className="input"
                 value={materialName}
                 onChange={(event) => setMaterialName(event.target.value)}
-                maxLength={120}
-                placeholder="Contoh: kain kanvas"
+                maxLength={200}
+                placeholder="Nama barang atau bahan yang dibeli"
                 required
               />
             </div>
             <div className="purchase-field">
-              <label htmlFor="purchase-supplier">Pemasok (opsional)</label>
+              <label htmlFor="purchase-supplier">Vendor (opsional)</label>
               <input
                 id="purchase-supplier"
                 className="input"
                 value={supplier}
                 onChange={(event) => setSupplier(event.target.value)}
                 maxLength={120}
-                placeholder="Nama toko atau pemasok"
+                placeholder="Nama vendor"
               />
             </div>
             <div className="purchase-field">
-              <label htmlFor="purchase-quantity">Jumlah *</label>
-              <input
-                id="purchase-quantity"
-                className="input"
-                type="text"
-                inputMode="decimal"
-                value={quantity}
-                onChange={(event) => setQuantity(event.target.value)}
-                maxLength={20}
-                placeholder="Contoh: 5"
-                required
-              />
-            </div>
-            <div className="purchase-field">
-              <label htmlFor="purchase-unit">Satuan *</label>
-              <input
-                id="purchase-unit"
-                className="input"
-                value={unit}
-                onChange={(event) => setUnit(event.target.value)}
-                maxLength={40}
-                placeholder="Contoh: meter"
-                required
-              />
-            </div>
-            <div className="purchase-field">
-              <label htmlFor="purchase-amount">Total pembelian *</label>
+              <label htmlFor="purchase-amount">Nominal *</label>
               <MoneyInput
                 id="purchase-amount"
                 value={amount}
                 onChange={setAmount}
-                placeholder="Masukkan total belanja"
+                placeholder="Masukkan nominal pembelian"
                 required
               />
             </div>
             <div className="purchase-field">
-              <label htmlFor="purchase-date">Tanggal pembelian *</label>
+              <label htmlFor="purchase-date">Tanggal *</label>
               <input
                 id="purchase-date"
                 className="input"
@@ -240,18 +200,22 @@ export default function Purchases() {
         </div>
         <table className="purchase-table">
           <thead>
-            <tr><th>Tanggal</th><th>Rincian bahan</th><th className="right">Total</th></tr>
+            <tr><th>Pembelian</th><th>Vendor</th><th className="right">Nominal</th><th>Tanggal</th></tr>
           </thead>
           <tbody>
             {entries.length === 0 ? (
-              <tr><td colSpan="3" className="muted center">Belum ada pembelian bahan yang dicatat.</td></tr>
-            ) : entries.map((entry) => (
-              <tr key={entry.id}>
-                <td>{dateOnly(entry.date || entry.createdAt)}</td>
-                <td className="purchase-details">{entry.note || '-'}</td>
-                <td className="right danger">{rupiah(entry.amount)}</td>
-              </tr>
-            ))}
+              <tr><td colSpan="4" className="muted center">Belum ada pembelian bahan yang dicatat.</td></tr>
+            ) : entries.map((entry) => {
+              const purchase = parsePurchaseNote(entry.note)
+              return (
+                <tr key={entry.id}>
+                  <td className="purchase-details">{purchase.purchase}</td>
+                  <td className="purchase-details">{purchase.vendor}</td>
+                  <td className="right danger">{rupiah(entry.amount)}</td>
+                  <td>{dateOnly(entry.date || entry.createdAt)}</td>
+                </tr>
+              )
+            })}
           </tbody>
         </table>
         {totalCount > 0 && (

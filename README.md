@@ -8,7 +8,7 @@ VOLTKER adalah aplikasi kasir React + Vite dengan Supabase sebagai sumber data u
 - Foto produk yang diunggah dari form Tambah/Edit Produk dan disimpan di Supabase Storage.
 - Backup manual seluruh data toko, termasuk saldo hutang lama, dan foto produk ke file ZIP privat di Supabase Storage.
 - Kasir tunai/kredit dengan nama pelanggan wajib; checkout dan pengurangan stok diproses atomik di database.
-- Tab Pembelian untuk mencatat nama bahan produksi, jumlah, pemasok, tanggal, dan total pembelian sebagai pengeluaran di buku kas. Catatan pembelian tidak mengubah stok produk dan pemasok dibayar lunas.
+- Tab Pembelian untuk mencatat nama pembelian, vendor, nominal, dan tanggal sebagai pengeluaran di buku kas. Catatan pembelian tidak mengubah stok produk dan vendor dibayar lunas.
 - Saldo hutang lama sebelum aplikasi digunakan dapat ditambahkan manual dari bagian Pelanggan dengan hutang; saldo ini bukan penjualan dan pelunasannya dicatat sebagai pemasukan.
 - Penambahan stok dikunci dan dicatat atomik di database, termasuk harga modal per batch. Nilai aset stok menghitung setiap batch; penjualan mengurangi nilai modal berdasarkan rata-rata tertimbang, bukan FIFO.
 - Pelunasan hutang pelanggan secara penuh atau sebagian dari tab Keuangan; pembayaran dialokasikan ke saldo hutang lama terlebih dahulu, lalu ke transaksi kredit tertua, dan dicatat di buku kas.
