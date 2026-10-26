@@ -257,13 +257,42 @@ export async function getDashboardData({ from, to, summaryFrom, summaryTo, page,
 }
 
 export async function getFinanceData({ from, to, page, pageSize }) {
-  const { data, error } = await getClient().rpc('get_finance_data', {
+  const client = getClient()
+  const { data, error } = await client.rpc('get_finance_data', {
     p_from: from,
     p_to: to,
     p_page: page,
     p_page_size: pageSize
   })
   throwIfError(error, 'Gagal memuat ringkasan keuangan')
+
+  const expeditionEntries = (data?.entries || []).filter((entry) =>
+    entry.refId != null
+    && String(entry.category || '').trim().toLocaleLowerCase('id-ID') === 'biaya ekspedisi'
+  )
+  if (expeditionEntries.length) {
+    const transactionIds = [...new Set(expeditionEntries.map((entry) => entry.refId))]
+    const { data: transactions, error: transactionError } = await client
+      .from(tableFor('transactions'))
+      .select('id, expedition, customerName')
+      .in('id', transactionIds)
+    throwIfError(transactionError, 'Gagal memuat detail ekspedisi untuk Buku Kas')
+
+    const transactionById = new Map((transactions || []).map((transaction) => [String(transaction.id), transaction]))
+    const expeditionEntryIds = new Set(expeditionEntries.map((entry) => entry.id))
+    data.entries = data.entries.map((entry) => {
+      if (!expeditionEntryIds.has(entry.id)) return entry
+      const transaction = transactionById.get(String(entry.refId))
+      const expedition = String(transaction?.expedition || '').trim()
+      if (!expedition) return entry
+      const customerName = String(transaction.customerName || '').trim() || 'Pelanggan'
+      return {
+        ...entry,
+        category: 'Biaya Ekspedisi ' + expedition + ' (' + customerName + ')'
+      }
+    })
+  }
+
   return data
 }
 
