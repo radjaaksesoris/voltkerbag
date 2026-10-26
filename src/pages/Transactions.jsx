@@ -350,7 +350,15 @@ export default function Transactions() {
           <div className="product-grid">
             {filtered.length === 0 && <p className="muted">Tidak ada produk. Tambahkan di menu Stok Barang.</p>}
             {filtered.map((p) => (
-              <article key={p.id} className="product-card">
+              <article
+                key={p.id}
+                className="product-card"
+                onClick={(event) => {
+                  if (event.target.closest('button')) return
+                  if (window.matchMedia('(max-width: 640px)').matches) {
+                    setExpandedProductId(p.id)
+                  }
+                }}>
                 <div className="product-card-heading">
                   {p.image_path ? (
                     <img className="product-card-image" src={getProductImageUrl(p.image_path)} width="48" height="48" alt="" />
