@@ -411,7 +411,6 @@ export default function Finance() {
             onClick={(event) => event.stopPropagation()}
             onSubmit={saveManualDebt}>
             <h3 id="manual-debt-title">Tambah hutang lama</h3>
-            <p className="muted">Catat saldo hutang yang sudah ada sebelum aplikasi digunakan. Catatan ini tidak dihitung sebagai penjualan.</p>
             <label htmlFor="manual-debt-customer">Nama pelanggan</label>
             <select
               id="manual-debt-customer"
