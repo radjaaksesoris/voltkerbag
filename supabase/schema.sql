@@ -1439,6 +1439,8 @@ begin
 end;
 $$;
 
+drop function if exists public.get_dashboard_data(timestamptz, timestamptz, timestamptz, timestamptz, integer, integer, boolean);
+
 create or replace function public.get_dashboard_data(
   p_from timestamptz,
   p_to timestamptz,
@@ -1446,7 +1448,8 @@ create or replace function public.get_dashboard_data(
   p_summary_to timestamptz,
   p_page integer,
   p_page_size integer,
-  p_credit_first boolean
+  p_credit_first boolean,
+  p_name_sort text
 )
 returns jsonb
 language plpgsql
@@ -1469,6 +1472,9 @@ begin
   if (p_from is not null and p_to is not null and p_from >= p_to)
      or (p_summary_from is not null and p_summary_to is not null and p_summary_from >= p_summary_to) then
     raise exception 'Rentang tanggal tidak valid.';
+  end if;
+  if coalesce(p_name_sort, 'date') not in ('date', 'asc', 'desc') then
+    raise exception 'Urutan nama transaksi tidak valid.';
   end if;
 
   select count(*), coalesce(sum(t.total), 0),
@@ -1510,7 +1516,8 @@ begin
   from (
     select t.*,
       case
-        when coalesce(p_credit_first, false)
+        when coalesce(p_name_sort, 'date') = 'date'
+          and coalesce(p_credit_first, false)
           and t."paymentType" = 'credit'
           and greatest(0, coalesce(t."balanceDue", t.total - coalesce(t."paidAmount", t.payment))) > 0
         then 0 else 1
@@ -1519,7 +1526,12 @@ begin
     where t.owner_id = current_user_id
       and (p_from is null or t."createdAt" >= p_from)
       and (p_to is null or t."createdAt" < p_to)
-    order by sort_rank, t."createdAt" desc nulls last, t.id desc
+    order by
+      sort_rank,
+      case when coalesce(p_name_sort, 'date') = 'asc' then lower(trim(t."customerName")) end asc,
+      case when coalesce(p_name_sort, 'date') = 'desc' then lower(trim(t."customerName")) end desc,
+      t."createdAt" desc nulls last,
+      t.id desc
     limit p_page_size offset (p_page - 1) * p_page_size
   ) as page_rows;
 
@@ -1720,7 +1732,7 @@ revoke all on function public.record_customer_credit_payment(text, double precis
 revoke all on function public.delete_manual_finance_entry(bigint) from public, anon;
 revoke all on function public.reset_store_data() from public, anon;
 revoke all on function public.get_transaction_summary(timestamptz, timestamptz) from public, anon;
-revoke all on function public.get_dashboard_data(timestamptz, timestamptz, timestamptz, timestamptz, integer, integer, boolean) from public, anon;
+revoke all on function public.get_dashboard_data(timestamptz, timestamptz, timestamptz, timestamptz, integer, integer, boolean, text) from public, anon;
 revoke all on function public.get_finance_data(timestamptz, timestamptz, integer, integer) from public, anon;
 grant execute on function public.complete_sale(text, text, double precision, jsonb, text, uuid) to authenticated;
 grant execute on function public.add_manual_customer_credit(text, double precision, uuid) to authenticated;
@@ -1730,7 +1742,7 @@ grant execute on function public.record_customer_credit_payment(text, double pre
 grant execute on function public.delete_manual_finance_entry(bigint) to authenticated;
 grant execute on function public.reset_store_data() to authenticated;
 grant execute on function public.get_transaction_summary(timestamptz, timestamptz) to authenticated;
-grant execute on function public.get_dashboard_data(timestamptz, timestamptz, timestamptz, timestamptz, integer, integer, boolean) to authenticated;
+grant execute on function public.get_dashboard_data(timestamptz, timestamptz, timestamptz, timestamptz, integer, integer, boolean, text) to authenticated;
 grant execute on function public.get_finance_data(timestamptz, timestamptz, integer, integer) to authenticated;
 revoke delete on public.finance_entries from public, anon, authenticated;
 grant select, insert, update on public.finance_entries to authenticated;

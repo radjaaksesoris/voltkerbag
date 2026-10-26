@@ -242,7 +242,7 @@ export async function restoreBackupArchive(file, onProgress = () => {}) {
   }
 }
 
-export async function getDashboardData({ from, to, summaryFrom, summaryTo, page, pageSize, creditFirst }) {
+export async function getDashboardData({ from, to, summaryFrom, summaryTo, page, pageSize, creditFirst, nameSort }) {
   const { data, error } = await getClient().rpc('get_dashboard_data', {
     p_from: from,
     p_to: to,
@@ -250,7 +250,8 @@ export async function getDashboardData({ from, to, summaryFrom, summaryTo, page,
     p_summary_to: summaryTo,
     p_page: page,
     p_page_size: pageSize,
-    p_credit_first: creditFirst
+    p_credit_first: creditFirst,
+    p_name_sort: nameSort
   })
   throwIfError(error, 'Gagal memuat ringkasan dashboard')
   return data

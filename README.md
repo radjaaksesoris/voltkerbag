@@ -3,7 +3,7 @@
 VOLTKER adalah aplikasi kasir React + Vite dengan Supabase sebagai sumber data utama. **Koneksi internet dan login akun toko wajib digunakan.** Aplikasi tidak membaca, menulis, atau mengimpor data dari IndexedDB/perangkat.
 
 ## Fitur
-- Dashboard penjualan, stok, riwayat transaksi, filter tanggal, dan detail barang.
+- Dashboard penjualan, stok, riwayat transaksi, filter tanggal, urutan transaksi berdasarkan nama pelanggan atau status pembayaran, dan detail barang.
 - Daftar nama pelanggan di tab Setting, dengan pilihan pelanggan wajib saat checkout.
 - Master ekspedisi di tab Setting, dengan pilihan opsional saat checkout dan penyimpanan pada riwayat transaksi/faktur.
 - Biaya ekspedisi yang ditanggung toko otomatis membuat catatan pengeluaran tertunda di Buku Kas; admin wajib melengkapi nominal aktual dari bukti pembayaran.

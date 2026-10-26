@@ -24,6 +24,7 @@ export default function Dashboard() {
     return { from: today, to: today }
   })
   const [creditFirst, setCreditFirst] = useState(false)
+  const [nameSort, setNameSort] = useState('date')
   const [transactionPage, setTransactionPage] = useState(1)
   const [selectedTransaction, setSelectedTransaction] = useState(null)
   const [customers, setCustomers] = useState([])
@@ -73,7 +74,8 @@ export default function Dashboard() {
           summaryTo: summaryRange.to,
           page: transactionPage,
           pageSize: TRANSACTIONS_PER_PAGE,
-          creditFirst
+          creditFirst,
+          nameSort
         })
         if (!active || currentRequest !== requestId.current) return
         if (!dashboardData.inventory) {
@@ -102,7 +104,7 @@ export default function Dashboard() {
       active = false
       unsubscribe()
     }
-  }, [dateRange, transactionPage, creditFirst])
+  }, [dateRange, transactionPage, creditFirst, nameSort])
 
   if (!loaded) return <div className="page"><p className="muted">Memuat data dari server...</p></div>
   if (loadError) {
@@ -184,7 +186,29 @@ export default function Dashboard() {
           <thead>
             <tr>
               <th className="dashboard-row-number">No</th>
-              <th>Nama</th>
+              <th>
+                <button
+                  type="button"
+                  className={'dashboard-payment-sort' + (nameSort !== 'date' ? ' active' : '')}
+                  aria-pressed={nameSort !== 'date'}
+                  aria-label={
+                    nameSort === 'asc'
+                      ? 'Urutkan nama Z ke A'
+                      : nameSort === 'desc'
+                        ? 'Urutkan nama berdasarkan tanggal transaksi'
+                        : 'Urutkan nama A ke Z'
+                  }
+                  onClick={() => {
+                    setCreditFirst(false)
+                    setNameSort((current) => current === 'date' ? 'asc' : current === 'asc' ? 'desc' : 'date')
+                    setTransactionPage(1)
+                  }}>
+                  <span>Nama</span>
+                  <span className="dashboard-payment-sort-indicator" aria-hidden="true">
+                    {nameSort === 'asc' ? '↑' : nameSort === 'desc' ? '↓' : '↕'}
+                  </span>
+                </button>
+              </th>
               <th>Tanggal</th>
               <th>
                 <button
@@ -194,6 +218,7 @@ export default function Dashboard() {
                   aria-label={creditFirst ? 'Urutkan kembali berdasarkan tanggal' : 'Tampilkan kredit yang belum lunas di atas'}
                   onClick={() => {
                     setCreditFirst((current) => !current)
+                    setNameSort('date')
                     setTransactionPage(1)
                   }}>
                   <span>Pembayaran</span>
