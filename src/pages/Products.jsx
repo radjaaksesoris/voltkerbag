@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { addProductStock, getAll, getProductImageUrl, put, remove, removeProductImage, setProductStock, updateProductDetails, uploadProductImage, onRefresh } from '../db'
 import { rupiah } from '../format'
+import { isSafeRupiahAmount } from '../money'
 import MoneyInput from '../components/MoneyInput.jsx'
 import CategorySelect from '../components/CategorySelect.jsx'
 import UnitSelect from '../components/UnitSelect.jsx'
@@ -175,8 +176,8 @@ export default function Products() {
       setStockError('Masukkan jumlah stok berupa bilangan bulat yang lebih dari nol.')
       return
     }
-    if (!Number.isFinite(enteredUnitCost) || enteredUnitCost < 0) {
-      setStockError('Masukkan harga modal yang valid dan tidak kurang dari Rp0.')
+    if (!isSafeRupiahAmount(enteredUnitCost, true)) {
+      setStockError('Harga modal harus rupiah utuh dan tidak melebihi batas nominal yang aman.')
       return
     }
 
@@ -297,7 +298,7 @@ export default function Products() {
     const basePrice = isStandard
       ? prices[form.unit.trim().toLocaleLowerCase('id-ID')]
       : Number(form.price)
-    if (isStandard && (!Number.isFinite(modalPerPiece) || modalPerPiece <= 0)) {
+    if (isStandard && (!isSafeRupiahAmount(form.cost) || !Number.isFinite(modalPerPiece) || modalPerPiece <= 0)) {
       setActionError('Harga modal wajib lebih dari Rp0 untuk menghitung harga jual.')
       return
     }
@@ -305,12 +306,16 @@ export default function Products() {
       setActionError('Isi persentase markup PCS dan LUSIN dengan angka yang valid.')
       return
     }
-    if (isStandard && Object.values(prices).some((price) => !Number.isFinite(price) || price <= 0)) {
-      setActionError('Isi harga jual PCS dan LUSIN dengan nominal lebih dari Rp0.')
+    if (isStandard && Object.values(prices).some((price) => !isSafeRupiahAmount(price))) {
+      setActionError('Harga jual harus rupiah utuh lebih dari Rp0 dan tidak melebihi batas aman.')
       return
     }
-    if (!Number.isFinite(basePrice) || basePrice <= 0) {
-      setActionError('Harga jual wajib diisi dengan nominal lebih dari Rp0.')
+    if (!isSafeRupiahAmount(basePrice)) {
+      setActionError('Harga jual harus rupiah utuh lebih dari Rp0 dan tidak melebihi batas aman.')
+      return
+    }
+    if (!isStandard && !isSafeRupiahAmount(form.cost, true)) {
+      setActionError('Harga modal harus rupiah utuh dan tidak melebihi batas nominal yang aman.')
       return
     }
     const baseStock = Number(form.stock)

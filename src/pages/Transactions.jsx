@@ -12,6 +12,7 @@ import CustomerIdentity from '../components/CustomerIdentity.jsx'
 import { saleUnitPrice, saleUnits, stockInPcs, stockLabel, unitCost, unitFactor } from '../productUnits'
 import { dateRangeTimestamps, localDateValue } from '../dateFilter'
 import { downloadInvoiceJpeg } from '../invoiceJpeg'
+import { isSafeRupiahAmount } from '../money'
 
 export default function Transactions() {
   const [products, setProducts] = useState([])
@@ -213,6 +214,14 @@ export default function Transactions() {
     }
 
     if (cart.length === 0) { setCheckoutError('Keranjang masih kosong.'); return }
+    if (!isSafeRupiahAmount(total, true) || cart.some((item) => !isSafeRupiahAmount(item.price))) {
+      setCheckoutError('Total transaksi melebihi batas nominal rupiah yang aman. Periksa harga produk.')
+      return
+    }
+    if (!isSafeRupiahAmount(paidNow, true)) {
+      setCheckoutError('Nominal pembayaran harus rupiah utuh dan tidak melebihi batas aman.')
+      return
+    }
     if (paymentType === 'cash' && change < 0) { setCheckoutError('Uang tunai kurang dari total belanja.'); return }
     if (paymentType === 'credit' && (paidNow < 0 || paidNow > total)) {
       setCheckoutError('Pembayaran awal harus antara Rp0 dan total belanja.')
@@ -286,8 +295,8 @@ export default function Transactions() {
     setInstallmentError('')
     const amount = Number(installmentAmount)
     const balance = getBalanceDue(installmentTransaction)
-    if (!Number.isFinite(amount) || amount <= 0) {
-      setInstallmentError('Masukkan jumlah pembayaran yang lebih dari Rp0.')
+    if (!isSafeRupiahAmount(amount)) {
+      setInstallmentError('Masukkan pembayaran rupiah utuh lebih dari Rp0 dan tidak melebihi batas aman.')
       return
     }
     if (amount > balance) {

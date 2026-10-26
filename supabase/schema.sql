@@ -1119,7 +1119,12 @@ begin
   if p_payment_type is null or p_payment_type not in ('cash', 'credit') then
     raise exception 'Metode pembayaran tidak valid.';
   end if;
-  if p_payment is null or p_payment < 0 then raise exception 'Nominal pembayaran tidak valid.'; end if;
+  if p_payment is null or p_payment < 0
+     or p_payment > 9007199254740991::double precision
+     or p_payment <> trunc(p_payment)
+     or p_payment::text in ('NaN', 'Infinity', '-Infinity') then
+    raise exception 'Nominal pembayaran harus rupiah utuh dalam batas aman.';
+  end if;
   if p_request_id is null then raise exception 'ID permintaan transaksi wajib diisi.'; end if;
   if p_cart is null or jsonb_typeof(p_cart) <> 'array' then
     raise exception 'Keranjang masih kosong.';
@@ -1226,6 +1231,13 @@ begin
     where id = product_row.id and owner_id = current_user_id;
   end loop;
 
+  if sale_total <= 0
+     or sale_total > 9007199254740991::double precision
+     or sale_total <> trunc(sale_total)
+     or sale_total::text in ('NaN', 'Infinity', '-Infinity') then
+    raise exception 'Total transaksi melebihi batas nominal rupiah yang aman.';
+  end if;
+
   if p_payment_type = 'cash' and p_payment < sale_total then
     raise exception 'Uang tunai kurang dari total belanja.';
   end if;
@@ -1326,7 +1338,12 @@ begin
   if transaction_row."paymentType" <> 'credit' then
     raise exception 'Cicilan hanya dapat dicatat untuk transaksi kredit.';
   end if;
-  if p_amount is null or p_amount <= 0 then raise exception 'Nominal cicilan harus lebih dari Rp0.'; end if;
+  if p_amount is null or p_amount <= 0
+     or p_amount > 9007199254740991::double precision
+     or p_amount <> trunc(p_amount)
+     or p_amount::text in ('NaN', 'Infinity', '-Infinity') then
+    raise exception 'Nominal cicilan harus rupiah utuh dalam batas aman.';
+  end if;
   if p_amount > transaction_row."balanceDue" then
     raise exception 'Nominal cicilan melebihi sisa utang.';
   end if;
@@ -1379,6 +1396,8 @@ begin
   if clean_customer_name = '' then raise exception 'Nama pelanggan wajib diisi.'; end if;
   if length(clean_customer_name) > 120 then raise exception 'Nama pelanggan maksimal 120 karakter.'; end if;
   if p_amount is null or p_amount <= 0
+     or p_amount > 9007199254740991::double precision
+     or p_amount <> trunc(p_amount)
      or p_amount = 'Infinity'::double precision
      or p_amount = '-Infinity'::double precision
      or p_amount = 'NaN'::double precision then
@@ -1436,8 +1455,11 @@ begin
   if p_customer_name is null or btrim(p_customer_name) = '' then
     raise exception 'Nama pelanggan wajib diisi.';
   end if;
-  if p_amount is null or p_amount <= 0 then
-    raise exception 'Nominal pembayaran harus lebih dari Rp0.';
+  if p_amount is null or p_amount <= 0
+     or p_amount > 9007199254740991::double precision
+     or p_amount <> trunc(p_amount)
+     or p_amount::text in ('NaN', 'Infinity', '-Infinity') then
+    raise exception 'Nominal pembayaran harus rupiah utuh dalam batas aman.';
   end if;
 
   perform pg_advisory_xact_lock(hashtextextended(current_user_id::text || p_request_id::text, 0));
@@ -1752,8 +1774,11 @@ declare
 begin
   if current_user_id is null then raise exception 'Login diperlukan.'; end if;
   if p_entry_id is null then raise exception 'Catatan biaya ekspedisi tidak valid.'; end if;
-  if p_amount is null or p_amount <= 0 or p_amount::text in ('NaN', 'Infinity', '-Infinity') then
-    raise exception 'Biaya ekspedisi harus lebih dari Rp0.';
+  if p_amount is null or p_amount <= 0
+     or p_amount > 9007199254740991::double precision
+     or p_amount <> trunc(p_amount)
+     or p_amount::text in ('NaN', 'Infinity', '-Infinity') then
+    raise exception 'Biaya ekspedisi harus rupiah utuh dalam batas aman.';
   end if;
 
   select * into entry_row

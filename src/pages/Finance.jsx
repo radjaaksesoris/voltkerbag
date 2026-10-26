@@ -6,6 +6,7 @@ import { dateRangeTimestamps, hasDateRange, localDateValue } from '../dateFilter
 import MoneyInput from '../components/MoneyInput.jsx'
 import CustomerIdentity from '../components/CustomerIdentity.jsx'
 import SelectInput from '../components/SelectInput.jsx'
+import { isSafeRupiahAmount } from '../money'
 
 const TYPES = {
   income: { label: 'Pemasukan', cls: 'badge-ok' },
@@ -179,8 +180,8 @@ export default function Finance() {
       setManualDebtError('Pilih nama pelanggan dari master pelanggan.')
       return
     }
-    if (!Number.isFinite(amount) || amount <= 0) {
-      setManualDebtError('Nominal hutang harus lebih dari Rp0.')
+    if (!isSafeRupiahAmount(amount)) {
+      setManualDebtError('Nominal hutang harus rupiah utuh lebih dari Rp0 dan tidak melebihi batas aman.')
       return
     }
 
@@ -205,8 +206,12 @@ export default function Finance() {
     setCreditPaymentError('')
     const balanceDue = Number(selectedDebt.balance_due)
     const amount = creditPaymentMode === 'full' ? balanceDue : Number(creditPaymentAmount)
-    if (!Number.isFinite(amount) || amount <= 0) {
-      setCreditPaymentError('Nominal pembayaran harus lebih dari Rp0.')
+    if (!isSafeRupiahAmount(balanceDue, true)) {
+      setCreditPaymentError('Sisa hutang melebihi batas nominal rupiah yang aman. Periksa data hutang.')
+      return
+    }
+    if (!isSafeRupiahAmount(amount)) {
+      setCreditPaymentError('Nominal harus rupiah utuh lebih dari Rp0 dan tidak melebihi batas aman.')
       return
     }
     if (amount > balanceDue) {
@@ -240,8 +245,8 @@ export default function Finance() {
     setActionError('')
     const amount = Number(entryAmount)
     if (editingEntry?.pending) {
-      if (!Number.isFinite(amount) || amount <= 0) {
-        setActionError('Biaya ekspedisi harus lebih dari Rp0.')
+      if (!isSafeRupiahAmount(amount)) {
+        setActionError('Biaya ekspedisi harus rupiah utuh lebih dari Rp0 dan tidak melebihi batas aman.')
         return
       }
       setSavingEntry(true)
@@ -260,8 +265,8 @@ export default function Finance() {
       setActionError('Pilih jenis pengeluaran atau modal.')
       return
     }
-    if (!Number.isFinite(amount) || amount <= 0) {
-      setActionError('Nominal harus lebih dari Rp0.')
+    if (!isSafeRupiahAmount(amount)) {
+      setActionError('Nominal harus rupiah utuh lebih dari Rp0 dan tidak melebihi batas aman.')
       return
     }
     if (!/^\d{4}-\d{2}-\d{2}$/.test(entryDate) || Number.isNaN(new Date(entryDate + 'T12:00:00').getTime())) {

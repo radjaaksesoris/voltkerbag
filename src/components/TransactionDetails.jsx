@@ -8,6 +8,7 @@ import ReceiptPreview from './ReceiptPreview'
 import Icon from './Icon.jsx'
 import CustomerIdentity from './CustomerIdentity.jsx'
 import { downloadInvoiceJpeg } from '../invoiceJpeg'
+import { isSafeRupiahAmount } from '../money'
 
 export default function TransactionDetails({ transaction, onClose, onTransactionUpdated, allowPayment = true }) {
   const [showReceipt, setShowReceipt] = useState(false)
@@ -71,8 +72,12 @@ export default function TransactionDetails({ transaction, onClose, onTransaction
     if (operationLock.current) return
     setPaymentError('')
     const paymentAmount = Number(amount)
-    if (!Number.isFinite(paymentAmount) || paymentAmount <= 0) {
-      setPaymentError('Masukkan nominal pembayaran lebih dari Rp0.')
+    if (!isSafeRupiahAmount(balanceDue, true)) {
+      setPaymentError('Sisa tagihan melebihi batas nominal rupiah yang aman. Periksa data transaksi.')
+      return
+    }
+    if (!isSafeRupiahAmount(paymentAmount)) {
+      setPaymentError('Nominal harus rupiah utuh lebih dari Rp0 dan tidak melebihi batas aman.')
       return
     }
     if (paymentAmount > balanceDue) {
