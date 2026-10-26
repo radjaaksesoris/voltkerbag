@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { addProductStock, getAll, getProductImageUrl, put, remove, removeProductImage, updateProductDetails, uploadProductImage, onRefresh } from '../db'
 import { rupiah } from '../format'
 import MoneyInput from '../components/MoneyInput.jsx'
@@ -463,6 +464,7 @@ export default function Products() {
       </div>
 
       {showForm && (
+        createPortal(
         <div className="overlay product-form-overlay" onClick={closeProductForm}>
           <form className="modal product-modal" onClick={(e) => e.stopPropagation()} onKeyDown={handleProductFormKeyDown} onSubmit={save}>
             <div className="product-modal-heading">
@@ -564,10 +566,13 @@ export default function Products() {
               </button>
             </div>
           </form>
-        </div>
+        </div>,
+        document.body
+        )
       )}
 
       {stockProduct && (
+        createPortal(
         <div className="overlay" onClick={() => !stockSaving && setStockProduct(null)}>
           <form className="modal add-stock-modal" onClick={(event) => event.stopPropagation()} onSubmit={addStock}>
             <h3>Tambah Stok</h3>
@@ -616,7 +621,9 @@ export default function Products() {
               </button>
             </div>
           </form>
-        </div>
+        </div>,
+        document.body
+        )
       )}
     </div>
   )
