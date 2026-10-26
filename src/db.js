@@ -32,6 +32,15 @@ const BACKUP_TABLES = {
   stockAdjustments: 'product_stock_adjustments'
 }
 const BACKUP_CHUNK_MAX_BYTES = 180 * 1024
+const MASTER_DATA_CACHE_TTL_MS = 30_000
+const masterDataCache = new Map()
+let masterDataCacheGeneration = 0
+let refreshCacheInvalidationInstalled = false
+
+function invalidateMasterDataCache() {
+  masterDataCacheGeneration += 1
+  masterDataCache.clear()
+}
 
 function tableFor(store) {
   const table = TABLES[store]
@@ -46,14 +55,43 @@ function throwIfError(error, context) {
 export async function getAll(store) {
   const table = tableFor(store)
   const client = getClient()
+  const { data: { session }, error: sessionError } = await client.auth.getSession()
+  throwIfError(sessionError, 'Gagal memeriksa sesi saat memuat ' + table)
+  const cacheKey = (session?.user?.id || 'anonymous') + ':' + store
+  const cached = masterDataCache.get(cacheKey)
+  if (cached && (cached.pending || cached.expiresAt > Date.now())) return cached.promise
+
   const rows = []
   const pageSize = 1000
+  let lastId = 0
+  const cacheGeneration = masterDataCacheGeneration
 
-  for (let from = 0; ; from += pageSize) {
-    const { data, error } = await client.from(table).select('*').order('id').range(from, from + pageSize - 1)
-    throwIfError(error, 'Gagal memuat ' + table)
-    rows.push(...(data || []))
-    if (!data || data.length < pageSize) return rows
+  const promise = (async () => {
+    for (;;) {
+      const { data, error } = await client
+        .from(table)
+        .select('*')
+        .gt('id', lastId)
+        .order('id')
+        .limit(pageSize)
+      throwIfError(error, 'Gagal memuat ' + table)
+      rows.push(...(data || []))
+      if (!data || data.length < pageSize) return rows
+      lastId = data[data.length - 1].id
+    }
+  })()
+
+  const cacheEntry = { expiresAt: Date.now() + MASTER_DATA_CACHE_TTL_MS, pending: true, promise }
+  masterDataCache.set(cacheKey, cacheEntry)
+  try {
+    const result = await promise
+    if (cacheGeneration !== masterDataCacheGeneration) return getAll(store)
+    cacheEntry.pending = false
+    cacheEntry.expiresAt = Date.now() + MASTER_DATA_CACHE_TTL_MS
+    return result
+  } catch (error) {
+    if (masterDataCache.get(cacheKey)?.promise === promise) masterDataCache.delete(cacheKey)
+    throw error
   }
 }
 
@@ -62,6 +100,12 @@ export async function createBackupArchive() {
   const { data: { user }, error: userError } = await client.auth.getUser()
   throwIfError(userError, 'Gagal memeriksa akun untuk backup')
   if (!user) throw new Error('Sesi login tidak ditemukan. Silakan masuk kembali.')
+
+  const { data: startRevision, error: startRevisionError } = await client.rpc('get_store_backup_revision')
+  if (startRevisionError?.code === 'PGRST202') {
+    throw new Error('Pembaruan skema backup belum diterapkan. Jalankan supabase/schema.sql di Supabase sebelum membuat backup.')
+  }
+  throwIfError(startRevisionError, 'Gagal memeriksa konsistensi data backup')
 
   const archive = new JSZip()
   const recordManifest = {}
@@ -116,6 +160,12 @@ export async function createBackupArchive() {
     const archivePath = 'images/' + path
     archive.file(archivePath, data)
     images.push({ storagePath: path, archivePath })
+  }
+
+  const { data: endRevision, error: endRevisionError } = await client.rpc('get_store_backup_revision')
+  throwIfError(endRevisionError, 'Gagal memeriksa konsistensi data backup')
+  if (String(startRevision) !== String(endRevision)) {
+    throw new Error('Data toko berubah selama backup berlangsung. Tidak ada backup yang disimpan; silakan ulangi saat aktivitas data lebih tenang.')
   }
 
   archive.file('data.json', JSON.stringify({
@@ -727,10 +777,15 @@ export async function remove(store, id) {
 }
 
 export function notifyRefresh() {
+  invalidateMasterDataCache()
   window.dispatchEvent(new CustomEvent('voltker:refresh'))
 }
 
 export function onRefresh(fn) {
+  if (!refreshCacheInvalidationInstalled) {
+    window.addEventListener('voltker:refresh', invalidateMasterDataCache)
+    refreshCacheInvalidationInstalled = true
+  }
   window.addEventListener('voltker:refresh', fn)
   return () => window.removeEventListener('voltker:refresh', fn)
 }
