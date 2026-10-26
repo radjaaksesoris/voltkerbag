@@ -530,8 +530,14 @@ export default function Transactions() {
               <button className="btn btn-primary" onClick={() => {
                 setPreviewTransaction(done.transaction)
               }}>Cetak struk</button>
-              <button className="btn" type="button" disabled={invoiceDownloading} onClick={() => downloadInvoice(done.transaction)}>
-                <Icon name="download" size={15} /> {invoiceDownloading ? 'Menyiapkan...' : 'Download faktur'}
+              <button
+                className="btn"
+                type="button"
+                aria-label={invoiceDownloading ? 'Menyiapkan download faktur' : 'Download faktur'}
+                title={invoiceDownloading ? 'Menyiapkan download faktur' : 'Download faktur'}
+                disabled={invoiceDownloading}
+                onClick={() => downloadInvoice(done.transaction)}>
+                <Icon name="download" size={15} />
               </button>
               <button className="btn btn-primary" onClick={() => setDone(null)}>Tutup</button>
             </div>
