@@ -1,6 +1,6 @@
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
-import { recordTransactionPayment } from '../db'
+import { getTransactionPayments, recordTransactionPayment } from '../db'
 import { rupiah, dateTime, dateOnly } from '../format'
 import { getInvoiceNumber } from '../invoice'
 import MoneyInput from './MoneyInput'
@@ -14,7 +14,8 @@ export default function TransactionDetails({ transaction, onClose, onTransaction
   const [invoiceDownloading, setInvoiceDownloading] = useState(false)
   const [invoiceDownloadError, setInvoiceDownloadError] = useState('')
   const [invoiceDownloadStatus, setInvoiceDownloadStatus] = useState('')
-  const payments = transaction.payments || []
+  const [payments, setPayments] = useState(transaction.payments || [])
+  const [paymentsError, setPaymentsError] = useState('')
   const paidAmount = transaction.paidAmount != null
     ? Number(transaction.paidAmount)
     : Math.min(Number(transaction.total) || 0, Number(transaction.payment) || 0)
@@ -26,6 +27,30 @@ export default function TransactionDetails({ transaction, onClose, onTransaction
   const [savingPayment, setSavingPayment] = useState(false)
   const paymentRequest = useRef(null)
   const operationLock = useRef(false)
+  const paymentsLoadGeneration = useRef(0)
+
+  useEffect(() => {
+    if (transaction.paymentType !== 'credit') return
+    let active = true
+    const generation = ++paymentsLoadGeneration.current
+    setPayments(transaction.payments || [])
+    setPaymentsError('')
+    getTransactionPayments(transaction.id)
+      .then((rows) => {
+        if (active && generation === paymentsLoadGeneration.current) {
+          setPayments(rows)
+          setPaymentsError('')
+        }
+      })
+      .catch((error) => {
+        if (active && generation === paymentsLoadGeneration.current) {
+          setPaymentsError(error.message || 'Gagal memuat riwayat pembayaran.')
+        }
+      })
+    return () => {
+      active = false
+    }
+  }, [transaction.id, transaction.paymentType])
 
   async function downloadInvoice() {
     setInvoiceDownloading(true)
@@ -76,6 +101,8 @@ export default function TransactionDetails({ transaction, onClose, onTransaction
         balanceDue: Math.max(0, Number(transaction.total) - updatedPaidAmount),
         payments: [...payments, { amount: paymentAmount, date: new Date().toISOString() }]
       }
+      paymentsLoadGeneration.current += 1
+      setPayments(updatedTransaction.payments)
       onTransactionUpdated?.(updatedTransaction)
       setAmount(String(updatedTransaction.balanceDue))
     } catch (error) {
@@ -155,6 +182,7 @@ export default function TransactionDetails({ transaction, onClose, onTransaction
         {transaction.paymentType === 'credit' && (
           <section className="transaction-details-payments">
             <h4>Riwayat pembayaran</h4>
+            {paymentsError && <p className="form-error" role="alert">{paymentsError}</p>}
             {payments.length === 0 ? (
               <p className="muted small">Belum ada pembayaran.</p>
             ) : (

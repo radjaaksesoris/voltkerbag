@@ -50,6 +50,7 @@ export async function createBackupArchive() {
     vendors: 'vendor_names',
     expeditions: 'expedition_names',
     transactions: 'transactions',
+    transactionPayments: 'transaction_payments',
     finance: 'finance_entries',
     manualCredits: 'manual_customer_credits',
     stockAdjustments: 'product_stock_adjustments'
@@ -141,6 +142,7 @@ export async function restoreBackupArchive(file, onProgress = () => {}) {
 
   const requiredRecordKeys = ['products', 'categories', 'units', 'customers', 'transactions', 'finance', 'stockAdjustments']
   if (!backup.records || requiredRecordKeys.some((key) => !Array.isArray(backup.records[key]))
+    || (backup.records.transactionPayments !== undefined && !Array.isArray(backup.records.transactionPayments))
     || (backup.records.manualCredits != null && !Array.isArray(backup.records.manualCredits))
     || (backup.records.vendors != null && !Array.isArray(backup.records.vendors))
     || (backup.records.expeditions != null && !Array.isArray(backup.records.expeditions))) {
@@ -319,6 +321,17 @@ export async function getTransactionSummary({ from, to }) {
   })
   throwIfError(error, 'Gagal memuat ringkasan transaksi')
   return data
+}
+
+export async function getTransactionPayments(transactionId) {
+  const { data, error } = await getClient()
+    .from('transaction_payments')
+    .select('id, amount, date')
+    .eq('transaction_id', transactionId)
+    .order('date', { ascending: true })
+    .order('id', { ascending: true })
+  throwIfError(error, 'Gagal memuat riwayat pembayaran transaksi')
+  return data || []
 }
 
 export async function put(store, value) {
