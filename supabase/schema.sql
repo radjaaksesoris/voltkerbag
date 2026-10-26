@@ -278,6 +278,11 @@ create policy "Users can read their own customer names" on public.customer_names
 drop policy if exists "Users can add their own customer names" on public.customer_names;
 create policy "Users can add their own customer names" on public.customer_names
   for insert to authenticated with check ((select auth.uid()) = owner_id);
+drop policy if exists "Users can update their own customer names" on public.customer_names;
+create policy "Users can update their own customer names" on public.customer_names
+  for update to authenticated
+  using ((select auth.uid()) = owner_id)
+  with check ((select auth.uid()) = owner_id);
 drop policy if exists "Users can delete their own customer names" on public.customer_names;
 create policy "Users can delete their own customer names" on public.customer_names
   for delete to authenticated using ((select auth.uid()) = owner_id);
@@ -328,8 +333,8 @@ grant select, insert on public.product_categories to authenticated;
 revoke update, delete on public.product_categories from anon, authenticated;
 grant select, insert on public.product_units to authenticated;
 revoke update, delete on public.product_units from anon, authenticated;
-grant select, insert, delete on public.customer_names to authenticated;
-revoke update on public.customer_names from anon, authenticated;
+grant select, insert, update, delete on public.customer_names to authenticated;
+revoke update on public.customer_names from anon;
 
 insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
 values ('product-images', 'product-images', true, 5242880, array['image/jpeg', 'image/png', 'image/webp'])

@@ -7,6 +7,10 @@ export default function Settings() {
   const [name, setName] = useState('')
   const [phone, setPhone] = useState('')
   const [address, setAddress] = useState('')
+  const [editingCustomer, setEditingCustomer] = useState(null)
+  const [editName, setEditName] = useState('')
+  const [editPhone, setEditPhone] = useState('')
+  const [editAddress, setEditAddress] = useState('')
   const [loadError, setLoadError] = useState('')
   const [actionError, setActionError] = useState('')
   const [loaded, setLoaded] = useState(false)
@@ -60,6 +64,53 @@ export default function Settings() {
       setAddress('')
     } catch (error) {
       setActionError(error.message || 'Gagal menambahkan nama pelanggan.')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  function startEditingCustomer(customer) {
+    setActionError('')
+    setEditingCustomer(customer)
+    setEditName(customer.name)
+    setEditPhone(customer.phone || '')
+    setEditAddress(customer.address || '')
+  }
+
+  function cancelEditingCustomer() {
+    setEditingCustomer(null)
+    setEditName('')
+    setEditPhone('')
+    setEditAddress('')
+  }
+
+  async function saveCustomer(event) {
+    event.preventDefault()
+    const normalizedName = editName.trim()
+    if (!normalizedName) {
+      setActionError('Nama pelanggan wajib diisi.')
+      return
+    }
+    if (customers.some((customer) =>
+      customer.id !== editingCustomer.id
+      && customer.name.toLocaleLowerCase('id-ID') === normalizedName.toLocaleLowerCase('id-ID')
+    )) {
+      setActionError('Nama pelanggan tersebut sudah ada.')
+      return
+    }
+
+    setSaving(true)
+    setActionError('')
+    try {
+      await put('customers', {
+        ...editingCustomer,
+        name: normalizedName,
+        phone: editPhone.trim() || null,
+        address: editAddress.trim() || null
+      })
+      cancelEditingCustomer()
+    } catch (error) {
+      setActionError(error.message || 'Gagal memperbarui data pelanggan.')
     } finally {
       setSaving(false)
     }
@@ -188,21 +239,81 @@ export default function Settings() {
           <ul className="customer-list">
             {customers.map((customer) => (
               <li key={customer.id}>
-                <div className="customer-info">
-                  <strong>{customer.name}</strong>
-                  {(customer.phone || customer.address) && (
-                    <span className="customer-contact">
-                      {[customer.phone, customer.address].filter(Boolean).join(' · ')}
-                    </span>
-                  )}
-                </div>
-                <button
-                  className="btn btn-sm btn-danger"
-                  type="button"
-                  aria-label={'Hapus ' + customer.name}
-                  onClick={() => deleteCustomer(customer)}>
-                  <Icon name="trash" size={14} /> Hapus
-                </button>
+                {editingCustomer?.id === customer.id ? (
+                  <form className="customer-edit-form" onSubmit={saveCustomer}>
+                    <div className="settings-customer-fields">
+                      <div>
+                        <label htmlFor={'edit-customer-name-' + customer.id}>Nama pelanggan</label>
+                        <input
+                          id={'edit-customer-name-' + customer.id}
+                          className="input"
+                          value={editName}
+                          maxLength={100}
+                          onChange={(event) => setEditName(event.target.value)}
+                          required
+                        />
+                      </div>
+                      <div>
+                        <label htmlFor={'edit-customer-phone-' + customer.id}>No. telepon (opsional)</label>
+                        <input
+                          id={'edit-customer-phone-' + customer.id}
+                          className="input"
+                          type="tel"
+                          autoComplete="tel"
+                          maxLength={32}
+                          value={editPhone}
+                          onChange={(event) => setEditPhone(event.target.value)}
+                        />
+                      </div>
+                      <div>
+                        <label htmlFor={'edit-customer-address-' + customer.id}>Alamat (opsional)</label>
+                        <input
+                          id={'edit-customer-address-' + customer.id}
+                          className="input"
+                          autoComplete="street-address"
+                          maxLength={250}
+                          value={editAddress}
+                          onChange={(event) => setEditAddress(event.target.value)}
+                        />
+                      </div>
+                    </div>
+                    <div className="customer-actions">
+                      <button className="btn btn-sm" type="button" onClick={cancelEditingCustomer} disabled={saving}>Batal</button>
+                      <button className="btn btn-sm btn-primary" type="submit" disabled={saving || !editName.trim()}>
+                        {saving ? 'Menyimpan...' : 'Simpan'}
+                      </button>
+                    </div>
+                  </form>
+                ) : (
+                  <>
+                    <div className="customer-info">
+                      <strong>{customer.name}</strong>
+                      {(customer.phone || customer.address) && (
+                        <span className="customer-contact">
+                          {[customer.phone, customer.address].filter(Boolean).join(' · ')}
+                        </span>
+                      )}
+                    </div>
+                    <div className="customer-actions">
+                      <button
+                        className="btn btn-sm"
+                        type="button"
+                        onClick={() => startEditingCustomer(customer)}
+                        disabled={saving}
+                        aria-label={'Edit ' + customer.name}>
+                        Edit
+                      </button>
+                      <button
+                        className="btn btn-sm btn-danger"
+                        type="button"
+                        aria-label={'Hapus ' + customer.name}
+                        onClick={() => deleteCustomer(customer)}
+                        disabled={saving}>
+                        <Icon name="trash" size={14} /> Hapus
+                      </button>
+                    </div>
+                  </>
+                )}
               </li>
             ))}
           </ul>

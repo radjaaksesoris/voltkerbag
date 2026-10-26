@@ -1162,10 +1162,14 @@ select.input { appearance: none; }
 .settings-customer-fields > div { min-width: 0; }
 .customer-list { display: grid; gap: 7px; max-height: 380px; margin-top: 14px; overflow-y: auto; list-style: none; }
 .customer-list li { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 12px; border: 1px solid var(--border); border-radius: 9px; background: rgba(255, 255, 255, .55); font-size: 13px; }
-.customer-list .btn { display: inline-flex; align-items: center; gap: 5px; }
+.customer-list .btn { display: inline-flex; align-items: center; justify-content: center; gap: 5px; }
 .customer-info { display: grid; min-width: 0; gap: 2px; }
 .customer-info strong { color: var(--ink); font-weight: 600; }
 .customer-contact { color: var(--muted); font-size: 11px; overflow-wrap: anywhere; }
+.customer-edit-form { display: grid; width: 100%; gap: 10px; }
+.customer-edit-form .settings-customer-fields { flex: 1; }
+.customer-edit-form .input { min-width: 0; }
+.customer-actions { display: flex; flex: 0 0 auto; align-items: center; gap: 6px; }
 .settings-empty { display: grid; gap: 4px; padding: 18px 2px 2px; color: var(--muted); font-size: 12px; }
 .settings-empty span:first-child { color: var(--ink); font-weight: 600; }
 .settings-storage-note { padding: 10px 12px; border-left: 3px solid var(--accent); border-radius: 0 7px 7px 0; background: var(--bg-soft); color: var(--muted); font-size: 11px; }
@@ -1452,6 +1456,11 @@ select.input { appearance: none; }
   .settings-customer-fields { grid-template-columns: 1fr; gap: 8px; }
   .settings-add-form .btn { justify-content: center; }
   .customer-list li { padding: 8px 9px; font-size: 12px; }
+  .customer-list li:has(.customer-edit-form) { align-items: stretch; }
+  .customer-edit-form .settings-customer-fields { grid-template-columns: 1fr; gap: 8px; }
+  .customer-edit-form .customer-actions { justify-content: flex-end; }
+  .customer-list li:not(:has(.customer-edit-form)) { align-items: flex-start; }
+  .customer-list li:not(:has(.customer-edit-form)) .customer-actions { flex-direction: column; }
   .settings-section-heading { gap: 9px; }
   .transaction-details-meta { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 7px; }
   .transaction-details-meta > div:nth-child(3) { grid-column: 1 / -1; }
