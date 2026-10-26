@@ -494,17 +494,22 @@ export default function Products() {
                 <td>
                   <span className={'badge ' + (availableQuantity(p, p.unit || 'pcs') <= 5 ? 'badge-danger' : 'badge-ok')}>
                     <span className="product-stock-desktop">{stockLabel(p)}</span>
-                    <span className="product-stock-mobile">{stockInPcs(p)} pcs</span>
                   </span>
                 </td>
                 <td className="row-actions">
                   <div className="product-row-actions">
-                    <button className="btn btn-sm product-stock-action" onClick={() => openAddStock(p)}>
+                    <button className="btn btn-sm product-stock-action" aria-label={'Tambah stok ' + p.name} title="Tambah Stok" onClick={() => openAddStock(p)}>
                       <Icon name="plus" size={13} />
-                      <span>Tambah Stok</span>
+                      <span className="product-action-label">Tambah Stok</span>
                     </button>
-                    <button className="btn btn-sm" onClick={() => openEdit(p)}>Edit</button>
-                    <button className="btn btn-sm btn-danger" onClick={() => del(p)}>Hapus</button>
+                    <button className="btn btn-sm product-edit-action" aria-label={'Edit produk ' + p.name} title="Edit" onClick={() => openEdit(p)}>
+                      <Icon name="edit" size={13} />
+                      <span className="product-action-label">Edit</span>
+                    </button>
+                    <button className="btn btn-sm btn-danger product-delete-action" aria-label={'Hapus produk ' + p.name} title="Hapus" onClick={() => del(p)}>
+                      <Icon name="trash" size={13} />
+                      <span className="product-action-label">Hapus</span>
+                    </button>
                   </div>
                 </td>
               </tr>
