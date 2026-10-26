@@ -433,6 +433,10 @@ export default function Products() {
     </div>
   }
 
+  const stockFieldValue = editId
+    ? stockLabel({ unit: stockEntryUnit(form.unit), stock: Number(form.stock) })
+    : form.stock
+
   return (
     <div className="page">
       {actionError && <p className="form-error" role="alert">{actionError}</p>}
@@ -630,7 +634,7 @@ export default function Products() {
               <div className="product-stock-fields">
                 <div>
                   <label>Stok ({stockEntryUnit(form.unit)})</label>
-                  <input ref={stockInputRef} className="input" type="number" min="0" step="any" value={form.stock} onChange={(e) => setForm({ ...form, stock: e.target.value })} disabled={Boolean(editId)} />
+                  <input ref={stockInputRef} className="input" type={editId ? 'text' : 'number'} min={editId ? undefined : '0'} step={editId ? undefined : 'any'} value={stockFieldValue} onChange={(e) => setForm({ ...form, stock: e.target.value })} disabled={Boolean(editId)} />
                 </div>
               </div>
             ) : (
@@ -641,7 +645,7 @@ export default function Products() {
                 </div>
                 <div>
                   <label>Stok ({stockEntryUnit(form.unit)})</label>
-                  <input ref={stockInputRef} className="input" type="number" min="0" step="any" value={form.stock} onChange={(e) => setForm({ ...form, stock: e.target.value })} disabled={Boolean(editId)} />
+                  <input ref={stockInputRef} className="input" type={editId ? 'text' : 'number'} min={editId ? undefined : '0'} step={editId ? undefined : 'any'} value={stockFieldValue} onChange={(e) => setForm({ ...form, stock: e.target.value })} disabled={Boolean(editId)} />
                 </div>
               </div>
             )}

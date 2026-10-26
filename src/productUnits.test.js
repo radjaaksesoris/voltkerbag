@@ -23,6 +23,7 @@ test('reads legacy stock in the product main unit', () => {
   assert.equal(quantityToPcs(1.5, 'lusin'), 18)
   assert.equal(stockLabel({ unit: 'kodi', stock_pcs: 19 }), '19 pcs')
   assert.equal(stockLabel({ unit: 'kodi', stock_pcs: 28 }), '28 pcs')
+  assert.equal(stockLabel({ unit: 'lusin', stock: 215 / 12 }), '17 lusin 11 pcs')
 })
 
 test('enters initial stock in lusin for standard products', () => {
