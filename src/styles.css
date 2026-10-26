@@ -1221,9 +1221,18 @@ label { display: block; margin-bottom: 6px; color: var(--muted); font-size: 11px
 .product-image-preview img { width: 92px; height: 76px; border: 1px solid var(--border); border-radius: 9px; background: var(--bg-soft); object-fit: cover; }
 .settings-page { display: grid; max-width: 900px; gap: 16px; }
 .settings-section { min-width: 0; }
-.settings-section-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; margin-bottom: 18px; }
+.settings-section-heading { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin: 0; list-style: none; cursor: pointer; }
+.settings-section-heading::-webkit-details-marker { display: none; }
+.settings-section-heading::marker { content: ''; }
+.settings-section-heading > div:first-child { min-width: 0; }
 .settings-section-heading h3 { margin: 0 0 4px; color: var(--ink); font-size: 16px; }
 .settings-section-heading .muted { max-width: 58ch; line-height: 1.5; }
+.settings-section-controls { display: flex; flex: 0 0 auto; align-items: center; gap: 10px; color: var(--muted); }
+.settings-section-heading > .icon { flex: 0 0 auto; color: var(--muted); transition: transform .18s ease; }
+.settings-section[open] > .settings-section-heading { margin-bottom: 18px; }
+.settings-section[open] > .settings-section-heading > .icon { transform: rotate(180deg); }
+.settings-section[open] > .settings-section-heading .settings-section-controls > .icon { transform: rotate(180deg); }
+.settings-section-content { min-width: 0; }
 .settings-count { flex: 0 0 auto; padding: 5px 9px; border-radius: 6px; background: var(--accent-soft); color: var(--accent-dark); font-size: 11px; font-weight: 700; }
 .settings-add-form { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: end; gap: 12px; padding-bottom: 17px; border-bottom: 1px solid var(--border); }
 .settings-add-form label { margin-bottom: 6px; }
@@ -1534,6 +1543,7 @@ label { display: block; margin-bottom: 6px; color: var(--muted); font-size: 11px
   .customer-list li:not(:has(.customer-edit-form)) .customer-actions .btn { width: 40px; min-width: 40px; min-height: 40px; padding: 0; }
   .settings-action-label { display: none; }
   .settings-section-heading { gap: 9px; }
+  .settings-section-controls { gap: 6px; }
   .transaction-details-meta { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 7px; }
   .transaction-details-meta > div:nth-child(3) { grid-column: 1 / -1; }
   .transaction-details-meta div { padding: 9px 11px; }

@@ -378,14 +378,18 @@ export default function Settings() {
 
   return (
     <div className="page settings-page">
-      <section className="card settings-section">
-        <div className="settings-section-heading">
+      <details className="card settings-section" defaultOpen>
+        <summary className="settings-section-heading">
           <div>
             <h3>Nama pelanggan</h3>
             <p className="muted small">Kelola pilihan nama yang tersedia di kasir.</p>
           </div>
-          <span className="settings-count">{customers.length} nama</span>
-        </div>
+          <div className="settings-section-controls">
+            <span className="settings-count">{customers.length} nama</span>
+            <Icon name="chevronDown" size={18} />
+          </div>
+        </summary>
+        <div className="settings-section-content">
 
         {actionError && <p className="form-error" role="alert">{actionError}</p>}
 
@@ -523,16 +527,21 @@ export default function Settings() {
             ))}
           </ul>
         )}
-      </section>
+        </div>
+      </details>
 
-      <section className="card settings-section">
-        <div className="settings-section-heading">
+      <details className="card settings-section">
+        <summary className="settings-section-heading">
           <div>
             <h3>Nama vendor</h3>
             <p className="muted small">Kelola pilihan vendor yang tersedia saat mencatat pembelian.</p>
           </div>
-          <span className="settings-count">{vendors.length} nama</span>
-        </div>
+          <div className="settings-section-controls">
+            <span className="settings-count">{vendors.length} nama</span>
+            <Icon name="chevronDown" size={18} />
+          </div>
+        </summary>
+        <div className="settings-section-content">
 
         {vendorActionError && <p className="form-error" role="alert">{vendorActionError}</p>}
 
@@ -611,16 +620,21 @@ export default function Settings() {
             ))}
           </ul>
         )}
-      </section>
+        </div>
+      </details>
 
-      <section className="card settings-section">
-        <div className="settings-section-heading">
+      <details className="card settings-section">
+        <summary className="settings-section-heading">
           <div>
             <h3>Nama ekspedisi</h3>
             <p className="muted small">Kelola pilihan ekspedisi yang tersedia saat checkout transaksi.</p>
           </div>
-          <span className="settings-count">{expeditions.length} nama</span>
-        </div>
+          <div className="settings-section-controls">
+            <span className="settings-count">{expeditions.length} nama</span>
+            <Icon name="chevronDown" size={18} />
+          </div>
+        </summary>
+        <div className="settings-section-content">
 
         {expeditionActionError && <p className="form-error" role="alert">{expeditionActionError}</p>}
 
@@ -699,15 +713,18 @@ export default function Settings() {
             ))}
           </ul>
         )}
-      </section>
+        </div>
+      </details>
 
-      <section className="card settings-section backup-section">
-        <div className="settings-section-heading">
+      <details className="card settings-section backup-section">
+        <summary className="settings-section-heading">
           <div>
             <h3>Backup data</h3>
             <p className="muted small">Simpan seluruh data toko dan foto produk sebagai file ZIP privat di Supabase Storage.</p>
           </div>
-        </div>
+          <Icon name="chevronDown" size={18} />
+        </summary>
+        <div className="settings-section-content">
         {backupError && <p className="form-error" role="alert">{backupError}</p>}
         {backupStatus && <p className="backup-success" role="status">{backupStatus}</p>}
         <div className="backup-actions">
@@ -734,15 +751,18 @@ export default function Settings() {
         </div>
         {restoreError && <p className="form-error" role="alert">{restoreError}</p>}
         {restoreStatus && <p className="backup-success" role="status">{restoreStatus}</p>}
-      </section>
+        </div>
+      </details>
 
-      <section className="card settings-section reset-section">
-        <div className="settings-section-heading">
+      <details className="card settings-section reset-section">
+        <summary className="settings-section-heading">
           <div>
             <h3>Reset data toko</h3>
             <p className="muted small">Hapus data operasional agar toko dapat dimulai kembali dari awal.</p>
           </div>
-        </div>
+          <Icon name="chevronDown" size={18} />
+        </summary>
+        <div className="settings-section-content">
         <p className="reset-description">
           Produk dan stok, transaksi, data keuangan dan hutang, daftar pelanggan, kategori, serta satuan akan dihapus.
           Akun login, file backup, dan foto produk di penyimpanan tetap dipertahankan.
@@ -760,7 +780,8 @@ export default function Settings() {
           }}>
           <Icon name="trash" size={15} /> Reset semua data toko
         </button>
-      </section>
+        </div>
+      </details>
 
       {showResetDialog && (
         <div className="overlay" onClick={() => !resetSaving && setShowResetDialog(false)}>
