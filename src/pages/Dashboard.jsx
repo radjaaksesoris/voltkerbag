@@ -1,11 +1,12 @@
 import { useEffect, useRef, useState } from 'react'
-import { getDashboardData, onRefresh } from '../db'
+import { getAll, getDashboardData, onRefresh } from '../db'
 import { rupiah, dateOnly, dateTime } from '../format'
 import DateRangeFilter from '../components/DateRangeFilter'
 import { dateRangeTimestamps, hasDateRange, localDateValue } from '../dateFilter'
 import TransactionDetails from '../components/TransactionDetails'
 import { getInvoiceNumber } from '../invoice'
 import Icon from '../components/Icon.jsx'
+import CustomerIdentity from '../components/CustomerIdentity.jsx'
 
 const TRANSACTIONS_PER_PAGE = 15
 
@@ -25,10 +26,32 @@ export default function Dashboard() {
   const [creditFirst, setCreditFirst] = useState(false)
   const [transactionPage, setTransactionPage] = useState(1)
   const [selectedTransaction, setSelectedTransaction] = useState(null)
+  const [customers, setCustomers] = useState([])
+  const [customerLoadError, setCustomerLoadError] = useState('')
   const [loadError, setLoadError] = useState('')
   const [loaded, setLoaded] = useState(false)
   const [refreshing, setRefreshing] = useState(false)
   const requestId = useRef(0)
+
+  useEffect(() => {
+    let active = true
+    async function loadCustomers() {
+      try {
+        const customerRows = await getAll('customers')
+        if (!active) return
+        setCustomers(customerRows)
+        setCustomerLoadError('')
+      } catch (error) {
+        if (active) setCustomerLoadError(error.message || 'Gagal memuat data kontak pelanggan.')
+      }
+    }
+    loadCustomers()
+    const unsubscribe = onRefresh(loadCustomers)
+    return () => {
+      active = false
+      unsubscribe()
+    }
+  }, [])
 
   useEffect(() => {
     let active = true
@@ -144,6 +167,7 @@ export default function Dashboard() {
       </div>
 
       <div className="card table-card dashboard-transactions">
+        {customerLoadError && <p className="form-error" role="alert">{customerLoadError}</p>}
         <div className="dashboard-transactions-heading">
           <h3>Transaksi Terakhir</h3>
           <button
@@ -193,7 +217,11 @@ export default function Dashboard() {
                 <tr key={t.id}>
                   <td className="dashboard-row-number">{pageStart + index + 1}</td>
                   <td>
-                    <strong className="transaction-customer">{t.customerName || 'Pelanggan lama'}</strong>
+                    <CustomerIdentity
+                      name={t.customerName}
+                      customer={customers.find((customer) => customer.name === t.customerName)}
+                      className="transaction-customer"
+                    />
                     <span className="transaction-invoice">{getInvoiceNumber(t)}</span>
                   </td>
                   <td>
@@ -208,7 +236,11 @@ export default function Dashboard() {
                     <strong className="dashboard-amount-mobile">{rupiah(t.total).replace(/[^\d.,-]/g, '')}</strong>
                   </td>
                   <td className="right">
-                    <button className="btn btn-sm btn-primary" onClick={() => setSelectedTransaction(t)}>Detail</button>
+                    <button className="btn btn-sm btn-primary" onClick={() => setSelectedTransaction({
+                      ...t,
+                      customerPhone: customers.find((customer) => customer.name === t.customerName)?.phone || '',
+                      customerAddress: customers.find((customer) => customer.name === t.customerName)?.address || ''
+                    })}>Detail</button>
                   </td>
                 </tr>
               )

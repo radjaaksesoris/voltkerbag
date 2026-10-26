@@ -16,6 +16,8 @@
   --radius: 16px;
   --shadow: 0 14px 36px rgba(56, 39, 27, .07);
 }
+.receipt-preview-paper .receipt-meta .receipt-customer-identity { display: grid; justify-content: end; gap: 1mm; text-align: right; }
+.receipt-preview-paper .receipt-customer-identity .customer-identity-contact { color: #000; font-size: 7pt; }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
 html { scroll-behavior: smooth; }
@@ -512,6 +514,12 @@ h3 { margin-bottom: 16px; color: var(--ink); font-size: 15px; font-weight: 700; 
 .dashboard-row-number { width: 44px; color: var(--muted); font-variant-numeric: tabular-nums; }
 .transaction-customer, .transaction-invoice { display: block; }
 .transaction-customer { color: var(--ink); }
+.customer-identity { display: grid; min-width: 0; gap: 2px; }
+.customer-identity > strong { color: inherit; font-weight: 700; overflow-wrap: anywhere; }
+.customer-identity-contact { display: grid; gap: 1px; color: var(--muted); font-size: 10px; font-weight: 400; line-height: 1.4; overflow-wrap: anywhere; }
+.checkout-customer-identity { margin-top: 6px; padding: 8px 10px; border-left: 2px solid var(--accent); border-radius: 0 6px 6px 0; background: var(--bg-soft); }
+.checkout-customer-identity .customer-identity-contact { font-size: 11px; }
+.installment-customer { display: grid; gap: 4px; }
 .transaction-invoice { margin-top: 3px; color: var(--muted); font-size: 11px; font-variant-numeric: tabular-nums; letter-spacing: .2px; }
 .transaction-table { min-width: 1050px; }
 .transaction-table > thead th:first-child { min-width: 165px; }
@@ -910,7 +918,7 @@ select.input { appearance: none; }
 .credit-balances-total { flex: 0 0 auto; color: var(--danger); font-size: 17px; font-variant-numeric: tabular-nums; }
 .credit-balances-list { display: grid; max-height: 360px; overflow-y: auto; list-style: none; }
 .credit-balances-list li { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 2px; border-top: 1px solid var(--border); font-size: 12px; }
-.credit-balances-list li span { min-width: 0; overflow-wrap: anywhere; }
+.credit-balances-list li > .customer-identity { min-width: 0; }
 .credit-balances-list li strong { flex: 0 0 auto; color: var(--danger); font-variant-numeric: tabular-nums; }
 .credit-balances-empty { padding: 10px 0 2px; font-size: 12px; }
 .receipt-button { display: block; margin-bottom: 6px; white-space: nowrap; }
@@ -1150,9 +1158,14 @@ select.input { appearance: none; }
 .settings-add-form label { margin-bottom: 6px; }
 .settings-add-form .input { margin: 0; }
 .settings-add-form .btn { display: inline-flex; align-items: center; gap: 7px; min-height: 42px; }
+.settings-customer-fields { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.settings-customer-fields > div { min-width: 0; }
 .customer-list { display: grid; gap: 7px; max-height: 380px; margin-top: 14px; overflow-y: auto; list-style: none; }
 .customer-list li { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 12px; border: 1px solid var(--border); border-radius: 9px; background: rgba(255, 255, 255, .55); font-size: 13px; }
 .customer-list .btn { display: inline-flex; align-items: center; gap: 5px; }
+.customer-info { display: grid; min-width: 0; gap: 2px; }
+.customer-info strong { color: var(--ink); font-weight: 600; }
+.customer-contact { color: var(--muted); font-size: 11px; overflow-wrap: anywhere; }
 .settings-empty { display: grid; gap: 4px; padding: 18px 2px 2px; color: var(--muted); font-size: 12px; }
 .settings-empty span:first-child { color: var(--ink); font-weight: 600; }
 .settings-storage-note { padding: 10px 12px; border-left: 3px solid var(--accent); border-radius: 0 7px 7px 0; background: var(--bg-soft); color: var(--muted); font-size: 11px; }
@@ -1433,8 +1446,10 @@ select.input { appearance: none; }
   .receipt-preview-paper { min-height: 240px; aspect-ratio: auto; padding: 6mm; }
   .receipt-preview-paper .receipt-meta { grid-template-columns: 1fr; gap: 2mm; }
   .receipt-preview-paper .receipt-money { width: auto; }
+  .receipt-preview-paper .receipt-meta .receipt-customer-identity { gap: 1px; }
   .transaction-details { padding: 18px; }
   .settings-add-form { grid-template-columns: 1fr; align-items: stretch; gap: 8px; }
+  .settings-customer-fields { grid-template-columns: 1fr; gap: 8px; }
   .settings-add-form .btn { justify-content: center; }
   .customer-list li { padding: 8px 9px; font-size: 12px; }
   .settings-section-heading { gap: 9px; }

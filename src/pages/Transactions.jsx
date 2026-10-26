@@ -7,6 +7,7 @@ import TransactionDetails from '../components/TransactionDetails'
 import { getInvoiceNumber } from '../invoice'
 import MoneyInput from '../components/MoneyInput.jsx'
 import CustomerSelect from '../components/CustomerSelect.jsx'
+import CustomerIdentity from '../components/CustomerIdentity.jsx'
 import { productPrice, saleUnitPrice, saleUnits, stockInPcs, stockLabel, unitCost, unitFactor } from '../productUnits'
 import { dateRangeTimestamps, localDateValue } from '../dateFilter'
 
@@ -195,6 +196,8 @@ export default function Transactions() {
     const remaining = total - initialPayment
     const sale = {
       customerName: customerName.trim(),
+      customerPhone: customers.find((customer) => customer.name === customerName)?.phone || '',
+      customerAddress: customers.find((customer) => customer.name === customerName)?.address || '',
       paymentType,
       items: cart.map((c) => ({ productId: c.productId, name: c.name, unit: c.unit, price: c.price, cost: c.cost, qty: c.qty })),
       total,
@@ -444,6 +447,13 @@ export default function Transactions() {
                   value={customerName}
                   onChange={setCustomerName}
                 />
+                {customerName && (
+                  <CustomerIdentity
+                    name={customerName}
+                    customer={customers.find((customer) => customer.name === customerName)}
+                    className="checkout-customer-identity"
+                  />
+                )}
               </div>
               <div>
                 <label>Metode pembayaran</label>
@@ -509,7 +519,13 @@ export default function Transactions() {
         <div className="overlay" onClick={() => setInstallmentTransaction(null)}>
           <form className="modal" onClick={(e) => e.stopPropagation()} onSubmit={recordInstallment}>
             <h3>Catat cicilan</h3>
-            <p className="muted small">{installmentTransaction.customerName} · Transaksi #{installmentTransaction.id}</p>
+            <p className="muted small installment-customer">
+              <CustomerIdentity
+                name={installmentTransaction.customerName}
+                customer={customers.find((customer) => customer.name === installmentTransaction.customerName)}
+              />
+              <span>Transaksi #{installmentTransaction.id}</span>
+            </p>
             <p className="installment-balance">Sisa utang <strong>{rupiah(getBalanceDue(installmentTransaction))}</strong></p>
             <label>Jumlah pembayaran</label>
             <MoneyInput value={installmentAmount} onChange={setInstallmentAmount}

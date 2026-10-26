@@ -5,6 +5,8 @@ import Icon from '../components/Icon.jsx'
 export default function Settings() {
   const [customers, setCustomers] = useState([])
   const [name, setName] = useState('')
+  const [phone, setPhone] = useState('')
+  const [address, setAddress] = useState('')
   const [loadError, setLoadError] = useState('')
   const [actionError, setActionError] = useState('')
   const [loaded, setLoaded] = useState(false)
@@ -48,8 +50,14 @@ export default function Settings() {
     setSaving(true)
     setActionError('')
     try {
-      await put('customers', { name: normalizedName })
+      await put('customers', {
+        name: normalizedName,
+        phone: phone.trim() || null,
+        address: address.trim() || null
+      })
       setName('')
+      setPhone('')
+      setAddress('')
     } catch (error) {
       setActionError(error.message || 'Gagal menambahkan nama pelanggan.')
     } finally {
@@ -128,16 +136,43 @@ export default function Settings() {
         {actionError && <p className="form-error" role="alert">{actionError}</p>}
 
         <form className="settings-add-form" onSubmit={addCustomer}>
-          <div>
-            <label htmlFor="new-customer-name">Nama pelanggan baru</label>
-            <input
-              id="new-customer-name"
-              className="input"
-              value={name}
-              maxLength={100}
-              onChange={(event) => setName(event.target.value)}
-              placeholder="Masukkan nama pelanggan"
-            />
+          <div className="settings-customer-fields">
+            <div>
+              <label htmlFor="new-customer-name">Nama pelanggan baru</label>
+              <input
+                id="new-customer-name"
+                className="input"
+                value={name}
+                maxLength={100}
+                onChange={(event) => setName(event.target.value)}
+                placeholder="Masukkan nama pelanggan"
+              />
+            </div>
+            <div>
+              <label htmlFor="new-customer-phone">No. telepon (opsional)</label>
+              <input
+                id="new-customer-phone"
+                className="input"
+                type="tel"
+                autoComplete="tel"
+                maxLength={32}
+                value={phone}
+                onChange={(event) => setPhone(event.target.value)}
+                placeholder="Contoh: 081234567890"
+              />
+            </div>
+            <div>
+              <label htmlFor="new-customer-address">Alamat (opsional)</label>
+              <input
+                id="new-customer-address"
+                className="input"
+                autoComplete="street-address"
+                maxLength={250}
+                value={address}
+                onChange={(event) => setAddress(event.target.value)}
+                placeholder="Masukkan alamat pelanggan"
+              />
+            </div>
           </div>
           <button className="btn btn-primary" type="submit" disabled={saving || !name.trim()}>
             <Icon name="plus" size={16} /> {saving ? 'Menyimpan...' : 'Tambah nama'}
@@ -153,7 +188,14 @@ export default function Settings() {
           <ul className="customer-list">
             {customers.map((customer) => (
               <li key={customer.id}>
-                <span>{customer.name}</span>
+                <div className="customer-info">
+                  <strong>{customer.name}</strong>
+                  {(customer.phone || customer.address) && (
+                    <span className="customer-contact">
+                      {[customer.phone, customer.address].filter(Boolean).join(' · ')}
+                    </span>
+                  )}
+                </div>
                 <button
                   className="btn btn-sm btn-danger"
                   type="button"

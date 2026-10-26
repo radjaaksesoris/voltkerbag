@@ -1,9 +1,10 @@
 import { useEffect, useRef, useState } from 'react'
-import { getFinanceData, put, remove, onRefresh } from '../db'
+import { getAll, getFinanceData, put, remove, onRefresh } from '../db'
 import { rupiah, dateOnly, dateTime } from '../format'
 import DateRangeFilter from '../components/DateRangeFilter.jsx'
 import { dateRangeTimestamps, hasDateRange, localDateValue } from '../dateFilter'
 import MoneyInput from '../components/MoneyInput.jsx'
+import CustomerIdentity from '../components/CustomerIdentity.jsx'
 
 const TYPES = {
   income: { label: 'Pemasukan', cls: 'badge-ok' },
@@ -29,6 +30,8 @@ export default function Finance() {
     credit_balances: []
   })
   const [dateRange, setDateRange] = useState(getTodayDateRange)
+  const [customers, setCustomers] = useState([])
+  const [customerLoadError, setCustomerLoadError] = useState('')
   const [page, setPage] = useState(1)
   const [loadError, setLoadError] = useState('')
   const [actionError, setActionError] = useState('')
@@ -42,6 +45,26 @@ export default function Finance() {
   const [entryAmount, setEntryAmount] = useState('')
   const [savingEntry, setSavingEntry] = useState(false)
   const requestId = useRef(0)
+
+  useEffect(() => {
+    let active = true
+    async function loadCustomers() {
+      try {
+        const customerRows = await getAll('customers')
+        if (!active) return
+        setCustomers(customerRows)
+        setCustomerLoadError('')
+      } catch (error) {
+        if (active) setCustomerLoadError(error.message || 'Gagal memuat data kontak pelanggan.')
+      }
+    }
+    loadCustomers()
+    const unsubscribe = onRefresh(loadCustomers)
+    return () => {
+      active = false
+      unsubscribe()
+    }
+  }, [])
 
   useEffect(() => {
     let active = true
@@ -191,13 +214,17 @@ export default function Finance() {
           </div>
           <strong className="credit-balances-total">{rupiah(totalCredit)}</strong>
         </div>
+        {customerLoadError && <p className="form-error" role="alert">{customerLoadError}</p>}
         {report.credit_balances.length === 0 ? (
           <p className="credit-balances-empty muted">Tidak ada pelanggan dengan hutang saat ini.</p>
         ) : (
           <ul className="credit-balances-list">
             {report.credit_balances.map((debt) => (
               <li key={debt.customer_name}>
-                <span>{debt.customer_name}</span>
+                <CustomerIdentity
+                  name={debt.customer_name}
+                  customer={customers.find((customer) => customer.name === debt.customer_name)}
+                />
                 <strong>{rupiah(Number(debt.balance_due))}</strong>
               </li>
             ))}

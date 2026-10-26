@@ -5,6 +5,7 @@ import { getInvoiceNumber } from '../invoice'
 import MoneyInput from './MoneyInput'
 import ReceiptPreview from './ReceiptPreview'
 import Icon from './Icon.jsx'
+import CustomerIdentity from './CustomerIdentity.jsx'
 
 export default function TransactionDetails({ transaction, onClose, onTransactionUpdated }) {
   const [showReceipt, setShowReceipt] = useState(false)
@@ -89,7 +90,12 @@ export default function TransactionDetails({ transaction, onClose, onTransaction
         </div>
 
         <dl className="transaction-details-meta">
-          <div><dt>Nama pelanggan</dt><dd>{transaction.customerName || 'Pelanggan lama'}</dd></div>
+          <div><dt>Nama pelanggan</dt><dd>
+            <CustomerIdentity
+              name={transaction.customerName}
+              customer={{ phone: transaction.customerPhone, address: transaction.customerAddress }}
+            />
+          </dd></div>
           <div><dt>Tanggal transaksi</dt><dd>{dateOnly(transaction.createdAt)}</dd></div>
           <div><dt>Metode pembayaran</dt><dd>{transaction.paymentType === 'credit' ? 'Kredit' : 'Tunai'}</dd></div>
         </dl>

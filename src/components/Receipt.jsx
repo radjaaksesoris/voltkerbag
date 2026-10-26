@@ -1,5 +1,6 @@
 import { rupiah, dateTime } from '../format'
 import { getInvoiceNumber } from '../invoice'
+import CustomerIdentity from './CustomerIdentity.jsx'
 
 function printRupiah(amount) {
   return rupiah(amount).replace(/\u00a0/g, ' ')
@@ -31,7 +32,11 @@ export default function Receipt({ transaction }) {
       <section className="receipt-meta">
         <div><span>No. Faktur</span><strong>{getInvoiceNumber(transaction)}</strong></div>
         <div><span>Tanggal</span><strong>{dateTime(transaction.createdAt)}</strong></div>
-        <div><span>Pelanggan</span><strong>{transaction.customerName || '-'}</strong></div>
+        <div><span>Pelanggan</span><CustomerIdentity
+          name={transaction.customerName || '-'}
+          customer={{ phone: transaction.customerPhone, address: transaction.customerAddress }}
+          className="receipt-customer-identity"
+        /></div>
         <div><span>Pembayaran</span><strong>{isCredit ? 'Kredit' : 'Tunai'}</strong></div>
       </section>
 
