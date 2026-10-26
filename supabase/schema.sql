@@ -131,6 +131,13 @@ set stock_pcs = round(coalesce(stock, 0) * case lower(trim(unit))
 where stock_pcs is null;
 
 update public.products
+set unit = 'pcs',
+    stock = stock_pcs,
+    price = price_pcs,
+    price_kodi = 0
+where lower(trim(unit)) = 'kodi';
+
+update public.products
 set stock_cost_value = coalesce(cost, 0) * coalesce(stock_pcs, 0)
 where stock_cost_value is null;
 
@@ -160,6 +167,7 @@ alter table public.product_units add column if not exists owner_id uuid default 
 alter table public.product_units add column if not exists name text;
 alter table public.product_units add column if not exists "createdAt" timestamptz;
 alter table public.product_units add column if not exists "updatedAt" timestamptz;
+delete from public.product_units where lower(trim(name)) = 'kodi';
 
 alter table public.customer_names add column if not exists owner_id uuid default auth.uid();
 alter table public.customer_names add column if not exists name text;
@@ -323,7 +331,7 @@ from (
   select id from auth.users
 ) as store_owners
 cross join (
-  select name from (values ('pcs'), ('lusin'), ('kodi')) as standard_units(name)
+  select name from (values ('pcs'), ('lusin')) as standard_units(name)
   union
   select distinct trim(unit) from public.products where nullif(trim(unit), '') is not null
 ) as defaults
@@ -465,7 +473,6 @@ set search_path = public, pg_temp
 as $$
   select case lower(trim(coalesce(p_unit, '')))
     when 'lusin' then 12
-    when 'kodi' then 20
     else 1
   end;
 $$;
@@ -708,12 +715,12 @@ begin
     requested_unit := lower(trim(coalesce(item ->> 'unit', product_row.unit)));
     base_factor := public.product_unit_factor(product_row.unit);
     sale_factor := public.product_unit_factor(requested_unit);
-    if lower(trim(product_row.unit)) not in ('pcs', 'lusin', 'kodi')
+    if lower(trim(product_row.unit)) not in ('pcs', 'lusin')
        and requested_unit <> lower(trim(product_row.unit)) then
       raise exception 'Satuan transaksi untuk "%" tidak valid.', product_row.name;
     end if;
-    if lower(trim(product_row.unit)) in ('pcs', 'lusin', 'kodi')
-       and requested_unit not in ('pcs', 'lusin', 'kodi') then
+    if lower(trim(product_row.unit)) in ('pcs', 'lusin')
+       and requested_unit not in ('pcs', 'lusin') then
       raise exception 'Satuan transaksi untuk "%" tidak valid.', product_row.name;
     end if;
     stock_deduction := item_qty * sale_factor;
@@ -723,7 +730,6 @@ begin
     sale_price := case requested_unit
       when 'pcs' then product_row.price_pcs
       when 'lusin' then product_row.price_lusin
-      when 'kodi' then product_row.price_kodi
       else product_row.price
     end;
     if sale_price <= 0 then

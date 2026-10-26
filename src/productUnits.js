@@ -1,7 +1,6 @@
 export const STANDARD_UNITS = [
   { name: 'pcs', factor: 1 },
-  { name: 'lusin', factor: 12 },
-  { name: 'kodi', factor: 20 }
+  { name: 'lusin', factor: 12 }
 ]
 
 function normalizedUnit(unit) {
@@ -9,18 +8,21 @@ function normalizedUnit(unit) {
 }
 
 export function unitFactor(unit) {
+  if (normalizedUnit(unit) === 'kodi') return 20
   return STANDARD_UNITS.find((option) => option.name === normalizedUnit(unit))?.factor || 1
 }
 
 export function saleUnits(baseUnit) {
   const normalized = normalizedUnit(baseUnit)
+  if (normalized === 'kodi') return STANDARD_UNITS.map((option) => option.name)
   return STANDARD_UNITS.some((option) => option.name === normalized)
     ? STANDARD_UNITS.map((option) => option.name)
     : [String(baseUnit || 'pcs').trim()]
 }
 
 export function purchaseCostUnit(unit) {
-  return saleUnits(unit).length === STANDARD_UNITS.length
+  const units = saleUnits(unit)
+  return units.includes('pcs') && units.includes('lusin')
     ? 'pcs'
     : String(unit || 'pcs').trim()
 }
@@ -89,6 +91,7 @@ export function unitCost(product, unit) {
 export function stockLabel(product) {
   const baseUnit = String(product.unit || 'pcs').trim()
   const quantity = stockInPcs(product)
+  if (normalizedUnit(baseUnit) === 'kodi') return quantity + ' pcs'
   const factor = unitFactor(baseUnit)
   if (factor === 1 && normalizedUnit(baseUnit) !== 'pcs') return quantity + ' ' + baseUnit
 

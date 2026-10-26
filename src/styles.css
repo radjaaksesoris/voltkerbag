@@ -1131,11 +1131,11 @@ select.input { appearance: none; }
 .product-option-fields > div { min-width: 0; }
 .product-modal > .product-option-fields:focus-within { z-index: 2; }
 .product-option-fields .category-select-trigger { padding-inline: 11px; }
-.product-modal .grid-3 { gap: 9px; }
+.product-sale-price-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 9px; }
 .product-sale-prices { margin-top: 6px; }
 .product-sale-prices > label { display: block; margin-bottom: 7px; }
 .product-price-hint { margin: -2px 0 8px; line-height: 1.4; }
-.product-sale-prices .grid-3 > div > label { font-size: 10px; }
+.product-sale-price-fields > div > label { font-size: 10px; }
 .product-stock-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin-top: 10px; }
 .product-stock-hint { margin: 9px 0 0; line-height: 1.45; }
 .product-price-cell { min-width: 125px; }

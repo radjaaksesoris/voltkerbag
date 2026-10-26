@@ -13,7 +13,7 @@ const EMPTY = {
   category: '',
   unit: 'pcs',
   price: '',
-  prices: { pcs: '', lusin: '', kodi: '' },
+  prices: { pcs: '', lusin: '' },
   cost: '',
   stock: '',
   image_path: null
@@ -45,8 +45,7 @@ export default function Products() {
   const unitInputRef = useRef(null)
   const priceInputRefs = {
     pcs: useRef(null),
-    lusin: useRef(null),
-    kodi: useRef(null)
+    lusin: useRef(null)
   }
   const customPriceInputRef = useRef(null)
   const costInputRef = useRef(null)
@@ -85,7 +84,7 @@ export default function Products() {
       ])
       setItems(productRows)
       setCategories(categoryRows)
-      setUnits(unitRows)
+      setUnits(unitRows.filter((unit) => (unit.name || '').trim().toLocaleLowerCase('id-ID') !== 'kodi'))
       setLoadError('')
     } catch (error) {
       setLoadError(error.message || 'Gagal memuat produk dari server.')
@@ -112,20 +111,21 @@ export default function Products() {
     : null
 
   function openEdit(p) {
+    const baseUnit = p.unit || 'pcs'
+    const editUnit = baseUnit.trim().toLocaleLowerCase('id-ID') === 'kodi' ? 'pcs' : baseUnit
     setEditId(p.id)
     originalImagePathRef.current = p.image_path || null
     setForm({
       name: p.name,
       category: p.category || '',
-      unit: p.unit || 'pcs',
+      unit: editUnit,
       price: p.price || '',
       prices: {
         pcs: productPrice(p, 'pcs'),
-        lusin: productPrice(p, 'lusin'),
-        kodi: productPrice(p, 'kodi')
+        lusin: productPrice(p, 'lusin')
       },
       cost: p.cost || '',
-      stock: String(stockInPcs(p) / unitFactor(p.unit || 'pcs')),
+      stock: String(stockInPcs(p) / unitFactor(editUnit)),
       image_path: p.image_path || null
     })
     setImageFile(null)
@@ -274,7 +274,7 @@ export default function Products() {
     setActionError('')
     if (!form.name) { setActionError('Nama produk wajib diisi.'); return }
     if (!form.unit) { setActionError('Satuan produk wajib dipilih.'); return }
-    const isStandard = saleUnits(form.unit).length === 3
+    const isStandard = saleUnits(form.unit).length === 2
     const prices = Object.fromEntries(
       Object.entries(form.prices).map(([unit, value]) => [unit, Number(value) || 0])
     )
@@ -282,7 +282,7 @@ export default function Products() {
       ? prices[form.unit.trim().toLocaleLowerCase('id-ID')]
       : Number(form.price)
     if (isStandard && Object.values(prices).some((price) => price <= 0)) {
-      setActionError('Isi harga jual pcs, lusin, dan kodi dengan nominal lebih dari Rp0.')
+      setActionError('Isi harga jual pcs dan lusin dengan nominal lebih dari Rp0.')
       return
     }
     if (!Number.isFinite(basePrice) || basePrice <= 0) {
@@ -311,7 +311,7 @@ export default function Products() {
         price: isStandard ? basePrice * unitFactor(form.unit) : basePrice,
         price_pcs: isStandard ? prices.pcs : 0,
         price_lusin: isStandard ? prices.lusin : 0,
-        price_kodi: isStandard ? prices.kodi : 0,
+        price_kodi: 0,
         image_path: imagePath
       }
       if (!editId) {
@@ -354,8 +354,8 @@ export default function Products() {
 
   function handleProductFormKeyDown(event) {
     if (event.key !== 'Tab') return
-    const priceFields = saleUnits(form.unit).length === 3
-      ? ['pcs', 'lusin', 'kodi'].map((unit) => priceInputRefs[unit].current)
+    const priceFields = saleUnits(form.unit).length === 2
+      ? ['pcs', 'lusin'].map((unit) => priceInputRefs[unit].current)
       : [customPriceInputRef.current]
     const fields = [
       nameInputRef.current,
@@ -521,10 +521,10 @@ export default function Products() {
                 />
               </div>
             </div>
-            {saleUnits(form.unit).length === 3 ? (
+            {saleUnits(form.unit).length === 2 ? (
               <div className="product-sale-prices">
-                <div className="grid-3">
-                  {['pcs', 'lusin', 'kodi'].map((unit) => (
+                <div className="product-sale-price-fields">
+                  {['pcs', 'lusin'].map((unit) => (
                     <div key={unit}>
                       <label htmlFor={'product-price-' + unit}>{unit} (/pcs)</label>
                       <MoneyInput
