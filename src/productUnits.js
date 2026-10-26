@@ -23,8 +23,16 @@ export function saleUnits(baseUnit) {
 export function purchaseCostUnit(unit) {
   const units = saleUnits(unit)
   return units.includes('pcs') && units.includes('lusin')
-    ? 'pcs'
+    ? 'lusin'
     : String(unit || 'pcs').trim()
+}
+
+export function purchaseCostFactor(unit) {
+  return unitFactor(purchaseCostUnit(unit))
+}
+
+export function purchaseCostPerPiece(unit, cost) {
+  return (Number(cost) || 0) / purchaseCostFactor(unit)
 }
 
 export function stockInPcs(product) {

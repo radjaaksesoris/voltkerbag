@@ -1,6 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { availableQuantity, productPrice, purchaseCostUnit, quantityToPcs, saleUnitPrice, saleUnits, stockCostValue, stockInPcs, stockIssueValuation, stockLabel, stockReceiptValuation, unitCost, unitFactor } from './productUnits.js'
+import { availableQuantity, productPrice, purchaseCostFactor, purchaseCostPerPiece, purchaseCostUnit, quantityToPcs, saleUnitPrice, saleUnits, stockCostValue, stockInPcs, stockIssueValuation, stockLabel, stockReceiptValuation, unitCost, unitFactor } from './productUnits.js'
 
 test('uses the standard conversion factors', () => {
   assert.equal(unitFactor('pcs'), 1)
@@ -27,7 +27,12 @@ test('reads legacy stock in the product main unit', () => {
 
 test('values standard-unit stock and sale costs using cost per piece', () => {
   const product = { unit: 'kodi', stock_pcs: 68, cost: 40000 }
-  assert.equal(purchaseCostUnit(product.unit), 'pcs')
+  assert.equal(purchaseCostUnit(product.unit), 'lusin')
+  assert.equal(purchaseCostFactor(product.unit), 12)
+  assert.equal(purchaseCostPerPiece(product.unit, 480000), 40000)
+  assert.equal(purchaseCostUnit('pcs'), 'lusin')
+  assert.equal(purchaseCostUnit('lusin'), 'lusin')
+  assert.equal(purchaseCostPerPiece('pcs', 120000), 10000)
   assert.equal(stockCostValue(product), 2720000)
   assert.equal(unitCost(product, 'pcs'), 40000)
   assert.equal(unitCost(product, 'lusin'), 480000)
@@ -94,6 +99,8 @@ test('applies each sale-tier price per piece and multiplies it by the selected u
 test('keeps custom product units limited to their own sale unit', () => {
   assert.deepEqual(saleUnits('pak'), ['pak'])
   assert.equal(purchaseCostUnit('pak'), 'pak')
+  assert.equal(purchaseCostFactor('pak'), 1)
+  assert.equal(purchaseCostPerPiece('pak', 5000), 5000)
   assert.equal(productPrice({ unit: 'pak', price: 25000 }, 'pak'), 25000)
   assert.equal(saleUnitPrice({ unit: 'pak', price: 25000 }, 'pak'), 25000)
   assert.equal(stockCostValue({ unit: 'pak', stock: 3, cost: 5000 }), 15000)

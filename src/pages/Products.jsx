@@ -6,7 +6,7 @@ import MoneyInput from '../components/MoneyInput.jsx'
 import CategorySelect from '../components/CategorySelect.jsx'
 import UnitSelect from '../components/UnitSelect.jsx'
 import Icon from '../components/Icon.jsx'
-import { availableQuantity, productPrice, purchaseCostUnit, quantityToPcs, saleUnitPrice, saleUnits, stockCostValue, stockInPcs, stockReceiptValuation, unitFactor, stockLabel } from '../productUnits'
+import { availableQuantity, productPrice, purchaseCostFactor, purchaseCostPerPiece, purchaseCostUnit, quantityToPcs, saleUnitPrice, saleUnits, stockCostValue, stockInPcs, stockReceiptValuation, unitFactor, stockLabel } from '../productUnits'
 
 const EMPTY = {
   name: '',
@@ -106,7 +106,7 @@ export default function Products() {
         stockPcs: stockInPcs(stockProduct),
         stockValue: stockCostValue(stockProduct),
         receiptPcs: quantityToPcs(Number(stockAmount), stockProduct.unit || 'pcs'),
-        receiptUnitCost: Number(stockUnitCost)
+        receiptUnitCost: purchaseCostPerPiece(stockProduct.unit, stockUnitCost)
       })
     : null
 
@@ -124,7 +124,7 @@ export default function Products() {
         pcs: productPrice(p, 'pcs'),
         lusin: productPrice(p, 'lusin')
       },
-      cost: p.cost || '',
+      cost: (Number(p.cost) || 0) * purchaseCostFactor(editUnit),
       stock: String(stockInPcs(p) / unitFactor(editUnit)),
       image_path: p.image_path || null
     })
@@ -158,17 +158,18 @@ export default function Products() {
     setStockError('')
 
     const amount = Number(stockAmount)
-    const unitCost = Number(stockUnitCost)
+    const enteredUnitCost = Number(stockUnitCost)
     const unit = stockProduct.unit || 'pcs'
     if (!Number.isFinite(amount) || amount <= 0 || !Number.isInteger(amount)) {
       setStockError('Masukkan jumlah stok berupa bilangan bulat yang lebih dari nol.')
       return
     }
-    if (!Number.isFinite(unitCost) || unitCost < 0) {
+    if (!Number.isFinite(enteredUnitCost) || enteredUnitCost < 0) {
       setStockError('Masukkan harga modal yang valid dan tidak kurang dari Rp0.')
       return
     }
 
+    const unitCost = purchaseCostPerPiece(unit, enteredUnitCost)
     const nextStockPcs = stockInPcs(stockProduct) + quantityToPcs(amount, unit)
     if (!Number.isSafeInteger(nextStockPcs) || nextStockPcs > 2147483647) {
       setStockError('Jumlah stok melebihi batas yang dapat disimpan.')
@@ -315,7 +316,7 @@ export default function Products() {
         image_path: imagePath
       }
       if (!editId) {
-        productRecord.cost = Number(form.cost) || 0
+        productRecord.cost = purchaseCostPerPiece(form.unit, form.cost)
         productRecord.stock = stockPcs / unitFactor(form.unit)
         productRecord.stock_pcs = stockPcs
         productRecord.stock_cost_value = productRecord.cost * stockPcs
@@ -432,7 +433,7 @@ export default function Products() {
                 </td>
                 <td>{p.category || '-'}</td>
                 <td>{p.unit || 'pcs'}</td>
-                <td>{rupiah(p.cost)}/{purchaseCostUnit(p.unit)}</td>
+                <td>{rupiah((Number(p.cost) || 0) * purchaseCostFactor(p.unit))}/{purchaseCostUnit(p.unit)}</td>
                 <td className="product-price-cell">
                   {saleUnits(p.unit || 'pcs').map((unit) => (
                     <div className="product-price-row" key={unit}>
@@ -608,7 +609,7 @@ export default function Products() {
                 </p>
                 <p className="add-stock-current">
                   Modal rata-rata baru per {purchaseCostUnit(stockProduct.unit)}
-                  <strong>{rupiah(stockReceiptPreview.averageUnitCost)}</strong>
+                  <strong>{rupiah(stockReceiptPreview.averageUnitCost * purchaseCostFactor(stockProduct.unit))}</strong>
                 </p>
               </>
             )}
