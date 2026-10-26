@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { getAll, getFinanceData, put, remove, onRefresh, recordCustomerCreditPayment } from '../db'
+import { getAll, getFinanceData, put, remove, onRefresh, recordCustomerCreditPayment, addManualCustomerCredit } from '../db'
 import { rupiah, dateOnly, dateTime } from '../format'
 import DateRangeFilter from '../components/DateRangeFilter.jsx'
 import { dateRangeTimestamps, hasDateRange, localDateValue } from '../dateFilter'
@@ -49,7 +49,13 @@ export default function Finance() {
   const [creditPaymentAmount, setCreditPaymentAmount] = useState('')
   const [creditPaymentError, setCreditPaymentError] = useState('')
   const [savingCreditPayment, setSavingCreditPayment] = useState(false)
+  const [showManualDebtForm, setShowManualDebtForm] = useState(false)
+  const [manualDebtCustomer, setManualDebtCustomer] = useState('')
+  const [manualDebtAmount, setManualDebtAmount] = useState('')
+  const [manualDebtError, setManualDebtError] = useState('')
+  const [savingManualDebt, setSavingManualDebt] = useState(false)
   const creditPaymentRequest = useRef(null)
+  const manualDebtRequest = useRef(null)
   const requestId = useRef(0)
 
   useEffect(() => {
@@ -153,6 +159,48 @@ export default function Finance() {
     creditPaymentRequest.current = null
   }
 
+  function openManualDebtForm() {
+    setManualDebtCustomer('')
+    setManualDebtAmount('')
+    setManualDebtError('')
+    manualDebtRequest.current = null
+    setShowManualDebtForm(true)
+  }
+
+  async function saveManualDebt(event) {
+    event.preventDefault()
+    if (savingManualDebt) return
+    setManualDebtError('')
+    const customerName = manualDebtCustomer.trim()
+    const amount = Number(manualDebtAmount)
+    if (!customerName) {
+      setManualDebtError('Nama pelanggan wajib diisi.')
+      return
+    }
+    if (customerName.length > 120) {
+      setManualDebtError('Nama pelanggan maksimal 120 karakter.')
+      return
+    }
+    if (!Number.isFinite(amount) || amount <= 0) {
+      setManualDebtError('Nominal hutang harus lebih dari Rp0.')
+      return
+    }
+
+    const fingerprint = JSON.stringify([customerName, amount])
+    if (manualDebtRequest.current?.fingerprint !== fingerprint) {
+      manualDebtRequest.current = { fingerprint, id: crypto.randomUUID() }
+    }
+    setSavingManualDebt(true)
+    try {
+      await addManualCustomerCredit(customerName, amount, manualDebtRequest.current.id)
+      setShowManualDebtForm(false)
+    } catch (error) {
+      setManualDebtError(error.message || 'Gagal menambahkan hutang pelanggan.')
+    } finally {
+      setSavingManualDebt(false)
+    }
+  }
+
   async function saveCreditPayment(event) {
     event.preventDefault()
     if (!selectedDebt || savingCreditPayment) return
@@ -251,7 +299,7 @@ export default function Finance() {
       {actionError && !showEntryForm && <p className="form-error" role="alert">{actionError}</p>}
       <div className="stats-grid dashboard-stats-grid">
         <div className="stat-card"><span>Pemasukan Penjualan</span><strong className="ok">+{rupiah(income)}</strong></div>
-        <div className="stat-card"><span>Total Kredit</span><strong className="danger">{rupiah(totalCredit)}</strong></div>
+        <div className="stat-card"><span>Total Hutang</span><strong className="danger">{rupiah(totalCredit)}</strong></div>
         <div className="stat-card highlight"><span>Saldo Kas</span><strong>{rupiah(balance)}</strong></div>
         <div className="stat-card"><span>Laba</span><strong className={netProfit >= 0 ? 'ok' : 'danger'}>{rupiah(netProfit)}</strong></div>
       </div>
@@ -262,7 +310,12 @@ export default function Finance() {
             <h3 id="credit-balances-title">Pelanggan dengan hutang</h3>
             <p className="muted small">Menampilkan sisa hutang yang masih berjalan, tidak dibatasi periode.</p>
           </div>
-          <strong className="credit-balances-total">{rupiah(totalCredit)}</strong>
+          <div className="credit-balances-heading-actions">
+            <strong className="credit-balances-total">{rupiah(totalCredit)}</strong>
+            <button className="btn btn-primary btn-sm" type="button" onClick={openManualDebtForm}>
+              + Tambah hutang
+            </button>
+          </div>
         </div>
         {customerLoadError && <p className="form-error" role="alert">{customerLoadError}</p>}
         {report.credit_balances.length === 0 ? (
@@ -354,6 +407,46 @@ export default function Finance() {
           )}
         </div>
       </div>
+
+      {showManualDebtForm && (
+        <div className="overlay" onClick={() => !savingManualDebt && setShowManualDebtForm(false)}>
+          <form
+            className="modal credit-payment-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="manual-debt-title"
+            onClick={(event) => event.stopPropagation()}
+            onSubmit={saveManualDebt}>
+            <h3 id="manual-debt-title">Tambah hutang lama</h3>
+            <p className="muted">Catat saldo hutang yang sudah ada sebelum aplikasi digunakan. Catatan ini tidak dihitung sebagai penjualan.</p>
+            <label htmlFor="manual-debt-customer">Nama pelanggan</label>
+            <input
+              id="manual-debt-customer"
+              className="input"
+              value={manualDebtCustomer}
+              onChange={(event) => setManualDebtCustomer(event.target.value)}
+              maxLength={120}
+              autoComplete="off"
+              required
+            />
+            <label htmlFor="manual-debt-amount">Nominal hutang</label>
+            <MoneyInput
+              id="manual-debt-amount"
+              value={manualDebtAmount}
+              onChange={setManualDebtAmount}
+              placeholder="Masukkan nominal hutang"
+              required
+            />
+            {manualDebtError && <p className="form-error" role="alert">{manualDebtError}</p>}
+            <div className="modal-actions">
+              <button className="btn" type="button" disabled={savingManualDebt} onClick={() => setShowManualDebtForm(false)}>Batal</button>
+              <button className="btn btn-primary" type="submit" disabled={savingManualDebt}>
+                {savingManualDebt ? 'Menyimpan...' : 'Simpan hutang'}
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
 
       {showEntryForm && (
         <div className="overlay" onClick={() => !savingEntry && setShowEntryForm(false)}>

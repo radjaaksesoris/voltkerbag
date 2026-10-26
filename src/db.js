@@ -47,6 +47,7 @@ export async function createBackupArchive() {
     customers: 'customer_names',
     transactions: 'transactions',
     finance: 'finance_entries',
+    manualCredits: 'manual_customer_credits',
     stockAdjustments: 'product_stock_adjustments'
   }
   const records = {}
@@ -134,8 +135,9 @@ export async function restoreBackupArchive(file, onProgress = () => {}) {
     throw new Error('File backup hanya dapat dipulihkan ke akun toko yang membuatnya.')
   }
 
-  const recordKeys = ['products', 'categories', 'units', 'customers', 'transactions', 'finance', 'stockAdjustments']
-  if (!backup.records || recordKeys.some((key) => !Array.isArray(backup.records[key]))) {
+  const requiredRecordKeys = ['products', 'categories', 'units', 'customers', 'transactions', 'finance', 'stockAdjustments']
+  if (!backup.records || requiredRecordKeys.some((key) => !Array.isArray(backup.records[key]))
+    || (backup.records.manualCredits != null && !Array.isArray(backup.records.manualCredits))) {
     throw new Error('Data pada file backup tidak lengkap.')
   }
   if (!Array.isArray(backup.images)) throw new Error('Daftar foto pada file backup tidak valid.')
@@ -195,6 +197,7 @@ export async function restoreBackupArchive(file, onProgress = () => {}) {
     onProgress('Memulihkan data toko...')
     const records = {
       ...backup.records,
+      manualCredits: backup.records.manualCredits || [],
       products: backup.records.products.map((product) => ({
         ...product,
         image_path: product.image_path ? restoredImagePaths.get(product.image_path) : null
@@ -344,6 +347,17 @@ export async function recordCustomerCreditPayment(customerName, amount, requestI
     p_request_id: requestId || crypto.randomUUID()
   })
   throwIfError(error, 'Gagal menyimpan pembayaran hutang pelanggan')
+  notifyRefresh()
+  return data
+}
+
+export async function addManualCustomerCredit(customerName, amount, requestId) {
+  const { data, error } = await getClient().rpc('add_manual_customer_credit', {
+    p_customer_name: customerName,
+    p_amount: amount,
+    p_request_id: requestId || crypto.randomUUID()
+  })
+  throwIfError(error, 'Gagal menambahkan hutang pelanggan')
   notifyRefresh()
   return data
 }

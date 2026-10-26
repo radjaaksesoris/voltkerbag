@@ -913,6 +913,7 @@ select.input { appearance: none; }
 .credit-balances-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 14px; margin-bottom: 14px; }
 .credit-balances-heading h3 { margin: 0 0 4px; color: var(--ink); }
 .credit-balances-heading p { margin: 0; }
+.credit-balances-heading-actions { display: flex; flex: 0 0 auto; align-items: center; gap: 12px; }
 .credit-balances-total { flex: 0 0 auto; color: var(--danger); font-size: 17px; font-variant-numeric: tabular-nums; }
 .credit-balances-list { display: grid; max-height: 360px; overflow-y: auto; list-style: none; }
 .credit-balances-list li { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 2px; border-top: 1px solid var(--border); font-size: 12px; }
@@ -1484,6 +1485,9 @@ select.input { appearance: none; }
   .transaction-details-items thead th:nth-child(3) { width: 23%; }
   .transaction-details-items thead th:nth-child(4) { width: 25%; }
   .transaction-details-items th { white-space: normal; }
+  .credit-balances-heading { flex-wrap: wrap; }
+  .credit-balances-heading-actions { width: 100%; justify-content: space-between; gap: 8px; }
+  .credit-balances-total { font-size: 15px; }
 }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
