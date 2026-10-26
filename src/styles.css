@@ -774,15 +774,19 @@ tbody tr:hover { background: #fbf5ed; }
   box-shadow: 0 14px 32px rgba(56, 39, 27, .16);
 }
 .category-options {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  align-content: start;
   max-height: 174px;
   overflow-y: auto;
   overscroll-behavior: contain;
   scrollbar-gutter: stable;
 }
-.category-option-row { display: flex; align-items: center; gap: 4px; }
+.category-option-row { display: flex; width: 100%; align-items: center; gap: 4px; }
 .category-option {
   flex: 1;
   min-width: 0;
+  width: 100%;
   padding: 9px 10px;
   border: 0;
   border-radius: 7px;
