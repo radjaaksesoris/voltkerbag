@@ -51,6 +51,7 @@ export async function createBackupArchive() {
     expeditions: 'expedition_names',
     transactions: 'transactions',
     transactionPayments: 'transaction_payments',
+    manualCreditPayments: 'manual_customer_credit_payments',
     finance: 'finance_entries',
     manualCredits: 'manual_customer_credits',
     stockAdjustments: 'product_stock_adjustments'
@@ -143,6 +144,7 @@ export async function restoreBackupArchive(file, onProgress = () => {}) {
   const requiredRecordKeys = ['products', 'categories', 'units', 'customers', 'transactions', 'finance', 'stockAdjustments']
   if (!backup.records || requiredRecordKeys.some((key) => !Array.isArray(backup.records[key]))
     || (backup.records.transactionPayments !== undefined && !Array.isArray(backup.records.transactionPayments))
+    || (backup.records.manualCreditPayments !== undefined && !Array.isArray(backup.records.manualCreditPayments))
     || (backup.records.manualCredits != null && !Array.isArray(backup.records.manualCredits))
     || (backup.records.vendors != null && !Array.isArray(backup.records.vendors))
     || (backup.records.expeditions != null && !Array.isArray(backup.records.expeditions))) {
