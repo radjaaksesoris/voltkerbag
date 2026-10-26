@@ -1145,6 +1145,7 @@ select.input { appearance: none; }
 .product-markup-row > div > label { min-height: 24px; }
 .product-percent-input { position: relative; }
 .product-percent-input .input { margin: 0; padding-right: 30px; }
+.product-markup-row .money-input-wrap .input { margin: 0; }
 .product-percent-input > span { position: absolute; top: 50%; right: 12px; color: var(--muted); font-size: 12px; transform: translateY(-50%); }
 .product-calculated-label { display: block; margin-bottom: 6px; color: #6f6056; font-size: 10px; font-weight: 700; }
 .product-calculated-price { display: flex; min-height: 40px; align-items: center; overflow: hidden; padding: 0 11px; border: 1px solid var(--border); border-radius: 9px; background: rgba(255, 255, 255, .8); color: var(--accent-dark); font-size: 13px; font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap; text-overflow: ellipsis; }
