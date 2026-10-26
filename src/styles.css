@@ -918,6 +918,10 @@ select.input { appearance: none; }
 .credit-balances-list li { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 2px; border-top: 1px solid var(--border); font-size: 12px; }
 .credit-balances-list li > .customer-identity { min-width: 0; }
 .credit-balances-list li strong { flex: 0 0 auto; color: var(--danger); font-variant-numeric: tabular-nums; }
+.credit-balances-actions { display: flex; flex: 0 0 auto; align-items: center; gap: 10px; }
+.credit-payment-modal > p { margin: -4px 0 4px; }
+.credit-payment-modes { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin: 8px 0; }
+.credit-payment-modes .btn { padding-inline: 8px; }
 .credit-balances-empty { padding: 10px 0 2px; font-size: 12px; }
 .receipt-button { display: block; margin-bottom: 6px; white-space: nowrap; }
 .print-receipt { display: none; }

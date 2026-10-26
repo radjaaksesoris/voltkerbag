@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { getAll, getFinanceData, put, remove, onRefresh } from '../db'
+import { getAll, getFinanceData, put, remove, onRefresh, recordCustomerCreditPayment } from '../db'
 import { rupiah, dateOnly, dateTime } from '../format'
 import DateRangeFilter from '../components/DateRangeFilter.jsx'
 import { dateRangeTimestamps, hasDateRange, localDateValue } from '../dateFilter'
@@ -44,6 +44,12 @@ export default function Finance() {
   const [entryNote, setEntryNote] = useState('')
   const [entryAmount, setEntryAmount] = useState('')
   const [savingEntry, setSavingEntry] = useState(false)
+  const [selectedDebt, setSelectedDebt] = useState(null)
+  const [creditPaymentMode, setCreditPaymentMode] = useState('full')
+  const [creditPaymentAmount, setCreditPaymentAmount] = useState('')
+  const [creditPaymentError, setCreditPaymentError] = useState('')
+  const [savingCreditPayment, setSavingCreditPayment] = useState(false)
+  const creditPaymentRequest = useRef(null)
   const requestId = useRef(0)
 
   useEffect(() => {
@@ -139,6 +145,50 @@ export default function Finance() {
     setShowEntryForm(true)
   }
 
+  function openCreditPayment(debt) {
+    setSelectedDebt(debt)
+    setCreditPaymentMode('full')
+    setCreditPaymentAmount(String(Number(debt.balance_due)))
+    setCreditPaymentError('')
+    creditPaymentRequest.current = null
+  }
+
+  async function saveCreditPayment(event) {
+    event.preventDefault()
+    if (!selectedDebt || savingCreditPayment) return
+    setCreditPaymentError('')
+    const balanceDue = Number(selectedDebt.balance_due)
+    const amount = creditPaymentMode === 'full' ? balanceDue : Number(creditPaymentAmount)
+    if (!Number.isFinite(amount) || amount <= 0) {
+      setCreditPaymentError('Nominal pembayaran harus lebih dari Rp0.')
+      return
+    }
+    if (amount > balanceDue) {
+      setCreditPaymentError('Pembayaran tidak boleh melebihi sisa hutang ' + rupiah(balanceDue) + '.')
+      return
+    }
+
+    const fingerprint = selectedDebt.customer_name + ':' + amount
+    if (creditPaymentRequest.current?.fingerprint !== fingerprint) {
+      creditPaymentRequest.current = { fingerprint, id: crypto.randomUUID() }
+    }
+
+    setSavingCreditPayment(true)
+    try {
+      await recordCustomerCreditPayment(
+        selectedDebt.customer_name,
+        amount,
+        creditPaymentRequest.current.id
+      )
+      setSelectedDebt(null)
+      creditPaymentRequest.current = null
+    } catch (error) {
+      setCreditPaymentError(error.message || 'Gagal menyimpan pembayaran hutang.')
+    } finally {
+      setSavingCreditPayment(false)
+    }
+  }
+
   async function saveEntry(event) {
     event.preventDefault()
     setActionError('')
@@ -225,7 +275,12 @@ export default function Finance() {
                   name={debt.customer_name}
                   customer={customers.find((customer) => customer.name === debt.customer_name)}
                 />
-                <strong>{rupiah(Number(debt.balance_due))}</strong>
+                <div className="credit-balances-actions">
+                  <strong>{rupiah(Number(debt.balance_due))}</strong>
+                  <button className="btn btn-sm btn-primary" type="button" onClick={() => openCreditPayment(debt)}>
+                    Bayar
+                  </button>
+                </div>
               </li>
             ))}
           </ul>
@@ -360,6 +415,58 @@ export default function Finance() {
               <button className="btn" type="button" disabled={savingEntry} onClick={() => setShowEntryForm(false)}>Batal</button>
               <button className="btn btn-primary" type="submit" disabled={savingEntry}>
                 {savingEntry ? 'Menyimpan...' : 'Simpan catatan'}
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
+
+      {selectedDebt && (
+        <div className="overlay" onClick={() => !savingCreditPayment && setSelectedDebt(null)}>
+          <form
+            className="modal credit-payment-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="credit-payment-title"
+            onClick={(event) => event.stopPropagation()}
+            onSubmit={saveCreditPayment}>
+            <h3 id="credit-payment-title">Pembayaran hutang pelanggan</h3>
+            <p className="muted">
+              {selectedDebt.customer_name} · Sisa hutang {rupiah(Number(selectedDebt.balance_due))}
+            </p>
+            <div className="credit-payment-modes" role="group" aria-label="Jenis pembayaran">
+              <button
+                className={'btn ' + (creditPaymentMode === 'full' ? 'btn-primary' : '')}
+                type="button"
+                aria-pressed={creditPaymentMode === 'full'}
+                onClick={() => setCreditPaymentMode('full')}>
+                Lunasi penuh
+              </button>
+              <button
+                className={'btn ' + (creditPaymentMode === 'partial' ? 'btn-primary' : '')}
+                type="button"
+                aria-pressed={creditPaymentMode === 'partial'}
+                onClick={() => {
+                  setCreditPaymentMode('partial')
+                  setCreditPaymentAmount('')
+                }}>
+                Bayar sebagian
+              </button>
+            </div>
+            <label htmlFor="customer-credit-payment-amount">Jumlah pembayaran</label>
+            <MoneyInput
+              id="customer-credit-payment-amount"
+              value={creditPaymentMode === 'full' ? String(Number(selectedDebt.balance_due)) : creditPaymentAmount}
+              onChange={setCreditPaymentAmount}
+              placeholder="Masukkan nominal pembayaran"
+              disabled={creditPaymentMode === 'full'}
+              required
+            />
+            {creditPaymentError && <p className="form-error" role="alert">{creditPaymentError}</p>}
+            <div className="modal-actions">
+              <button className="btn" type="button" disabled={savingCreditPayment} onClick={() => setSelectedDebt(null)}>Batal</button>
+              <button className="btn btn-primary" type="submit" disabled={savingCreditPayment}>
+                {savingCreditPayment ? 'Menyimpan...' : creditPaymentMode === 'full' ? 'Lunasi hutang' : 'Simpan pembayaran'}
               </button>
             </div>
           </form>

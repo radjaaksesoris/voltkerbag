@@ -337,6 +337,17 @@ export async function recordTransactionPayment(transactionId, amount, requestId)
   return data
 }
 
+export async function recordCustomerCreditPayment(customerName, amount, requestId) {
+  const { data, error } = await getClient().rpc('record_customer_credit_payment', {
+    p_customer_name: customerName,
+    p_amount: amount,
+    p_request_id: requestId || crypto.randomUUID()
+  })
+  throwIfError(error, 'Gagal menyimpan pembayaran hutang pelanggan')
+  notifyRefresh()
+  return data
+}
+
 export async function uploadProductImage(file) {
   const allowedTypes = {
     'image/jpeg': 'jpg',

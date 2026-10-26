@@ -8,7 +8,7 @@ import ReceiptPreview from './ReceiptPreview'
 import Icon from './Icon.jsx'
 import CustomerIdentity from './CustomerIdentity.jsx'
 
-export default function TransactionDetails({ transaction, onClose, onTransactionUpdated }) {
+export default function TransactionDetails({ transaction, onClose, onTransactionUpdated, allowPayment = true }) {
   const [showReceipt, setShowReceipt] = useState(false)
   const payments = transaction.payments || []
   const paidAmount = transaction.paidAmount != null
@@ -137,7 +137,7 @@ export default function TransactionDetails({ transaction, onClose, onTransaction
           </section>
         )}
 
-        {transaction.paymentType === 'credit' && balanceDue > 0 && (
+        {allowPayment && transaction.paymentType === 'credit' && balanceDue > 0 && (
           <form className="transaction-details-payment-form" onSubmit={submitPayment}>
             <h4>Catat pembayaran</h4>
             <p className="muted small">Isi sebesar sisa utang untuk melunasi, atau ubah nominal untuk membayar sebagian.</p>

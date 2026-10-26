@@ -279,6 +279,7 @@ export default function Dashboard() {
           transaction={selectedTransaction}
           onClose={() => setSelectedTransaction(null)}
           onTransactionUpdated={updateSelectedTransaction}
+          allowPayment={false}
         />
       )}
     </div>

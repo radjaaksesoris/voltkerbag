@@ -923,6 +923,97 @@ begin
 end;
 $$;
 
+create or replace function public.record_customer_credit_payment(
+  p_customer_name text,
+  p_amount double precision,
+  p_request_id uuid
+)
+returns bigint
+language plpgsql
+security definer
+set search_path = public, pg_temp
+as $$
+declare
+  current_user_id uuid := auth.uid();
+  transaction_row public.transactions%rowtype;
+  existing_entry public.finance_entries%rowtype;
+  balance_due double precision;
+  remaining_amount double precision;
+  allocated_amount double precision;
+  new_paid_amount double precision;
+  finance_entry_id bigint;
+  operation_time timestamptz := clock_timestamp();
+begin
+  if current_user_id is null then raise exception 'Login diperlukan.'; end if;
+  if p_request_id is null then raise exception 'ID permintaan pembayaran wajib diisi.'; end if;
+  if p_customer_name is null or btrim(p_customer_name) = '' then
+    raise exception 'Nama pelanggan wajib diisi.';
+  end if;
+  if p_amount is null or p_amount <= 0 then
+    raise exception 'Nominal pembayaran harus lebih dari Rp0.';
+  end if;
+
+  perform pg_advisory_xact_lock(hashtextextended(current_user_id::text || p_request_id::text, 0));
+
+  select * into existing_entry
+  from public.finance_entries
+  where owner_id = current_user_id and "requestId" = p_request_id;
+  if found then
+    if existing_entry.category is distinct from 'Cicilan kredit'
+       or existing_entry.note is distinct from 'Cicilan kredit pelanggan · ' || p_customer_name
+       or existing_entry.amount is distinct from p_amount then
+      raise exception 'ID permintaan pembayaran sudah digunakan.';
+    end if;
+    return existing_entry.id;
+  end if;
+
+  remaining_amount := p_amount;
+  for transaction_row in
+    select *
+    from public.transactions
+    where owner_id = current_user_id
+      and "paymentType" = 'credit'
+      and coalesce(nullif(btrim("customerName"), ''), 'Pelanggan lama') = p_customer_name
+      and greatest(0, coalesce("balanceDue", total - coalesce("paidAmount", payment))) > 0
+    order by "createdAt" asc nulls first, id asc
+    for update
+  loop
+    balance_due := greatest(0, coalesce(
+      transaction_row."balanceDue",
+      transaction_row.total - coalesce(transaction_row."paidAmount", transaction_row.payment)
+    ));
+    allocated_amount := least(remaining_amount, balance_due);
+    new_paid_amount := coalesce(transaction_row."paidAmount", transaction_row.payment) + allocated_amount;
+
+    update public.transactions
+    set "paidAmount" = new_paid_amount,
+        "balanceDue" = greatest(0, transaction_row.total - new_paid_amount),
+        payments = coalesce(transaction_row.payments, '[]'::jsonb)
+          || jsonb_build_array(jsonb_build_object('amount', allocated_amount, 'date', operation_time)),
+        "updatedAt" = operation_time
+    where id = transaction_row.id and owner_id = current_user_id;
+
+    remaining_amount := remaining_amount - allocated_amount;
+    exit when remaining_amount <= 0;
+  end loop;
+
+  if remaining_amount > 0 then
+    raise exception 'Nominal pembayaran melebihi sisa hutang pelanggan.';
+  end if;
+
+  insert into public.finance_entries (
+    owner_id, type, category, note, amount, "requestId", date, "createdAt", "updatedAt"
+  ) values (
+    current_user_id, 'income', 'Cicilan kredit',
+    'Cicilan kredit pelanggan · ' || p_customer_name,
+    p_amount, p_request_id, operation_time, operation_time, operation_time
+  )
+  returning id into finance_entry_id;
+
+  return finance_entry_id;
+end;
+$$;
+
 create or replace function public.delete_manual_finance_entry(p_entry_id bigint)
 returns void
 language plpgsql
@@ -1186,12 +1277,14 @@ $$;
 
 revoke all on function public.complete_sale(text, text, double precision, jsonb, uuid) from public, anon;
 revoke all on function public.record_transaction_payment(bigint, double precision, uuid) from public, anon;
+revoke all on function public.record_customer_credit_payment(text, double precision, uuid) from public, anon;
 revoke all on function public.delete_manual_finance_entry(bigint) from public, anon;
 revoke all on function public.get_transaction_summary(timestamptz, timestamptz) from public, anon;
 revoke all on function public.get_dashboard_data(timestamptz, timestamptz, timestamptz, timestamptz, integer, integer, boolean) from public, anon;
 revoke all on function public.get_finance_data(timestamptz, timestamptz, integer, integer) from public, anon;
 grant execute on function public.complete_sale(text, text, double precision, jsonb, uuid) to authenticated;
 grant execute on function public.record_transaction_payment(bigint, double precision, uuid) to authenticated;
+grant execute on function public.record_customer_credit_payment(text, double precision, uuid) to authenticated;
 grant execute on function public.delete_manual_finance_entry(bigint) to authenticated;
 grant execute on function public.get_transaction_summary(timestamptz, timestamptz) to authenticated;
 grant execute on function public.get_dashboard_data(timestamptz, timestamptz, timestamptz, timestamptz, integer, integer, boolean) to authenticated;
