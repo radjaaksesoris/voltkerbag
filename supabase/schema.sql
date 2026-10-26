@@ -331,13 +331,23 @@ create unique index if not exists manual_customer_credits_owner_request_id_idx
 create unique index if not exists product_stock_adjustments_owner_request_id_idx
   on public.product_stock_adjustments (owner_id, request_id);
 
+update public.finance_entries e
+set category = 'Biaya Ekspedisi ' || trim(t.expedition) || ' ('
+      || coalesce(nullif(trim(t."customerName"), ''), 'Pelanggan') || ')'
+from public.transactions t
+where e.owner_id = t.owner_id
+  and e."refId" = t.id
+  and e.category = 'Biaya ekspedisi'
+  and nullif(trim(coalesce(t.expedition, '')), '') is not null;
+
 insert into public.finance_entries (
   owner_id, type, category, note, amount, pending, "refId", date, "createdAt", "updatedAt"
 )
 select
   t.owner_id,
   'expense',
-  'Biaya ekspedisi',
+  'Biaya Ekspedisi ' || trim(t.expedition) || ' ('
+    || coalesce(nullif(trim(t."customerName"), ''), 'Pelanggan') || ')',
   'Ekspedisi ' || trim(t.expedition) || ' · ' || coalesce(t."invoiceNo", '#' || t.id::text),
   0,
   true,
@@ -352,7 +362,7 @@ where nullif(trim(coalesce(t.expedition, '')), '') is not null
     from public.finance_entries e
     where e.owner_id = t.owner_id
       and e."refId" = t.id
-      and e.category = 'Biaya ekspedisi'
+      and e.category like 'Biaya Ekspedisi %'
   );
 
 alter table public.products enable row level security;
@@ -1101,7 +1111,9 @@ begin
     insert into public.finance_entries (
       owner_id, type, category, note, amount, pending, "refId", date, "createdAt", "updatedAt"
     ) values (
-      current_user_id, 'expense', 'Biaya ekspedisi',
+      current_user_id, 'expense',
+      'Biaya Ekspedisi ' || trim(p_expedition) || ' ('
+        || coalesce(nullif(trim(p_customer_name), ''), 'Pelanggan') || ')',
       'Ekspedisi ' || trim(p_expedition) || ' · ' || invoice_number,
       0, true, transaction_id, operation_time, operation_time, operation_time
     );
@@ -1547,7 +1559,7 @@ begin
   where id = p_entry_id and owner_id = current_user_id
   for update;
   if not found then raise exception 'Catatan biaya ekspedisi tidak ditemukan.'; end if;
-  if entry_row.type <> 'expense' or entry_row.category <> 'Biaya ekspedisi' then
+  if entry_row.type <> 'expense' or entry_row.category not like 'Biaya Ekspedisi %' then
     raise exception 'Catatan ini bukan biaya ekspedisi.';
   end if;
   if not entry_row.pending then
