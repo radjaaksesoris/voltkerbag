@@ -499,7 +499,7 @@ export default function Products() {
 
       {showForm && (
         createPortal(
-        <div className="overlay product-form-overlay" onClick={closeProductForm}>
+        <div className="overlay product-form-overlay">
           <form className="modal product-modal" onClick={(e) => e.stopPropagation()} onKeyDown={handleProductFormKeyDown} onSubmit={save}>
             <div className="product-modal-heading">
               <span className="product-modal-mark"><Icon name="bag" size={22} /></span>
