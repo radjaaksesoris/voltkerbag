@@ -100,6 +100,15 @@ export function saleMarkupPrice(costPerPiece, unit, percentage) {
   )
 }
 
+export function salePricesFromMarkups(cost, markups, baseUnit) {
+  const costPerPiece = purchaseCostPerPiece(baseUnit, cost)
+  return Object.fromEntries(
+    saleUnits(baseUnit)
+      .filter((unit) => markups[unit] !== '' && Number.isFinite(Number(markups[unit])))
+      .map((unit) => [unit, saleMarkupPrice(costPerPiece, unit, markups[unit])])
+  )
+}
+
 export function saleMarkupPercentage(price, costPerPiece, unit) {
   const unitCost = (Number(costPerPiece) || 0) * unitFactor(unit)
   if (unitCost <= 0) return ''

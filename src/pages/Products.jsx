@@ -6,7 +6,7 @@ import MoneyInput from '../components/MoneyInput.jsx'
 import CategorySelect from '../components/CategorySelect.jsx'
 import UnitSelect from '../components/UnitSelect.jsx'
 import Icon from '../components/Icon.jsx'
-import { availableQuantity, productPrice, purchaseCostFactor, purchaseCostPerPiece, purchaseCostUnit, quantityToPcs, saleMarkupPercentage, saleMarkupPrice, saleUnitPrice, saleUnits, stockCostValue, stockEntryUnit, stockInPcs, stockReceiptValuation, unitFactor, stockLabel } from '../productUnits'
+import { availableQuantity, productPrice, purchaseCostFactor, purchaseCostPerPiece, purchaseCostUnit, quantityToPcs, saleMarkupPercentage, saleMarkupPrice, salePricesFromMarkups, saleUnitPrice, saleUnits, stockCostValue, stockEntryUnit, stockInPcs, stockReceiptValuation, unitFactor, stockLabel } from '../productUnits'
 
 const EMPTY = {
   name: '',
@@ -583,7 +583,14 @@ export default function Products() {
                   <MoneyInput
                     inputRef={costInputRef}
                     value={form.cost}
-                    onChange={(cost) => setForm({ ...form, cost })}
+                    onChange={(cost) => setForm((current) => ({
+                      ...current,
+                      cost,
+                      salePrices: {
+                        ...current.salePrices,
+                        ...salePricesFromMarkups(cost, current.markups, current.unit)
+                      }
+                    }))}
                     disabled={Boolean(editId)}
                   />
                 </div>

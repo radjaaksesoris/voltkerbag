@@ -1,6 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { availableQuantity, productPrice, purchaseCostFactor, purchaseCostPerPiece, purchaseCostUnit, quantityToPcs, saleMarkupPercentage, saleMarkupPrice, saleUnitPrice, saleUnits, stockCostValue, stockEntryUnit, stockInPcs, stockLabel, stockReceiptValuation, unitCost, unitFactor } from './productUnits.js'
+import { availableQuantity, productPrice, purchaseCostFactor, purchaseCostPerPiece, purchaseCostUnit, quantityToPcs, saleMarkupPercentage, saleMarkupPrice, salePricesFromMarkups, saleUnitPrice, saleUnits, stockCostValue, stockEntryUnit, stockInPcs, stockLabel, stockReceiptValuation, unitCost, unitFactor } from './productUnits.js'
 
 test('uses the standard conversion factors', () => {
   assert.equal(unitFactor('pcs'), 1)
@@ -103,6 +103,18 @@ test('calculates prices from cost markup and converts only stock quantities', ()
   assert.equal(saleUnitPrice({ ...product, price_lusin: 0, cost: 40000 }, 'lusin'), 480000)
   assert.equal(unitCost(product, 'pcs'), 30000)
   assert.equal(unitCost(product, 'lusin'), 360000)
+})
+
+test('recalculates sale prices from existing markups when cost changes', () => {
+  assert.deepEqual(salePricesFromMarkups(130000, { pcs: '50', lusin: '' }, 'lusin'), {
+    pcs: 16250
+  })
+  assert.deepEqual(salePricesFromMarkups(150000, { pcs: '50', lusin: '' }, 'lusin'), {
+    pcs: 18750
+  })
+  assert.deepEqual(salePricesFromMarkups(150000, { pcs: '', lusin: '50' }, 'lusin'), {
+    lusin: 225000
+  })
 })
 
 test('keeps custom product units limited to their own sale unit', () => {
