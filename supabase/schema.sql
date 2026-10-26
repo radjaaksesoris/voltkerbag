@@ -123,6 +123,21 @@ set price_pcs = coalesce(price_pcs, case lower(trim(unit))
       else price end)
 where price_pcs is null or price_lusin is null or price_kodi is null;
 
+do $$
+begin
+  if col_description(
+    'public.products'::regclass,
+    (select attnum from pg_attribute
+     where attrelid = 'public.products'::regclass and attname = 'price_lusin')
+  ) is distinct from 'Full selling price for one lusin; not a per-piece rate.' then
+    update public.products
+    set price_lusin = price_lusin * 12;
+
+    execute 'comment on column public.products.price_lusin is ''Full selling price for one lusin; not a per-piece rate.''';
+  end if;
+end;
+$$;
+
 update public.products
 set stock_pcs = round(coalesce(stock, 0) * case lower(trim(unit))
       when 'lusin' then 12
@@ -735,7 +750,7 @@ begin
     if sale_price <= 0 then
       raise exception 'Harga jual per % untuk "%" belum diatur.', requested_unit, product_row.name;
     end if;
-    sale_unit_price := sale_price * sale_factor;
+    sale_unit_price := sale_price;
     if sale_unit_price is distinct from (item ->> 'price')::double precision then
       raise exception 'Harga produk "%" berubah. Muat ulang halaman sebelum menyimpan.', product_row.name;
     end if;

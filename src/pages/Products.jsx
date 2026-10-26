@@ -6,7 +6,7 @@ import MoneyInput from '../components/MoneyInput.jsx'
 import CategorySelect from '../components/CategorySelect.jsx'
 import UnitSelect from '../components/UnitSelect.jsx'
 import Icon from '../components/Icon.jsx'
-import { availableQuantity, productPrice, purchaseCostFactor, purchaseCostPerPiece, purchaseCostUnit, quantityToPcs, salePricePerPiece, saleUnitPrice, saleUnits, stockCostValue, stockEntryUnit, stockInPcs, stockReceiptValuation, unitFactor, stockLabel } from '../productUnits'
+import { availableQuantity, productPrice, purchaseCostFactor, purchaseCostPerPiece, purchaseCostUnit, quantityToPcs, saleUnitPrice, saleUnits, stockCostValue, stockEntryUnit, stockInPcs, stockReceiptValuation, unitFactor, stockLabel } from '../productUnits'
 
 const EMPTY = {
   name: '',
@@ -311,7 +311,7 @@ export default function Products() {
         unit: form.unit.trim(),
         price: basePrice,
         price_pcs: isStandard ? prices.pcs : 0,
-        price_lusin: isStandard ? salePricePerPiece(prices.lusin, 'lusin') : 0,
+        price_lusin: isStandard ? prices.lusin : 0,
         price_kodi: 0,
         image_path: imagePath
       }

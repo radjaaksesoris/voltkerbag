@@ -88,18 +88,13 @@ export function productPrice(product, unit) {
     const storedPrice = Number(product['price_' + normalizedUnitName])
     if (Number.isFinite(storedPrice) && storedPrice > 0) return storedPrice
 
-    const legacyPrice = Number(product.price) || 0
-    return Math.round(legacyPrice / unitFactor(product.unit))
+    return Number(product.price) || 0
   }
   return Number(product.price) || 0
 }
 
 export function saleUnitPrice(product, unit) {
-  return productPrice(product, unit) * unitFactor(unit)
-}
-
-export function salePricePerPiece(price, unit) {
-  return (Number(price) || 0) / unitFactor(unit)
+  return productPrice(product, unit)
 }
 
 export function unitCost(product, unit) {
