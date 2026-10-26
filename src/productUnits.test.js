@@ -1,6 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { availableQuantity, productPrice, purchaseCostFactor, purchaseCostPerPiece, purchaseCostUnit, quantityToPcs, saleUnitPrice, saleUnits, stockCostValue, stockInPcs, stockIssueValuation, stockLabel, stockReceiptValuation, unitCost, unitFactor } from './productUnits.js'
+import { availableQuantity, productPrice, purchaseCostFactor, purchaseCostPerPiece, purchaseCostUnit, quantityToPcs, saleUnitPrice, saleUnits, stockCostValue, stockEntryUnit, stockInPcs, stockIssueValuation, stockLabel, stockReceiptValuation, unitCost, unitFactor } from './productUnits.js'
 
 test('uses the standard conversion factors', () => {
   assert.equal(unitFactor('pcs'), 1)
@@ -23,6 +23,15 @@ test('reads legacy stock in the product main unit', () => {
   assert.equal(quantityToPcs(1.5, 'lusin'), 18)
   assert.equal(stockLabel({ unit: 'kodi', stock_pcs: 19 }), '19 pcs')
   assert.equal(stockLabel({ unit: 'kodi', stock_pcs: 28 }), '28 pcs')
+})
+
+test('enters initial stock in lusin for standard products', () => {
+  assert.equal(stockEntryUnit('pcs'), 'lusin')
+  assert.equal(stockEntryUnit('lusin'), 'lusin')
+  assert.equal(quantityToPcs(5, stockEntryUnit('pcs')), 60)
+  assert.equal(quantityToPcs(2.5, stockEntryUnit('lusin')), 30)
+  assert.equal(stockEntryUnit('pak'), 'pak')
+  assert.equal(quantityToPcs(3, stockEntryUnit('pak')), 3)
 })
 
 test('values standard-unit stock and sale costs using cost per piece', () => {

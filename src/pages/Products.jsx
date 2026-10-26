@@ -6,7 +6,7 @@ import MoneyInput from '../components/MoneyInput.jsx'
 import CategorySelect from '../components/CategorySelect.jsx'
 import UnitSelect from '../components/UnitSelect.jsx'
 import Icon from '../components/Icon.jsx'
-import { availableQuantity, productPrice, purchaseCostFactor, purchaseCostPerPiece, purchaseCostUnit, quantityToPcs, saleUnitPrice, saleUnits, stockCostValue, stockInPcs, stockReceiptValuation, unitFactor, stockLabel } from '../productUnits'
+import { availableQuantity, productPrice, purchaseCostFactor, purchaseCostPerPiece, purchaseCostUnit, quantityToPcs, saleUnitPrice, saleUnits, stockCostValue, stockEntryUnit, stockInPcs, stockReceiptValuation, unitFactor, stockLabel } from '../productUnits'
 
 const EMPTY = {
   name: '',
@@ -125,7 +125,7 @@ export default function Products() {
         lusin: productPrice(p, 'lusin')
       },
       cost: (Number(p.cost) || 0) * purchaseCostFactor(editUnit),
-      stock: String(stockInPcs(p) / unitFactor(editUnit)),
+      stock: String(stockInPcs(p) / unitFactor(stockEntryUnit(editUnit))),
       image_path: p.image_path || null
     })
     setImageFile(null)
@@ -260,12 +260,12 @@ export default function Products() {
   function changeBaseUnit(unit) {
     if (editId) return
     setForm((current) => {
-      const conversion = unitFactor(unit) / unitFactor(current.unit)
+      const stockPcs = (Number(current.stock) || 0) * unitFactor(stockEntryUnit(current.unit))
       return {
         ...current,
         unit,
         cost: current.cost,
-        stock: String((Number(current.stock) || 0) / conversion)
+        stock: String(stockPcs / unitFactor(stockEntryUnit(unit)))
       }
     })
   }
@@ -295,7 +295,7 @@ export default function Products() {
       setActionError('Stok harus berupa angka nol atau lebih.')
       return
     }
-    const stockPcs = quantityToPcs(baseStock, form.unit)
+    const stockPcs = quantityToPcs(baseStock, stockEntryUnit(form.unit))
     const previousImagePath = originalImagePathRef.current
     let imagePath = imageRemoved ? null : previousImagePath
     let uploadedImagePath = null
@@ -550,7 +550,7 @@ export default function Products() {
                 <MoneyInput inputRef={costInputRef} value={form.cost} onChange={(cost) => setForm({ ...form, cost })} disabled={Boolean(editId)} />
               </div>
               <div>
-                <label>Stok ({form.unit})</label>
+                <label>Stok ({stockEntryUnit(form.unit)})</label>
                 <input ref={stockInputRef} className="input" type="number" min="0" step="any" value={form.stock} onChange={(e) => setForm({ ...form, stock: e.target.value })} disabled={Boolean(editId)} />
               </div>
             </div>

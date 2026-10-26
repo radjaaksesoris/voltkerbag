@@ -35,6 +35,12 @@ export function purchaseCostPerPiece(unit, cost) {
   return (Number(cost) || 0) / purchaseCostFactor(unit)
 }
 
+export function stockEntryUnit(unit) {
+  return saleUnits(unit).length === 2
+    ? 'lusin'
+    : String(unit || 'pcs').trim()
+}
+
 export function stockInPcs(product) {
   if (product.stock_pcs != null) return Math.max(0, Number(product.stock_pcs) || 0)
   return Math.max(0, (Number(product.stock) || 0) * unitFactor(product.unit))
