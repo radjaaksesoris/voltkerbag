@@ -7,9 +7,13 @@ import MoneyInput from './MoneyInput'
 import ReceiptPreview from './ReceiptPreview'
 import Icon from './Icon.jsx'
 import CustomerIdentity from './CustomerIdentity.jsx'
+import { downloadInvoiceJpeg } from '../invoiceJpeg'
 
 export default function TransactionDetails({ transaction, onClose, onTransactionUpdated, allowPayment = true }) {
   const [showReceipt, setShowReceipt] = useState(false)
+  const [invoiceDownloading, setInvoiceDownloading] = useState(false)
+  const [invoiceDownloadError, setInvoiceDownloadError] = useState('')
+  const [invoiceDownloadStatus, setInvoiceDownloadStatus] = useState('')
   const payments = transaction.payments || []
   const paidAmount = transaction.paidAmount != null
     ? Number(transaction.paidAmount)
@@ -22,6 +26,20 @@ export default function TransactionDetails({ transaction, onClose, onTransaction
   const [savingPayment, setSavingPayment] = useState(false)
   const paymentRequest = useRef(null)
   const operationLock = useRef(false)
+
+  async function downloadInvoice() {
+    setInvoiceDownloading(true)
+    setInvoiceDownloadError('')
+    setInvoiceDownloadStatus('')
+    try {
+      await downloadInvoiceJpeg(transaction)
+      setInvoiceDownloadStatus('Faktur JPEG berhasil diunduh.')
+    } catch (error) {
+      setInvoiceDownloadError(error.message || 'Gagal mengunduh faktur.')
+    } finally {
+      setInvoiceDownloading(false)
+    }
+  }
 
   async function submitPayment(event) {
     event.preventDefault()
@@ -86,9 +104,20 @@ export default function TransactionDetails({ transaction, onClose, onTransaction
               <Icon name="print" size={15} />
               PRINT
             </button>
+            <button
+              className="btn"
+              type="button"
+              aria-label={invoiceDownloading ? 'Menyiapkan download faktur' : 'Download faktur'}
+              title={invoiceDownloading ? 'Menyiapkan download faktur' : 'Download faktur'}
+              disabled={invoiceDownloading}
+              onClick={downloadInvoice}>
+              <Icon name="download" size={15} />
+            </button>
             <button className="btn" type="button" onClick={onClose}>Tutup</button>
           </div>
         </div>
+        {invoiceDownloadError && <p className="form-error" role="alert">{invoiceDownloadError}</p>}
+        {invoiceDownloadStatus && <p className="backup-success" role="status">{invoiceDownloadStatus}</p>}
 
         <dl className="transaction-details-meta">
           <div><dt>Nama pelanggan</dt><dd>

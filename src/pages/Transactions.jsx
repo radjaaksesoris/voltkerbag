@@ -10,7 +10,7 @@ import CustomerSelect from '../components/CustomerSelect.jsx'
 import CustomerIdentity from '../components/CustomerIdentity.jsx'
 import { saleUnitPrice, saleUnits, stockInPcs, stockLabel, unitCost, unitFactor } from '../productUnits'
 import { dateRangeTimestamps, localDateValue } from '../dateFilter'
-import { downloadInvoicePdf } from '../invoicePdf'
+import { downloadInvoiceJpeg } from '../invoiceJpeg'
 
 export default function Transactions() {
   const [products, setProducts] = useState([])
@@ -186,8 +186,8 @@ export default function Transactions() {
     setInvoiceDownloadError('')
     setInvoiceDownloadStatus('')
     try {
-      await downloadInvoicePdf(transaction)
-      setInvoiceDownloadStatus('Faktur berhasil diunduh.')
+      await downloadInvoiceJpeg(transaction)
+      setInvoiceDownloadStatus('Faktur JPEG berhasil diunduh.')
     } catch (error) {
       setInvoiceDownloadError(error.message || 'Gagal mengunduh faktur.')
     } finally {
