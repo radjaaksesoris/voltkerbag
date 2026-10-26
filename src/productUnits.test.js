@@ -1,6 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { availableQuantity, productPrice, purchaseCostFactor, purchaseCostPerPiece, purchaseCostUnit, quantityToPcs, saleUnitPrice, saleUnits, stockCostValue, stockEntryUnit, stockInPcs, stockIssueValuation, stockLabel, stockReceiptValuation, unitCost, unitFactor } from './productUnits.js'
+import { availableQuantity, productPrice, purchaseCostFactor, purchaseCostPerPiece, purchaseCostUnit, quantityToPcs, saleMarkupPercentage, saleMarkupPrice, saleUnitPrice, saleUnits, stockCostValue, stockEntryUnit, stockInPcs, stockIssueValuation, stockLabel, stockReceiptValuation, unitCost, unitFactor } from './productUnits.js'
 
 test('uses the standard conversion factors', () => {
   assert.equal(unitFactor('pcs'), 1)
@@ -89,22 +89,30 @@ test('uses stored inventory value instead of recalculating historic stock at the
   }), 40000000)
 })
 
-test('uses the separately entered sale price for each unit and converts only stock quantities', () => {
+test('calculates prices from cost markup and converts only stock quantities', () => {
   assert.equal(quantityToPcs(1, 'lusin'), 12)
   assert.equal(quantityToPcs(2.5, 'lusin'), 30)
+  assert.equal(saleMarkupPrice(30000, 'pcs', 25), 37500)
+  assert.equal(saleMarkupPrice(30000, 'lusin', 20), 432000)
+  assert.equal(saleMarkupPercentage(360000, 30000, 'lusin'), 0)
+  assert.equal(saleMarkupPercentage(37500, 30000, 'pcs'), 25)
   const product = {
-    unit: 'kodi',
-    price: 360000,
+    unit: 'pcs',
+    price: 50000,
     price_pcs: 50000,
     price_lusin: 360000,
-    cost: 100000
+    sale_markup_pcs_pct: 25,
+    sale_markup_lusin_pct: 0,
+    cost: 30000
   }
-  assert.equal(productPrice(product, 'pcs'), 50000)
+  assert.equal(productPrice(product, 'pcs'), 37500)
   assert.equal(productPrice(product, 'lusin'), 360000)
-  assert.equal(saleUnitPrice(product, 'pcs'), 50000)
+  assert.equal(saleUnitPrice(product, 'pcs'), 37500)
   assert.equal(saleUnitPrice(product, 'lusin'), 360000)
-  assert.equal(unitCost(product, 'pcs'), 100000)
-  assert.equal(unitCost(product, 'lusin'), 1200000)
+  assert.equal(saleUnitPrice({ ...product, cost: 40000 }, 'pcs'), 50000)
+  assert.equal(saleUnitPrice({ ...product, cost: 40000 }, 'lusin'), 480000)
+  assert.equal(unitCost(product, 'pcs'), 30000)
+  assert.equal(unitCost(product, 'lusin'), 360000)
 })
 
 test('keeps custom product units limited to their own sale unit', () => {

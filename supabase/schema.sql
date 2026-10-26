@@ -10,6 +10,8 @@ create table if not exists public.products (
   price double precision not null default 0,
   price_pcs double precision,
   price_lusin double precision,
+  sale_markup_pcs_pct double precision,
+  sale_markup_lusin_pct double precision,
   price_kodi double precision,
   cost double precision not null default 0,
   stock integer not null default 0,
@@ -97,6 +99,8 @@ alter table public.products add column if not exists "updatedAt" timestamptz;
 alter table public.products add column if not exists unit text not null default 'pcs';
 alter table public.products add column if not exists price_pcs double precision;
 alter table public.products add column if not exists price_lusin double precision;
+alter table public.products add column if not exists sale_markup_pcs_pct double precision;
+alter table public.products add column if not exists sale_markup_lusin_pct double precision;
 alter table public.products add column if not exists price_kodi double precision;
 alter table public.products add column if not exists stock_pcs integer;
 alter table public.products add column if not exists stock_cost_value double precision;
@@ -137,6 +141,12 @@ begin
   end if;
 end;
 $$;
+
+update public.products
+set sale_markup_pcs_pct = coalesce(sale_markup_pcs_pct, ((price_pcs / cost) - 1) * 100),
+    sale_markup_lusin_pct = coalesce(sale_markup_lusin_pct, ((price_lusin / (cost * 12)) - 1) * 100)
+where cost > 0
+  and (sale_markup_pcs_pct is null or sale_markup_lusin_pct is null);
 
 update public.products
 set stock_pcs = round(coalesce(stock, 0) * case lower(trim(unit))
@@ -569,6 +579,21 @@ begin
       stock = next_stock_pcs::double precision / public.product_unit_factor(product_row.unit),
       stock_cost_value = next_stock_cost_value,
       cost = next_stock_cost_value / next_stock_pcs,
+      price_pcs = case
+        when product_row.sale_markup_pcs_pct is not null
+          then round((next_stock_cost_value / next_stock_pcs * (100 + product_row.sale_markup_pcs_pct) / 100)::numeric)::double precision
+        else product_row.price_pcs
+      end,
+      price_lusin = case
+        when product_row.sale_markup_lusin_pct is not null
+          then round((next_stock_cost_value / next_stock_pcs * 12 * (100 + product_row.sale_markup_lusin_pct) / 100)::numeric)::double precision
+        else product_row.price_lusin
+      end,
+      price = case
+        when lower(trim(product_row.unit)) in ('pcs', 'lusin') and product_row.sale_markup_pcs_pct is not null
+          then round((next_stock_cost_value / next_stock_pcs * (100 + product_row.sale_markup_pcs_pct) / 100)::numeric)::double precision
+        else product_row.price
+      end,
       "updatedAt" = clock_timestamp()
   where id = p_product_id and owner_id = current_user_id;
 
@@ -743,8 +768,16 @@ begin
       raise exception 'Stok "%" tidak cukup untuk dijual per %.', product_row.name, requested_unit;
     end if;
     sale_price := case requested_unit
-      when 'pcs' then product_row.price_pcs
-      when 'lusin' then product_row.price_lusin
+      when 'pcs' then case
+        when product_row.sale_markup_pcs_pct is not null and product_row.cost > 0
+          then round((product_row.cost * (100 + product_row.sale_markup_pcs_pct) / 100)::numeric)::double precision
+        else product_row.price_pcs
+      end
+      when 'lusin' then case
+        when product_row.sale_markup_lusin_pct is not null and product_row.cost > 0
+          then round((product_row.cost * 12 * (100 + product_row.sale_markup_lusin_pct) / 100)::numeric)::double precision
+        else product_row.price_lusin
+      end
       else product_row.price
     end;
     if sale_price <= 0 then
