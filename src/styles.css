@@ -1044,7 +1044,7 @@ select.input { appearance: none; }
 }
 .receipt-preview-paper .receipt-items thead { border-bottom: 3px double #000; }
 .receipt-preview-paper .receipt-items tbody tr + tr { border-top: 1px solid #000; }
-.receipt-preview-paper .receipt-qty { width: 12mm; text-align: center; }
+.receipt-preview-paper .receipt-qty { width: 20mm; text-align: center; white-space: nowrap; }
 .receipt-preview-paper .receipt-money { width: 34mm; text-align: right; white-space: nowrap !important; }
 .receipt-preview-paper .receipt-totals {
   display: flex;
@@ -1587,7 +1587,7 @@ select.input { appearance: none; }
   }
   .receipt-items thead { border-bottom: 3px double #000; }
   .receipt-items tbody tr:hover { background: transparent; }
-  .receipt-qty { width: 12mm; text-align: center; }
+  .receipt-qty { width: 20mm; text-align: center; white-space: nowrap !important; }
   .receipt-money { width: 34mm; text-align: right; white-space: nowrap !important; }
   .receipt-totals {
     display: flex;

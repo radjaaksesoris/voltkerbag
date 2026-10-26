@@ -42,7 +42,7 @@ export default function Receipt({ transaction }) {
 
       <table className="receipt-items">
         <thead>
-          <tr><th>Barang</th><th className="receipt-qty">Jml</th><th className="receipt-money">Harga</th><th className="receipt-money">Jumlah</th></tr>
+          <tr><th>Barang</th><th className="receipt-qty">QTY</th><th className="receipt-money">Harga</th><th className="receipt-money">Jumlah</th></tr>
         </thead>
         <tbody>
           {transaction.items.map((item, index) => (
