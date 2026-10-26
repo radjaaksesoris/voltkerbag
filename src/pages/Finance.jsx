@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { getAll, getFinanceData, put, remove, onRefresh, recordCustomerCreditPayment, addManualCustomerCredit } from '../db'
-import { rupiah, dateOnly, dateTime } from '../format'
+import { rupiah, dateOnly } from '../format'
 import DateRangeFilter from '../components/DateRangeFilter.jsx'
 import { dateRangeTimestamps, hasDateRange, localDateValue } from '../dateFilter'
 import MoneyInput from '../components/MoneyInput.jsx'
@@ -354,17 +354,14 @@ export default function Finance() {
             <button className="btn btn-primary" type="button" onClick={openNewEntry}>+ Tambah catatan</button>
           </div>
           <table className="finance-ledger-table">
-            <thead><tr><th><span className="finance-ledger-time-label">Waktu</span><span className="finance-ledger-date-label">Tanggal</span></th><th>Jenis</th><th>Kategori</th><th>Catatan</th><th>Nominal</th><th></th></tr></thead>
+            <thead><tr><th>Tanggal</th><th>Jenis</th><th>Kategori</th><th>Catatan</th><th>Nominal</th><th></th></tr></thead>
             <tbody>
               {report.entries.length === 0 && <tr><td colSpan="6" className="muted center">
                 {hasFilter ? 'Tidak ada catatan pada rentang tanggal ini.' : 'Belum ada catatan.'}
               </td></tr>}
               {report.entries.map((e) => (
                 <tr key={e.id}>
-                  <td>
-                    <span className="finance-ledger-datetime">{dateTime(e.date || e.createdAt)}</span>
-                    <span className="finance-ledger-date">{dateOnly(e.date || e.createdAt)}</span>
-                  </td>
+                  <td>{dateOnly(e.date || e.createdAt)}</td>
                   <td><span className={'badge ' + TYPES[e.type].cls}>{TYPES[e.type].label}</span></td>
                   <td>{e.category || '-'}</td>
                   <td>{e.note || '-'}</td>
