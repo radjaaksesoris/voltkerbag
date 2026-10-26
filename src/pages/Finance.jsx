@@ -173,12 +173,8 @@ export default function Finance() {
     setManualDebtError('')
     const customerName = manualDebtCustomer.trim()
     const amount = Number(manualDebtAmount)
-    if (!customerName) {
-      setManualDebtError('Nama pelanggan wajib diisi.')
-      return
-    }
-    if (customerName.length > 120) {
-      setManualDebtError('Nama pelanggan maksimal 120 karakter.')
+    if (!customers.some((customer) => customer.name === customerName)) {
+      setManualDebtError('Pilih nama pelanggan dari master pelanggan.')
       return
     }
     if (!Number.isFinite(amount) || amount <= 0) {
@@ -420,15 +416,21 @@ export default function Finance() {
             <h3 id="manual-debt-title">Tambah hutang lama</h3>
             <p className="muted">Catat saldo hutang yang sudah ada sebelum aplikasi digunakan. Catatan ini tidak dihitung sebagai penjualan.</p>
             <label htmlFor="manual-debt-customer">Nama pelanggan</label>
-            <input
+            <select
               id="manual-debt-customer"
               className="input"
               value={manualDebtCustomer}
               onChange={(event) => setManualDebtCustomer(event.target.value)}
-              maxLength={120}
-              autoComplete="off"
               required
-            />
+              disabled={customers.length === 0 || savingManualDebt}>
+              <option value="" disabled>Pilih pelanggan</option>
+              {customers.map((customer) => (
+                <option key={customer.id} value={customer.name}>{customer.name}</option>
+              ))}
+            </select>
+            {customers.length === 0 && (
+              <p className="muted small">Belum ada pelanggan di master. Tambahkan pelanggan terlebih dahulu di tab Setting.</p>
+            )}
             <label htmlFor="manual-debt-amount">Nominal hutang</label>
             <MoneyInput
               id="manual-debt-amount"
@@ -440,7 +442,7 @@ export default function Finance() {
             {manualDebtError && <p className="form-error" role="alert">{manualDebtError}</p>}
             <div className="modal-actions">
               <button className="btn" type="button" disabled={savingManualDebt} onClick={() => setShowManualDebtForm(false)}>Batal</button>
-              <button className="btn btn-primary" type="submit" disabled={savingManualDebt}>
+              <button className="btn btn-primary" type="submit" disabled={savingManualDebt || customers.length === 0}>
                 {savingManualDebt ? 'Menyimpan...' : 'Simpan hutang'}
               </button>
             </div>
