@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
-import { addProductStock, getAll, getProductImageUrl, put, remove, removeProductImage, updateProductDetails, uploadProductImage, onRefresh } from '../db'
+import { addProductStock, getAll, getProductImageUrl, put, remove, removeProductImage, setProductStock, updateProductDetails, uploadProductImage, onRefresh } from '../db'
 import { rupiah } from '../format'
 import MoneyInput from '../components/MoneyInput.jsx'
 import CategorySelect from '../components/CategorySelect.jsx'
@@ -134,7 +134,9 @@ export default function Products() {
         lusin: productPrice(p, 'lusin')
       },
       cost: (Number(p.cost) || 0) * purchaseCostFactor(editUnit),
-      stock: String(stockInPcs(p) / unitFactor(stockEntryUnit(editUnit))),
+      stock: String(saleUnits(editUnit).length === 2
+        ? stockInPcs(p)
+        : stockInPcs(p) / unitFactor(stockEntryUnit(editUnit))),
       image_path: p.image_path || null
     })
     setImageFile(null)
@@ -312,14 +314,19 @@ export default function Products() {
       return
     }
     const baseStock = Number(form.stock)
-    if (!editId && (!Number.isFinite(baseStock) || baseStock < 0)) {
-      setActionError('Stok harus berupa angka nol atau lebih.')
+    if (!Number.isFinite(baseStock) || baseStock < 0 || (editId && !Number.isInteger(baseStock))) {
+      setActionError(editId
+        ? 'Stok harus berupa bilangan bulat nol atau lebih.'
+        : 'Stok harus berupa angka nol atau lebih.')
       return
     }
-    const stockPcs = quantityToPcs(baseStock, stockEntryUnit(form.unit))
+    const stockPcs = editId
+      ? quantityToPcs(baseStock, 'pcs')
+      : quantityToPcs(baseStock, stockEntryUnit(form.unit))
     const previousImagePath = originalImagePathRef.current
     let imagePath = imageRemoved ? null : previousImagePath
     let uploadedImagePath = null
+    let productDetailsSaved = false
     setSaving(true)
     try {
       if (imageFile) {
@@ -346,6 +353,12 @@ export default function Products() {
       }
       if (editId) {
         await updateProductDetails(editId, productRecord)
+        productDetailsSaved = true
+        const currentProduct = items.find((product) => product.id === editId)
+        if (!currentProduct) throw new Error('Produk tidak ditemukan untuk memperbarui stok.')
+        if (stockInPcs(currentProduct) !== stockPcs) {
+          await setProductStock(editId, stockPcs)
+        }
       } else {
         await put('products', productRecord)
       }
@@ -363,7 +376,9 @@ export default function Products() {
       }
     } catch (error) {
       let message = error.message || 'Gagal menyimpan produk ke server.'
-      if (uploadedImagePath) {
+      if (productDetailsSaved) {
+        message = 'Detail produk tersimpan, tetapi stok gagal diperbarui: ' + message
+      } else if (uploadedImagePath) {
         try {
           await removeProductImage(uploadedImagePath)
         } catch (cleanupError) {
@@ -433,9 +448,7 @@ export default function Products() {
     </div>
   }
 
-  const stockFieldValue = editId
-    ? stockLabel({ unit: stockEntryUnit(form.unit), stock: Number(form.stock) })
-    : form.stock
+  const editingProduct = editId ? items.find((product) => product.id === editId) : null
 
   return (
     <div className="page">
@@ -633,8 +646,11 @@ export default function Products() {
             {saleUnits(form.unit).length === 2 ? (
               <div className="product-stock-fields">
                 <div>
-                  <label>Stok ({stockEntryUnit(form.unit)})</label>
-                  <input ref={stockInputRef} className="input" type={editId ? 'text' : 'number'} min={editId ? undefined : '0'} step={editId ? undefined : 'any'} value={stockFieldValue} onChange={(e) => setForm({ ...form, stock: e.target.value })} disabled={Boolean(editId)} />
+                  <label>Stok ({editId ? 'pcs' : stockEntryUnit(form.unit)})</label>
+                  <input ref={stockInputRef} className="input" type="number" min="0" step={editId ? '1' : 'any'} value={form.stock} onChange={(e) => setForm({ ...form, stock: e.target.value })} />
+                  {editId && saleUnits(form.unit).length === 2 && (
+                    <span className="muted small">Stok saat ini: {editingProduct ? stockLabel(editingProduct) : '-'}</span>
+                  )}
                 </div>
               </div>
             ) : (
@@ -644,8 +660,11 @@ export default function Products() {
                   <MoneyInput inputRef={costInputRef} value={form.cost} onChange={(cost) => setForm({ ...form, cost })} disabled={Boolean(editId)} />
                 </div>
                 <div>
-                  <label>Stok ({stockEntryUnit(form.unit)})</label>
-                  <input ref={stockInputRef} className="input" type={editId ? 'text' : 'number'} min={editId ? undefined : '0'} step={editId ? undefined : 'any'} value={stockFieldValue} onChange={(e) => setForm({ ...form, stock: e.target.value })} disabled={Boolean(editId)} />
+                  <label>Stok ({editId && saleUnits(form.unit).length === 2 ? 'pcs' : stockEntryUnit(form.unit)})</label>
+                  <input ref={stockInputRef} className="input" type="number" min="0" step={editId ? '1' : 'any'} value={form.stock} onChange={(e) => setForm({ ...form, stock: e.target.value })} />
+                  {editId && saleUnits(form.unit).length === 2 && (
+                    <span className="muted small">Stok saat ini: {editingProduct ? stockLabel(editingProduct) : '-'}</span>
+                  )}
                 </div>
               </div>
             )}

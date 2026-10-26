@@ -342,6 +342,16 @@ export async function addProductStock(productId, quantityPcs, unitCost, requestI
   return data
 }
 
+export async function setProductStock(productId, stockPcs) {
+  const { data, error } = await getClient().rpc('set_product_stock', {
+    p_product_id: productId,
+    p_stock_pcs: stockPcs
+  })
+  throwIfError(error, 'Gagal memperbarui stok produk')
+  notifyRefresh()
+  return data
+}
+
 export async function recordTransactionPayment(transactionId, amount, requestId) {
   const { data, error } = await getClient().rpc('record_transaction_payment', {
     p_transaction_id: transactionId,

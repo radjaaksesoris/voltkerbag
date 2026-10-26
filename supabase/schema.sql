@@ -672,6 +672,74 @@ grant select on public.product_stock_adjustments to authenticated;
 revoke all on function public.add_product_stock(bigint, integer, double precision, uuid) from public, anon;
 grant execute on function public.add_product_stock(bigint, integer, double precision, uuid) to authenticated;
 
+create or replace function public.set_product_stock(
+  p_product_id bigint,
+  p_stock_pcs integer
+)
+returns integer
+language plpgsql
+security definer
+set search_path = public, pg_temp
+as $$
+declare
+  current_user_id uuid := auth.uid();
+  product_row public.products%rowtype;
+  next_stock_cost_value double precision;
+  average_unit_cost double precision;
+begin
+  if current_user_id is null then raise exception 'Login diperlukan.'; end if;
+  if p_product_id is null then raise exception 'Produk tidak valid.'; end if;
+  if p_stock_pcs is null or p_stock_pcs < 0 then
+    raise exception 'Jumlah stok harus nol atau lebih.';
+  end if;
+
+  select * into product_row
+  from public.products
+  where id = p_product_id and owner_id = current_user_id
+  for update;
+  if not found then raise exception 'Produk tidak ditemukan atau tidak dapat diakses.'; end if;
+  if product_row.stock_pcs = p_stock_pcs then return p_stock_pcs; end if;
+
+  average_unit_cost := case
+    when product_row.stock_pcs > 0
+      then coalesce(product_row.stock_cost_value, product_row.cost * product_row.stock_pcs) / product_row.stock_pcs
+    else coalesce(product_row.cost, 0)
+  end;
+  next_stock_cost_value := average_unit_cost * p_stock_pcs;
+  if next_stock_cost_value::text in ('NaN', 'Infinity', '-Infinity') then
+    raise exception 'Nilai modal stok melebihi batas yang dapat disimpan.';
+  end if;
+
+  update public.products
+  set stock_pcs = p_stock_pcs,
+      stock = p_stock_pcs::double precision / public.product_unit_factor(product_row.unit),
+      stock_cost_value = next_stock_cost_value,
+      cost = case when p_stock_pcs > 0 then next_stock_cost_value / p_stock_pcs else product_row.cost end,
+      price_pcs = case
+        when product_row.sale_markup_pcs_pct is not null
+          then round((average_unit_cost * (100 + product_row.sale_markup_pcs_pct) / 100)::numeric)::double precision
+        else product_row.price_pcs
+      end,
+      price_lusin = case
+        when product_row.sale_markup_lusin_pct is not null
+          then round((average_unit_cost * 12 * (100 + product_row.sale_markup_lusin_pct) / 100)::numeric)::double precision
+        else product_row.price_lusin
+      end,
+      price = case
+        when lower(trim(product_row.unit)) in ('pcs', 'lusin') and product_row.sale_markup_pcs_pct is not null
+          then round((average_unit_cost * (100 + product_row.sale_markup_pcs_pct) / 100)::numeric)::double precision
+        else product_row.price
+      end,
+      "updatedAt" = clock_timestamp()
+  where id = p_product_id and owner_id = current_user_id;
+
+  return p_stock_pcs;
+end;
+$$;
+
+revoke all on function public.set_product_stock(bigint, integer) from public, anon;
+grant execute on function public.set_product_stock(bigint, integer) to authenticated;
+
 create or replace function public.restore_store_backup(p_records jsonb)
 returns void
 language plpgsql
