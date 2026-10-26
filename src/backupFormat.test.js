@@ -1,6 +1,31 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { isValidBackupChunkManifestEntry, isValidBackupChunkRows } from './backupFormat.js'
+import {
+  createBackupChunks,
+  isValidBackupChunkManifestEntry,
+  isValidBackupChunkRows
+} from './backupFormat.js'
+
+test('backup chunks honor UTF-8 byte and row limits', () => {
+  const rows = [
+    { id: 1, name: 'andri' },
+    { id: 2, name: 'Kemeja 🧵' },
+    { id: 3, name: 'barang'.repeat(5) }
+  ]
+  const maxBytes = 50
+  const chunks = createBackupChunks(rows, maxBytes, 2)
+
+  assert.deepEqual(chunks.flat(), rows)
+  assert.ok(chunks.every((chunk) => chunk.length <= 2))
+  assert.ok(chunks.every((chunk) => new TextEncoder().encode(JSON.stringify(chunk)).byteLength <= maxBytes))
+})
+
+test('backup chunking rejects rows that exceed the byte limit', () => {
+  assert.throws(
+    () => createBackupChunks([{ name: 'too large' }], 8),
+    /Satu baris terlalu besar/
+  )
+})
 
 test('backup manifest accepts byte-split chunks with fewer than 100 rows', () => {
   assert.equal(isValidBackupChunkManifestEntry({ count: 203, chunks: 5 }), true)

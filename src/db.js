@@ -1,6 +1,10 @@
 import { getClient } from './supabaseSync'
 import JSZip from 'jszip'
-import { isValidBackupChunkManifestEntry, isValidBackupChunkRows } from './backupFormat'
+import {
+  createBackupChunks,
+  isValidBackupChunkManifestEntry,
+  isValidBackupChunkRows
+} from './backupFormat'
 
 const TABLES = {
   products: 'products',
@@ -67,17 +71,7 @@ export async function createBackupArchive() {
     let lastId = 0
     let chunkIndex = 0
     let tableCount = 0
-    let serializedRows = []
-    let serializedBytes = 2
     const pageSize = 100
-
-    function flushChunk() {
-      if (!serializedRows.length) return
-      archive.file('records/' + key + '/' + chunkIndex + '.json', '[' + serializedRows.join(',') + ']')
-      chunkIndex += 1
-      serializedRows = []
-      serializedBytes = 2
-    }
 
     for (;;) {
       const { data, error } = await client
@@ -93,25 +87,21 @@ export async function createBackupArchive() {
           if (product.image_path) imagePaths.add(product.image_path)
         }
       }
-      for (const row of data) {
-        const serialized = JSON.stringify(row)
-        const rowBytes = new TextEncoder().encode(serialized).length
-        if (rowBytes + 2 > BACKUP_CHUNK_MAX_BYTES) {
-          throw new Error('Satu baris ' + table + ' terlalu besar untuk dibackup dengan aman.')
-        }
-        const separatorBytes = serializedRows.length ? 1 : 0
-        if (serializedRows.length >= 100 || serializedBytes + separatorBytes + rowBytes > BACKUP_CHUNK_MAX_BYTES) {
-          flushChunk()
-        }
-        serializedRows.push(serialized)
-        serializedBytes += (serializedRows.length > 1 ? 1 : 0) + rowBytes
+      let chunks
+      try {
+        chunks = createBackupChunks(data, BACKUP_CHUNK_MAX_BYTES)
+      } catch (error) {
+        throw new Error('Gagal membagi backup tabel ' + table + ': ' + error.message)
+      }
+      for (const rows of chunks) {
+        archive.file('records/' + key + '/' + chunkIndex + '.json', JSON.stringify(rows))
+        chunkIndex += 1
       }
       tableCount += data.length
       recordCount += data.length
       lastId = data[data.length - 1].id
       if (data.length < pageSize) break
     }
-    flushChunk()
     recordManifest[key] = { count: tableCount, chunks: chunkIndex }
   }
 
