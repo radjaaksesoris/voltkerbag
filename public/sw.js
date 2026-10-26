@@ -16,7 +16,15 @@ self.addEventListener('install', (event) => {
 })
 
 self.addEventListener('activate', (event) => {
-  event.waitUntil(self.clients.claim())
+  event.waitUntil((async () => {
+    const cacheNames = await caches.keys()
+    await Promise.all(
+      cacheNames
+        .filter((name) => name.startsWith('voltker-app-') && name !== CACHE_NAME)
+        .map((name) => caches.delete(name))
+    )
+    await self.clients.claim()
+  })())
 })
 
 self.addEventListener('message', (event) => {
