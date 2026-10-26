@@ -64,16 +64,6 @@ export function stockReceiptValuation({ stockPcs, stockValue, receiptPcs, receip
   }
 }
 
-export function stockIssueValuation({ stockPcs, stockValue, issuePcs }) {
-  const averageUnitCost = stockPcs > 0 ? stockValue / stockPcs : 0
-  const issuedValue = Math.min(stockValue, averageUnitCost * issuePcs)
-  return {
-    stockPcs: Math.max(0, stockPcs - issuePcs),
-    stockValue: Math.max(0, stockValue - issuedValue),
-    issuedValue
-  }
-}
-
 export function quantityToPcs(quantity, unit) {
   return Math.round((Number(quantity) || 0) * unitFactor(unit))
 }

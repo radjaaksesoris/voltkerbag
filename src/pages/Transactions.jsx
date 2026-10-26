@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { getAll, getProductImageUrl, getTransactionSummary, completeSale, recordTransactionPayment, onRefresh } from '../db'
-import { rupiah, dateTime } from '../format'
+import { rupiah } from '../format'
 import ReceiptPreview from '../components/ReceiptPreview'
 import Icon from '../components/Icon.jsx'
 import TransactionDetails from '../components/TransactionDetails'
@@ -8,7 +8,7 @@ import { getInvoiceNumber } from '../invoice'
 import MoneyInput from '../components/MoneyInput.jsx'
 import CustomerSelect from '../components/CustomerSelect.jsx'
 import CustomerIdentity from '../components/CustomerIdentity.jsx'
-import { productPrice, saleUnitPrice, saleUnits, stockInPcs, stockLabel, unitCost, unitFactor } from '../productUnits'
+import { saleUnitPrice, saleUnits, stockInPcs, stockLabel, unitCost, unitFactor } from '../productUnits'
 import { dateRangeTimestamps, localDateValue } from '../dateFilter'
 
 export default function Transactions() {

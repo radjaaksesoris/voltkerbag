@@ -1,6 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { availableQuantity, productPrice, purchaseCostFactor, purchaseCostPerPiece, purchaseCostUnit, quantityToPcs, saleMarkupPercentage, saleMarkupPrice, saleUnitPrice, saleUnits, stockCostValue, stockEntryUnit, stockInPcs, stockIssueValuation, stockLabel, stockReceiptValuation, unitCost, unitFactor } from './productUnits.js'
+import { availableQuantity, productPrice, purchaseCostFactor, purchaseCostPerPiece, purchaseCostUnit, quantityToPcs, saleMarkupPercentage, saleMarkupPrice, saleUnitPrice, saleUnits, stockCostValue, stockEntryUnit, stockInPcs, stockLabel, stockReceiptValuation, unitCost, unitFactor } from './productUnits.js'
 
 test('uses the standard conversion factors', () => {
   assert.equal(unitFactor('pcs'), 1)
@@ -60,18 +60,6 @@ test('keeps the existing stock value when a new production batch has a different
     stockValue: 65000000,
     averageUnitCost: 65000000 / 3000
   })
-})
-
-test('reduces stock value proportionally at weighted average cost when goods are sold', () => {
-  const issue = stockIssueValuation({
-    stockPcs: 3000,
-    stockValue: 65000000,
-    issuePcs: 1000
-  })
-
-  assert.equal(issue.stockPcs, 2000)
-  assert.equal(issue.issuedValue, 65000000 / 3)
-  assert.equal(issue.stockValue, 65000000 - 65000000 / 3)
 })
 
 test('uses stored inventory value instead of recalculating historic stock at the latest average price', () => {

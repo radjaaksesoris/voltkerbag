@@ -391,7 +391,6 @@ button:focus-visible, input:focus-visible, select:focus-visible {
 }
 
 /* Pages and type */
-.page-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; flex-wrap: wrap; margin-bottom: 25px; }
 .page-toolbar {
   display: flex;
   align-items: center;
@@ -449,7 +448,7 @@ button:focus-visible, input:focus-visible, select:focus-visible {
 .finance-date-filter .date-filter-reset:hover { border-color: #fff; background: #fff; }
 .finance-date-filter .date-filter-reset:disabled { opacity: .82; }
 .finance-date-filter .date-filter-error { color: #fff8ed; }
-h2, .page-head h2 {
+h2 {
   color: var(--ink);
   font-family: 'Playfair Display', Georgia, serif;
   font-size: clamp(28px, 3vw, 36px);
@@ -476,7 +475,6 @@ h2, .page-head h2 {
   .finance-date-filter .date-filter-reset { grid-column: auto; align-self: end; justify-self: stretch; padding-inline: 8px; white-space: nowrap; }
 }
 h3 { margin-bottom: 16px; color: var(--ink); font-size: 15px; font-weight: 700; }
-.page-head p { margin-top: 7px; max-width: 60ch; font-size: 13px; }
 .muted { color: var(--muted); }
 .small { font-size: 12px; }
 .accent { color: var(--accent); }
@@ -484,7 +482,6 @@ h3 { margin-bottom: 16px; color: var(--ink); font-size: 15px; font-weight: 700; 
 .danger { color: var(--danger); }
 .right { text-align: right; }
 .center, .center-text { text-align: center; }
-.th-subtitle { display: block; margin-top: 3px; font-size: 9px; font-weight: 500; letter-spacing: .2px; text-transform: none; }
 .dashboard-transaction-table { min-width: 720px; }
 .dashboard-date-mobile, .dashboard-amount-mobile { display: none; }
 .finance-ledger-table { min-width: 780px; }
@@ -903,10 +900,6 @@ select.input { appearance: none; }
 .cart-checkout .btn-block { margin-top: 7px; }
 .cart-checkout .btn-lg { padding: 11px; }
 .transaction-table { min-width: 1040px; }
-.payment-history { margin-top: 8px; font-size: 11px; }
-.payment-history summary { color: var(--muted); cursor: pointer; font-weight: 600; }
-.payment-history ul { min-width: 210px; margin: 7px 0 0; padding-left: 17px; color: var(--text); }
-.payment-history li + li { margin-top: 4px; }
 .installment-balance { display: flex; justify-content: space-between; margin: 15px 0; color: var(--muted); }
 .installment-balance strong { color: var(--accent); font-variant-numeric: tabular-nums; }
 .credit-balances { margin-bottom: 20px; }
@@ -924,7 +917,6 @@ select.input { appearance: none; }
 .credit-payment-modes { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin: 8px 0; }
 .credit-payment-modes .btn { padding-inline: 8px; }
 .credit-balances-empty { padding: 10px 0 2px; font-size: 12px; }
-.receipt-button { display: block; margin-bottom: 6px; white-space: nowrap; }
 .print-receipt { display: none; }
 .receipt-preview-overlay { z-index: 70; }
 .receipt-preview-modal {
@@ -1076,7 +1068,6 @@ select.input { appearance: none; }
 
 /* Finance and forms */
 .finance-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 22px; align-items: start; }
-.grid-3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
 .overlay { position: fixed; z-index: 50; inset: 0; display: flex; align-items: center; justify-content: center; padding: 20px; background: rgba(24, 22, 21, .6); overscroll-behavior: contain; backdrop-filter: blur(5px); }
 .product-form-overlay {
   align-items: stretch;
@@ -1152,9 +1143,6 @@ select.input { appearance: none; }
 .product-percent-input .input { margin: 0; padding-right: 30px; }
 .product-markup-row .money-input-wrap .input { margin: 0; }
 .product-percent-input > span { position: absolute; top: 50%; right: 12px; color: var(--muted); font-size: 12px; transform: translateY(-50%); }
-.product-calculated-label { display: block; margin-bottom: 6px; color: #6f6056; font-size: 10px; font-weight: 700; }
-.product-calculated-price { display: flex; min-height: 40px; align-items: center; overflow: hidden; padding: 0 11px; border: 1px solid var(--border); border-radius: 9px; background: rgba(255, 255, 255, .8); color: var(--accent-dark); font-size: 13px; font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap; text-overflow: ellipsis; }
-.product-price-hint { margin: -2px 0 8px; line-height: 1.4; }
 .product-stock-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin-top: 10px; }
 .product-stock-hint { margin: 9px 0 0; line-height: 1.45; }
 .product-price-cell { min-width: 125px; }
@@ -1191,7 +1179,6 @@ select.input { appearance: none; }
 .customer-actions { display: flex; flex: 0 0 auto; align-items: center; gap: 6px; }
 .settings-empty { display: grid; gap: 4px; padding: 18px 2px 2px; color: var(--muted); font-size: 12px; }
 .settings-empty span:first-child { color: var(--ink); font-weight: 600; }
-.settings-storage-note { padding: 10px 12px; border-left: 3px solid var(--accent); border-radius: 0 7px 7px 0; background: var(--bg-soft); color: var(--muted); font-size: 11px; }
 .backup-actions { display: flex; flex-wrap: wrap; gap: 9px; }
 .backup-actions .btn { display: inline-flex; align-items: center; gap: 7px; }
 .backup-file-input { display: none; }
@@ -1303,8 +1290,7 @@ select.input { appearance: none; }
   .topbar-title span { font-size: 10px; line-height: 1.3; }
   .content { padding: 27px 15px 94px; }
   .nav-hidden .content { padding-bottom: 27px; }
-  .page-head { margin-bottom: 20px; }
-  h2, .page-head h2 { font-size: 29px; }
+  h2 { font-size: 29px; }
   .stats-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin-bottom: 18px; }
   .stat-card { min-height: 98px; padding: 14px; gap: 8px; }
   .stat-card span { font-size: 9px; letter-spacing: .65px; }
@@ -1457,7 +1443,6 @@ select.input { appearance: none; }
   .dashboard-pagination-controls { width: 100%; justify-content: space-between; gap: 6px; }
   .dashboard-pagination-controls > span { min-width: 0; font-size: 9px; }
   .dashboard-pagination-controls .btn { padding-inline: 9px; }
-  .grid-3 { grid-template-columns: 1fr; gap: 0; }
   .receipt-preview-modal { gap: 12px; padding: 14px; }
   .receipt-preview-paper { min-height: 240px; aspect-ratio: auto; padding: 6mm; }
   .receipt-preview-paper .receipt-meta { grid-template-columns: 1fr; gap: 2mm; }
