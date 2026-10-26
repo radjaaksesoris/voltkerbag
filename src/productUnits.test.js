@@ -96,6 +96,8 @@ test('calculates prices from cost markup and converts only stock quantities', ()
   assert.equal(saleMarkupPrice(30000, 'lusin', 20), 432000)
   assert.equal(saleMarkupPercentage(360000, 30000, 'lusin'), 0)
   assert.equal(saleMarkupPercentage(37500, 30000, 'pcs'), 25)
+  const manualLusinPriceMarkup = saleMarkupPercentage(12345, 10000, 'lusin')
+  assert.equal(saleMarkupPrice(10000, 'lusin', manualLusinPriceMarkup), 12345)
   const product = {
     unit: 'pcs',
     price: 50000,

@@ -14,6 +14,7 @@ const EMPTY = {
   unit: 'lusin',
   price: '',
   markups: { pcs: '', lusin: '' },
+  salePrices: { pcs: '', lusin: '' },
   cost: '',
   stock: '',
   image_path: null
@@ -44,6 +45,10 @@ export default function Products() {
   const categoryInputRef = useRef(null)
   const unitInputRef = useRef(null)
   const markupInputRefs = {
+    pcs: useRef(null),
+    lusin: useRef(null)
+  }
+  const salePriceInputRefs = {
     pcs: useRef(null),
     lusin: useRef(null)
   }
@@ -123,6 +128,10 @@ export default function Products() {
       markups: {
         pcs: p.sale_markup_pcs_pct ?? saleMarkupPercentage(productPrice(p, 'pcs'), p.cost, 'pcs'),
         lusin: p.sale_markup_lusin_pct ?? saleMarkupPercentage(productPrice(p, 'lusin'), p.cost, 'lusin')
+      },
+      salePrices: {
+        pcs: productPrice(p, 'pcs'),
+        lusin: productPrice(p, 'lusin')
       },
       cost: (Number(p.cost) || 0) * purchaseCostFactor(editUnit),
       stock: String(stockInPcs(p) / unitFactor(stockEntryUnit(editUnit))),
@@ -279,13 +288,10 @@ export default function Products() {
     const markups = Object.fromEntries(
       Object.entries(form.markups).map(([unit, value]) => [unit, Number(value)])
     )
+    const prices = Object.fromEntries(
+      Object.entries(form.salePrices).map(([unit, value]) => [unit, Number(value)])
+    )
     const modalPerPiece = purchaseCostPerPiece(form.unit, form.cost)
-    const prices = isStandard
-      ? {
-          pcs: saleMarkupPrice(modalPerPiece, 'pcs', markups.pcs),
-          lusin: saleMarkupPrice(modalPerPiece, 'lusin', markups.lusin)
-        }
-      : null
     const basePrice = isStandard
       ? prices[form.unit.trim().toLocaleLowerCase('id-ID')]
       : Number(form.price)
@@ -298,7 +304,7 @@ export default function Products() {
       return
     }
     if (isStandard && Object.values(prices).some((price) => !Number.isFinite(price) || price <= 0)) {
-      setActionError('Hasil harga jual PCS dan LUSIN harus lebih dari Rp0.')
+      setActionError('Isi harga jual PCS dan LUSIN dengan nominal lebih dari Rp0.')
       return
     }
     if (!Number.isFinite(basePrice) || basePrice <= 0) {
@@ -380,7 +386,9 @@ export default function Products() {
           unitInputRef.current,
           costInputRef.current,
           markupInputRefs.pcs.current,
+          salePriceInputRefs.pcs.current,
           markupInputRefs.lusin.current,
+          salePriceInputRefs.lusin.current,
           stockInputRef.current
         ]
       : [
@@ -560,12 +568,6 @@ export default function Products() {
                 </div>
                 <div className="product-markup-fields">
                   {['pcs', 'lusin'].map((unit) => {
-                    const markup = Number(form.markups[unit])
-                    const result = saleMarkupPrice(
-                      purchaseCostPerPiece(form.unit, form.cost),
-                      unit,
-                      markup
-                    )
                     return (
                       <div className="product-markup-row" key={unit}>
                         <div>
@@ -580,19 +582,39 @@ export default function Products() {
                               value={form.markups[unit]}
                               onChange={(event) => setForm({
                                 ...form,
-                                markups: { ...form.markups, [unit]: event.target.value }
+                                markups: { ...form.markups, [unit]: event.target.value },
+                                salePrices: {
+                                  ...form.salePrices,
+                                  [unit]: saleMarkupPrice(
+                                    purchaseCostPerPiece(form.unit, form.cost),
+                                    unit,
+                                    event.target.value
+                                  )
+                                }
                               })}
                             />
                             <span>%</span>
                           </div>
                         </div>
                         <div>
-                          <span className="product-calculated-label">Harga jual {unit}</span>
-                          <output className="product-calculated-price" aria-label={'Harga jual per ' + unit}>
-                            {form.cost !== '' && form.markups[unit] !== '' && result > 0
-                              ? rupiah(result)
-                              : 'Masukkan modal dan persentase'}
-                          </output>
+                          <label htmlFor={'product-sale-price-' + unit}>Harga jual {unit}</label>
+                          <MoneyInput
+                            inputRef={salePriceInputRefs[unit]}
+                            id={'product-sale-price-' + unit}
+                            value={form.salePrices[unit]}
+                            onChange={(price) => setForm({
+                              ...form,
+                              salePrices: { ...form.salePrices, [unit]: price },
+                              markups: {
+                                ...form.markups,
+                                [unit]: saleMarkupPercentage(
+                                  price,
+                                  purchaseCostPerPiece(form.unit, form.cost),
+                                  unit
+                                )
+                              }
+                            })}
+                          />
                         </div>
                       </div>
                     )

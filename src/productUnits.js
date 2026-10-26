@@ -112,7 +112,7 @@ export function saleMarkupPrice(costPerPiece, unit, percentage) {
 export function saleMarkupPercentage(price, costPerPiece, unit) {
   const unitCost = (Number(costPerPiece) || 0) * unitFactor(unit)
   if (unitCost <= 0) return ''
-  return Number((((Number(price) / unitCost) - 1) * 100).toFixed(2))
+  return Number((((Number(price) / unitCost) - 1) * 100).toFixed(10))
 }
 
 export function unitCost(product, unit) {
