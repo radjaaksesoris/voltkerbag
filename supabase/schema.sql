@@ -1090,13 +1090,13 @@ begin
 
   remaining_amount := p_amount;
   for manual_credit_row in
-    select *
-    from public.manual_customer_credits
-    where owner_id = current_user_id
-      and lower(btrim(customer_name)) = lower(btrim(p_customer_name))
-      and balance_due > 0
-    order by "createdAt" asc, id asc
-    for update
+    select credit.*
+    from public.manual_customer_credits as credit
+    where credit.owner_id = current_user_id
+      and lower(btrim(credit.customer_name)) = lower(btrim(p_customer_name))
+      and credit.balance_due > 0
+    order by credit."createdAt" asc, credit.id asc
+    for update of credit
   loop
     allocated_amount := least(remaining_amount, manual_credit_row.balance_due);
 
