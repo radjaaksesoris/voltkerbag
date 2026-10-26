@@ -268,12 +268,6 @@ export async function getTransactionSummary({ from, to }) {
   return data
 }
 
-export async function getOne(store, id) {
-  const { data, error } = await getClient().from(tableFor(store)).select('*').eq('id', id).maybeSingle()
-  throwIfError(error, 'Gagal memuat data')
-  return data
-}
-
 export async function put(store, value) {
   const now = new Date().toISOString()
   const record = {

@@ -18,12 +18,3 @@ export function dateOnly(iso) {
     day: '2-digit', month: 'short', year: 'numeric'
   })
 }
-
-export function isToday(iso) {
-  if (!iso) return false
-  const d = new Date(iso)
-  const t = new Date()
-  return d.getFullYear() === t.getFullYear() &&
-         d.getMonth() === t.getMonth() &&
-         d.getDate() === t.getDate()
-}

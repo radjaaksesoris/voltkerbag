@@ -8,14 +8,6 @@ export function localDateValue(value) {
   return `${year}-${month}-${day}`
 }
 
-export function isInDateRange(value, range) {
-  const date = localDateValue(value)
-  if (!date) return false
-  if (range.from && date < range.from) return false
-  if (range.to && date > range.to) return false
-  return true
-}
-
 export function hasDateRange(range) {
   return Boolean(range.from || range.to)
 }
