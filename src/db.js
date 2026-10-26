@@ -1,5 +1,6 @@
 import { getClient } from './supabaseSync'
 import JSZip from 'jszip'
+import { isValidBackupChunkManifestEntry, isValidBackupChunkRows } from './backupFormat'
 
 const TABLES = {
   products: 'products',
@@ -11,6 +12,22 @@ const TABLES = {
   transactions: 'transactions',
   finance: 'finance_entries'
 }
+
+const BACKUP_TABLES = {
+  products: 'products',
+  categories: 'product_categories',
+  units: 'product_units',
+  customers: 'customer_names',
+  vendors: 'vendor_names',
+  expeditions: 'expedition_names',
+  transactions: 'transactions',
+  transactionPayments: 'transaction_payments',
+  manualCreditPayments: 'manual_customer_credit_payments',
+  finance: 'finance_entries',
+  manualCredits: 'manual_customer_credits',
+  stockAdjustments: 'product_stock_adjustments'
+}
+const BACKUP_CHUNK_MAX_BYTES = 180 * 1024
 
 function tableFor(store) {
   const table = TABLES[store]
@@ -42,35 +59,62 @@ export async function createBackupArchive() {
   throwIfError(userError, 'Gagal memeriksa akun untuk backup')
   if (!user) throw new Error('Sesi login tidak ditemukan. Silakan masuk kembali.')
 
-  const tables = {
-    products: 'products',
-    categories: 'product_categories',
-    units: 'product_units',
-    customers: 'customer_names',
-    vendors: 'vendor_names',
-    expeditions: 'expedition_names',
-    transactions: 'transactions',
-    transactionPayments: 'transaction_payments',
-    manualCreditPayments: 'manual_customer_credit_payments',
-    finance: 'finance_entries',
-    manualCredits: 'manual_customer_credits',
-    stockAdjustments: 'product_stock_adjustments'
-  }
-  const records = {}
-  for (const [key, table] of Object.entries(tables)) {
-    const rows = []
-    const pageSize = 1000
-    for (let from = 0; ; from += pageSize) {
-      const { data, error } = await client.from(table).select('*').order('id').range(from, from + pageSize - 1)
-      throwIfError(error, 'Gagal membuat backup tabel ' + table)
-      rows.push(...(data || []))
-      if (!data || data.length < pageSize) break
+  const archive = new JSZip()
+  const recordManifest = {}
+  const imagePaths = new Set()
+  let recordCount = 0
+  for (const [key, table] of Object.entries(BACKUP_TABLES)) {
+    let lastId = 0
+    let chunkIndex = 0
+    let tableCount = 0
+    let serializedRows = []
+    let serializedBytes = 2
+    const pageSize = 100
+
+    function flushChunk() {
+      if (!serializedRows.length) return
+      archive.file('records/' + key + '/' + chunkIndex + '.json', '[' + serializedRows.join(',') + ']')
+      chunkIndex += 1
+      serializedRows = []
+      serializedBytes = 2
     }
-    records[key] = rows
+
+    for (;;) {
+      const { data, error } = await client
+        .from(table)
+        .select('*')
+        .gt('id', lastId)
+        .order('id')
+        .limit(pageSize)
+      throwIfError(error, 'Gagal membuat backup tabel ' + table)
+      if (!data?.length) break
+      if (key === 'products') {
+        for (const product of data) {
+          if (product.image_path) imagePaths.add(product.image_path)
+        }
+      }
+      for (const row of data) {
+        const serialized = JSON.stringify(row)
+        const rowBytes = new TextEncoder().encode(serialized).length
+        if (rowBytes + 2 > BACKUP_CHUNK_MAX_BYTES) {
+          throw new Error('Satu baris ' + table + ' terlalu besar untuk dibackup dengan aman.')
+        }
+        const separatorBytes = serializedRows.length ? 1 : 0
+        if (serializedRows.length >= 100 || serializedBytes + separatorBytes + rowBytes > BACKUP_CHUNK_MAX_BYTES) {
+          flushChunk()
+        }
+        serializedRows.push(serialized)
+        serializedBytes += (serializedRows.length > 1 ? 1 : 0) + rowBytes
+      }
+      tableCount += data.length
+      recordCount += data.length
+      lastId = data[data.length - 1].id
+      if (data.length < pageSize) break
+    }
+    flushChunk()
+    recordManifest[key] = { count: tableCount, chunks: chunkIndex }
   }
 
-  const archive = new JSZip()
-  const imagePaths = [...new Set(records.products.map((product) => product.image_path).filter(Boolean))]
   const images = []
   for (const path of imagePaths) {
     if (!path.startsWith(user.id + '/')) {
@@ -86,10 +130,10 @@ export async function createBackupArchive() {
 
   archive.file('data.json', JSON.stringify({
     format: 'voltker-backup',
-    version: 1,
+    version: 2,
     generatedAt: new Date().toISOString(),
     ownerId: user.id,
-    records,
+    records: recordManifest,
     images
   }, null, 2))
 
@@ -107,7 +151,184 @@ export async function createBackupArchive() {
     upsert: false
   })
   throwIfError(uploadError, 'Gagal menyimpan backup ke Supabase Storage')
-  return { path, size: blob.size, recordCount: Object.values(records).reduce((count, rows) => count + rows.length, 0) }
+  return { path, size: blob.size, recordCount }
+}
+
+async function restoreChunkedBackupArchive({ client, user, archive, backup, onProgress }) {
+  const requiredKeys = Object.keys(BACKUP_TABLES)
+  if (!backup.records || requiredKeys.some((key) => {
+    return !isValidBackupChunkManifestEntry(backup.records[key])
+  }) || Object.keys(backup.records).length !== requiredKeys.length) {
+    throw new Error('Manifest backup bertahap tidak lengkap atau tidak valid.')
+  }
+  if (!Array.isArray(backup.images)) throw new Error('Daftar foto pada file backup tidak valid.')
+
+  const imageEntries = new Map()
+  for (const image of backup.images) {
+    if (!image || typeof image.storagePath !== 'string' || typeof image.archivePath !== 'string'
+      || !image.storagePath.startsWith(user.id + '/')
+      || image.storagePath.split('/').length !== 2
+      || image.archivePath !== 'images/' + image.storagePath) {
+      throw new Error('Daftar lokasi foto dalam file backup tidak valid.')
+    }
+    if (imageEntries.has(image.storagePath)) throw new Error('File backup memiliki entri foto ganda.')
+    const imageFile = archive.file(image.archivePath)
+    if (!imageFile) throw new Error('Foto produk tidak ditemukan dalam file backup: ' + image.storagePath)
+    imageEntries.set(image.storagePath, imageFile)
+  }
+
+  const oldImagePaths = []
+  let lastProductId = 0
+  for (;;) {
+    const { data, error } = await client
+      .from('products')
+      .select('id, image_path')
+      .gt('id', lastProductId)
+      .order('id')
+      .limit(500)
+    throwIfError(error, 'Gagal memeriksa gambar produk saat ini')
+    if (!data?.length) break
+    oldImagePaths.push(...data.map((product) => product.image_path).filter(Boolean))
+    lastProductId = data[data.length - 1].id
+    if (data.length < 500) break
+  }
+
+  const restoreId = crypto.randomUUID()
+  const uploadedPaths = []
+  const restoredImagePaths = new Map()
+  let restoreSessionId = null
+  let committed = false
+  let commitAttempted = false
+  try {
+    for (const [index, [originalPath, imageFile]] of [...imageEntries.entries()].entries()) {
+      onProgress('Mengunggah foto produk ' + (index + 1) + ' dari ' + imageEntries.size + '...')
+      const extension = originalPath.split('.').pop().toLowerCase()
+      const contentTypes = { jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png', webp: 'image/webp' }
+      const contentType = contentTypes[extension]
+      if (!contentType) throw new Error('Format foto dalam backup tidak didukung: ' + originalPath)
+      const imageBlob = await imageFile.async('blob')
+      if (imageBlob.size === 0 || imageBlob.size > 5 * 1024 * 1024) {
+        throw new Error('Ukuran foto dalam backup tidak valid: ' + originalPath)
+      }
+
+      const filename = originalPath.split('/').pop()
+      const restoredPath = user.id + '/restore-' + restoreId + '/' + filename
+      const { error } = await client.storage.from('product-images').upload(restoredPath, imageBlob, {
+        cacheControl: '3600',
+        contentType,
+        upsert: false
+      })
+      throwIfError(error, 'Gagal mengunggah foto produk dari backup')
+      uploadedPaths.push(restoredPath)
+      restoredImagePaths.set(originalPath, restoredPath)
+    }
+
+    onProgress('Menyiapkan pemulihan data...')
+    const { data: sessionId, error: beginError } = await client.rpc('begin_store_backup_restore', {
+      p_expected: backup.records
+    })
+    throwIfError(beginError, 'Gagal memulai pemulihan bertahap')
+    if (typeof sessionId !== 'string') throw new Error('Server tidak mengembalikan sesi pemulihan yang valid.')
+    restoreSessionId = sessionId
+
+    let productImagePaths = new Set()
+    let totalChunks = Object.values(backup.records).reduce((sum, entry) => sum + entry.chunks, 0)
+    let completedChunks = 0
+    for (const key of requiredKeys) {
+      const { chunks } = backup.records[key]
+      for (let chunkIndex = 0; chunkIndex < chunks; chunkIndex += 1) {
+        onProgress('Memulihkan ' + key + ' (' + (++completedChunks) + ' dari ' + totalChunks + ')...')
+        const chunkFile = archive.file('records/' + key + '/' + chunkIndex + '.json')
+        if (!chunkFile) throw new Error('Bagian backup tidak ditemukan: ' + key + '/' + chunkIndex)
+        let chunkBytes
+        try {
+          chunkBytes = await chunkFile.async('uint8array')
+        } catch {
+          throw new Error('Bagian backup tidak dapat dibaca: ' + key + '/' + chunkIndex)
+        }
+        if (chunkBytes.byteLength > BACKUP_CHUNK_MAX_BYTES) {
+          throw new Error('Bagian backup terlalu besar: ' + key + '/' + chunkIndex)
+        }
+        let rows
+        try {
+          rows = JSON.parse(new TextDecoder().decode(chunkBytes))
+        } catch {
+          throw new Error('Bagian backup tidak dapat dibaca: ' + key + '/' + chunkIndex)
+        }
+        if (!isValidBackupChunkRows(rows)) {
+          throw new Error('Jumlah data pada bagian backup tidak valid: ' + key + '/' + chunkIndex)
+        }
+        if (key === 'products') {
+          rows = rows.map((product) => {
+            const originalPath = product.image_path
+            if (!originalPath) return { ...product, image_path: null }
+            productImagePaths.add(originalPath)
+            const restoredPath = restoredImagePaths.get(originalPath)
+            if (!restoredPath) throw new Error('Foto produk tidak ada di manifest: ' + originalPath)
+            return { ...product, image_path: restoredPath }
+          })
+        }
+        const { error } = await client.rpc('stage_store_backup_restore_chunk', {
+          p_restore_id: sessionId,
+          p_table_key: key,
+          p_chunk_index: chunkIndex,
+          p_records: rows
+        })
+        throwIfError(error, 'Gagal mengunggah bagian pemulihan ' + key)
+      }
+    }
+
+    if (productImagePaths.size !== imageEntries.size
+      || [...productImagePaths].some((path) => !imageEntries.has(path))) {
+      throw new Error('Daftar foto produk tidak cocok dengan manifest backup.')
+    }
+
+    onProgress('Menerapkan data toko...')
+    commitAttempted = true
+    const { error: commitError } = await client.rpc('commit_store_backup_restore', {
+      p_restore_id: sessionId
+    })
+    throwIfError(commitError, 'Gagal menerapkan data backup')
+    committed = true
+  } catch (error) {
+    if (restoreSessionId) {
+      const { error: abortError } = await client.rpc('abort_store_backup_restore', {
+        p_restore_id: restoreSessionId
+      })
+      if (abortError) {
+        throw new Error(error.message + ' Data sementara pemulihan gagal dibersihkan: ' + abortError.message)
+      }
+    }
+    if (uploadedPaths.length && !commitAttempted) {
+      const { error: cleanupError } = await client.storage.from('product-images').remove(uploadedPaths)
+      if (cleanupError) {
+        throw new Error(error.message + ' Foto sementara gagal dibersihkan: ' + cleanupError.message)
+      }
+    }
+    if (uploadedPaths.length && commitAttempted) {
+      throw new Error(error.message + ' Status penerapan mungkin sudah berhasil; foto sementara dipertahankan agar gambar tidak terputus. Periksa data toko sebelum menghapusnya.')
+    }
+    throw error
+  }
+
+  if (!committed) throw new Error('Pemulihan data tidak berhasil diselesaikan.')
+  const restoredImagePathSet = new Set(restoredImagePaths.values())
+  const obsoleteImagePaths = oldImagePaths.filter((path) => !restoredImagePathSet.has(path))
+  let warning = ''
+  for (let index = 0; index < obsoleteImagePaths.length; index += 100) {
+    const { error } = await client.storage.from('product-images').remove(obsoleteImagePaths.slice(index, index + 100))
+    if (error) {
+      warning = 'Data sudah dipulihkan, tetapi beberapa foto lama gagal dibersihkan: ' + error.message
+      break
+    }
+  }
+
+  notifyRefresh()
+  return {
+    recordCount: Object.values(backup.records).reduce((count, entry) => count + entry.count, 0),
+    imageCount: restoredImagePaths.size,
+    warning
+  }
 }
 
 export async function restoreBackupArchive(file, onProgress = () => {}) {
@@ -134,11 +355,15 @@ export async function restoreBackupArchive(file, onProgress = () => {}) {
   } catch {
     throw new Error('Data backup tidak valid atau rusak.')
   }
-  if (backup.format !== 'voltker-backup' || backup.version !== 1) {
+  if (backup.format !== 'voltker-backup' || ![1, 2].includes(backup.version)) {
     throw new Error('Format atau versi file backup tidak didukung.')
   }
   if (backup.ownerId !== user.id) {
     throw new Error('File backup hanya dapat dipulihkan ke akun toko yang membuatnya.')
+  }
+  if (backup.version === 2) {
+    const result = await restoreChunkedBackupArchive({ client, user, archive, backup, onProgress })
+    return result
   }
 
   const requiredRecordKeys = ['products', 'categories', 'units', 'customers', 'transactions', 'finance', 'stockAdjustments']
