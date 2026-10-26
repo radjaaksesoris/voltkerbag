@@ -1154,14 +1154,18 @@ select.input { appearance: none; }
 .product-modal .input,
 .product-modal .category-select-trigger { background-color: rgba(255, 255, 255, .8); }
 .product-modal .category-menu {
+  z-index: 30;
   max-height: min(280px, 40dvh);
+  background-color: #fffdf8;
   box-shadow: 0 5px 16px rgba(56, 39, 27, .1);
 }
 .product-modal .category-options { max-height: min(174px, 25dvh); }
 .product-option-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
 .product-option-fields > div { min-width: 0; }
-.product-modal > .product-option-fields:focus-within { z-index: 2; }
+.product-modal > .product-option-fields:focus-within { z-index: 20; }
+.product-modal .category-select:focus-within { z-index: 21; }
 .product-option-fields .category-select-trigger { padding-inline: 11px; }
+.product-modal .category-add-form .input { background-color: #fffdf8; }
 .product-modal-cost-field { margin-top: 8px; }
 .product-markup-fields { display: grid; gap: 10px; margin-top: 10px; }
 .product-markup-row { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: end; gap: 10px; }
