@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { getAll, getFinanceData, put, remove, onRefresh, recordCustomerCreditPayment, addManualCustomerCredit } from '../db'
+import { getAll, getFinanceData, put, remove, onRefresh, recordCustomerCreditPayment, addManualCustomerCredit, recordExpeditionCost } from '../db'
 import { rupiah, dateOnly } from '../format'
 import DateRangeFilter from '../components/DateRangeFilter.jsx'
 import { dateRangeTimestamps, hasDateRange, localDateValue } from '../dateFilter'
@@ -26,6 +26,7 @@ export default function Finance() {
     income: 0,
     expense: 0,
     capital: 0,
+    pending_expedition_count: 0,
     total_credit: 0,
     gross_profit: 0,
     credit_balances: []
@@ -92,8 +93,8 @@ export default function Finance() {
           pageSize: FINANCE_PAGE_SIZE
         })
         if (!active || currentRequest !== requestId.current) return
-        if (!Array.isArray(data.credit_balances)) {
-          throw new Error('Daftar hutang pelanggan belum tersedia. Terapkan pembaruan supabase/schema.sql di Supabase, lalu muat ulang.')
+        if (!Array.isArray(data.credit_balances) || typeof data.pending_expedition_count !== 'number') {
+          throw new Error('Pembaruan Buku Kas belum tersedia. Jalankan ulang supabase/schema.sql di Supabase, lalu muat ulang.')
         }
         const pageCount = Math.max(1, Math.ceil(data.total_count / FINANCE_PAGE_SIZE))
         if (page > pageCount) {
@@ -147,7 +148,7 @@ export default function Finance() {
     setEntryDate(localDateValue(entry.date || entry.createdAt))
     setEntryCategory(entry.category || '')
     setEntryNote(entry.note || '')
-    setEntryAmount(String(entry.amount))
+    setEntryAmount(entry.pending ? '' : String(entry.amount))
     setActionError('')
     setShowEntryForm(true)
   }
@@ -238,6 +239,23 @@ export default function Finance() {
     event.preventDefault()
     setActionError('')
     const amount = Number(entryAmount)
+    if (editingEntry?.pending) {
+      if (!Number.isFinite(amount) || amount <= 0) {
+        setActionError('Biaya ekspedisi harus lebih dari Rp0.')
+        return
+      }
+      setSavingEntry(true)
+      try {
+        await recordExpeditionCost(editingEntry.id, amount)
+        setShowEntryForm(false)
+        setEditingEntry(null)
+      } catch (error) {
+        setActionError(error.message || 'Gagal menyimpan biaya ekspedisi.')
+      } finally {
+        setSavingEntry(false)
+      }
+      return
+    }
     if (!['expense', 'capital'].includes(entryType)) {
       setActionError('Pilih jenis pengeluaran atau modal.')
       return
@@ -354,6 +372,14 @@ export default function Finance() {
             <h3>Buku Kas</h3>
             <button className="btn btn-primary" type="button" onClick={openNewEntry}>+ Tambah catatan</button>
           </div>
+          {report.pending_expedition_count > 0 && (
+            <div className="finance-pending-alert" role="alert">
+              <strong>Biaya ekspedisi belum diisi</strong>
+              <span>
+                {report.pending_expedition_count} transaksi perlu dilengkapi. Masukkan biaya sesuai bukti pembayaran agar tercatat sebagai beban toko.
+              </span>
+            </div>
+          )}
           <table className="finance-ledger-table">
             <thead><tr><th>Tanggal</th><th>Jenis</th><th>Kategori</th><th>Catatan</th><th>Nominal</th><th></th></tr></thead>
             <tbody>
@@ -365,9 +391,19 @@ export default function Finance() {
                   <td>{dateOnly(e.date || e.createdAt)}</td>
                   <td><span className={'badge ' + TYPES[e.type].cls}>{TYPES[e.type].label}</span></td>
                   <td>{e.category || '-'}</td>
-                  <td>{e.note || '-'}</td>
+                  <td>
+                    {e.pending && <strong className="finance-pending-label">Belum diisi · </strong>}
+                    {e.note || '-'}
+                  </td>
                   <td className={'right ' + (e.type === 'expense' ? 'danger' : 'ok')}>
-                    {e.type === 'expense' ? '−' : '+'}{rupiah(e.amount)}
+                    {e.pending ? (
+                      <div className="finance-pending-cell">
+                        <span className="finance-pending-amount">Wajib diisi</span>
+                        <button className="btn btn-sm btn-primary" type="button" onClick={() => openEditEntry(e)}>
+                          Isi biaya
+                        </button>
+                      </div>
+                    ) : (e.type === 'expense' ? '−' : '+') + rupiah(e.amount)}
                   </td>
                   <td className="finance-ledger-actions">
                     {isAutomaticEntry(e) ? (
@@ -457,46 +493,54 @@ export default function Finance() {
             aria-labelledby="finance-entry-title"
             onClick={(event) => event.stopPropagation()}
             onSubmit={saveEntry}>
-            <h3 id="finance-entry-title">{editingEntry ? 'Edit catatan keuangan' : 'Tambah catatan keuangan'}</h3>
-            <label htmlFor="finance-entry-type">Jenis catatan</label>
-            <SelectInput
-              id="finance-entry-type"
-              className="finance-entry-type-select"
-              ariaLabel="Jenis catatan"
-              value={entryType}
-              onChange={setEntryType}
-              options={[
-                { value: 'expense', label: 'Pengeluaran' },
-                { value: 'capital', label: 'Modal' }
-              ]} />
-            <label htmlFor="finance-entry-date">Tanggal</label>
-            <input
-              id="finance-entry-date"
-              className="input"
-              type="date"
-              value={entryDate}
-              onChange={(event) => setEntryDate(event.target.value)}
-              required
-            />
-            <label htmlFor="finance-entry-category">Kategori</label>
-            <input
-              id="finance-entry-category"
-              className="input"
-              value={entryCategory}
-              onChange={(event) => setEntryCategory(event.target.value)}
-              maxLength={100}
-              placeholder="Contoh: Belanja perlengkapan"
-            />
-            <label htmlFor="finance-entry-note">Catatan</label>
-            <textarea
-              id="finance-entry-note"
-              className="input"
-              value={entryNote}
-              onChange={(event) => setEntryNote(event.target.value)}
-              maxLength={500}
-              rows={3}
-              placeholder="Catatan tambahan (opsional)"
-            />
+            <h3 id="finance-entry-title">{editingEntry?.pending ? 'Lengkapi biaya ekspedisi' : editingEntry ? 'Edit catatan keuangan' : 'Tambah catatan keuangan'}</h3>
+            {editingEntry?.pending ? (
+              <p className="finance-pending-instructions" role="status">
+                {entryNote}. Masukkan nominal yang dibayar toko. Biaya ini akan dicatat sebagai pengeluaran.
+              </p>
+            ) : (
+              <>
+                <label htmlFor="finance-entry-type">Jenis catatan</label>
+                <SelectInput
+                  id="finance-entry-type"
+                  className="finance-entry-type-select"
+                  ariaLabel="Jenis catatan"
+                  value={entryType}
+                  onChange={setEntryType}
+                  options={[
+                    { value: 'expense', label: 'Pengeluaran' },
+                    { value: 'capital', label: 'Modal' }
+                  ]} />
+                <label htmlFor="finance-entry-date">Tanggal</label>
+                <input
+                  id="finance-entry-date"
+                  className="input"
+                  type="date"
+                  value={entryDate}
+                  onChange={(event) => setEntryDate(event.target.value)}
+                  required
+                />
+                <label htmlFor="finance-entry-category">Kategori</label>
+                <input
+                  id="finance-entry-category"
+                  className="input"
+                  value={entryCategory}
+                  onChange={(event) => setEntryCategory(event.target.value)}
+                  maxLength={100}
+                  placeholder="Contoh: Belanja perlengkapan"
+                />
+                <label htmlFor="finance-entry-note">Catatan</label>
+                <textarea
+                  id="finance-entry-note"
+                  className="input"
+                  value={entryNote}
+                  onChange={(event) => setEntryNote(event.target.value)}
+                  maxLength={500}
+                  rows={3}
+                  placeholder="Catatan tambahan (opsional)"
+                />
+              </>
+            )}
             <label htmlFor="finance-entry-amount">Nominal</label>
             <MoneyInput
               id="finance-entry-amount"
@@ -508,8 +552,8 @@ export default function Finance() {
             {actionError && <p className="form-error" role="alert">{actionError}</p>}
             <div className="modal-actions">
               <button className="btn" type="button" disabled={savingEntry} onClick={() => setShowEntryForm(false)}>Batal</button>
-              <button className="btn btn-primary" type="submit" disabled={savingEntry}>
-                {savingEntry ? 'Menyimpan...' : 'Simpan catatan'}
+              <button className="btn btn-primary" type="submit" disabled={savingEntry || (editingEntry?.pending && !entryAmount)}>
+                {savingEntry ? 'Menyimpan...' : editingEntry?.pending ? 'Simpan biaya ekspedisi' : 'Simpan catatan'}
               </button>
             </div>
           </form>
@@ -572,6 +616,7 @@ export default function Finance() {
 }
 
 function isAutomaticEntry(entry) {
+  if (entry.pending) return true
   const category = String(entry.category || '').trim().toLocaleLowerCase('id-ID')
   const note = String(entry.note || '')
   return entry.refId != null

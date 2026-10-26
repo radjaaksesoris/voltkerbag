@@ -90,6 +90,7 @@ create table if not exists public.finance_entries (
   category text,
   note text,
   amount double precision not null default 0,
+  pending boolean not null default false,
   "refId" bigint,
   "requestId" uuid,
   date timestamptz,
@@ -254,6 +255,7 @@ alter table public.transactions add column if not exists "createdAt" timestamptz
 alter table public.transactions add column if not exists "updatedAt" timestamptz;
 
 alter table public.finance_entries add column if not exists owner_id uuid default auth.uid();
+alter table public.finance_entries add column if not exists pending boolean not null default false;
 alter table public.finance_entries add column if not exists "refId" bigint;
 alter table public.finance_entries add column if not exists "requestId" uuid;
 alter table public.finance_entries add column if not exists "createdAt" timestamptz;
@@ -318,6 +320,8 @@ create index if not exists transactions_owner_created_id_idx
   on public.transactions (owner_id, "createdAt" desc, id desc);
 create index if not exists finance_owner_effective_date_id_idx
   on public.finance_entries (owner_id, (coalesce(date, "createdAt")) desc, id desc);
+create index if not exists finance_owner_pending_idx
+  on public.finance_entries (owner_id, id) where pending;
 create unique index if not exists transactions_owner_request_id_idx
   on public.transactions (owner_id, "requestId") where "requestId" is not null;
 create unique index if not exists finance_owner_request_id_idx
@@ -326,6 +330,30 @@ create unique index if not exists manual_customer_credits_owner_request_id_idx
   on public.manual_customer_credits (owner_id, request_id);
 create unique index if not exists product_stock_adjustments_owner_request_id_idx
   on public.product_stock_adjustments (owner_id, request_id);
+
+insert into public.finance_entries (
+  owner_id, type, category, note, amount, pending, "refId", date, "createdAt", "updatedAt"
+)
+select
+  t.owner_id,
+  'expense',
+  'Biaya ekspedisi',
+  'Ekspedisi ' || trim(t.expedition) || ' · ' || coalesce(t."invoiceNo", '#' || t.id::text),
+  0,
+  true,
+  t.id,
+  coalesce(t."createdAt", now()),
+  coalesce(t."createdAt", now()),
+  now()
+from public.transactions t
+where nullif(trim(coalesce(t.expedition, '')), '') is not null
+  and not exists (
+    select 1
+    from public.finance_entries e
+    where e.owner_id = t.owner_id
+      and e."refId" = t.id
+      and e.category = 'Biaya ekspedisi'
+  );
 
 alter table public.products enable row level security;
 alter table public.product_categories enable row level security;
@@ -843,7 +871,13 @@ begin
   )).*
   from jsonb_array_elements(p_records->'transactions') as rows(row_data);
   insert into public.finance_entries
-  select (jsonb_populate_record(null::public.finance_entries, row_data || jsonb_build_object('owner_id', current_user_id))).*
+  select (jsonb_populate_record(
+    null::public.finance_entries,
+    row_data || jsonb_build_object(
+      'owner_id', current_user_id,
+      'pending', coalesce((row_data->>'pending')::boolean, false)
+    )
+  )).*
   from jsonb_array_elements(p_records->'finance') as rows(row_data);
   insert into public.manual_customer_credits
   select (jsonb_populate_record(null::public.manual_customer_credits, row_data || jsonb_build_object('owner_id', current_user_id))).*
@@ -1060,6 +1094,16 @@ begin
       case when p_payment_type = 'credit' then 'DP kredit' else 'Penjualan' end,
       'Penjualan · ' || trim(p_customer_name), initial_payment, transaction_id,
       operation_time, operation_time, operation_time
+    );
+  end if;
+
+  if nullif(trim(coalesce(p_expedition, '')), '') is not null then
+    insert into public.finance_entries (
+      owner_id, type, category, note, amount, pending, "refId", date, "createdAt", "updatedAt"
+    ) values (
+      current_user_id, 'expense', 'Biaya ekspedisi',
+      'Ekspedisi ' || trim(p_expedition) || ' · ' || invoice_number,
+      0, true, transaction_id, operation_time, operation_time, operation_time
     );
   end if;
 
@@ -1478,6 +1522,49 @@ begin
 end;
 $$;
 
+create or replace function public.record_expedition_cost(
+  p_entry_id bigint,
+  p_amount double precision
+)
+returns bigint
+language plpgsql
+security definer
+set search_path = public, pg_temp
+as $$
+declare
+  current_user_id uuid := auth.uid();
+  entry_row public.finance_entries%rowtype;
+  operation_time timestamptz := clock_timestamp();
+begin
+  if current_user_id is null then raise exception 'Login diperlukan.'; end if;
+  if p_entry_id is null then raise exception 'Catatan biaya ekspedisi tidak valid.'; end if;
+  if p_amount is null or p_amount <= 0 or p_amount::text in ('NaN', 'Infinity', '-Infinity') then
+    raise exception 'Biaya ekspedisi harus lebih dari Rp0.';
+  end if;
+
+  select * into entry_row
+  from public.finance_entries
+  where id = p_entry_id and owner_id = current_user_id
+  for update;
+  if not found then raise exception 'Catatan biaya ekspedisi tidak ditemukan.'; end if;
+  if entry_row.type <> 'expense' or entry_row.category <> 'Biaya ekspedisi' then
+    raise exception 'Catatan ini bukan biaya ekspedisi.';
+  end if;
+  if not entry_row.pending then
+    if entry_row.amount = p_amount then return entry_row.id; end if;
+    raise exception 'Biaya ekspedisi ini sudah pernah dilengkapi.';
+  end if;
+
+  update public.finance_entries
+  set amount = p_amount,
+      pending = false,
+      "updatedAt" = operation_time
+  where id = p_entry_id and owner_id = current_user_id;
+
+  return p_entry_id;
+end;
+$$;
+
 create or replace function public.get_finance_data(
   p_from timestamptz,
   p_to timestamptz,
@@ -1499,6 +1586,7 @@ declare
   credit_total numeric;
   credit_balances jsonb;
   gross_profit numeric;
+  pending_expedition_count bigint;
 begin
   if current_user_id is null then raise exception 'Login diperlukan.'; end if;
   if p_page is null or p_page < 1 or p_page_size is null or p_page_size < 1 or p_page_size > 100 then
@@ -1508,15 +1596,24 @@ begin
     raise exception 'Rentang tanggal tidak valid.';
   end if;
 
+  select count(*) into pending_expedition_count
+  from public.finance_entries
+  where owner_id = current_user_id and pending;
+
   select count(*),
-    coalesce(sum(e.amount) filter (where e.type = 'income'), 0),
-    coalesce(sum(e.amount) filter (where e.type = 'expense'), 0),
-    coalesce(sum(e.amount) filter (where e.type = 'capital'), 0)
+    coalesce(sum(e.amount) filter (where e.type = 'income' and not e.pending), 0),
+    coalesce(sum(e.amount) filter (where e.type = 'expense' and not e.pending), 0),
+    coalesce(sum(e.amount) filter (where e.type = 'capital' and not e.pending), 0)
   into entry_count, income_total, expense_total, capital_total
   from public.finance_entries e
   where e.owner_id = current_user_id
-    and (p_from is null or coalesce(e.date, e."createdAt") >= p_from)
-    and (p_to is null or coalesce(e.date, e."createdAt") < p_to);
+    and (
+      e.pending
+      or (
+        (p_from is null or coalesce(e.date, e."createdAt") >= p_from)
+        and (p_to is null or coalesce(e.date, e."createdAt") < p_to)
+      )
+    );
 
   select coalesce(sum(outstanding.balance_due), 0)
   into credit_total
@@ -1578,9 +1675,14 @@ begin
     select e.*
     from public.finance_entries e
     where e.owner_id = current_user_id
-      and (p_from is null or coalesce(e.date, e."createdAt") >= p_from)
-      and (p_to is null or coalesce(e.date, e."createdAt") < p_to)
-    order by coalesce(e.date, e."createdAt") desc nulls last, e.id desc
+      and (
+        e.pending
+        or (
+          (p_from is null or coalesce(e.date, e."createdAt") >= p_from)
+          and (p_to is null or coalesce(e.date, e."createdAt") < p_to)
+        )
+      )
+    order by e.pending desc, coalesce(e.date, e."createdAt") desc nulls last, e.id desc
     limit p_page_size offset (p_page - 1) * p_page_size
   ) as page_rows;
 
@@ -1590,6 +1692,7 @@ begin
     'income', income_total,
     'expense', expense_total,
     'capital', capital_total,
+    'pending_expedition_count', pending_expedition_count,
     'total_credit', credit_total,
     'credit_balances', credit_balances,
     'gross_profit', gross_profit
@@ -1599,6 +1702,7 @@ $$;
 
 revoke all on function public.complete_sale(text, text, double precision, jsonb, text, uuid) from public, anon;
 revoke all on function public.add_manual_customer_credit(text, double precision, uuid) from public, anon;
+revoke all on function public.record_expedition_cost(bigint, double precision) from public, anon;
 revoke all on function public.record_transaction_payment(bigint, double precision, uuid) from public, anon;
 revoke all on function public.record_customer_credit_payment(text, double precision, uuid) from public, anon;
 revoke all on function public.delete_manual_finance_entry(bigint) from public, anon;
@@ -1608,6 +1712,7 @@ revoke all on function public.get_dashboard_data(timestamptz, timestamptz, times
 revoke all on function public.get_finance_data(timestamptz, timestamptz, integer, integer) from public, anon;
 grant execute on function public.complete_sale(text, text, double precision, jsonb, text, uuid) to authenticated;
 grant execute on function public.add_manual_customer_credit(text, double precision, uuid) to authenticated;
+grant execute on function public.record_expedition_cost(bigint, double precision) to authenticated;
 grant execute on function public.record_transaction_payment(bigint, double precision, uuid) to authenticated;
 grant execute on function public.record_customer_credit_payment(text, double precision, uuid) to authenticated;
 grant execute on function public.delete_manual_finance_entry(bigint) to authenticated;

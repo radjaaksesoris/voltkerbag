@@ -390,6 +390,16 @@ export async function addManualCustomerCredit(customerName, amount, requestId) {
   return data
 }
 
+export async function recordExpeditionCost(entryId, amount) {
+  const { data, error } = await getClient().rpc('record_expedition_cost', {
+    p_entry_id: entryId,
+    p_amount: amount
+  })
+  throwIfError(error, 'Gagal menyimpan biaya ekspedisi')
+  notifyRefresh()
+  return data
+}
+
 export async function resetStoreData() {
   const { error } = await getClient().rpc('reset_store_data')
   throwIfError(error, 'Gagal menghapus data toko')
