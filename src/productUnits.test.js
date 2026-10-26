@@ -94,10 +94,8 @@ test('calculates prices from cost markup and converts only stock quantities', ()
   assert.equal(quantityToPcs(2.5, 'lusin'), 30)
   assert.equal(saleMarkupPrice(30000, 'pcs', 25), 37500)
   assert.equal(saleMarkupPrice(30000, 'lusin', 20), 432000)
-  assert.equal(saleMarkupPercentage(360000, 30000, 'lusin'), 0)
+  assert.equal(saleMarkupPercentage(140000, 10000, 'lusin'), 17)
   assert.equal(saleMarkupPercentage(37500, 30000, 'pcs'), 25)
-  const manualLusinPriceMarkup = saleMarkupPercentage(12345, 10000, 'lusin')
-  assert.equal(saleMarkupPrice(10000, 'lusin', manualLusinPriceMarkup), 12345)
   const product = {
     unit: 'pcs',
     price: 50000,
@@ -107,12 +105,13 @@ test('calculates prices from cost markup and converts only stock quantities', ()
     sale_markup_lusin_pct: 0,
     cost: 30000
   }
-  assert.equal(productPrice(product, 'pcs'), 37500)
+  assert.equal(productPrice(product, 'pcs'), 50000)
   assert.equal(productPrice(product, 'lusin'), 360000)
-  assert.equal(saleUnitPrice(product, 'pcs'), 37500)
+  assert.equal(saleUnitPrice(product, 'pcs'), 50000)
   assert.equal(saleUnitPrice(product, 'lusin'), 360000)
-  assert.equal(saleUnitPrice({ ...product, cost: 40000 }, 'pcs'), 50000)
-  assert.equal(saleUnitPrice({ ...product, cost: 40000 }, 'lusin'), 480000)
+  assert.equal(saleUnitPrice({ ...product, price_lusin: 140000 }, 'lusin'), 140000)
+  assert.equal(saleUnitPrice({ ...product, price_pcs: 0, cost: 40000 }, 'pcs'), 50000)
+  assert.equal(saleUnitPrice({ ...product, price_lusin: 0, cost: 40000 }, 'lusin'), 480000)
   assert.equal(unitCost(product, 'pcs'), 30000)
   assert.equal(unitCost(product, 'lusin'), 360000)
 })

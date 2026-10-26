@@ -1140,7 +1140,9 @@ select.input { appearance: none; }
 .product-option-fields .category-select-trigger { padding-inline: 11px; }
 .product-modal-cost-field { margin-top: 8px; }
 .product-markup-fields { display: grid; gap: 10px; margin-top: 10px; }
-.product-markup-row { display: grid; grid-template-columns: minmax(0, .8fr) minmax(0, 1.2fr); align-items: end; gap: 10px; }
+.product-markup-row { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: end; gap: 10px; }
+.product-markup-row > div { min-width: 0; }
+.product-markup-row > div > label { min-height: 24px; }
 .product-percent-input { position: relative; }
 .product-percent-input .input { margin: 0; padding-right: 30px; }
 .product-percent-input > span { position: absolute; top: 50%; right: 12px; color: var(--muted); font-size: 12px; transform: translateY(-50%); }

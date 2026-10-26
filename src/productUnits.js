@@ -85,12 +85,13 @@ export function availableQuantity(product, unit) {
 export function productPrice(product, unit) {
   const normalizedUnitName = normalizedUnit(unit)
   if (STANDARD_UNITS.some((option) => option.name === normalizedUnitName)) {
+    const storedPrice = Number(product['price_' + normalizedUnitName])
+    if (Number.isFinite(storedPrice) && storedPrice > 0) return storedPrice
+
     const markup = Number(product['sale_markup_' + normalizedUnitName + '_pct'])
     if (Number.isFinite(markup) && Number(product.cost) > 0) {
       return saleMarkupPrice(product.cost, normalizedUnitName, markup)
     }
-    const storedPrice = Number(product['price_' + normalizedUnitName])
-    if (Number.isFinite(storedPrice) && storedPrice > 0) return storedPrice
 
     return Number(product.price) || 0
   }
@@ -112,7 +113,8 @@ export function saleMarkupPrice(costPerPiece, unit, percentage) {
 export function saleMarkupPercentage(price, costPerPiece, unit) {
   const unitCost = (Number(costPerPiece) || 0) * unitFactor(unit)
   if (unitCost <= 0) return ''
-  return Number((((Number(price) / unitCost) - 1) * 100).toFixed(10))
+  const percentage = ((Number(price) / unitCost) - 1) * 100
+  return unit === 'lusin' ? Math.round(percentage) : Number(percentage.toFixed(2))
 }
 
 export function unitCost(product, unit) {

@@ -769,11 +769,13 @@ begin
     end if;
     sale_price := case requested_unit
       when 'pcs' then case
+        when product_row.price_pcs > 0 then product_row.price_pcs
         when product_row.sale_markup_pcs_pct is not null and product_row.cost > 0
           then round((product_row.cost * (100 + product_row.sale_markup_pcs_pct) / 100)::numeric)::double precision
         else product_row.price_pcs
       end
       when 'lusin' then case
+        when product_row.price_lusin > 0 then product_row.price_lusin
         when product_row.sale_markup_lusin_pct is not null and product_row.cost > 0
           then round((product_row.cost * 12 * (100 + product_row.sale_markup_lusin_pct) / 100)::numeric)::double precision
         else product_row.price_lusin
