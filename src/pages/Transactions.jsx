@@ -616,19 +616,33 @@ export default function Transactions() {
               {saleUnits(previewProduct.unit || 'pcs').map((unit) => {
                 const quantityInCart = cart.find((item) => item.productId === previewProduct.id && item.unit === unit)?.qty || 0
                 return (
-                  <button
+                  <div
                     key={unit}
-                    className="product-quick-view-unit"
-                    type="button"
-                    aria-label={'Tambah 1 ' + unit + ' ' + previewProduct.name + ', ' + rupiah(saleUnitPrice(previewProduct, unit))}
-                    disabled={!canAddOne(previewProduct.id, unit)}
-                    onClick={() => addToCart(previewProduct, unit)}>
+                    className={'product-quick-view-unit' + (quantityInCart > 0 ? ' is-in-cart' : '')}
+                  >
                     <span className="product-quick-view-unit-copy">
-                      <span>+ {unit}</span>
+                      <strong>{unit}</strong>
                       <small>Di keranjang: {quantityInCart} {unit}</small>
                     </span>
-                    <strong>{rupiah(saleUnitPrice(previewProduct, unit))}</strong>
-                  </button>
+                    <strong className="product-quick-view-unit-price">{rupiah(saleUnitPrice(previewProduct, unit))}</strong>
+                    <div className="qty-ctrl product-quick-view-qty">
+                      <button
+                        type="button"
+                        aria-label={'Kurangi jumlah ' + previewProduct.name + ' ' + unit}
+                        disabled={quantityInCart === 0}
+                        onClick={() => setQty(previewProduct.id, unit, quantityInCart - 1)}>
+                        <Icon name="minus" size={15} />
+                      </button>
+                      <span>{quantityInCart}</span>
+                      <button
+                        type="button"
+                        aria-label={'Tambah jumlah ' + previewProduct.name + ' ' + unit}
+                        disabled={!canAddOne(previewProduct.id, unit)}
+                        onClick={() => addToCart(previewProduct, unit)}>
+                        <Icon name="plus" size={15} />
+                      </button>
+                    </div>
+                  </div>
                 )
               })}
             </div>
