@@ -200,12 +200,12 @@ body {
     position: relative;
     gap: 0;
     min-height: 100dvh;
-    padding: 16px;
+    padding: 72px 16px 16px;
   }
   .login-brand,
   .login-panel { width: min(78vw, 320px); }
-  .login-brand { padding: 16px 21px 12px; border-radius: 20px 20px 0 0; }
-  .login-brand-logo { width: 144px; max-height: 44px; }
+  .login-brand { padding: 9px 21px 8px; border-radius: 20px 20px 0 0; }
+  .login-brand-logo { width: 144px; max-height: 38px; }
   .login-brand-copy,
   .login-brand-foot { display: none; }
   .login-panel { padding: 12px 21px 18px; border-radius: 0 0 20px 20px; }
