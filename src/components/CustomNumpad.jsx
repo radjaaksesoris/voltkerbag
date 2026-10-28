@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 
 const INPUT_SELECTOR = 'input[data-custom-numpad]'
 
@@ -13,36 +13,72 @@ function updateInputValue(input, value, selectionStart = null, selectionEnd = se
 
 export default function CustomNumpad() {
   const [activeInput, setActiveInput] = useState(null)
+  const activeInputRef = useRef(null)
 
   useEffect(() => {
+    function syncInputReadOnly() {
+      const isMobile = window.matchMedia('(max-width: 640px)').matches
+      document.querySelectorAll(INPUT_SELECTOR).forEach((input) => {
+        if (isMobile && !input.disabled) {
+          if (input.dataset.customNumpadManagedReadonly !== 'true') {
+            if (input.readOnly) return
+            input.dataset.customNumpadOriginalReadonly = String(input.readOnly)
+            input.dataset.customNumpadManagedReadonly = 'true'
+          }
+          input.readOnly = true
+        } else if (input.dataset.customNumpadManagedReadonly === 'true') {
+          input.readOnly = input.dataset.customNumpadOriginalReadonly === 'true'
+          delete input.dataset.customNumpadOriginalReadonly
+          delete input.dataset.customNumpadManagedReadonly
+        }
+      })
+    }
+
+    syncInputReadOnly()
+    const observer = new MutationObserver(syncInputReadOnly)
+    observer.observe(document.body, {
+      attributes: true,
+      attributeFilter: ['data-custom-numpad', 'disabled'],
+      childList: true,
+      subtree: true
+    })
+
     function handleFocusIn(event) {
       const input = event.target
+      if (input instanceof HTMLInputElement && input.matches(INPUT_SELECTOR)) syncInputReadOnly()
       const shouldShow = input instanceof HTMLInputElement &&
         input.matches(INPUT_SELECTOR) &&
+        input.dataset.customNumpadManagedReadonly === 'true' &&
         !input.disabled &&
-        !input.readOnly &&
         window.matchMedia('(max-width: 640px)').matches
+      activeInputRef.current = shouldShow ? input : null
       setActiveInput(shouldShow ? input : null)
       if (shouldShow) requestAnimationFrame(() => input.scrollIntoView({ block: 'center', behavior: 'auto' }))
     }
 
     function handlePointerDown(event) {
       if (event.target.closest('.custom-numpad')) return
-      if (event.target !== activeInput) {
-        activeInput?.blur()
+      if (event.target !== activeInputRef.current) {
+        activeInputRef.current?.blur()
+        activeInputRef.current = null
         setActiveInput(null)
       }
     }
 
     function handleKeyDown(event) {
       if (event.key === 'Escape') {
-        activeInput?.blur()
+        activeInputRef.current?.blur()
+        activeInputRef.current = null
         setActiveInput(null)
       }
     }
 
     function handleResize() {
-      if (!window.matchMedia('(max-width: 640px)').matches) setActiveInput(null)
+      if (!window.matchMedia('(max-width: 640px)').matches) {
+        activeInputRef.current = null
+        setActiveInput(null)
+      }
+      syncInputReadOnly()
     }
 
     document.addEventListener('focusin', handleFocusIn)
@@ -54,14 +90,15 @@ export default function CustomNumpad() {
       document.removeEventListener('pointerdown', handlePointerDown)
       document.removeEventListener('keydown', handleKeyDown)
       window.removeEventListener('resize', handleResize)
+      observer.disconnect()
     }
-  }, [activeInput])
+  }, [])
 
   if (!activeInput?.isConnected) return null
 
   function applyKey(key) {
     const input = activeInput
-    if (!input?.isConnected || input.disabled || input.readOnly) {
+    if (!input?.isConnected || input.disabled || (input.readOnly && input.dataset.customNumpadManagedReadonly !== 'true')) {
       setActiveInput(null)
       return
     }
@@ -148,11 +185,13 @@ export default function CustomNumpad() {
           className="custom-numpad-done"
           onPointerDown={(event) => {
             event.preventDefault()
+            activeInputRef.current = null
             setActiveInput(null)
             activeInput.blur()
           }}
           onClick={(event) => {
             if (event.detail !== 0) return
+            activeInputRef.current = null
             setActiveInput(null)
             activeInput.blur()
           }}>
