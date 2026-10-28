@@ -57,7 +57,7 @@ export default function LoginScreen({ configured, connectionError, updateBanner,
     <main className="login-page">
       {updateBanner}
       <div className="login-background" aria-hidden="true">
-        <img src={import.meta.env.BASE_URL + 'voltker-login-interior.png'} alt="" />
+        <img src={import.meta.env.BASE_URL + 'voltker-app-background.jpg'} alt="" />
       </div>
       <aside className="login-brand" aria-label="VOLTKER Toko Tas">
         <img

@@ -339,9 +339,10 @@ export default function App() {
   }
 
   return (
-    <div
-      className={'app ' + (navHidden ? 'nav-hidden' : '')}
-      style={{ '--brand-watermark': 'url("' + import.meta.env.BASE_URL + 'voltker-watermark-tile.png")' }}>
+    <div className={'app ' + (navHidden ? 'nav-hidden' : '')}>
+      <div className="app-background" aria-hidden="true">
+        <img src={import.meta.env.BASE_URL + 'voltker-app-background.jpg'} alt="" />
+      </div>
       <aside className="sidebar" id="primary-navigation" hidden={navHidden}>
         <div className="logo">
           <img
