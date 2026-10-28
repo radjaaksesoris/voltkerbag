@@ -1,6 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { availableQuantity, productPrice, purchaseCostFactor, purchaseCostPerPiece, purchaseCostUnit, quantityToPcs, saleMarkupPercentage, saleMarkupPrice, salePricesFromMarkups, saleUnitPrice, saleUnits, stockCostValue, stockEntryUnit, stockInPcs, stockLabel, stockReceiptValuation, unitCost, unitFactor } from './productUnits.js'
+import { availableQuantity, isWholeStockQuantity, productPrice, purchaseCostFactor, purchaseCostPerPiece, purchaseCostUnit, quantityToPcs, saleMarkupPercentage, saleMarkupPrice, salePricesFromMarkups, saleUnitPrice, saleUnits, stockCostValue, stockEntryUnit, stockInPcs, stockLabel, stockReceiptValuation, unitCost, unitFactor } from './productUnits.js'
 
 test('uses the standard conversion factors', () => {
   assert.equal(unitFactor('pcs'), 1)
@@ -33,6 +33,14 @@ test('enters initial stock in lusin for standard products', () => {
   assert.equal(quantityToPcs(2.5, stockEntryUnit('lusin')), 30)
   assert.equal(stockEntryUnit('pak'), 'pak')
   assert.equal(quantityToPcs(3, stockEntryUnit('pak')), 3)
+})
+
+test('rejects stock quantities that would be rounded to a different piece count', () => {
+  assert.equal(isWholeStockQuantity(1.5, 'lusin'), true)
+  assert.equal(isWholeStockQuantity(0.1, 'lusin'), false)
+  assert.equal(isWholeStockQuantity(2.5, 'pak'), false)
+  assert.equal(isWholeStockQuantity(-1, 'pcs'), false)
+  assert.equal(isWholeStockQuantity(Number.POSITIVE_INFINITY, 'pcs'), false)
 })
 
 test('values standard-unit stock and sale costs using cost per piece', () => {

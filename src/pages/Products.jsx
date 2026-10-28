@@ -8,7 +8,7 @@ import MoneyInput from '../components/MoneyInput.jsx'
 import CategorySelect from '../components/CategorySelect.jsx'
 import UnitSelect from '../components/UnitSelect.jsx'
 import Icon from '../components/Icon.jsx'
-import { availableQuantity, productPrice, purchaseCostFactor, purchaseCostPerPiece, purchaseCostUnit, quantityToPcs, saleMarkupPercentage, saleMarkupPrice, salePricesFromMarkups, saleUnitPrice, saleUnits, stockCostValue, stockEntryUnit, stockInPcs, stockReceiptValuation, unitFactor, stockLabel } from '../productUnits'
+import { availableQuantity, isWholeStockQuantity, productPrice, purchaseCostFactor, purchaseCostPerPiece, purchaseCostUnit, quantityToPcs, saleMarkupPercentage, saleMarkupPrice, salePricesFromMarkups, saleUnitPrice, saleUnits, stockCostValue, stockEntryUnit, stockInPcs, stockReceiptValuation, unitFactor, stockLabel } from '../productUnits'
 
 const EMPTY = {
   name: '',
@@ -302,7 +302,8 @@ export default function Products() {
   async function save(e) {
     e.preventDefault()
     setActionError('')
-    if (!form.name) { setActionError('Nama produk wajib diisi.'); return }
+    const productName = form.name.trim()
+    if (!productName) { setActionError('Nama produk wajib diisi.'); return }
     if (!form.unit) { setActionError('Satuan produk wajib dipilih.'); return }
     const isStandard = saleUnits(form.unit).length === 2
     const markups = Object.fromEntries(
@@ -342,9 +343,16 @@ export default function Products() {
         : 'Stok harus berupa angka nol atau lebih.')
       return
     }
-    const stockPcs = editId
-      ? quantityToPcs(baseStock, 'pcs')
-      : quantityToPcs(baseStock, stockEntryUnit(form.unit))
+    const stockUnit = editId && isStandard ? 'pcs' : stockEntryUnit(form.unit)
+    if (!isWholeStockQuantity(baseStock, stockUnit)) {
+      setActionError('Jumlah stok harus menghasilkan jumlah PCS utuh. Periksa kembali jumlah dan satuannya.')
+      return
+    }
+    const stockPcs = quantityToPcs(baseStock, stockUnit)
+    if (stockPcs > 2147483647) {
+      setActionError('Jumlah stok melebihi batas yang dapat disimpan.')
+      return
+    }
     const previousImagePath = originalImagePathRef.current
     let imagePath = imageRemoved ? null : previousImagePath
     let uploadedImagePath = null
@@ -356,7 +364,7 @@ export default function Products() {
         imagePath = uploadedImagePath
       }
       const productRecord = {
-        name: form.name.trim(),
+        name: productName,
         category: form.category.trim(),
         unit: form.unit.trim(),
         price: basePrice,

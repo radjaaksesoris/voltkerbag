@@ -687,7 +687,7 @@ export default function Transactions() {
       )}
 
       {installmentTransaction && (
-        <div className="overlay" onClick={() => setInstallmentTransaction(null)}>
+        <div className="overlay" onClick={() => !saving && setInstallmentTransaction(null)}>
           <form className="modal" onClick={(e) => e.stopPropagation()} onSubmit={recordInstallment}>
             <h3>Catat cicilan</h3>
             <p className="muted small installment-customer">
@@ -703,7 +703,7 @@ export default function Transactions() {
               placeholder="Masukkan nominal pembayaran" required autoFocus />
             {installmentError && <p className="form-error" role="alert">{installmentError}</p>}
             <div className="modal-actions">
-              <button type="button" className="btn" onClick={() => setInstallmentTransaction(null)}>Batal</button>
+              <button type="button" className="btn" disabled={saving} onClick={() => setInstallmentTransaction(null)}>Batal</button>
               <button type="submit" className="btn btn-primary" disabled={saving}>
                 {saving ? 'Menyimpan…' : 'Simpan pembayaran'}
               </button>

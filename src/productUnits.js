@@ -68,6 +68,18 @@ export function quantityToPcs(quantity, unit) {
   return Math.round((Number(quantity) || 0) * unitFactor(unit))
 }
 
+export function isWholeStockQuantity(quantity, unit) {
+  const numericQuantity = Number(quantity)
+  const quantityInPcs = numericQuantity * unitFactor(unit)
+  const roundedQuantityInPcs = Math.round(quantityInPcs)
+  const precisionTolerance = Number.EPSILON * Math.max(1, Math.abs(quantityInPcs)) * 4
+
+  return Number.isFinite(numericQuantity)
+    && numericQuantity >= 0
+    && Number.isSafeInteger(roundedQuantityInPcs)
+    && Math.abs(quantityInPcs - roundedQuantityInPcs) <= precisionTolerance
+}
+
 export function availableQuantity(product, unit) {
   return Math.floor(stockInPcs(product) / unitFactor(unit))
 }
