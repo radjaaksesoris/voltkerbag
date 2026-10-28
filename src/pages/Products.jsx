@@ -497,7 +497,17 @@ export default function Products() {
                 <td className="product-number-cell">{index + 1}</td>
                 <td className="product-name-cell">
                   <div className="product-name-content">
-                    {p.image_path && <img src={getProductImageUrl(p.image_path)} width="42" height="42" alt="" />}
+                    {p.image_path && (
+                      <img
+                        src={getProductImageUrl(p.image_path)}
+                        width="42"
+                        height="42"
+                        alt=""
+                        loading={index < 4 ? 'eager' : 'lazy'}
+                        fetchPriority={index < 2 ? 'high' : 'auto'}
+                        decoding="async"
+                      />
+                    )}
                     <div className="product-name-text">
                       <strong>{p.name}</strong>
                       <span className="product-category-mobile">{p.category || '-'}</span>

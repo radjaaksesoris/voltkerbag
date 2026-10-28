@@ -403,8 +403,8 @@ export default function Transactions() {
                         width="48"
                         height="48"
                         alt=""
-                        loading={index < 8 ? 'eager' : 'lazy'}
-                        fetchPriority={index < 8 ? 'high' : 'auto'}
+                        loading={index < 4 ? 'eager' : 'lazy'}
+                        fetchPriority={index < 2 ? 'high' : 'auto'}
                         decoding="async"
                       />
                     ) : (
