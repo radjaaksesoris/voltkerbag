@@ -342,8 +342,9 @@ export default function Finance() {
           <p className="credit-balances-empty muted">Tidak ada pelanggan dengan hutang saat ini.</p>
         ) : (
           <ul className="credit-balances-list">
-            {report.credit_balances.map((debt) => (
+            {report.credit_balances.map((debt, index) => (
               <li key={debt.customer_name}>
+                <span className="finance-row-number">{index + 1}</span>
                 <CustomerIdentity
                   name={debt.customer_name}
                   customer={customers.find((customer) => customer.name === debt.customer_name)}
@@ -386,13 +387,14 @@ export default function Finance() {
             </div>
           )}
           <table className="finance-ledger-table">
-            <thead><tr><th>Tanggal</th><th>Jenis</th><th>Kategori</th><th>Catatan</th><th>Nominal</th><th></th></tr></thead>
+            <thead><tr><th>No.</th><th>Tanggal</th><th>Jenis</th><th>Kategori</th><th>Catatan</th><th>Nominal</th><th></th></tr></thead>
             <tbody>
-              {report.entries.length === 0 && <tr><td colSpan="6" className="muted center">
+              {report.entries.length === 0 && <tr><td colSpan="7" className="muted center">
                 {hasFilter ? 'Tidak ada catatan pada rentang tanggal ini.' : 'Belum ada catatan.'}
               </td></tr>}
-              {report.entries.map((e) => (
+              {report.entries.map((e, index) => (
                 <tr key={e.id}>
+                  <td className="finance-row-number">{pageStart + index + 1}</td>
                   <td>{dateOnly(e.date || e.createdAt)}</td>
                   <td><span className={'badge ' + TYPES[e.type].cls}>{TYPES[e.type].label}</span></td>
                   <td>{e.category || '-'}</td>
