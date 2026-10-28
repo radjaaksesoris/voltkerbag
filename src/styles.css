@@ -117,7 +117,7 @@ body {
     background: #000;
     pointer-events: none;
   }
-  .login-background img { width: 100%; height: 100%; object-fit: cover; opacity: .4; }
+  .login-background img { width: 100%; height: 100%; object-fit: cover; opacity: .3; }
   .login-brand,
   .login-panel { box-sizing: border-box; width: min(78vw, 420px); }
   .login-brand {
@@ -245,7 +245,7 @@ button:focus-visible, input:focus-visible, select:focus-visible {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  opacity: .4;
+  opacity: .3;
 }
 
 /* Navigation */
