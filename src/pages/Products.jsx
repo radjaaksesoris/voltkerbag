@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom'
 import { addProductStock, getAll, getProductImageUrl, put, remove, removeProductImage, setProductStock, updateProductDetails, uploadProductImage, onRefresh } from '../db'
 import { rupiah } from '../format'
 import { isSafeRupiahAmount } from '../money'
+import { compressProductImage } from '../productImage'
 import MoneyInput from '../components/MoneyInput.jsx'
 import CategorySelect from '../components/CategorySelect.jsx'
 import UnitSelect from '../components/UnitSelect.jsx'
@@ -37,6 +38,7 @@ export default function Products() {
   const [imageFile, setImageFile] = useState(null)
   const [imagePreview, setImagePreview] = useState('')
   const [imageRemoved, setImageRemoved] = useState(false)
+  const [compressingImage, setCompressingImage] = useState(false)
   const [saving, setSaving] = useState(false)
   const [loadError, setLoadError] = useState('')
   const [actionError, setActionError] = useState('')
@@ -57,6 +59,7 @@ export default function Products() {
   const costInputRef = useRef(null)
   const stockInputRef = useRef(null)
   const imageInputRef = useRef(null)
+  const imageProcessingRef = useRef(false)
   const stockRequest = useRef(null)
 
   useEffect(() => {
@@ -205,7 +208,7 @@ export default function Products() {
   }
 
   function closeProductForm() {
-    if (saving) return
+    if (saving || imageProcessingRef.current) return
     setShowForm(false)
     setImageFile(null)
     setImagePreview('')
@@ -213,7 +216,7 @@ export default function Products() {
     if (imageInputRef.current) imageInputRef.current.value = ''
   }
 
-  function selectProductImage(event) {
+  async function selectProductImage(event) {
     const file = event.target.files?.[0]
     if (!file) return
     if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
@@ -226,10 +229,24 @@ export default function Products() {
       event.target.value = ''
       return
     }
+    if (imageProcessingRef.current) return
+
+    imageProcessingRef.current = true
+    setCompressingImage(true)
     setActionError('')
-    setImageFile(file)
-    setImagePreview(URL.createObjectURL(file))
-    setImageRemoved(false)
+    try {
+      const compressedFile = await compressProductImage(file)
+      setImageFile(compressedFile)
+      setImagePreview(URL.createObjectURL(compressedFile))
+      setImageRemoved(false)
+      if (imageInputRef.current) imageInputRef.current.value = ''
+    } catch (error) {
+      setActionError(error.message || 'Gagal mengompres gambar produk.')
+      if (imageInputRef.current) imageInputRef.current.value = ''
+    } finally {
+      imageProcessingRef.current = false
+      setCompressingImage(false)
+    }
   }
 
   function clearProductImage() {
@@ -545,9 +562,14 @@ export default function Products() {
                 className="input product-image-input"
                 type="file"
                 accept="image/jpeg,image/png,image/webp"
-                disabled={saving}
+                disabled={saving || compressingImage}
                 onChange={selectProductImage}
               />
+              <p className="muted small" role="status">
+                {compressingImage
+                  ? 'Mengoptimalkan gambar...'
+                  : 'Gambar otomatis dikompres ke WebP, maksimal 1200 px.'}
+              </p>
               {(imagePreview || form.image_path) && (
                 <div className="product-image-preview">
                   <img src={imagePreview || getProductImageUrl(form.image_path)} width="92" height="76" alt="Pratinjau gambar produk" />
@@ -690,9 +712,9 @@ export default function Products() {
             )}
             <div className="modal-actions">
               {actionError && <p className="form-error" role="alert">{actionError}</p>}
-              <button type="button" className="btn" disabled={saving} onClick={closeProductForm}>Batal</button>
-              <button type="submit" className="btn btn-primary" disabled={saving}>
-                {saving ? 'Menyimpan...' : 'Simpan'}
+              <button type="button" className="btn" disabled={saving || compressingImage} onClick={closeProductForm}>Batal</button>
+              <button type="submit" className="btn btn-primary" disabled={saving || compressingImage}>
+                {compressingImage ? 'Mengoptimalkan gambar...' : saving ? 'Menyimpan...' : 'Simpan'}
               </button>
             </div>
           </form>
