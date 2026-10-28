@@ -117,7 +117,7 @@ body {
     background: #07182e;
     pointer-events: none;
   }
-  .login-background img { width: 100%; height: 100%; object-fit: cover; opacity: .72; filter: brightness(.48) saturate(.78); }
+  .login-background img { width: 100%; height: 100%; object-fit: cover; opacity: .36; }
   .login-brand,
   .login-panel { box-sizing: border-box; width: min(78vw, 420px); }
   .login-brand {
@@ -129,9 +129,7 @@ body {
     border-radius: 20px 20px 0 0;
     background: rgba(91, 24, 33, .58);
     color: #fff8f4;
-    box-shadow: 0 24px 68px rgba(37, 5, 11, .36), inset 0 1px 0 rgba(255, 255, 255, .14);
-    backdrop-filter: blur(20px) saturate(135%);
-    -webkit-backdrop-filter: blur(20px) saturate(135%);
+    box-shadow: 0 12px 28px rgba(37, 5, 11, .24), inset 0 1px 0 rgba(255, 255, 255, .08);
   }
   .login-brand::before,
   .login-brand::after { border-color: rgba(255, 222, 216, .12); }
@@ -152,8 +150,6 @@ body {
     font-size: 18px;
     font-weight: 700;
     box-shadow: inset 0 1px 0 rgba(255, 255, 255, .06);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
     transition: border-color .18s, background .18s, transform .18s;
   }
   .login-keypad-button:hover:not(:disabled) { border-color: rgba(255, 205, 198, .52); background: rgba(121, 37, 47, .66); }
@@ -169,9 +165,7 @@ body {
     border-radius: 0 0 20px 20px;
     background: rgba(91, 24, 33, .58);
     color: #fff8f4;
-    box-shadow: 0 28px 76px rgba(37, 5, 11, .4), inset 0 1px 0 rgba(255, 255, 255, .09);
-    backdrop-filter: blur(20px) saturate(135%);
-    -webkit-backdrop-filter: blur(20px) saturate(135%);
+    box-shadow: 0 14px 38px rgba(37, 5, 11, .25), inset 0 1px 0 rgba(255, 255, 255, .06);
   }
   .login-panel-heading { margin-bottom: 21px; }
   .login-eyebrow { margin-bottom: 10px; color: rgba(255, 221, 216, .78); font-size: 13px; font-weight: 500; letter-spacing: 0; text-align: center; text-transform: none; }
@@ -184,8 +178,6 @@ body {
     background: rgba(55, 13, 21, .14);
     color: #fff8f4;
     box-shadow: inset 0 1px 0 rgba(255, 255, 255, .04);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
   }
   .login-panel form .input::placeholder { color: rgba(244, 194, 190, .48); }
   .login-panel form .input:focus { border-color: rgba(255, 174, 166, .68); box-shadow: 0 0 0 3px rgba(230, 82, 77, .16); }
@@ -250,8 +242,7 @@ button:focus-visible, input:focus-visible, select:focus-visible {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  opacity: .72;
-  filter: brightness(.48) saturate(.78);
+  opacity: .36;
 }
 
 /* Navigation */
@@ -1294,7 +1285,7 @@ label { display: block; margin-bottom: 6px; color: var(--muted); font-size: 11px
 
 /* Finance and forms */
 .finance-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 22px; align-items: start; }
-.overlay { position: fixed; z-index: 50; inset: 0; display: flex; align-items: center; justify-content: center; padding: 20px; background: rgba(24, 22, 21, .6); overscroll-behavior: contain; backdrop-filter: blur(5px); }
+.overlay { position: fixed; z-index: 50; inset: 0; display: flex; align-items: center; justify-content: center; padding: 20px; background: rgba(24, 22, 21, .6); overscroll-behavior: contain; }
 .product-form-overlay {
   align-items: stretch;
   justify-content: flex-end;
@@ -1838,6 +1829,40 @@ label { display: block; margin-bottom: 6px; color: var(--muted); font-size: 11px
 .content .customer-list li {
   border-color: rgba(255, 255, 255, .56);
   background-color: rgba(255, 253, 248, .72);
+}
+
+@media (max-width: 1024px) {
+  .login-brand::before,
+  .login-brand::after,
+  .sidebar::before,
+  .topbar::after {
+    display: none;
+  }
+  .login-keypad-button {
+    box-shadow: none;
+  }
+  .content .card,
+  .content .cart,
+  .content .product-card {
+    box-shadow: none;
+  }
+  .content .stat-card:not(.highlight) {
+    background-image: none;
+    box-shadow: none;
+  }
+  .content .dashboard-stats-grid .stat-card:not(.highlight)::after,
+  .content .stat-card.highlight::after {
+    display: none;
+  }
+  .product-modal {
+    background-color: var(--card);
+    background-image: none;
+    box-shadow: 0 12px 30px rgba(91, 28, 27, .18);
+  }
+  .modal,
+  .receipt-preview-modal {
+    box-shadow: 0 12px 30px rgba(26, 19, 15, .18);
+  }
 }
 
 @media print {
