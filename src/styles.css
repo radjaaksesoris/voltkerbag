@@ -119,7 +119,7 @@ body {
   }
   .login-background img { width: 100%; height: 100%; object-fit: cover; opacity: .72; filter: brightness(.48) saturate(.78); }
   .login-brand,
-  .login-panel { box-sizing: border-box; width: min(84vw, 460px); }
+  .login-panel { box-sizing: border-box; width: min(78vw, 420px); }
   .login-brand {
     z-index: 1;
     min-height: 0;
@@ -202,7 +202,7 @@ body {
     padding: 16px;
   }
   .login-brand,
-  .login-panel { width: min(84vw, 350px); }
+  .login-panel { width: min(78vw, 320px); }
   .login-brand { padding: 16px 21px 12px; border-radius: 20px 20px 0 0; }
   .login-brand-logo { width: 144px; max-height: 44px; }
   .login-brand-copy,
@@ -219,7 +219,7 @@ body {
   .login-keypad-button { min-height: clamp(48px, 12vw, 62px); border-radius: 13px; font-size: 20px; }
   .login-keypad-action { font-size: 13px; }
   .login-panel form .btn { min-height: 48px; border-radius: 12px; }
-  .login-footnote { margin-top: 11px; font-size: 10px; line-height: 1.45; }
+  .login-footnote { display: none; }
 }
 button, input, select { font: inherit; }
 button { cursor: pointer; }
