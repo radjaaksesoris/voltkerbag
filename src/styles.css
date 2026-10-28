@@ -118,9 +118,10 @@ body {
     pointer-events: none;
   }
   .login-background img { width: 100%; height: 100%; object-fit: cover; opacity: .72; filter: brightness(.48) saturate(.78); }
+  .login-brand,
+  .login-panel { box-sizing: border-box; width: min(84vw, 460px); }
   .login-brand {
     z-index: 1;
-    width: min(84vw, 460px);
     min-height: 0;
     padding: 23px 27px;
     border: 1px solid rgba(246, 190, 185, .3);
@@ -161,7 +162,6 @@ body {
   .login-keypad-action { color: rgba(255, 218, 212, .82); font-size: 13px; }
   .login-panel {
     z-index: 1;
-    width: min(100%, 500px);
     min-height: 0;
     padding: clamp(25px, 6vw, 38px);
     border: 1px solid rgba(246, 190, 185, .3);
@@ -201,11 +201,13 @@ body {
     min-height: 100dvh;
     padding: 16px;
   }
-  .login-brand { width: min(84vw, 350px); padding: 16px 21px 12px; border-radius: 20px 20px 0 0; }
+  .login-brand,
+  .login-panel { width: min(84vw, 350px); }
+  .login-brand { padding: 16px 21px 12px; border-radius: 20px 20px 0 0; }
   .login-brand-logo { width: 144px; max-height: 44px; }
   .login-brand-copy,
   .login-brand-foot { display: none; }
-  .login-panel { width: min(84vw, 350px); padding: 12px 21px 18px; border-radius: 0 0 20px 20px; }
+  .login-panel { padding: 12px 21px 18px; border-radius: 0 0 20px 20px; }
   .login-panel-heading { margin-bottom: 15px; }
   .login-eyebrow { margin-bottom: 0; font-size: 14px; }
   .login-panel h1 { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
