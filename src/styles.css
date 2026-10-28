@@ -525,6 +525,10 @@ button:focus-visible, input:focus-visible, select:focus-visible {
 .date-filter-reset { min-height: 38px; padding: 8px 12px; }
 .date-filter-reset:disabled { cursor: default; opacity: .5; }
 .date-filter-error { flex-basis: 100%; margin: 0; }
+.content .page > .muted,
+.content .page-toolbar > .muted { color: rgba(255, 250, 243, .9); }
+.content .page-toolbar > .muted strong { color: #fffaf3; }
+.content .page > .form-error { color: #ffd2c9; }
 .dashboard-filter-row, .finance-date-filter {
   display: flex;
   align-items: flex-end;
@@ -539,6 +543,10 @@ button:focus-visible, input:focus-visible, select:focus-visible {
 .date-filter-caption { display: flex; flex-direction: column; gap: 3px; }
 .date-filter-caption strong { color: var(--ink); font-size: 13px; }
 .date-filter-caption span { font-size: 11px; }
+.content .dashboard-filter-row .date-filter-caption strong { color: #fffaf3; }
+.content .dashboard-filter-row .date-filter-caption > span,
+.content .dashboard-filter-row .date-filter-field > span { color: rgba(255, 250, 243, .9); }
+.content .dashboard-filter-row .date-filter-error { color: #ffd2c9; }
 .finance-date-filter {
   align-items: center;
   margin: 0 0 20px;
