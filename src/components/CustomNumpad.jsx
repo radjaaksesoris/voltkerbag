@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 
 const INPUT_SELECTOR = 'input[data-custom-numpad]'
 
@@ -14,6 +14,8 @@ function updateInputValue(input, value, selectionStart = null, selectionEnd = se
 export default function CustomNumpad() {
   const [activeInput, setActiveInput] = useState(null)
   const activeInputRef = useRef(null)
+  const keypadRef = useRef(null)
+  const scrollHostRef = useRef(null)
 
   useEffect(() => {
     function syncInputReadOnly() {
@@ -53,7 +55,6 @@ export default function CustomNumpad() {
         window.matchMedia('(max-width: 640px)').matches
       activeInputRef.current = shouldShow ? input : null
       setActiveInput(shouldShow ? input : null)
-      if (shouldShow) requestAnimationFrame(() => input.scrollIntoView({ block: 'center', behavior: 'auto' }))
     }
 
     function handlePointerDown(event) {
@@ -93,6 +94,35 @@ export default function CustomNumpad() {
       observer.disconnect()
     }
   }, [])
+
+  useLayoutEffect(() => {
+    if (!activeInput?.isConnected || !keypadRef.current) return undefined
+
+    const scrollHost = activeInput.closest('.product-modal, .modal, .content')
+    if (!scrollHost) return undefined
+
+    const originalPaddingBottom = scrollHost.style.paddingBottom
+    const keypadHeight = keypadRef.current.getBoundingClientRect().height
+    const computedPaddingBottom = Number.parseFloat(getComputedStyle(scrollHost).paddingBottom) || 0
+    scrollHost.style.paddingBottom = `${computedPaddingBottom + keypadHeight + 12}px`
+    scrollHostRef.current = { element: scrollHost, originalPaddingBottom }
+
+    requestAnimationFrame(() => {
+      if (!activeInput.isConnected || !keypadRef.current) return
+      const inputBottom = activeInput.getBoundingClientRect().bottom
+      const keypadTop = keypadRef.current.getBoundingClientRect().top
+      const overlap = inputBottom - keypadTop + 12
+      if (overlap > 0) scrollHost.scrollBy({ top: overlap, behavior: 'auto' })
+    })
+
+    return () => {
+      const currentHost = scrollHostRef.current
+      if (currentHost?.element === scrollHost) {
+        scrollHost.style.paddingBottom = currentHost.originalPaddingBottom
+        scrollHostRef.current = null
+      }
+    }
+  }, [activeInput])
 
   if (!activeInput?.isConnected) return null
 
@@ -174,7 +204,7 @@ export default function CustomNumpad() {
   }
 
   return (
-    <div className="custom-numpad" role="group" aria-label="Keypad angka">
+    <div className="custom-numpad" ref={keypadRef} role="group" aria-label="Keypad angka">
       <div className="custom-numpad-heading">
         <strong>Masukkan angka</strong>
         <button type="button" onPointerDown={handlePointerKey('clear')} onClick={handleKeyboardClick('clear')}>
