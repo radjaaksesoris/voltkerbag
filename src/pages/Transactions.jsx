@@ -613,21 +613,24 @@ export default function Transactions() {
             </div>
             <div className="product-quick-view-units">
               <strong>Pilih satuan</strong>
-              {saleUnits(previewProduct.unit || 'pcs').map((unit) => (
-                <button
-                  key={unit}
-                  className="product-quick-view-unit"
-                  type="button"
-                  aria-label={'Tambah 1 ' + unit + ' ' + previewProduct.name + ', ' + rupiah(saleUnitPrice(previewProduct, unit))}
-                  disabled={!canAddOne(previewProduct.id, unit)}
-                  onClick={() => {
-                    addToCart(previewProduct, unit)
-                    setPreviewProduct(null)
-                  }}>
-                  <span>+ {unit}</span>
-                  <strong>{rupiah(saleUnitPrice(previewProduct, unit))}</strong>
-                </button>
-              ))}
+              {saleUnits(previewProduct.unit || 'pcs').map((unit) => {
+                const quantityInCart = cart.find((item) => item.productId === previewProduct.id && item.unit === unit)?.qty || 0
+                return (
+                  <button
+                    key={unit}
+                    className="product-quick-view-unit"
+                    type="button"
+                    aria-label={'Tambah 1 ' + unit + ' ' + previewProduct.name + ', ' + rupiah(saleUnitPrice(previewProduct, unit))}
+                    disabled={!canAddOne(previewProduct.id, unit)}
+                    onClick={() => addToCart(previewProduct, unit)}>
+                    <span className="product-quick-view-unit-copy">
+                      <span>+ {unit}</span>
+                      <small>Di keranjang: {quantityInCart} {unit}</small>
+                    </span>
+                    <strong>{rupiah(saleUnitPrice(previewProduct, unit))}</strong>
+                  </button>
+                )
+              })}
             </div>
             <button
               className="btn btn-primary product-quick-view-close"
