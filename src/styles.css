@@ -1807,12 +1807,12 @@ label { display: block; margin-bottom: 6px; color: var(--muted); font-size: 11px
 .content .card,
 .content .cart {
   border-color: rgba(255, 255, 255, .54);
-  background-color: rgba(255, 253, 248, .76);
+  background-color: rgba(255, 253, 248, .64);
   box-shadow: 0 5px 14px rgba(11, 20, 30, .12);
 }
 .content .stat-card:not(.highlight) {
   border-color: rgba(255, 255, 255, .54);
-  background: radial-gradient(circle at 100% 100%, var(--metric-wash, rgba(181, 40, 46, .06)), transparent 58%), rgba(255, 253, 248, .76);
+  background: radial-gradient(circle at 100% 100%, var(--metric-wash, rgba(181, 40, 46, .06)), transparent 58%), rgba(255, 253, 248, .64);
   box-shadow: 0 4px 12px rgba(11, 20, 30, .1);
 }
 .content .stat-card.highlight,
@@ -1824,18 +1824,18 @@ label { display: block; margin-bottom: 6px; color: var(--muted); font-size: 11px
 }
 .content .product-card {
   border-color: rgba(255, 255, 255, .62);
-  background: rgba(255, 253, 248, .84);
+  background: rgba(255, 253, 248, .72);
   box-shadow: 0 3px 9px rgba(11, 20, 30, .1);
 }
 .content .product-card:hover {
-  background: rgba(255, 250, 244, .9);
+  background: rgba(255, 250, 244, .8);
 }
 .content .product-quick-view-unit,
 .content .transaction-details-meta > div,
 .content .transaction-details-payments li,
 .content .customer-list li {
   border-color: rgba(255, 255, 255, .56);
-  background-color: rgba(255, 253, 248, .72);
+  background-color: rgba(255, 253, 248, .66);
 }
 
 @media (max-width: 1024px) {
