@@ -242,15 +242,16 @@ export default function Purchases() {
         </div>
         <table className="purchase-table">
           <thead>
-            <tr><th>Pembelian</th><th>Tanggal</th><th>Nominal</th><th>Vendor</th></tr>
+            <tr><th>No.</th><th>Pembelian</th><th>Tanggal</th><th>Nominal</th><th>Vendor</th></tr>
           </thead>
           <tbody>
             {entries.length === 0 ? (
-              <tr><td colSpan="4" className="muted center">Belum ada pembelian bahan yang dicatat.</td></tr>
-            ) : entries.map((entry) => {
+              <tr><td colSpan="5" className="muted center">Belum ada pembelian bahan yang dicatat.</td></tr>
+            ) : entries.map((entry, index) => {
               const purchase = parsePurchaseNote(entry.note)
               return (
                 <tr key={entry.id}>
+                  <td className="purchase-row-number">{pageStart + index + 1}</td>
                   <td className="purchase-details">{purchase.purchase}</td>
                   <td>{dateOnly(entry.date || entry.createdAt)}</td>
                   <td className="danger">{rupiah(entry.amount)}</td>
