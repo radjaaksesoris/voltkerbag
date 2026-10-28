@@ -6,6 +6,7 @@ import { dateRangeTimestamps, hasDateRange, localDateValue } from '../dateFilter
 import MoneyInput from '../components/MoneyInput.jsx'
 import CustomerIdentity from '../components/CustomerIdentity.jsx'
 import SelectInput from '../components/SelectInput.jsx'
+import Icon from '../components/Icon.jsx'
 import { isSafeRupiahAmount } from '../money'
 
 const TYPES = {
@@ -368,12 +369,12 @@ export default function Finance() {
                 <p className="muted small">Menampilkan sisa hutang yang masih berjalan, tidak dibatasi periode.</p>
               </div>
               <button
-                className="btn btn-sm"
+                className="btn credit-balances-close"
                 type="button"
                 aria-label="Tutup daftar pelanggan dengan hutang"
                 autoFocus
                 onClick={closeCreditBalances}>
-                Tutup
+                <Icon name="close" size={18} />
               </button>
             </div>
             <div className="credit-balances-heading-actions">
