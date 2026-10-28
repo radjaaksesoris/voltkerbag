@@ -1,4 +1,5 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 
 const INPUT_SELECTOR = 'input[data-custom-numpad]'
 
@@ -203,7 +204,7 @@ export default function CustomNumpad() {
     }
   }
 
-  return (
+  return createPortal(
     <div className="custom-numpad" ref={keypadRef} role="group" aria-label="Keypad angka">
       <div className="custom-numpad-heading">
         <strong>Masukkan angka</strong>
@@ -247,6 +248,7 @@ export default function CustomNumpad() {
           ⌫
         </button>
       </div>
-    </div>
+    </div>,
+    document.body
   )
 }
