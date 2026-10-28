@@ -120,13 +120,13 @@ body {
   .login-background img { width: 100%; height: 100%; object-fit: cover; opacity: .72; filter: brightness(.48) saturate(.78); }
   .login-brand {
     z-index: 1;
-    width: min(100%, 500px);
+    width: min(84vw, 460px);
     min-height: 0;
     padding: 23px 27px;
     border: 1px solid rgba(246, 190, 185, .3);
     border-bottom: 0;
     border-radius: 20px 20px 0 0;
-    background: rgba(91, 24, 33, .78);
+    background: rgba(91, 24, 33, .58);
     color: #fff8f4;
     box-shadow: 0 24px 68px rgba(37, 5, 11, .36), inset 0 1px 0 rgba(255, 255, 255, .14);
     backdrop-filter: blur(20px) saturate(135%);
@@ -146,7 +146,7 @@ body {
     min-height: 48px;
     border: 1px solid rgba(246, 190, 185, .23);
     border-radius: 12px;
-    background: rgba(72, 18, 27, .42);
+    background: rgba(72, 18, 27, .28);
     color: #fff8f4;
     font-size: 18px;
     font-weight: 700;
@@ -167,7 +167,7 @@ body {
     border: 1px solid rgba(246, 190, 185, .3);
     border-top: 1px solid rgba(255, 219, 213, .14);
     border-radius: 0 0 20px 20px;
-    background: rgba(91, 24, 33, .78);
+    background: rgba(91, 24, 33, .58);
     color: #fff8f4;
     box-shadow: 0 28px 76px rgba(37, 5, 11, .4), inset 0 1px 0 rgba(255, 255, 255, .09);
     backdrop-filter: blur(20px) saturate(135%);
@@ -180,7 +180,7 @@ body {
   .login-panel form label { color: rgba(255, 238, 234, .84); }
   .login-panel form .input {
     border-color: rgba(246, 190, 185, .23);
-    background: rgba(55, 13, 21, .24);
+    background: rgba(55, 13, 21, .14);
     color: #fff8f4;
     box-shadow: inset 0 1px 0 rgba(255, 255, 255, .04);
     backdrop-filter: blur(12px);
@@ -201,11 +201,11 @@ body {
     min-height: 100dvh;
     padding: 16px;
   }
-  .login-brand { width: min(100%, 390px); padding: 16px 21px 12px; border-radius: 20px 20px 0 0; }
+  .login-brand { width: min(84vw, 350px); padding: 16px 21px 12px; border-radius: 20px 20px 0 0; }
   .login-brand-logo { width: 144px; max-height: 44px; }
   .login-brand-copy,
   .login-brand-foot { display: none; }
-  .login-panel { width: min(100%, 390px); padding: 12px 21px 18px; border-radius: 0 0 20px 20px; }
+  .login-panel { width: min(84vw, 350px); padding: 12px 21px 18px; border-radius: 0 0 20px 20px; }
   .login-panel-heading { margin-bottom: 15px; }
   .login-eyebrow { margin-bottom: 0; font-size: 14px; }
   .login-panel h1 { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
