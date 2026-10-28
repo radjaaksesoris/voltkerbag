@@ -47,6 +47,7 @@ body {
     radial-gradient(ellipse at 90% 8%, rgba(194, 170, 143, .13), transparent 34%),
     #f4f0e8;
 }
+.login-background { display: none; }
 .login-brand {
   position: relative;
   isolation: isolate;
@@ -127,13 +128,37 @@ body {
   .login-panel-heading { margin-bottom: 21px; }
 }
 @media (max-width: 480px) {
-  .login-page { padding: 12px; }
-  .login-page { gap: 19px; }
-  .login-brand { padding: 2px 6px; }
-  .login-brand-logo { width: 142px; }
-  .login-panel { padding: 24px 21px; }
-  .login-panel h1 { font-size: 30px; }
-  .login-footnote { margin-top: 13px; }
+  .login-page {
+    position: relative;
+    gap: 0;
+    min-height: 100dvh;
+    padding: 16px;
+    background: transparent;
+  }
+  .login-background {
+    position: fixed;
+    z-index: -1;
+    inset: 0;
+    display: block;
+    overflow: hidden;
+    background: rgba(242, 238, 229, .62);
+  }
+  .login-background img { width: 100%; height: 100%; object-fit: cover; opacity: .36; }
+  .login-brand { width: min(100%, 390px); padding: 12px 18px; border-radius: 14px 14px 0 0; }
+  .login-brand-logo { width: 126px; max-height: 42px; }
+  .login-brand-copy,
+  .login-brand-foot { display: none; }
+  .login-panel { width: min(100%, 390px); padding: 17px 19px 15px; border-radius: 0 0 14px 14px; background: rgba(255, 253, 249, .91); }
+  .login-panel-heading { margin-bottom: 12px; }
+  .login-eyebrow { margin-bottom: 4px; font-size: 8px; }
+  .login-panel h1 { max-width: none; margin-bottom: 0; font-size: 23px; }
+  .login-panel form label { margin-bottom: 4px; font-size: 10px; }
+  .login-panel form .input { min-height: 39px; margin-bottom: 10px; padding: 9px 11px; }
+  .login-keypad { gap: 5px; margin-bottom: 7px; }
+  .login-keypad-button { min-height: 38px; border-radius: 8px; font-size: 16px; }
+  .login-keypad-action { font-size: 11px; }
+  .login-panel form .btn { min-height: 40px; }
+  .login-footnote { margin-top: 8px; font-size: 9px; line-height: 1.4; }
 }
 button, input, select { font: inherit; }
 button { cursor: pointer; }
