@@ -350,7 +350,7 @@ export default function Finance() {
         {report.credit_balances.length === 0 ? (
           <p className="credit-balances-empty muted">Tidak ada pelanggan dengan hutang saat ini.</p>
         ) : (
-          <ul className="credit-balances-list">
+          <ul className={'credit-balances-list' + (report.credit_balances.length >= 5 ? ' is-scrollable' : '')}>
             {report.credit_balances.map((debt, index) => (
               <li key={debt.customer_name}>
                 <span className="finance-row-number">{index + 1}</span>
