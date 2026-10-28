@@ -179,7 +179,7 @@ export default function Purchases() {
                 value={materialName}
                 onChange={(event) => setMaterialName(event.target.value)}
                 maxLength={200}
-                placeholder="Nama barang atau bahan yang dibeli"
+                placeholder="Nama barang"
                 required
               />
             </div>
@@ -208,7 +208,7 @@ export default function Purchases() {
                 id="purchase-amount"
                 value={amount}
                 onChange={setAmount}
-                placeholder="Masukkan nominal pembelian"
+                placeholder="Masukan nominal"
                 required
               />
             </div>
