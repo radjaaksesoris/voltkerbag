@@ -609,7 +609,7 @@ h3 { margin-bottom: 16px; color: var(--ink); font-size: 15px; font-weight: 700; 
 .danger { color: var(--danger); }
 .right { text-align: right; }
 .center, .center-text { text-align: center; }
-.dashboard-transaction-table { min-width: 720px; }
+.dashboard-transaction-table { min-width: 720px; border-collapse: separate; border-spacing: 0; }
 .dashboard-date-mobile, .dashboard-amount-mobile { display: none; }
 .finance-ledger-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 16px; }
 .finance-ledger-heading h3 { margin: 0; }
@@ -638,6 +638,8 @@ h3 { margin-bottom: 16px; color: var(--ink); font-size: 15px; font-weight: 700; 
   text-align: center;
   text-transform: uppercase;
 }
+.dashboard-transaction-table thead th:first-child { border-top-left-radius: 7px; border-bottom-left-radius: 7px; }
+.dashboard-transaction-table thead th:last-child { border-top-right-radius: 7px; border-bottom-right-radius: 7px; }
 .dashboard-payment-sort { display: inline-flex; align-items: center; gap: 5px; padding: 0; border: 0; background: transparent; color: inherit; font: inherit; cursor: pointer; }
 .dashboard-payment-sort.active { color: #ffe0a6; }
 .dashboard-payment-sort-indicator { font-size: 12px; line-height: 1; }
