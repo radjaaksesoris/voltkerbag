@@ -203,13 +203,13 @@ export default function Dashboard() {
                     setNameSort((current) => current === 'date' ? 'asc' : current === 'asc' ? 'desc' : 'date')
                     setTransactionPage(1)
                   }}>
-                  <span>Nama</span>
+                  <span>NAMA</span>
                   <span className="dashboard-payment-sort-indicator" aria-hidden="true">
                     {nameSort === 'asc' ? '↑' : nameSort === 'desc' ? '↓' : '↕'}
                   </span>
                 </button>
               </th>
-              <th>Tanggal</th>
+              <th>TANGGAL</th>
               <th>
                 <button
                   type="button"
@@ -221,12 +221,12 @@ export default function Dashboard() {
                     setNameSort('date')
                     setTransactionPage(1)
                   }}>
-                  <span>Pembayaran</span>
+                  <span>PEMBAYARAN</span>
                   <span className="dashboard-payment-sort-indicator" aria-hidden="true">{creditFirst ? '↑' : '↕'}</span>
                 </button>
               </th>
-              <th className="right">Nominal</th>
-              <th className="right">Detail</th>
+              <th className="right">NOMINAL</th>
+              <th className="right">DETAIL</th>
             </tr>
           </thead>
           <tbody>
