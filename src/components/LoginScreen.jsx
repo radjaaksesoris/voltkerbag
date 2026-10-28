@@ -79,7 +79,7 @@ export default function LoginScreen({ configured, connectionError, updateBanner,
       </aside>
       <section className="login-panel" aria-labelledby="login-title">
         <div className="login-panel-heading">
-          <p className="login-eyebrow">AKSES ADMINISTRATOR</p>
+          <p className="login-eyebrow">{isMobile ? 'Masukkan password' : 'Akses administrator'}</p>
           <h1 id="login-title">Selamat datang kembali.</h1>
           <p className="login-description">Masuk untuk melanjutkan pengelolaan toko.</p>
         </div>
@@ -103,6 +103,7 @@ export default function LoginScreen({ configured, connectionError, updateBanner,
             <label htmlFor="login-password">Kata sandi</label>
             <input id="login-password" className="input" type="password" autoComplete="current-password"
               inputMode={isMobile ? 'none' : undefined} readOnly={isMobile} required
+              maxLength={isMobile ? 6 : undefined} placeholder={isMobile ? '○  ○  ○  ○  ○  ○' : undefined}
               value={password} onChange={(event) => setPassword(
                 isMobile ? event.target.value.replace(/\D/g, '') : event.target.value
               )} />
