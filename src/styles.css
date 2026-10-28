@@ -1509,11 +1509,11 @@ label { display: block; margin-bottom: 6px; color: var(--muted); font-size: 11px
   .products-table th:nth-child(3), .products-table td:nth-child(3),
   .products-table th:nth-child(4), .products-table td:nth-child(4) { display: none; }
   .products-table th:nth-child(1), .products-table td:nth-child(1) { width: 6%; }
-  .products-table th:nth-child(2), .products-table td:nth-child(2) { width: 15%; }
+  .products-table th:nth-child(2), .products-table td:nth-child(2) { width: 22%; }
   .products-table th:nth-child(5), .products-table td:nth-child(5) { width: 15%; }
-  .products-table th:nth-child(6), .products-table td:nth-child(6) { width: 21%; }
-  .products-table th:nth-child(7), .products-table td:nth-child(7) { width: 20%; }
-  .products-table th:nth-child(8), .products-table td:nth-child(8) { width: 23%; }
+  .products-table th:nth-child(6), .products-table td:nth-child(6) { width: 19%; }
+  .products-table th:nth-child(7), .products-table td:nth-child(7) { width: 16%; }
+  .products-table th:nth-child(8), .products-table td:nth-child(8) { width: 22%; }
   .products-table .product-name-content { display: block; }
   .products-table .product-name-content img { display: none; }
   .products-table .product-name-text { display: grid; gap: 2px; }
