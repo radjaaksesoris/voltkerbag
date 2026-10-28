@@ -511,6 +511,7 @@ h3 { margin-bottom: 16px; color: var(--ink); font-size: 15px; font-weight: 700; 
 .finance-ledger-table th:nth-child(4), .finance-ledger-table td:nth-child(4) { width: 24%; text-align: left; overflow-wrap: anywhere; }
 .finance-ledger-table th:nth-child(5), .finance-ledger-table td:nth-child(5) { width: 15%; text-align: right; }
 .finance-ledger-table th:nth-child(6), .finance-ledger-table td:nth-child(6) { width: 6%; text-align: right; }
+.finance-ledger-table thead th:nth-child(n) { text-align: center; }
 .finance-entry-modal textarea.input { min-height: 76px; resize: vertical; }
 .dashboard-transaction-table thead th {
   background: #a92730;
