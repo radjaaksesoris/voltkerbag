@@ -298,6 +298,23 @@ export default function App() {
       ? 'Buka menu browser ⋮, lalu pilih “Instal aplikasi” atau “Tambahkan ke layar utama”.'
       : 'Gunakan menu browser, lalu pilih “Instal aplikasi” atau “Install VOLTKER”.'
 
+  const pwaUpdateBanner = updateReady && (
+    <div className="pwa-update-banner" role="status" aria-live="polite">
+      <span>
+        {applyingUpdate
+          ? 'Menerapkan pembaruan...'
+          : 'Pembaruan VOLTKER siap. Muat ulang untuk menggunakan versi terbaru.'}
+      </span>
+      <button
+        className="btn btn-sm btn-primary"
+        type="button"
+        onClick={applyAppUpdate}
+        disabled={applyingUpdate}>
+        {applyingUpdate ? 'Memperbarui...' : 'Perbarui sekarang'}
+      </button>
+    </div>
+  )
+
   if (checkingSession && !session && !connectionError) {
     return <main className="login-page"><p className="login-loading">Memeriksa koneksi dan sesi VOLTKER...</p></main>
   }
@@ -307,6 +324,7 @@ export default function App() {
       <LoginScreen
         configured={Boolean(import.meta.env.VITE_SUPABASE_ANON_KEY)}
         connectionError={connectionError}
+        updateBanner={pwaUpdateBanner}
         onSignedIn={(nextSession) => {
           setSession(nextSession)
           setConnectionError('')
@@ -385,22 +403,7 @@ export default function App() {
           </div>
         )}
 
-        {updateReady && (
-          <div className="pwa-update-banner" role="status" aria-live="polite">
-            <span>
-              {applyingUpdate
-                ? 'Menerapkan pembaruan...'
-                : 'Pembaruan VOLTKER siap. Muat ulang untuk menggunakan versi terbaru.'}
-            </span>
-            <button
-              className="btn btn-sm btn-primary"
-              type="button"
-              onClick={applyAppUpdate}
-              disabled={applyingUpdate}>
-              {applyingUpdate ? 'Memperbarui...' : 'Perbarui sekarang'}
-            </button>
-          </div>
-        )}
+        {pwaUpdateBanner}
 
         <div className="content" ref={contentRef}>
           {NAV.filter(({ id }) => visitedPages.has(id)).map(({ id }) => {

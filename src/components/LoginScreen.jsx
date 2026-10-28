@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 
-export default function LoginScreen({ configured, connectionError, onSignedIn, onRetry }) {
+export default function LoginScreen({ configured, connectionError, updateBanner, onSignedIn, onRetry }) {
   const defaultEmail = import.meta.env.VITE_LOGIN_EMAIL?.trim() || ''
   const [isMobile, setIsMobile] = useState(() => window.matchMedia('(max-width: 1024px)').matches)
   const [email, setEmail] = useState('')
@@ -55,6 +55,7 @@ export default function LoginScreen({ configured, connectionError, onSignedIn, o
 
   return (
     <main className="login-page">
+      {updateBanner}
       <div className="login-background" aria-hidden="true">
         <img src={import.meta.env.BASE_URL + 'voltker-login-interior.png'} alt="" />
       </div>
