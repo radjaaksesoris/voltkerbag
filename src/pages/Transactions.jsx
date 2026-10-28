@@ -463,7 +463,7 @@ export default function Transactions() {
               <strong>Item transaksi</strong>
               <span>{cart.length} item</span>
             </div>
-            {cart.length > 4 && <p className="cart-items-scroll-hint">Gulir daftar ini untuk melihat semua item</p>}
+            {cart.length > 6 && <p className="cart-items-scroll-hint">Gulir daftar ini untuk melihat semua item</p>}
             <div className={'cart-items-list' + (cart.length === 0 ? ' cart-items-list-empty' : '')}>
               {cart.length === 0 ? (
                 <div className="cart-empty" role="img" aria-label="Keranjang kosong">
