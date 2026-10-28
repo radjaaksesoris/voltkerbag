@@ -370,7 +370,7 @@ export default function Transactions() {
           </div>
           <div className="product-grid">
             {filtered.length === 0 && <p className="muted">Tidak ada produk. Tambahkan di menu Stok Barang.</p>}
-            {filtered.map((p) => (
+            {filtered.map((p, index) => (
               <article
                 key={p.id}
                 className="product-card"
@@ -382,7 +382,16 @@ export default function Transactions() {
                 }}>
                 <div className="product-card-heading">
                   {p.image_path ? (
-                    <img className="product-card-image" src={getProductImageUrl(p.image_path)} width="48" height="48" alt="" />
+                    <img
+                      className="product-card-image"
+                      src={getProductImageUrl(p.image_path)}
+                      width="48"
+                      height="48"
+                      alt=""
+                      loading={index < 8 ? 'eager' : 'lazy'}
+                      fetchPriority={index < 8 ? 'high' : 'auto'}
+                      decoding="async"
+                    />
                   ) : (
                     <div className="product-illustration"><Icon name="bag" size={22} /></div>
                   )}
