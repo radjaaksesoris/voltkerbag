@@ -1464,7 +1464,7 @@ label { display: block; margin-bottom: 6px; color: var(--muted); font-size: 11px
   .cart-items-heading { padding-bottom: 7px; }
   .cart-items-heading strong { font-size: 13px; }
   .cart-items-scroll-hint { padding-top: 5px; font-size: 9px; }
-  .cart-items-list { max-height: min(45dvh, 420px); flex: 0 1 auto; padding-right: 2px; overflow-y: auto; }
+  .cart-items-list { max-height: 420px; flex: 0 1 auto; padding-right: 2px; overflow-y: auto; }
   .cart-row { grid-template-columns: minmax(0, 1fr) 106px 76px 112px; gap: 3px 6px; margin: 6px 0; padding: 7px 8px; border: 1px solid var(--accent-dark); border-radius: 10px; background: var(--accent); color: #fffaf3; }
   .cart-info { display: contents; }
   .cart-info > strong { grid-column: 1; grid-row: 1; color: #fffaf3; font-size: 11px; }
