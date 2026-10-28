@@ -1588,7 +1588,6 @@ label { display: block; margin-bottom: 6px; color: var(--muted); font-size: 11px
     border-radius: 12px;
     background: rgba(145, 32, 39, .96);
     box-shadow: 0 6px 16px rgba(104, 25, 31, .22);
-    backdrop-filter: blur(10px);
   }
   .transactions-page > .page-toolbar > .muted {
     display: flex;
@@ -1811,30 +1810,24 @@ label { display: block; margin-bottom: 6px; color: var(--muted); font-size: 11px
 .content .cart {
   border-color: rgba(255, 255, 255, .54);
   background-color: rgba(255, 253, 248, .82);
-  box-shadow: 0 12px 30px rgba(11, 20, 30, .16), inset 0 1px 0 rgba(255, 255, 255, .72);
-  backdrop-filter: blur(10px) saturate(1.08);
-  -webkit-backdrop-filter: blur(10px) saturate(1.08);
+  box-shadow: 0 5px 14px rgba(11, 20, 30, .12);
 }
 .content .stat-card:not(.highlight) {
   border-color: rgba(255, 255, 255, .54);
   background: radial-gradient(circle at 100% 100%, var(--metric-wash, rgba(181, 40, 46, .06)), transparent 58%), rgba(255, 253, 248, .82);
-  box-shadow: 0 8px 22px rgba(11, 20, 30, .13), inset 0 1px 0 rgba(255, 255, 255, .72);
-  backdrop-filter: blur(10px) saturate(1.08);
-  -webkit-backdrop-filter: blur(10px) saturate(1.08);
+  box-shadow: 0 4px 12px rgba(11, 20, 30, .1);
 }
 .content .stat-card.highlight,
 .content .finance-date-filter,
 .content .transactions-page > .page-toolbar {
   border-color: rgba(255, 245, 239, .48);
   background-color: rgba(145, 32, 39, .82);
-  box-shadow: 0 10px 26px rgba(74, 16, 23, .2), inset 0 1px 0 rgba(255, 255, 255, .25);
-  backdrop-filter: blur(10px) saturate(1.08);
-  -webkit-backdrop-filter: blur(10px) saturate(1.08);
+  box-shadow: 0 5px 14px rgba(74, 16, 23, .16);
 }
 .content .product-card {
   border-color: rgba(255, 255, 255, .62);
   background: rgba(255, 253, 248, .88);
-  box-shadow: 0 5px 16px rgba(11, 20, 30, .13), inset 0 1px 0 rgba(255, 255, 255, .76);
+  box-shadow: 0 3px 9px rgba(11, 20, 30, .1);
 }
 .content .product-card:hover {
   background: rgba(255, 250, 244, .94);
@@ -1845,7 +1838,6 @@ label { display: block; margin-bottom: 6px; color: var(--muted); font-size: 11px
 .content .customer-list li {
   border-color: rgba(255, 255, 255, .56);
   background-color: rgba(255, 253, 248, .72);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .68);
 }
 
 @media print {
