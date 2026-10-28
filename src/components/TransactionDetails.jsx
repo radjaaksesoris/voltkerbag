@@ -151,7 +151,7 @@ export default function TransactionDetails({ transaction, onClose, onTransaction
         {invoiceDownloadError && <p className="form-error" role="alert">{invoiceDownloadError}</p>}
         {invoiceDownloadStatus && <p className="backup-success" role="status">{invoiceDownloadStatus}</p>}
 
-        <dl className="transaction-details-meta">
+        <dl className={'transaction-details-meta' + (transaction.expedition ? ' has-expedition' : '')}>
           <div><dt>Nama pelanggan</dt><dd>
             <CustomerIdentity
               name={transaction.customerName}
