@@ -2,10 +2,13 @@ export default function DateRangeFilter({
   value,
   onChange,
   resetValue = { from: '', to: '' },
-  resetLabel = 'Hapus filter'
+  resetLabel = 'Hapus filter',
+  quickValue,
+  quickLabel
 }) {
   const invalidRange = value.from && value.to && value.from > value.to
   const isResetValue = value.from === resetValue.from && value.to === resetValue.to
+  const isQuickValue = quickValue && value.from === quickValue.from && value.to === quickValue.to
 
   function update(field, nextValue) {
     onChange({ ...value, [field]: nextValue })
@@ -40,6 +43,15 @@ export default function DateRangeFilter({
         onClick={() => onChange(resetValue)}>
         {resetLabel}
       </button>
+      {quickValue && quickLabel && (
+        <button
+          className="btn date-filter-quick"
+          type="button"
+          disabled={isQuickValue}
+          onClick={() => onChange(quickValue)}>
+          {quickLabel}
+        </button>
+      )}
       {invalidRange && <p className="form-error date-filter-error" role="alert">Tanggal awal tidak boleh melewati tanggal akhir.</p>}
     </section>
   )

@@ -20,6 +20,14 @@ function getTodayDateRange() {
   return { from: today, to: today }
 }
 
+function getCurrentMonthDateRange() {
+  const now = new Date()
+  return {
+    from: localDateValue(new Date(now.getFullYear(), now.getMonth(), 1)),
+    to: localDateValue(new Date(now.getFullYear(), now.getMonth() + 1, 0))
+  }
+}
+
 export default function Finance() {
   const [report, setReport] = useState({
     entries: [],
@@ -32,7 +40,7 @@ export default function Finance() {
     gross_profit: 0,
     credit_balances: []
   })
-  const [dateRange, setDateRange] = useState(getTodayDateRange)
+  const [dateRange, setDateRange] = useState(getCurrentMonthDateRange)
   const [customers, setCustomers] = useState([])
   const [customerLoadError, setCustomerLoadError] = useState('')
   const [page, setPage] = useState(1)
@@ -131,6 +139,7 @@ export default function Finance() {
   const pageStart = (page - 1) * FINANCE_PAGE_SIZE
   const hasFilter = hasDateRange(dateRange)
   const todayDateRange = getTodayDateRange()
+  const currentMonthDateRange = getCurrentMonthDateRange()
 
   function openNewEntry() {
     setEditingEntry(null)
@@ -317,7 +326,7 @@ export default function Finance() {
   return (
     <div className="page">
       {actionError && !showEntryForm && <p className="form-error" role="alert">{actionError}</p>}
-      <div className="stats-grid dashboard-stats-grid">
+      <div className="stats-grid dashboard-stats-grid finance-summary-grid">
         <div className="stat-card"><span>Pemasukan Penjualan</span><strong className="ok">+{rupiah(income)}</strong></div>
         <div className="stat-card"><span>Total Hutang</span><strong className="danger">{rupiah(totalCredit)}</strong></div>
         <div className="stat-card highlight"><span>Saldo Kas</span><strong>{rupiah(balance)}</strong></div>
@@ -369,7 +378,8 @@ export default function Finance() {
         <DateRangeFilter value={dateRange} onChange={(range) => {
           setDateRange(range)
           setPage(1)
-        }} resetValue={todayDateRange} resetLabel="Hari ini" />
+        }} resetValue={todayDateRange} resetLabel="Hari ini"
+          quickValue={currentMonthDateRange} quickLabel="Bulan ini" />
       </div>
 
       <div className="finance-grid">
