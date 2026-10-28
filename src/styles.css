@@ -985,6 +985,7 @@ label { display: block; margin-bottom: 6px; color: var(--muted); font-size: 11px
 .cart-checkout .money-input-wrap .input { margin-bottom: 8px; padding-top: 9px; padding-bottom: 9px; }
 .cart-checkout-options .category-select { margin-bottom: 0; }
 .cart-total { display: flex; align-items: center; justify-content: space-between; margin-top: 2px; padding: 9px 0; border-top: 1px solid var(--border); font-size: 16px; }
+.cart-total strong { font-size: 18px; font-weight: 800; }
 .change { padding: 4px 0 8px; color: var(--muted); }
 .change.negative { color: var(--danger); }
 .change.credit-balance { color: var(--accent); }
