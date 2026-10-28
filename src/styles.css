@@ -502,6 +502,7 @@ h3 { margin-bottom: 16px; color: var(--ink); font-size: 15px; font-weight: 700; 
 .finance-pending-instructions { margin-bottom: 16px; padding: 11px 13px; border-radius: 8px; background: #fff3dd; color: #67420d; font-size: 12px; line-height: 1.5; }
 .finance-ledger-actions > div { display: flex; justify-content: flex-end; gap: 5px; }
 .finance-ledger-table { table-layout: fixed; }
+.finance-ledger-table thead th { border-bottom-color: var(--accent-dark); background: var(--accent); color: #fffaf3; }
 .finance-ledger-table th,
 .finance-ledger-table td { vertical-align: middle; }
 .finance-ledger-table th:nth-child(1), .finance-ledger-table td:nth-child(1) { width: 14%; text-align: center; }
@@ -689,18 +690,19 @@ tbody tr { transition: background .15s; }
 tbody tr:hover { background: #fbf5ed; }
 .row-actions { display: flex; justify-content: flex-end; gap: 7px; }
 .products-table { width: 100%; min-width: 0; table-layout: fixed; }
-.products-table th:nth-child(1), .products-table td:nth-child(1) { width: 20%; }
-.products-table th:nth-child(2), .products-table td:nth-child(2) { width: 10%; }
-.products-table th:nth-child(3), .products-table td:nth-child(3) { width: 7%; }
-.products-table th:nth-child(4), .products-table td:nth-child(4) { width: 15%; }
-.products-table th:nth-child(5), .products-table td:nth-child(5) { width: 22%; }
-.products-table th:nth-child(6), .products-table td:nth-child(6) { width: 10%; }
-.products-table th:nth-child(7), .products-table td:nth-child(7) { width: 16%; }
+.products-table th:nth-child(1), .products-table td:nth-child(1) { width: 4%; }
+.products-table th:nth-child(2), .products-table td:nth-child(2) { width: 16%; }
+.products-table th:nth-child(3), .products-table td:nth-child(3) { width: 10%; }
+.products-table th:nth-child(4), .products-table td:nth-child(4) { width: 7%; }
+.products-table th:nth-child(5), .products-table td:nth-child(5) { width: 15%; }
+.products-table th:nth-child(6), .products-table td:nth-child(6) { width: 22%; }
+.products-table th:nth-child(7), .products-table td:nth-child(7) { width: 10%; }
+.products-table th:nth-child(8), .products-table td:nth-child(8) { width: 16%; }
 .products-table th { padding-inline: 9px; font-size: 9px; letter-spacing: .55px; }
 .products-table td { padding: 12px 9px; }
 .products-table th,
 .products-table td { text-align: center; }
-.products-table thead th:nth-child(6) { border-bottom-color: var(--accent-dark); background: var(--accent); color: #fffaf3; }
+.products-table thead th { border-bottom-color: var(--accent-dark); background: var(--accent); color: #fffaf3; }
 .products-table td:nth-child(2) { overflow-wrap: anywhere; }
 .products-table .product-name-cell { min-width: 0; }
 .products-table .product-name-content { display: flex; align-items: center; justify-content: center; gap: 8px; min-width: 0; }
@@ -1343,13 +1345,14 @@ label { display: block; margin-bottom: 6px; color: var(--muted); font-size: 11px
   .sidebar-foot { justify-content: center; padding-inline: 0; font-size: 0; }
   .pos-grid, .finance-grid { grid-template-columns: 1fr; }
   .cart { position: static; }
-  .products-table th:nth-child(2), .products-table td:nth-child(2),
-  .products-table th:nth-child(3), .products-table td:nth-child(3) { display: none; }
-  .products-table th:nth-child(1), .products-table td:nth-child(1) { width: 24%; }
-  .products-table th:nth-child(4), .products-table td:nth-child(4) { width: 17%; }
-  .products-table th:nth-child(5), .products-table td:nth-child(5) { width: 25%; }
-  .products-table th:nth-child(6), .products-table td:nth-child(6) { width: 13%; }
-  .products-table th:nth-child(7), .products-table td:nth-child(7) { width: 21%; }
+  .products-table th:nth-child(3), .products-table td:nth-child(3),
+  .products-table th:nth-child(4), .products-table td:nth-child(4) { display: none; }
+  .products-table th:nth-child(1), .products-table td:nth-child(1) { width: 5%; }
+  .products-table th:nth-child(2), .products-table td:nth-child(2) { width: 19%; }
+  .products-table th:nth-child(5), .products-table td:nth-child(5) { width: 17%; }
+  .products-table th:nth-child(6), .products-table td:nth-child(6) { width: 25%; }
+  .products-table th:nth-child(7), .products-table td:nth-child(7) { width: 13%; }
+  .products-table th:nth-child(8), .products-table td:nth-child(8) { width: 21%; }
   .products-table .product-category-mobile { display: block; color: var(--muted); font-size: 10px; }
   .products-table .row-actions { white-space: normal; }
 }
@@ -1501,13 +1504,14 @@ label { display: block; margin-bottom: 6px; color: var(--muted); font-size: 11px
   .products-table { width: 100%; min-width: 0; table-layout: fixed; }
   .products-table th,
   .products-table td { padding: 7px 3px; font-size: 8px; letter-spacing: 0; overflow-wrap: anywhere; }
-  .products-table th:nth-child(1), .products-table td:nth-child(1) { width: 21%; }
-  .products-table th:nth-child(2), .products-table td:nth-child(2),
-  .products-table th:nth-child(3), .products-table td:nth-child(3) { display: none; }
-  .products-table th:nth-child(4), .products-table td:nth-child(4) { width: 15%; }
-  .products-table th:nth-child(5), .products-table td:nth-child(5) { width: 21%; }
-  .products-table th:nth-child(6), .products-table td:nth-child(6) { width: 20%; }
-  .products-table th:nth-child(7), .products-table td:nth-child(7) { width: 23%; }
+  .products-table th:nth-child(3), .products-table td:nth-child(3),
+  .products-table th:nth-child(4), .products-table td:nth-child(4) { display: none; }
+  .products-table th:nth-child(1), .products-table td:nth-child(1) { width: 6%; }
+  .products-table th:nth-child(2), .products-table td:nth-child(2) { width: 15%; }
+  .products-table th:nth-child(5), .products-table td:nth-child(5) { width: 15%; }
+  .products-table th:nth-child(6), .products-table td:nth-child(6) { width: 21%; }
+  .products-table th:nth-child(7), .products-table td:nth-child(7) { width: 20%; }
+  .products-table th:nth-child(8), .products-table td:nth-child(8) { width: 23%; }
   .products-table .product-name-content { display: block; }
   .products-table .product-name-content img { display: none; }
   .products-table .product-name-text { display: grid; gap: 2px; }

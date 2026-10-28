@@ -469,14 +469,15 @@ export default function Products() {
       <div className="card table-card products-table-card">
         <table className="products-table">
           <thead>
-            <tr><th>Produk</th><th>Kategori</th><th>Satuan</th><th>Modal Rata-rata</th><th>Harga Jual</th><th>Stok</th><th>Aksi</th></tr>
+            <tr><th>No.</th><th>Produk</th><th>Kategori</th><th>Satuan</th><th>Modal Rata-rata</th><th>Harga Jual</th><th>Stok</th><th>Aksi</th></tr>
           </thead>
           <tbody>
             {filtered.length === 0 && (
-              <tr><td colSpan="7" className="muted center">Belum ada produk. Klik "+ Tambah Produk".</td></tr>
+              <tr><td colSpan="8" className="muted center">Belum ada produk. Klik "+ Tambah Produk".</td></tr>
             )}
-            {filtered.map((p) => (
+            {filtered.map((p, index) => (
               <tr key={p.id}>
+                <td className="product-number-cell">{index + 1}</td>
                 <td className="product-name-cell">
                   <div className="product-name-content">
                     {p.image_path && <img src={getProductImageUrl(p.image_path)} width="42" height="42" alt="" />}
