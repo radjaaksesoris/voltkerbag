@@ -31,6 +31,8 @@ export default function Products() {
   const [editId, setEditId] = useState(null)
   const [showForm, setShowForm] = useState(false)
   const [stockProduct, setStockProduct] = useState(null)
+  const [actionMenuProductId, setActionMenuProductId] = useState(null)
+  const [actionMenuPosition, setActionMenuPosition] = useState(null)
   const [stockAmount, setStockAmount] = useState('')
   const [stockUnitCost, setStockUnitCost] = useState('')
   const [stockSaving, setStockSaving] = useState(false)
@@ -61,6 +63,53 @@ export default function Products() {
   const imageInputRef = useRef(null)
   const imageProcessingRef = useRef(false)
   const stockRequest = useRef(null)
+  const actionButtonRef = useRef(null)
+  const actionMenuRef = useRef(null)
+
+  function updateActionMenuPosition() {
+    if (!actionButtonRef.current) return
+    const rect = actionButtonRef.current.getBoundingClientRect()
+    const menuWidth = 148
+    const leftOfButton = rect.left - menuWidth - 8
+    const left = leftOfButton >= 8 ? leftOfButton : rect.right + 8
+    const menuHeight = 132
+    setActionMenuPosition({
+      left: Math.min(left, window.innerWidth - menuWidth - 8),
+      top: Math.min(
+        Math.max(rect.top + rect.height / 2, menuHeight / 2 + 8),
+        window.innerHeight - menuHeight / 2 - 8
+      )
+    })
+  }
+
+  useEffect(() => {
+    if (actionMenuProductId === null) return
+
+    function closeOnOutsideClick(event) {
+      if (!(event.target instanceof Node)) return
+      if (actionButtonRef.current?.contains(event.target) || actionMenuRef.current?.contains(event.target)) return
+      setActionMenuProductId(null)
+    }
+
+    function closeOnEscape(event) {
+      if (event.key !== 'Escape') return
+      setActionMenuProductId(null)
+      actionButtonRef.current?.focus()
+    }
+
+    updateActionMenuPosition()
+    actionMenuRef.current?.querySelector('button')?.focus()
+    document.addEventListener('pointerdown', closeOnOutsideClick)
+    document.addEventListener('keydown', closeOnEscape)
+    window.addEventListener('resize', updateActionMenuPosition)
+    window.addEventListener('scroll', updateActionMenuPosition, true)
+    return () => {
+      document.removeEventListener('pointerdown', closeOnOutsideClick)
+      document.removeEventListener('keydown', closeOnEscape)
+      window.removeEventListener('resize', updateActionMenuPosition)
+      window.removeEventListener('scroll', updateActionMenuPosition, true)
+    }
+  }, [actionMenuProductId])
 
   useEffect(() => {
     return () => {
@@ -465,6 +514,31 @@ export default function Products() {
         } catch (error) {
           setActionError('Produk terhapus, tetapi gambar gagal dihapus: ' + error.message)
         }
+
+        function toggleActionMenu(product, event) {
+          if (actionMenuProductId === product.id) {
+            setActionMenuProductId(null)
+            return
+          }
+          actionButtonRef.current = event.currentTarget
+          setActionMenuProductId(product.id)
+        }
+
+        function navigateActionMenu(event) {
+          const menuItems = actionMenuRef.current?.querySelectorAll('[role="menuitem"]')
+          if (!menuItems?.length) return
+
+          const currentIndex = Array.from(menuItems).indexOf(document.activeElement)
+          let nextIndex
+          if (event.key === 'ArrowDown') nextIndex = (currentIndex + 1) % menuItems.length
+          else if (event.key === 'ArrowUp') nextIndex = (currentIndex - 1 + menuItems.length) % menuItems.length
+          else if (event.key === 'Home') nextIndex = 0
+          else if (event.key === 'End') nextIndex = menuItems.length - 1
+          else return
+
+          event.preventDefault()
+          menuItems[nextIndex].focus()
+        }
       }
     } catch (error) {
       setActionError(error.message || 'Gagal menghapus produk dari server.')
@@ -538,26 +612,57 @@ export default function Products() {
                   </span>
                 </td>
                 <td className="row-actions">
-                  <div className="product-row-actions">
-                    <button className="btn btn-sm product-stock-action" aria-label={'Tambah stok ' + p.name} title="Tambah Stok" onClick={() => openAddStock(p)}>
-                      <Icon name="plus" size={13} />
-                      <span className="product-action-label">Tambah Stok</span>
-                    </button>
-                    <button className="btn btn-sm product-edit-action" aria-label={'Edit produk ' + p.name} title="Edit" onClick={() => openEdit(p)}>
-                      <Icon name="edit" size={13} />
-                      <span className="product-action-label">Edit</span>
-                    </button>
-                    <button className="btn btn-sm btn-danger product-delete-action" aria-label={'Hapus produk ' + p.name} title="Hapus" onClick={() => del(p)}>
-                      <Icon name="trash" size={13} />
-                      <span className="product-action-label">Hapus</span>
-                    </button>
-                  </div>
+                  <button
+                    className="btn btn-sm product-action-trigger"
+                    type="button"
+                    aria-label={'Aksi untuk ' + p.name}
+                    aria-haspopup="menu"
+                    aria-expanded={actionMenuProductId === p.id}
+                    onClick={(event) => toggleActionMenu(p, event)}
+                  >
+                    <Icon name="more" size={15} />
+                    <span>Aksi</span>
+                  </button>
                 </td>
               </tr>
             ))}
           </tbody>
         </table>
       </div>
+
+      {actionMenuProductId !== null && actionMenuPosition && createPortal(
+        <div
+          ref={actionMenuRef}
+          className="product-action-menu"
+          role="menu"
+          aria-label="Aksi produk"
+          onKeyDown={navigateActionMenu}
+          style={{ left: actionMenuPosition.left, top: actionMenuPosition.top }}
+        >
+          <button type="button" role="menuitem" onClick={() => {
+            const product = items.find((item) => item.id === actionMenuProductId)
+            setActionMenuProductId(null)
+            if (product) openAddStock(product)
+          }}>
+            <Icon name="plus" size={14} /> Tambah Stok
+          </button>
+          <button type="button" role="menuitem" onClick={() => {
+            const product = items.find((item) => item.id === actionMenuProductId)
+            setActionMenuProductId(null)
+            if (product) openEdit(product)
+          }}>
+            <Icon name="edit" size={14} /> Edit
+          </button>
+          <button type="button" role="menuitem" className="product-action-menu-delete" onClick={() => {
+            const product = items.find((item) => item.id === actionMenuProductId)
+            setActionMenuProductId(null)
+            if (product) del(product)
+          }}>
+            <Icon name="trash" size={14} /> Hapus
+          </button>
+        </div>,
+        document.body
+      )}
 
       {showForm && (
         createPortal(
