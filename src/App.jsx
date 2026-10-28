@@ -341,7 +341,7 @@ export default function App() {
   return (
     <div className={'app ' + (navHidden ? 'nav-hidden' : '')}>
       <div className="app-background" aria-hidden="true">
-        <img src={import.meta.env.BASE_URL + 'voltker-app-background.jpg'} alt="" />
+        <img src={import.meta.env.BASE_URL + 'voltker-app-background.jpg'} alt="" decoding="async" />
       </div>
       <aside className="sidebar" id="primary-navigation" hidden={navHidden}>
         <div className="logo">
