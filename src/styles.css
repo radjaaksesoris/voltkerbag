@@ -1470,6 +1470,9 @@ label { display: block; margin-bottom: 6px; color: var(--muted); font-size: 11px
   .cart-row .muted { color: rgba(255, 250, 243, .88); }
   .cart-row .cart-unit-select .category-select-trigger { border-color: rgba(255, 255, 255, .7); background-color: #fffaf3; color: var(--ink); }
   .cart-item-meta { align-items: center; }
+  .cart-item-bottom { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); }
+  .cart-item-bottom .qty-ctrl { grid-column: 2; }
+  .cart-item-bottom .cart-sub { grid-column: 3; justify-self: end; }
   .cart-row .qty-ctrl > span { color: #fffaf3; }
   .cart-row .qty-ctrl button { border-color: #fffaf3; background: #fffaf3; color: var(--accent-dark); }
   .cart-row .qty-ctrl button:hover:not(:disabled) { border-color: #fff; background: #f5e5e0; color: var(--accent-dark); }
