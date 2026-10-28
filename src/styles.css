@@ -154,6 +154,9 @@ body {
   }
   .login-keypad-button:hover:not(:disabled) { border-color: rgba(255, 205, 198, .52); background: rgba(121, 37, 47, .66); }
   .login-keypad-button:active:not(:disabled) { transform: scale(.97); background: rgba(143, 43, 53, .74); }
+  .login-keypad-button:not(.login-keypad-action) { border-color: #b94a51; background: #8f202a; }
+  .login-keypad-button:not(.login-keypad-action):hover:not(:disabled) { border-color: #d66b70; background: #a92c36; }
+  .login-keypad-button:not(.login-keypad-action):active:not(:disabled) { background: #741c24; }
   .login-keypad-button:disabled { cursor: not-allowed; opacity: .55; }
   .login-keypad-action { color: rgba(255, 218, 212, .82); font-size: 13px; }
   .login-panel {
