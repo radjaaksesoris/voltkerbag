@@ -236,14 +236,14 @@ button:focus-visible, input:focus-visible, select:focus-visible {
   height: 100vh;
   height: 100dvh;
   overflow: hidden;
-  background: #160d10;
+  background: #07182e;
 }
 .app-background {
   position: absolute;
   z-index: 0;
   inset: 0;
   overflow: hidden;
-  background: #160d10;
+  background: #07182e;
   pointer-events: none;
 }
 .app-background img {
@@ -430,7 +430,6 @@ button:focus-visible, input:focus-visible, select:focus-visible {
   scrollbar-gutter: stable;
   margin: 0 auto;
   padding: 38px clamp(20px, 4vw, 52px) 56px;
-  background: rgba(242, 238, 229, .76);
 }
 
 /* Session status */
