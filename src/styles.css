@@ -1714,6 +1714,7 @@ label { display: block; margin-bottom: 6px; color: var(--muted); font-size: 11px
   .finance-ledger-table th:nth-child(4), .finance-ledger-table td:nth-child(4) { width: 30%; text-align: left; }
   .finance-ledger-table th:nth-child(6), .finance-ledger-table td:nth-child(6) { width: 25%; text-align: right; }
   .finance-ledger-table th:nth-child(6) { white-space: nowrap; }
+  .finance-ledger-table thead th:nth-child(6) { border-top-right-radius: 7px; border-bottom-right-radius: 7px; }
   .finance-ledger-table td.right { text-align: right; }
   .finance-pending-cell { justify-items: center; }
   .finance-pending-cell .btn { min-height: 30px; padding: 5px 7px; font-size: 8px; }
