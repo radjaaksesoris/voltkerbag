@@ -1465,19 +1465,19 @@ label { display: block; margin-bottom: 6px; color: var(--muted); font-size: 11px
   .cart-items-heading strong { font-size: 13px; }
   .cart-items-scroll-hint { padding-top: 5px; font-size: 9px; }
   .cart-items-list { max-height: min(45dvh, 420px); flex: 0 1 auto; padding-right: 2px; overflow-y: auto; }
-  .cart-row { grid-template-columns: minmax(0, 1fr) auto 70px auto; gap: 3px 6px; margin: 6px 0; padding: 7px 8px; border: 1px solid var(--accent-dark); border-radius: 10px; background: var(--accent); color: #fffaf3; }
+  .cart-row { grid-template-columns: minmax(0, 1fr) 106px 76px 112px; gap: 3px 6px; margin: 6px 0; padding: 7px 8px; border: 1px solid var(--accent-dark); border-radius: 10px; background: var(--accent); color: #fffaf3; }
   .cart-info { display: contents; }
   .cart-info > strong { grid-column: 1; grid-row: 1; color: #fffaf3; font-size: 11px; }
   .cart-row .muted { color: rgba(255, 250, 243, .88); }
   .cart-row .cart-unit-select .category-select-trigger { border-color: rgba(255, 255, 255, .7); background-color: #fffaf3; color: var(--ink); }
   .cart-item-meta { display: contents; }
   .cart-item-meta > span { grid-column: 1; grid-row: 2; align-self: center; font-size: 9px; }
-  .cart-item-meta .cart-unit-select { grid-column: 3; grid-row: 1 / span 2; justify-self: center; width: 70px; min-width: 0; }
+  .cart-item-meta .cart-unit-select { grid-column: 3; grid-row: 1 / span 2; justify-self: center; width: 76px; min-width: 0; }
   .cart-item-bottom { display: contents; }
   .cart-item-bottom .qty-ctrl { grid-column: 2; grid-row: 1 / span 2; justify-self: center; gap: 4px; }
   .cart-item-bottom .qty-ctrl > span { min-width: 36px; font-size: 10px; }
   .cart-item-bottom .qty-ctrl button { width: 24px; height: 24px; flex-basis: 24px; }
-  .cart-item-bottom .cart-sub { grid-column: 4; grid-row: 1 / span 2; align-self: center; justify-self: end; font-size: 11px; }
+  .cart-item-bottom .cart-sub { grid-column: 4; grid-row: 1 / span 2; align-self: center; justify-self: end; width: 100%; font-size: 11px; }
   .cart-row .qty-ctrl > span { color: #fffaf3; }
   .cart-row .qty-ctrl button { border-color: #fffaf3; background: #fffaf3; color: var(--accent-dark); }
   .cart-row .qty-ctrl button:hover:not(:disabled) { border-color: #fff; background: #f5e5e0; color: var(--accent-dark); }
