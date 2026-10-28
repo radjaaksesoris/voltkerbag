@@ -1845,17 +1845,18 @@ label { display: block; margin-bottom: 6px; color: var(--muted); font-size: 11px
   box-shadow: 0 4px 12px rgba(11, 20, 30, .1);
 }
 .content .finance-summary-grid .debt-stat-card {
-  border-color: rgba(186, 133, 45, .72);
-  background: linear-gradient(135deg, rgba(255, 229, 166, .94), rgba(255, 246, 216, .94));
-  box-shadow: 0 4px 14px rgba(104, 71, 16, .2);
+  border-color: #b87918;
+  background: #f5d477;
+  box-shadow: 0 4px 14px rgba(83, 55, 11, .26);
 }
 .content .finance-summary-grid .debt-stat-card:hover {
-  border-color: #a97922;
-  background: linear-gradient(135deg, #ffdda0, #ffefc6);
-  box-shadow: 0 6px 18px rgba(104, 71, 16, .26);
+  border-color: #80500c;
+  background: #edc45a;
+  box-shadow: 0 6px 18px rgba(83, 55, 11, .34);
 }
-.content .finance-summary-grid .debt-stat-card > span:first-child { color: #74520d; }
-.content .finance-summary-grid .debt-stat-card .debt-stat-hint { color: #705a32; }
+.content .finance-summary-grid .debt-stat-card > span:first-child { color: #3e2b08; }
+.content .finance-summary-grid .debt-stat-card strong.danger { color: #681b20; }
+.content .finance-summary-grid .debt-stat-card .debt-stat-hint { color: #493508; }
 .content .stat-card.highlight,
 .content .finance-date-filter,
 .content .transactions-page > .page-toolbar {
