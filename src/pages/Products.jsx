@@ -533,7 +533,7 @@ export default function Products() {
                   ))}
                 </td>
                 <td>
-                  <span className={'badge ' + (availableQuantity(p, p.unit || 'pcs') <= 5 ? 'badge-danger' : 'badge-ok')}>
+                  <span className={'badge product-stock-badge ' + (availableQuantity(p, p.unit || 'pcs') <= 5 ? 'badge-danger' : 'badge-ok')}>
                     <span className="product-stock-desktop">{stockLabel(p)}</span>
                   </span>
                 </td>

@@ -1001,6 +1001,16 @@ label { display: block; margin-bottom: 6px; color: var(--muted); font-size: 11px
 .badge-danger { background: #f5e5e0; color: #a5222a; }
 .badge-partial { background: #fff0d6; color: #855400; }
 .badge-neutral { background: #eee9df; color: #766c63; }
+.products-table .product-stock-badge {
+  box-sizing: border-box;
+  display: inline-flex;
+  width: 100%;
+  min-height: 28px;
+  align-items: center;
+  justify-content: center;
+  padding: 4px 6px;
+  white-space: normal;
+}
 .form-error { margin: 0 0 12px; color: var(--danger); font-size: 12px; font-weight: 600; }
 
 /* Point of sale */
@@ -1697,6 +1707,7 @@ label { display: block; margin-bottom: 6px; color: var(--muted); font-size: 11px
   .products-table .product-category-mobile { display: block; color: var(--muted); font-size: 7px; }
   .products-table .product-price-cell strong { font-size: 7px; overflow-wrap: anywhere; }
   .products-table .badge { padding: 3px 4px; font-size: 6px; white-space: normal; }
+  .products-table .product-stock-badge { min-height: 19px; padding: 3px 2px; }
   .products-table .row-actions { white-space: normal; text-align: center; }
   .products-table .product-row-actions { display: flex; justify-content: center; gap: 3px; }
   .products-table .row-actions .btn { display: inline-flex; align-items: center; justify-content: center; width: 20px; height: 20px; min-height: 20px; margin: 0; padding: 3px; font-size: 0; }
