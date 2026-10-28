@@ -720,7 +720,7 @@ export default function Settings() {
         <summary className="settings-section-heading">
           <div>
             <h3>Backup data</h3>
-            <p className="muted small">Simpan seluruh data toko dan foto produk sebagai file ZIP privat di Supabase Storage.</p>
+            <p className="muted small">Simpan seluruh data toko dan foto produk di Storage Server.</p>
           </div>
           <Icon name="chevronDown" size={18} />
         </summary>
