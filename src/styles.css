@@ -1006,9 +1006,10 @@ label { display: block; margin-bottom: 6px; color: var(--muted); font-size: 11px
 .credit-balances-heading-actions { display: flex; flex: 0 0 auto; align-items: center; gap: 12px; }
 .credit-balances-total { flex: 0 0 auto; color: var(--danger); font-size: 17px; font-variant-numeric: tabular-nums; }
 .credit-balances-list { display: grid; max-height: 360px; overflow-y: auto; list-style: none; }
-.credit-balances-list li { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 2px; border-top: 1px solid var(--border); font-size: 12px; }
-.credit-balances-list li > .customer-identity { min-width: 0; }
+.credit-balances-list li { display: flex; align-items: center; justify-content: flex-start; gap: 6px; padding: 10px 2px; border-top: 1px solid var(--border); font-size: 12px; }
+.credit-balances-list li > .customer-identity { flex: 1 1 auto; min-width: 0; text-align: left; }
 .finance-row-number { flex: 0 0 24px; color: var(--muted); font-variant-numeric: tabular-nums; text-align: center; }
+.credit-balances-list .finance-row-number { flex-basis: 18px; }
 .finance-ledger-table .finance-row-number { padding-inline: 3px; }
 .credit-balances-list li strong { flex: 0 0 auto; color: var(--danger); font-variant-numeric: tabular-nums; }
 .credit-balances-actions { display: flex; flex: 0 0 auto; align-items: center; gap: 10px; }
