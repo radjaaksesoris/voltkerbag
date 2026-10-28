@@ -49,6 +49,7 @@ export default function ManagedOptionSelect({
     try {
       await onAdd(name)
       setDraft('')
+      setOpen(false)
     } catch (err) {
       setError(err.message || 'Gagal menambahkan ' + fieldName.toLowerCase() + '.')
     } finally {
