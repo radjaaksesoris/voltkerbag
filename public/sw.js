@@ -1,4 +1,4 @@
-const CACHE_NAME = 'voltker-app-v5'
+const CACHE_NAME = 'voltker-app-v6'
 const APP_SHELL = [
   './',
   './index.html',
@@ -49,7 +49,7 @@ self.addEventListener('fetch', (event) => {
 
   if (request.mode === 'navigate') {
     event.respondWith(
-      fetch(request)
+      fetch(request, { cache: 'no-cache' })
         .then((response) => {
           const copy = response.clone()
           caches.open(CACHE_NAME).then((cache) => cache.put('./index.html', copy))
@@ -61,16 +61,19 @@ self.addEventListener('fetch', (event) => {
   }
 
   if (['script', 'style', 'image', 'font'].includes(request.destination)) {
-    event.respondWith(
-      caches.open(CACHE_NAME).then((cache) => cache.match(request)).then(async (cached) => {
-        if (cached) return cached
-        const response = await fetch(request)
+    event.respondWith((async () => {
+      const cache = await caches.open(CACHE_NAME)
+      try {
+        const response = await fetch(request, { cache: 'no-cache' })
         if (response.ok) {
-          const cache = await caches.open(CACHE_NAME)
           await cache.put(request, response.clone())
         }
         return response
-      }).catch(() => Response.error())
-    )
+      } catch (error) {
+        const cached = await cache.match(request)
+        if (cached) return cached
+        throw error
+      }
+    })())
   }
 })

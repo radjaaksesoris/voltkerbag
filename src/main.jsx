@@ -6,7 +6,18 @@ import './styles.css'
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register(import.meta.env.BASE_URL + 'sw.js', {
-      scope: import.meta.env.BASE_URL
+      scope: import.meta.env.BASE_URL,
+      updateViaCache: 'none'
+    }).then((registration) => {
+      function checkForUpdates() {
+        if (document.visibilityState !== 'visible') return
+        registration.update().catch((error) => {
+          console.error('Gagal memeriksa pembaruan service worker:', error)
+        })
+      }
+
+      checkForUpdates()
+      document.addEventListener('visibilitychange', checkForUpdates)
     }).catch((error) => {
       console.error('Gagal mendaftarkan service worker:', error)
     })
