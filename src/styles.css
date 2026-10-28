@@ -1611,7 +1611,7 @@ label { display: block; margin-bottom: 6px; color: var(--muted); font-size: 11px
     bottom: 76px;
     left: 31px;
     padding: 8px 0;
-    background: var(--bg);
+    background: transparent;
   }
   .product-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 7px; }
   .product-card { padding: 6px; }
