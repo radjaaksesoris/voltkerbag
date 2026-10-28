@@ -405,7 +405,7 @@ export default function App() {
           {NAV.filter(({ id }) => visitedPages.has(id)).map(({ id }) => {
             const Page = PAGES[id]
             return (
-              <div key={id} hidden={page !== id}>
+              <div key={id} className={'page-slot page-slot-' + id} hidden={page !== id}>
                 <PageErrorBoundary>
                   <Suspense fallback={<p className="login-loading">Memuat halaman...</p>}>
                     <Page />
