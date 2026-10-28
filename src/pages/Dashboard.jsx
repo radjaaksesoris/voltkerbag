@@ -139,7 +139,7 @@ export default function Dashboard() {
       <div className="dashboard-filter-row">
         <div className="date-filter-caption">
           <strong>{isTodayRange ? 'Ringkasan hari ini' : 'Ringkasan periode'}</strong>
-          <span className="muted">{isTodayRange ? 'Pilih rentang tanggal untuk melihat laporan lain.' : 'Sesuaikan rentang untuk melihat performa.'}</span>
+          {!isTodayRange && <span className="muted">Sesuaikan rentang untuk melihat performa.</span>}
         </div>
         <DateRangeFilter value={dateRange} onChange={(range) => {
           setDateRange(range)
