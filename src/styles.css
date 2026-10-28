@@ -195,7 +195,7 @@ body {
   .login-message { border-color: rgba(229, 164, 159, .4); background: rgba(104, 35, 43, .32); color: #ffe4e1; }
   .login-message.error { border-color: rgba(229, 164, 159, .4); background: rgba(104, 35, 43, .32); color: #ffe4e1; }
 }
-@media (max-width: 480px) {
+@media (max-width: 640px) {
   .login-page {
     position: relative;
     gap: 0;
