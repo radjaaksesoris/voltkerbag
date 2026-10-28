@@ -23,6 +23,7 @@ export default function Transactions() {
   const [cartNotification, setCartNotification] = useState(null)
   const [mobileCartOpen, setMobileCartOpen] = useState(false)
   const [expandedProductId, setExpandedProductId] = useState(null)
+  const [previewProduct, setPreviewProduct] = useState(null)
   const [q, setQ] = useState('')
   const [pay, setPay] = useState('')
   const [customerName, setCustomerName] = useState('')
@@ -50,6 +51,15 @@ export default function Transactions() {
   const [loaded, setLoaded] = useState(false)
 
   useEffect(() => () => window.clearTimeout(cartNotificationTimeout.current), [])
+
+  useEffect(() => {
+    if (!previewProduct) return undefined
+    function handlePreviewKeyDown(event) {
+      if (event.key === 'Escape') setPreviewProduct(null)
+    }
+    window.addEventListener('keydown', handlePreviewKeyDown)
+    return () => window.removeEventListener('keydown', handlePreviewKeyDown)
+  }, [previewProduct])
 
   async function load() {
     try {
@@ -381,20 +391,26 @@ export default function Transactions() {
                   }
                 }}>
                 <div className="product-card-heading">
-                  {p.image_path ? (
-                    <img
-                      className="product-card-image"
-                      src={getProductImageUrl(p.image_path)}
-                      width="48"
-                      height="48"
-                      alt=""
-                      loading={index < 8 ? 'eager' : 'lazy'}
-                      fetchPriority={index < 8 ? 'high' : 'auto'}
-                      decoding="async"
-                    />
-                  ) : (
-                    <div className="product-illustration"><Icon name="bag" size={22} /></div>
-                  )}
+                  <button
+                    className="product-image-trigger"
+                    type="button"
+                    aria-label={'Lihat ' + p.name + ' dan pilih satuan'}
+                    onClick={() => setPreviewProduct(p)}>
+                    {p.image_path ? (
+                      <img
+                        className="product-card-image"
+                        src={getProductImageUrl(p.image_path)}
+                        width="48"
+                        height="48"
+                        alt=""
+                        loading={index < 8 ? 'eager' : 'lazy'}
+                        fetchPriority={index < 8 ? 'high' : 'auto'}
+                        decoding="async"
+                      />
+                    ) : (
+                      <div className="product-illustration"><Icon name="bag" size={22} /></div>
+                    )}
+                  </button>
                   <div className="product-card-info">
                     <strong>{p.name}</strong>
                     <span className="muted small">{p.category || 'Umum'} · stok {stockLabel(p)}</span>
@@ -571,6 +587,57 @@ export default function Transactions() {
         <div className="cart-notification" role="status" aria-live="polite">
           <Icon name="check" size={17} />
           <span><strong>{cartNotification.name}</strong> · {cartNotification.qty} {cartNotification.unit} di keranjang</span>
+        </div>
+      )}
+
+      {previewProduct && (
+        <div className="overlay product-quick-view-overlay" onClick={() => setPreviewProduct(null)}>
+          <section
+            className="modal product-quick-view-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="product-quick-view-title"
+            onClick={(event) => event.stopPropagation()}>
+            <button
+              className="btn product-quick-view-close"
+              type="button"
+              aria-label="Tutup pratinjau produk"
+              autoFocus
+              onClick={() => setPreviewProduct(null)}>
+              <Icon name="close" size={18} />
+            </button>
+            {previewProduct.image_path ? (
+              <img
+                className="product-quick-view-image"
+                src={getProductImageUrl(previewProduct.image_path)}
+                alt={previewProduct.name}
+              />
+            ) : (
+              <div className="product-quick-view-placeholder"><Icon name="bag" size={42} /></div>
+            )}
+            <div className="product-quick-view-info">
+              <h3 id="product-quick-view-title">{previewProduct.name}</h3>
+              <p className="muted small">{previewProduct.category || 'Umum'} · stok {stockLabel(previewProduct)}</p>
+            </div>
+            <div className="product-quick-view-units">
+              <strong>Pilih satuan</strong>
+              {saleUnits(previewProduct.unit || 'pcs').map((unit) => (
+                <button
+                  key={unit}
+                  className="product-quick-view-unit"
+                  type="button"
+                  aria-label={'Tambah 1 ' + unit + ' ' + previewProduct.name + ', ' + rupiah(saleUnitPrice(previewProduct, unit))}
+                  disabled={!canAddOne(previewProduct.id, unit)}
+                  onClick={() => {
+                    addToCart(previewProduct, unit)
+                    setPreviewProduct(null)
+                  }}>
+                  <span>+ {unit}</span>
+                  <strong>{rupiah(saleUnitPrice(previewProduct, unit))}</strong>
+                </button>
+              ))}
+            </div>
+          </section>
         </div>
       )}
 
