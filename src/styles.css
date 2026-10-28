@@ -473,12 +473,13 @@ h2 {
   .dashboard-filter-row .date-filter-caption { padding-right: 100px; }
   .finance-date-filter { align-items: stretch; }
   .finance-date-filter { padding: 10px; }
-  .finance-date-filter .date-filter { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .finance-date-filter .date-filter-field { min-width: 0; }
-  .finance-date-filter .date-filter-field .input { width: 100%; min-width: 0; }
-  .finance-date-filter .date-filter-actions { grid-column: 1 / -1; display: flex; justify-content: flex-end; }
+  .finance-date-filter .date-filter { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 5px; width: 100%; }
+  .finance-date-filter .date-filter-field { min-width: 0; gap: 3px; }
+  .finance-date-filter .date-filter-field span { font-size: 8px; }
+  .finance-date-filter .date-filter-field .input { width: 100%; min-width: 0; padding: 6px 3px; font-size: 10px; }
+  .finance-date-filter .date-filter-actions { display: contents; }
   .finance-date-filter .date-filter-reset,
-  .finance-date-filter .date-filter-quick { min-width: 0; padding-inline: 14px; white-space: nowrap; }
+  .finance-date-filter .date-filter-quick { min-width: 0; min-height: 34px; align-self: end; padding: 6px 3px; font-size: 10px; white-space: nowrap; }
   .purchase-page { gap: 14px; }
   .purchase-form-card, .purchase-history-card { padding: 15px 12px; }
   .purchase-form-grid { gap: 0 8px; }
