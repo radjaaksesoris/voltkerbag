@@ -516,6 +516,7 @@ h3 { margin-bottom: 16px; color: var(--ink); font-size: 15px; font-weight: 700; 
   border-bottom-color: #8f2029;
   color: #fffaf4;
   text-align: center;
+  text-transform: uppercase;
 }
 .dashboard-payment-sort { display: inline-flex; align-items: center; gap: 5px; padding: 0; border: 0; background: transparent; color: inherit; font: inherit; cursor: pointer; }
 .dashboard-payment-sort.active { color: #ffe0a6; }
