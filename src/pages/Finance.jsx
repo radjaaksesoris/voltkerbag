@@ -47,6 +47,7 @@ export default function Finance() {
   const [loadError, setLoadError] = useState('')
   const [actionError, setActionError] = useState('')
   const [loaded, setLoaded] = useState(false)
+  const [showCreditBalances, setShowCreditBalances] = useState(false)
   const [showEntryForm, setShowEntryForm] = useState(false)
   const [editingEntry, setEditingEntry] = useState(null)
   const [entryType, setEntryType] = useState('expense')
@@ -68,6 +69,7 @@ export default function Finance() {
   const creditPaymentRequest = useRef(null)
   const manualDebtRequest = useRef(null)
   const requestId = useRef(0)
+  const creditBalancesTriggerRef = useRef(null)
 
   useEffect(() => {
     let active = true
@@ -177,6 +179,11 @@ export default function Finance() {
     setManualDebtError('')
     manualDebtRequest.current = null
     setShowManualDebtForm(true)
+  }
+
+  function closeCreditBalances() {
+    setShowCreditBalances(false)
+    requestAnimationFrame(() => creditBalancesTriggerRef.current?.focus())
   }
 
   async function saveManualDebt(event) {
@@ -328,47 +335,78 @@ export default function Finance() {
       {actionError && !showEntryForm && <p className="form-error" role="alert">{actionError}</p>}
       <div className="stats-grid dashboard-stats-grid finance-summary-grid">
         <div className="stat-card"><span>Pemasukan Penjualan</span><strong className="ok">+{rupiah(income)}</strong></div>
-        <div className="stat-card"><span>Total Hutang</span><strong className="danger">{rupiah(totalCredit)}</strong></div>
+        <button
+          className="stat-card debt-stat-card"
+          type="button"
+          ref={creditBalancesTriggerRef}
+          aria-haspopup="dialog"
+          aria-expanded={showCreditBalances}
+          onClick={() => setShowCreditBalances(true)}>
+          <span>Total Hutang</span>
+          <strong className="danger">{rupiah(totalCredit)}</strong>
+          <span className="debt-stat-hint">Lihat pelanggan dengan hutang</span>
+        </button>
         <div className="stat-card highlight"><span>Saldo Kas</span><strong>{rupiah(balance)}</strong></div>
         <div className="stat-card"><span>Laba</span><strong className={netProfit >= 0 ? 'ok' : 'danger'}>{rupiah(netProfit)}</strong></div>
       </div>
 
-      <section className="card credit-balances" aria-labelledby="credit-balances-title">
-        <div className="credit-balances-heading">
-          <div>
-            <h3 id="credit-balances-title">Pelanggan dengan hutang</h3>
-            <p className="muted small">Menampilkan sisa hutang yang masih berjalan, tidak dibatasi periode.</p>
-          </div>
-          <div className="credit-balances-heading-actions">
-            <strong className="credit-balances-total">{rupiah(totalCredit)}</strong>
-            <button className="btn btn-primary btn-sm" type="button" onClick={openManualDebtForm}>
-              + Tambah hutang
-            </button>
-          </div>
+      {showCreditBalances && (
+        <div className="overlay credit-balances-overlay" onClick={closeCreditBalances}>
+          <section
+            className="modal credit-balances-modal"
+            id="credit-balances-dialog"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="credit-balances-title"
+            onClick={(event) => event.stopPropagation()}
+            onKeyDown={(event) => {
+              if (event.key === 'Escape') closeCreditBalances()
+            }}>
+            <div className="credit-balances-heading">
+              <div>
+                <h3 id="credit-balances-title">Pelanggan dengan hutang</h3>
+                <p className="muted small">Menampilkan sisa hutang yang masih berjalan, tidak dibatasi periode.</p>
+              </div>
+              <button
+                className="btn btn-sm"
+                type="button"
+                aria-label="Tutup daftar pelanggan dengan hutang"
+                autoFocus
+                onClick={closeCreditBalances}>
+                Tutup
+              </button>
+            </div>
+            <div className="credit-balances-heading-actions">
+              <strong className="credit-balances-total">{rupiah(totalCredit)}</strong>
+              <button className="btn btn-primary btn-sm" type="button" onClick={openManualDebtForm}>
+                + Tambah hutang
+              </button>
+            </div>
+            {customerLoadError && <p className="form-error" role="alert">{customerLoadError}</p>}
+            {report.credit_balances.length === 0 ? (
+              <p className="credit-balances-empty muted">Tidak ada pelanggan dengan hutang saat ini.</p>
+            ) : (
+              <ul className={'credit-balances-list' + (report.credit_balances.length >= 5 ? ' is-scrollable' : '')}>
+                {report.credit_balances.map((debt, index) => (
+                  <li key={debt.customer_name}>
+                    <span className="finance-row-number">{index + 1}</span>
+                    <CustomerIdentity
+                      name={debt.customer_name}
+                      customer={customers.find((customer) => customer.name === debt.customer_name)}
+                    />
+                    <div className="credit-balances-actions">
+                      <strong>{rupiah(Number(debt.balance_due))}</strong>
+                      <button className="btn btn-sm btn-primary" type="button" onClick={() => openCreditPayment(debt)}>
+                        Bayar
+                      </button>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
         </div>
-        {customerLoadError && <p className="form-error" role="alert">{customerLoadError}</p>}
-        {report.credit_balances.length === 0 ? (
-          <p className="credit-balances-empty muted">Tidak ada pelanggan dengan hutang saat ini.</p>
-        ) : (
-          <ul className={'credit-balances-list' + (report.credit_balances.length >= 5 ? ' is-scrollable' : '')}>
-            {report.credit_balances.map((debt, index) => (
-              <li key={debt.customer_name}>
-                <span className="finance-row-number">{index + 1}</span>
-                <CustomerIdentity
-                  name={debt.customer_name}
-                  customer={customers.find((customer) => customer.name === debt.customer_name)}
-                />
-                <div className="credit-balances-actions">
-                  <strong>{rupiah(Number(debt.balance_due))}</strong>
-                  <button className="btn btn-sm btn-primary" type="button" onClick={() => openCreditPayment(debt)}>
-                    Bayar
-                  </button>
-                </div>
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
+      )}
 
       <div className="finance-date-filter">
         <div className="date-filter-caption">
