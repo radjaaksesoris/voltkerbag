@@ -36,22 +36,24 @@ export default function DateRangeFilter({
           onChange={(event) => update('to', event.target.value)}
         />
       </label>
-      <button
-        className="btn date-filter-reset"
-        type="button"
-        disabled={isResetValue}
-        onClick={() => onChange(resetValue)}>
-        {resetLabel}
-      </button>
-      {quickValue && quickLabel && (
+      <div className="date-filter-actions">
         <button
-          className="btn date-filter-quick"
+          className="btn date-filter-reset"
           type="button"
-          disabled={isQuickValue}
-          onClick={() => onChange(quickValue)}>
-          {quickLabel}
+          disabled={isResetValue}
+          onClick={() => onChange(resetValue)}>
+          {resetLabel}
         </button>
-      )}
+        {quickValue && quickLabel && (
+          <button
+            className="btn date-filter-quick"
+            type="button"
+            disabled={isQuickValue}
+            onClick={() => onChange(quickValue)}>
+            {quickLabel}
+          </button>
+        )}
+      </div>
       {invalidRange && <p className="form-error date-filter-error" role="alert">Tanggal awal tidak boleh melewati tanggal akhir.</p>}
     </section>
   )
