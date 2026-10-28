@@ -1,0 +1,165 @@
+import { useEffect, useState } from 'react'
+
+const INPUT_SELECTOR = 'input[data-custom-numpad]'
+
+function updateInputValue(input, value, selectionStart = null, selectionEnd = selectionStart) {
+  const valueSetter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')?.set
+  valueSetter?.call(input, value)
+  if (input.type !== 'number' && selectionStart != null) {
+    input.setSelectionRange(selectionStart, selectionEnd)
+  }
+  input.dispatchEvent(new Event('input', { bubbles: true }))
+}
+
+export default function CustomNumpad() {
+  const [activeInput, setActiveInput] = useState(null)
+
+  useEffect(() => {
+    function handleFocusIn(event) {
+      const input = event.target
+      const shouldShow = input instanceof HTMLInputElement &&
+        input.matches(INPUT_SELECTOR) &&
+        !input.disabled &&
+        !input.readOnly &&
+        window.matchMedia('(max-width: 640px)').matches
+      setActiveInput(shouldShow ? input : null)
+      if (shouldShow) requestAnimationFrame(() => input.scrollIntoView({ block: 'center', behavior: 'smooth' }))
+    }
+
+    function handlePointerDown(event) {
+      if (event.target.closest('.custom-numpad')) return
+      if (event.target !== activeInput) {
+        activeInput?.blur()
+        setActiveInput(null)
+      }
+    }
+
+    function handleKeyDown(event) {
+      if (event.key === 'Escape') {
+        activeInput?.blur()
+        setActiveInput(null)
+      }
+    }
+
+    function handleResize() {
+      if (!window.matchMedia('(max-width: 640px)').matches) setActiveInput(null)
+    }
+
+    document.addEventListener('focusin', handleFocusIn)
+    document.addEventListener('pointerdown', handlePointerDown)
+    document.addEventListener('keydown', handleKeyDown)
+    window.addEventListener('resize', handleResize)
+    return () => {
+      document.removeEventListener('focusin', handleFocusIn)
+      document.removeEventListener('pointerdown', handlePointerDown)
+      document.removeEventListener('keydown', handleKeyDown)
+      window.removeEventListener('resize', handleResize)
+    }
+  }, [activeInput])
+
+  if (!activeInput?.isConnected) return null
+
+  function applyKey(key) {
+    const input = activeInput
+    if (!input?.isConnected || input.disabled || input.readOnly) {
+      setActiveInput(null)
+      return
+    }
+
+    const currentValue = input.value
+    const isNumberInput = input.type === 'number'
+    const acceptsDecimal = input.dataset.customNumpad === 'decimal'
+
+    if (key === 'clear') {
+      delete input.dataset.customNumpadDecimalPending
+      updateInputValue(input, '', 0)
+      input.focus()
+      return
+    }
+
+    if (key === 'backspace') {
+      if (isNumberInput) {
+        delete input.dataset.customNumpadDecimalPending
+        updateInputValue(input, currentValue.slice(0, -1))
+      } else {
+        let start = input.selectionStart ?? currentValue.length
+        let end = input.selectionEnd ?? start
+        if (start === end && start > 0) start -= 1
+        updateInputValue(input, currentValue.slice(0, start) + currentValue.slice(end), start)
+      }
+      input.focus()
+      return
+    }
+
+    if (key === 'decimal') {
+      if (!acceptsDecimal || currentValue.includes('.')) return
+      if (isNumberInput) {
+        updateInputValue(input, (currentValue || '0') + '.0')
+        input.dataset.customNumpadDecimalPending = 'true'
+      } else {
+        const start = input.selectionStart ?? currentValue.length
+        const end = input.selectionEnd ?? start
+        updateInputValue(input, currentValue.slice(0, start) + '.' + currentValue.slice(end), start + 1)
+      }
+      input.focus()
+      return
+    }
+
+    if (!/^\d$/.test(key)) return
+    if (isNumberInput) {
+      const nextValue = input.dataset.customNumpadDecimalPending === 'true'
+        ? currentValue.replace(/\.0$/, '.' + key)
+        : currentValue + key
+      delete input.dataset.customNumpadDecimalPending
+      updateInputValue(input, nextValue)
+    } else {
+      const start = input.selectionStart ?? currentValue.length
+      const end = input.selectionEnd ?? start
+      const maxLength = Number(input.maxLength)
+      const nextValue = currentValue.slice(0, start) + key + currentValue.slice(end)
+      if (maxLength > 0 && nextValue.length > maxLength) return
+      updateInputValue(input, nextValue, start + 1)
+    }
+    input.focus()
+  }
+
+  return (
+    <div className="custom-numpad" role="group" aria-label="Keypad angka">
+      <div className="custom-numpad-heading">
+        <strong>Masukkan angka</strong>
+        <button type="button" onPointerDown={(event) => event.preventDefault()} onClick={() => applyKey('clear')}>
+          Hapus
+        </button>
+        <button
+          type="button"
+          className="custom-numpad-done"
+          onPointerDown={(event) => event.preventDefault()}
+          onClick={() => {
+            setActiveInput(null)
+            activeInput.blur()
+          }}>
+          Selesai
+        </button>
+      </div>
+      <div className="custom-numpad-keys">
+        {['1', '2', '3', '4', '5', '6', '7', '8', '9'].map((digit) => (
+          <button key={digit} type="button" onPointerDown={(event) => event.preventDefault()} onClick={() => applyKey(digit)}>
+            {digit}
+          </button>
+        ))}
+        {activeInput.dataset.customNumpad === 'decimal' ? (
+          <button type="button" onPointerDown={(event) => event.preventDefault()} onClick={() => applyKey('decimal')}>.</button>
+        ) : <span aria-hidden="true" />}
+        <button type="button" onPointerDown={(event) => event.preventDefault()} onClick={() => applyKey('0')}>0</button>
+        <button
+          type="button"
+          className="custom-numpad-backspace"
+          aria-label="Hapus angka terakhir"
+          onPointerDown={(event) => event.preventDefault()}
+          onClick={() => applyKey('backspace')}>
+          ⌫
+        </button>
+      </div>
+    </div>
+  )
+}

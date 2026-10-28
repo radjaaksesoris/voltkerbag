@@ -412,6 +412,8 @@ export default function Settings() {
                 id="new-customer-phone"
                 className="input"
                 type="tel"
+                inputMode="none"
+                data-custom-numpad="phone"
                 autoComplete="tel"
                 maxLength={32}
                 value={phone}
@@ -466,6 +468,8 @@ export default function Settings() {
                           id={'edit-customer-phone-' + customer.id}
                           className="input"
                           type="tel"
+                          inputMode="none"
+                          data-custom-numpad="phone"
                           autoComplete="tel"
                           maxLength={32}
                           value={editPhone}

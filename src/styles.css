@@ -1369,6 +1369,26 @@ label { display: block; margin-bottom: 6px; color: var(--muted); font-size: 11px
   .dashboard-stats-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 @media (max-width: 640px) {
+  .custom-numpad {
+    position: fixed;
+    z-index: 80;
+    right: 8px;
+    bottom: calc(68px + env(safe-area-inset-bottom));
+    left: 8px;
+    padding: 9px;
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    background: var(--card);
+    box-shadow: 0 8px 28px rgba(24, 22, 21, .24);
+  }
+  .custom-numpad-heading { display: flex; align-items: center; gap: 8px; margin-bottom: 7px; }
+  .custom-numpad-heading strong { flex: 1; color: var(--muted); font-size: 11px; }
+  .custom-numpad-heading button { min-height: 30px; padding: 5px 10px; border: 1px solid var(--border); border-radius: 7px; background: var(--card); color: var(--accent-dark); font-size: 11px; font-weight: 700; }
+  .custom-numpad-heading .custom-numpad-done { border-color: var(--accent); background: var(--accent); color: #fffaf3; }
+  .custom-numpad-keys { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 5px; }
+  .custom-numpad-keys button { min-height: 39px; border: 1px solid var(--border); border-radius: 8px; background: #fffefa; color: var(--ink); font-size: 17px; font-weight: 700; touch-action: manipulation; }
+  .custom-numpad-keys button:active { background: var(--accent-soft); }
+  .custom-numpad-keys .custom-numpad-backspace { color: var(--accent-dark); }
   .product-form-overlay { align-items: center; justify-content: center; padding: 12px; }
   .product-modal { height: auto; max-height: 90dvh; border-radius: 17px; }
   .purchase-stock-notice { display: none; }

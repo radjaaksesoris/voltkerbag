@@ -612,6 +612,8 @@ export default function Products() {
                               ref={markupInputRefs[unit]}
                               className="input"
                               type="number"
+                              inputMode="none"
+                              data-custom-numpad="decimal"
                               step="any"
                               value={form.markups[unit]}
                               onChange={(event) => setForm({
@@ -665,7 +667,7 @@ export default function Products() {
               <div className="product-stock-fields">
                 <div>
                   <label>Stok ({editId ? 'pcs' : stockEntryUnit(form.unit)})</label>
-                  <input ref={stockInputRef} className="input" type="number" min="0" step={editId ? '1' : 'any'} value={form.stock} onChange={(e) => setForm({ ...form, stock: e.target.value })} />
+                  <input ref={stockInputRef} className="input" type="number" inputMode="none" data-custom-numpad={editId ? 'integer' : 'decimal'} min="0" step={editId ? '1' : 'any'} value={form.stock} onChange={(e) => setForm({ ...form, stock: e.target.value })} />
                   {editId && saleUnits(form.unit).length === 2 && (
                     <span className="muted small">Stok saat ini: {editingProduct ? stockLabel(editingProduct) : '-'}</span>
                   )}
@@ -679,7 +681,7 @@ export default function Products() {
                 </div>
                 <div>
                   <label>Stok ({editId && saleUnits(form.unit).length === 2 ? 'pcs' : stockEntryUnit(form.unit)})</label>
-                  <input ref={stockInputRef} className="input" type="number" min="0" step={editId ? '1' : 'any'} value={form.stock} onChange={(e) => setForm({ ...form, stock: e.target.value })} />
+                  <input ref={stockInputRef} className="input" type="number" inputMode="none" data-custom-numpad={editId ? 'integer' : 'decimal'} min="0" step={editId ? '1' : 'any'} value={form.stock} onChange={(e) => setForm({ ...form, stock: e.target.value })} />
                   {editId && saleUnits(form.unit).length === 2 && (
                     <span className="muted small">Stok saat ini: {editingProduct ? stockLabel(editingProduct) : '-'}</span>
                   )}
@@ -712,6 +714,8 @@ export default function Products() {
               id="add-stock-amount"
               className="input"
               type="number"
+              inputMode="none"
+              data-custom-numpad="integer"
               min="0"
               step="1"
               value={stockAmount}

@@ -51,7 +51,8 @@ export default function MoneyInput({ value, onChange, className = 'input', input
         }}
         className={className}
         type="text"
-        inputMode="numeric"
+        inputMode="none"
+        data-custom-numpad="money"
         value={displayValue}
         placeholder={placeholder}
         onChange={handleChange}

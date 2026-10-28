@@ -2,6 +2,7 @@ import { memo, Suspense, lazy, useEffect, useRef, useState } from 'react'
 import LoginScreen from './components/LoginScreen.jsx'
 import SessionControl from './components/SessionControl.jsx'
 import PageErrorBoundary from './components/PageErrorBoundary.jsx'
+import CustomNumpad from './components/CustomNumpad.jsx'
 import Icon from './components/Icon.jsx'
 
 const CHUNK_RELOAD_KEY = 'voltker:chunk-reload-attempted'
@@ -433,6 +434,7 @@ export default function App() {
           </section>
         </div>
       )}
+      <CustomNumpad />
     </div>
   )
 }
