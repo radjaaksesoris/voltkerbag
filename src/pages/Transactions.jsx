@@ -598,14 +598,6 @@ export default function Transactions() {
             aria-modal="true"
             aria-labelledby="product-quick-view-title"
             onClick={(event) => event.stopPropagation()}>
-            <button
-              className="btn product-quick-view-close"
-              type="button"
-              aria-label="Tutup pratinjau produk"
-              autoFocus
-              onClick={() => setPreviewProduct(null)}>
-              <Icon name="close" size={18} />
-            </button>
             {previewProduct.image_path ? (
               <img
                 className="product-quick-view-image"
@@ -637,6 +629,13 @@ export default function Transactions() {
                 </button>
               ))}
             </div>
+            <button
+              className="btn btn-primary product-quick-view-close"
+              type="button"
+              autoFocus
+              onClick={() => setPreviewProduct(null)}>
+              Tutup
+            </button>
           </section>
         </div>
       )}
