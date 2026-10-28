@@ -23,7 +23,7 @@ export default function CustomNumpad() {
         !input.readOnly &&
         window.matchMedia('(max-width: 640px)').matches
       setActiveInput(shouldShow ? input : null)
-      if (shouldShow) requestAnimationFrame(() => input.scrollIntoView({ block: 'center', behavior: 'smooth' }))
+      if (shouldShow) requestAnimationFrame(() => input.scrollIntoView({ block: 'center', behavior: 'auto' }))
     }
 
     function handlePointerDown(event) {
@@ -123,18 +123,36 @@ export default function CustomNumpad() {
     input.focus()
   }
 
+  function handlePointerKey(key) {
+    return (event) => {
+      event.preventDefault()
+      applyKey(key)
+    }
+  }
+
+  function handleKeyboardClick(key) {
+    return (event) => {
+      if (event.detail === 0) applyKey(key)
+    }
+  }
+
   return (
     <div className="custom-numpad" role="group" aria-label="Keypad angka">
       <div className="custom-numpad-heading">
         <strong>Masukkan angka</strong>
-        <button type="button" onPointerDown={(event) => event.preventDefault()} onClick={() => applyKey('clear')}>
+        <button type="button" onPointerDown={handlePointerKey('clear')} onClick={handleKeyboardClick('clear')}>
           Hapus
         </button>
         <button
           type="button"
           className="custom-numpad-done"
-          onPointerDown={(event) => event.preventDefault()}
-          onClick={() => {
+          onPointerDown={(event) => {
+            event.preventDefault()
+            setActiveInput(null)
+            activeInput.blur()
+          }}
+          onClick={(event) => {
+            if (event.detail !== 0) return
             setActiveInput(null)
             activeInput.blur()
           }}>
@@ -143,20 +161,20 @@ export default function CustomNumpad() {
       </div>
       <div className="custom-numpad-keys">
         {['1', '2', '3', '4', '5', '6', '7', '8', '9'].map((digit) => (
-          <button key={digit} type="button" onPointerDown={(event) => event.preventDefault()} onClick={() => applyKey(digit)}>
+          <button key={digit} type="button" onPointerDown={handlePointerKey(digit)} onClick={handleKeyboardClick(digit)}>
             {digit}
           </button>
         ))}
         {activeInput.dataset.customNumpad === 'decimal' ? (
-          <button type="button" onPointerDown={(event) => event.preventDefault()} onClick={() => applyKey('decimal')}>.</button>
+          <button type="button" onPointerDown={handlePointerKey('decimal')} onClick={handleKeyboardClick('decimal')}>.</button>
         ) : <span aria-hidden="true" />}
-        <button type="button" onPointerDown={(event) => event.preventDefault()} onClick={() => applyKey('0')}>0</button>
+        <button type="button" onPointerDown={handlePointerKey('0')} onClick={handleKeyboardClick('0')}>0</button>
         <button
           type="button"
           className="custom-numpad-backspace"
           aria-label="Hapus angka terakhir"
-          onPointerDown={(event) => event.preventDefault()}
-          onClick={() => applyKey('backspace')}>
+          onPointerDown={handlePointerKey('backspace')}
+          onClick={handleKeyboardClick('backspace')}>
           ⌫
         </button>
       </div>
