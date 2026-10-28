@@ -1465,14 +1465,17 @@ label { display: block; margin-bottom: 6px; color: var(--muted); font-size: 11px
   .cart-items-heading strong { font-size: 13px; }
   .cart-items-scroll-hint { padding-top: 5px; font-size: 9px; }
   .cart-items-list { max-height: min(45dvh, 420px); flex: 0 1 auto; padding-right: 2px; overflow-y: auto; }
-  .cart-row { gap: 6px; margin: 7px 0; padding: 10px; border: 1px solid var(--accent-dark); border-radius: 10px; background: var(--accent); color: #fffaf3; }
-  .cart-info > strong { color: #fffaf3; font-size: 12px; }
+  .cart-row { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px 8px; margin: 6px 0; padding: 7px 9px; border: 1px solid var(--accent-dark); border-radius: 10px; background: var(--accent); color: #fffaf3; }
+  .cart-info { display: contents; }
+  .cart-info > strong { grid-column: 1 / -1; color: #fffaf3; font-size: 12px; text-align: center; }
   .cart-row .muted { color: rgba(255, 250, 243, .88); }
   .cart-row .cart-unit-select .category-select-trigger { border-color: rgba(255, 255, 255, .7); background-color: #fffaf3; color: var(--ink); }
-  .cart-item-meta { align-items: center; }
-  .cart-item-bottom { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); }
-  .cart-item-bottom .qty-ctrl { grid-column: 2; }
-  .cart-item-bottom .cart-sub { grid-column: 3; justify-self: end; }
+  .cart-item-meta { display: contents; }
+  .cart-item-meta > span { grid-column: 1; align-self: center; text-align: center; }
+  .cart-item-meta .cart-unit-select { grid-column: 2; justify-self: center; }
+  .cart-item-bottom { display: contents; }
+  .cart-item-bottom .qty-ctrl { grid-column: 1; justify-self: center; }
+  .cart-item-bottom .cart-sub { grid-column: 2; align-self: center; justify-self: center; }
   .cart-row .qty-ctrl > span { color: #fffaf3; }
   .cart-row .qty-ctrl button { border-color: #fffaf3; background: #fffaf3; color: var(--accent-dark); }
   .cart-row .qty-ctrl button:hover:not(:disabled) { border-color: #fff; background: #f5e5e0; color: var(--accent-dark); }
