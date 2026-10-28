@@ -127,7 +127,6 @@ export default function LoginScreen({ configured, connectionError, updateBanner,
             <button className="btn btn-primary btn-block btn-lg" disabled={busy}>
               {busy ? 'Memverifikasi akun...' : 'Masuk'}
             </button>
-            <p className="login-footnote">Akun dibuat oleh administrator toko. Pendaftaran mandiri tidak tersedia.</p>
           </form>
         )}
       </section>

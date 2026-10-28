@@ -177,6 +177,7 @@ body {
   .login-eyebrow { margin-bottom: 10px; color: rgba(255, 221, 216, .78); font-size: 13px; font-weight: 500; letter-spacing: 0; text-align: center; text-transform: none; }
   .login-brand-copy h2,
   .login-panel h1 { display: none; }
+  .login-panel form > label { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
   .login-panel form label { color: rgba(255, 238, 234, .84); }
   .login-panel form .input {
     border-color: rgba(246, 190, 185, .23);
@@ -211,7 +212,6 @@ body {
   .login-panel-heading { margin-bottom: 15px; }
   .login-eyebrow { margin-bottom: 0; font-size: 14px; }
   .login-panel h1 { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
-  .login-panel form > label { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
   .login-panel form .input { min-height: 36px; margin-bottom: 16px; padding: 4px 11px; border: 0; background: transparent; box-shadow: none; color: #fff8f4; font-size: 21px; letter-spacing: .24em; text-align: center; }
   .login-panel form .input::placeholder { color: rgba(244, 194, 190, .48); font-size: 17px; letter-spacing: .12em; }
   .login-panel form .input:focus { border: 0; box-shadow: none; }
