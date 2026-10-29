@@ -14,7 +14,7 @@ import { dateRangeTimestamps, localDateValue } from '../dateFilter'
 import { downloadInvoiceJpeg } from '../invoiceJpeg'
 import { isSafeRupiahAmount } from '../money'
 
-const PRODUCT_BATCH_SIZE = 40
+const PRODUCT_BATCH_SIZE = 20
 
 export default function Transactions() {
   const [products, setProducts] = useState([])
