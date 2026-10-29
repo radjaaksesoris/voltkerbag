@@ -445,8 +445,20 @@ export default function Finance() {
                 <tr key={e.id}>
                   <td className="finance-row-number">{pageStart + index + 1}</td>
                   <td>{dateOnly(e.date || e.createdAt)}</td>
-                  <td><span className={'badge ' + TYPES[e.type].cls}>{TYPES[e.type].label}</span></td>
-                  <td>{e.category || '-'}</td>
+                  <td>
+                    <span className={'badge finance-entry-type-label ' + TYPES[e.type].cls}>{TYPES[e.type].label}</span>
+                    {(e.type === 'income' || e.type === 'expense') && (
+                      <span className={'badge finance-entry-type-icon ' + TYPES[e.type].cls} role="img" aria-label={TYPES[e.type].label} title={TYPES[e.type].label}>
+                        <Icon name={e.type === 'income' ? 'income' : 'expense'} size={14} />
+                      </span>
+                    )}
+                  </td>
+                  <td>
+                    {e.category || '-'}
+                    {getFinanceEntryCustomerName(e) && (
+                      <span className="finance-entry-customer">{getFinanceEntryCustomerName(e)}</span>
+                    )}
+                  </td>
                   <td>
                     {e.pending && <strong className="finance-pending-label">Belum diisi · </strong>}
                     {e.note || '-'}
@@ -680,4 +692,19 @@ function isAutomaticEntry(entry) {
     || ['penjualan', 'dp kredit', 'cicilan kredit', 'pembelian bahan produksi'].includes(category)
     || note.startsWith('Penjualan ·')
     || note.startsWith('Cicilan transaksi ')
+}
+
+function getFinanceEntryCustomerName(entry) {
+  if (entry.type !== 'income') return ''
+
+  const note = String(entry.note || '').trim()
+  const prefixes = ['Penjualan · ', 'Cicilan kredit pelanggan · ']
+  const prefix = prefixes.find((value) => note.startsWith(value))
+  if (prefix) return note.slice(prefix.length).trim()
+
+  if (note.startsWith('Cicilan transaksi ')) {
+    const separatorIndex = note.lastIndexOf(' · ')
+    if (separatorIndex !== -1) return note.slice(separatorIndex + 3).trim()
+  }
+  return ''
 }
