@@ -22,6 +22,8 @@ const EMPTY = {
   image_path: null
 }
 
+const PRODUCT_NAME_COLLATOR = new Intl.Collator('id', { numeric: true, sensitivity: 'base' })
+
 export default function Products() {
   const [items, setItems] = useState([])
   const [categories, setCategories] = useState([])
@@ -154,9 +156,9 @@ export default function Products() {
     return onRefresh(load, 'stok')
   }, [])
 
-  const filtered = items.filter((p) =>
-    (p.name + ' ' + (p.category || '')).toLowerCase().includes(q.toLowerCase())
-  )
+  const filtered = items
+    .filter((p) => (p.name + ' ' + (p.category || '')).toLowerCase().includes(q.toLowerCase()))
+    .sort((left, right) => PRODUCT_NAME_COLLATOR.compare(left.name, right.name))
   const lowStock = items.filter((p) => availableQuantity(p, p.unit || 'pcs') <= 5)
   const stockReceiptPreview = stockProduct && Number(stockAmount) > 0 && stockUnitCost !== '' && Number(stockUnitCost) >= 0
     ? stockReceiptValuation({
