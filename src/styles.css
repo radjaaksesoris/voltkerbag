@@ -842,8 +842,8 @@ tbody tr:hover { background: #fbf5ed; }
 .products-table th:nth-child(6), .products-table td:nth-child(6) { width: 22%; }
 .products-table th:nth-child(7), .products-table td:nth-child(7) { width: 10%; }
 .products-table th:nth-child(8), .products-table td:nth-child(8) { width: 16%; }
-.products-table th { padding-inline: 9px; font-size: 9px; letter-spacing: .55px; }
-.products-table td { padding: 12px 9px; }
+.products-table th { padding-inline: 9px; font-size: 11px; letter-spacing: .55px; }
+.products-table td { padding: 12px 9px; font-size: 13px; }
 .products-table th,
 .products-table td { text-align: center; }
 .products-table thead th { border-bottom-color: var(--accent-dark); background: var(--accent); color: #fffaf3; }
@@ -857,7 +857,7 @@ tbody tr:hover { background: #fbf5ed; }
 .products-table .product-name-content strong { min-width: 0; overflow-wrap: anywhere; }
 .products-table .product-price-cell { min-width: 0; }
 .products-table .product-price-row { white-space: normal; }
-.products-table .product-price-cell strong { font-size: 10px; overflow-wrap: anywhere; }
+.products-table .product-price-cell strong { font-size: 12px; overflow-wrap: anywhere; }
 .products-table .badge { display: inline-block; white-space: normal; }
 .products-table .row-actions { display: table-cell; text-align: right; }
 .products-table .product-action-trigger { display: inline-flex; align-items: center; justify-content: center; gap: 4px; min-width: 58px; margin: 0; padding: 6px 8px; white-space: nowrap; }
@@ -1711,26 +1711,26 @@ label { display: block; margin-bottom: 6px; color: var(--muted); font-size: 11px
   .products-table-card { overflow-x: hidden; padding: 10px 8px; }
   .products-table { width: 100%; min-width: 0; table-layout: fixed; }
   .products-table th,
-  .products-table td { padding: 7px 3px; font-size: 8px; letter-spacing: 0; overflow-wrap: anywhere; }
+  .products-table td { padding: 7px 3px; font-size: 10px; letter-spacing: 0; overflow-wrap: anywhere; }
   .products-table th:nth-child(3), .products-table td:nth-child(3),
   .products-table th:nth-child(4), .products-table td:nth-child(4) { display: none; }
   .products-table th:nth-child(1), .products-table td:nth-child(1) { width: 6%; }
   .products-table th:nth-child(2), .products-table td:nth-child(2) { width: 22%; }
   .products-table th:nth-child(5), .products-table td:nth-child(5) { width: 15%; }
-  .products-table th:nth-child(6), .products-table td:nth-child(6) { width: 15%; }
-  .products-table th:nth-child(7), .products-table td:nth-child(7) { width: 26%; }
-  .products-table th:nth-child(8), .products-table td:nth-child(8) { width: 15%; }
+  .products-table th:nth-child(6), .products-table td:nth-child(6) { width: 19%; }
+  .products-table th:nth-child(7), .products-table td:nth-child(7) { width: 16%; }
+  .products-table th:nth-child(8), .products-table td:nth-child(8) { width: 22%; }
   .products-table .product-name-content { display: block; }
   .products-table .product-name-content img { display: none; }
   .products-table .product-name-text { display: grid; gap: 2px; }
-  .products-table .product-name-content strong { font-size: 8px; line-height: 1.2; }
-  .products-table .product-category-mobile { display: block; color: var(--muted); font-size: 7px; }
-  .products-table .product-price-cell strong { font-size: 7px; overflow-wrap: anywhere; }
-  .products-table .badge { padding: 3px 4px; font-size: 6px; white-space: normal; }
-  .products-table .product-stock-badge { min-height: 19px; padding: 3px 2px; }
+  .products-table .product-name-content strong { font-size: 10px; line-height: 1.25; }
+  .products-table .product-category-mobile { display: block; color: var(--muted); font-size: 8px; }
+  .products-table .product-price-cell strong { font-size: 9px; overflow-wrap: anywhere; }
+  .products-table .badge { padding: 4px 4px; font-size: 8px; white-space: normal; }
+  .products-table .product-stock-badge { min-height: 24px; padding: 4px 2px; }
   .products-table .row-actions { white-space: normal; text-align: center; }
-  .products-table .product-action-trigger { min-width: 0; min-height: 28px; gap: 2px; padding: 3px 4px; font-size: 8px; }
-  .products-table .product-action-trigger .icon { width: 11px; height: 11px; }
+  .products-table .product-action-trigger { min-width: 0; min-height: 30px; gap: 3px; padding: 4px 5px; font-size: 9px; }
+  .products-table .product-action-trigger .icon { width: 12px; height: 12px; }
   .product-action-menu { width: 140px; }
   .finance-ledger { overflow-x: hidden; padding: 12px 8px; }
   .finance-ledger-heading { margin: 0 4px 10px; }

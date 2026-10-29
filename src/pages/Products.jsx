@@ -98,7 +98,6 @@ export default function Products() {
     }
 
     updateActionMenuPosition()
-    actionMenuRef.current?.querySelector('button')?.focus()
     document.addEventListener('pointerdown', closeOnOutsideClick)
     document.addEventListener('keydown', closeOnEscape)
     window.addEventListener('resize', updateActionMenuPosition)
@@ -514,35 +513,35 @@ export default function Products() {
         } catch (error) {
           setActionError('Produk terhapus, tetapi gambar gagal dihapus: ' + error.message)
         }
-
-        function toggleActionMenu(product, event) {
-          if (actionMenuProductId === product.id) {
-            setActionMenuProductId(null)
-            return
-          }
-          actionButtonRef.current = event.currentTarget
-          setActionMenuProductId(product.id)
-        }
-
-        function navigateActionMenu(event) {
-          const menuItems = actionMenuRef.current?.querySelectorAll('[role="menuitem"]')
-          if (!menuItems?.length) return
-
-          const currentIndex = Array.from(menuItems).indexOf(document.activeElement)
-          let nextIndex
-          if (event.key === 'ArrowDown') nextIndex = (currentIndex + 1) % menuItems.length
-          else if (event.key === 'ArrowUp') nextIndex = (currentIndex - 1 + menuItems.length) % menuItems.length
-          else if (event.key === 'Home') nextIndex = 0
-          else if (event.key === 'End') nextIndex = menuItems.length - 1
-          else return
-
-          event.preventDefault()
-          menuItems[nextIndex].focus()
-        }
       }
     } catch (error) {
       setActionError(error.message || 'Gagal menghapus produk dari server.')
     }
+  }
+
+  function toggleActionMenu(product, event) {
+    if (actionMenuProductId === product.id) {
+      setActionMenuProductId(null)
+      return
+    }
+    actionButtonRef.current = event.currentTarget
+    setActionMenuProductId(product.id)
+  }
+
+  function navigateActionMenu(event) {
+    const menuItems = actionMenuRef.current?.querySelectorAll('[role="menuitem"]')
+    if (!menuItems?.length) return
+
+    const currentIndex = Array.from(menuItems).indexOf(document.activeElement)
+    let nextIndex
+    if (event.key === 'ArrowDown') nextIndex = (currentIndex + 1) % menuItems.length
+    else if (event.key === 'ArrowUp') nextIndex = (currentIndex - 1 + menuItems.length) % menuItems.length
+    else if (event.key === 'Home') nextIndex = 0
+    else if (event.key === 'End') nextIndex = menuItems.length - 1
+    else return
+
+    event.preventDefault()
+    menuItems[nextIndex].focus()
   }
 
   if (!loaded) return <div className="page"><p className="muted">Memuat produk dari server...</p></div>
