@@ -316,7 +316,28 @@ export default function App() {
   )
 
   if (checkingSession && !session && !connectionError) {
-    return <main className="login-page"><p className="login-loading">Memeriksa koneksi dan sesi VOLTKER...</p></main>
+    return (
+      <main className="login-page login-loading-page" role="status" aria-live="polite">
+        <div className="login-loading-background" aria-hidden="true">
+          <img
+            src={import.meta.env.BASE_URL + 'voltker-app-background.jpg'}
+            alt=""
+            decoding="async"
+          />
+        </div>
+        <div className="login-loading-panel">
+          <img
+            className="login-brand-logo"
+            src={import.meta.env.BASE_URL + 'voltker-logo-320.png'}
+            width="320"
+            height="79"
+            alt="VOLTKER Toko Tas"
+          />
+          <span className="login-loading-spinner" aria-hidden="true" />
+          <p className="login-loading">Memeriksa koneksi dan sesi VOLTKER...</p>
+        </div>
+      </main>
+    )
   }
 
   if (!session) {
