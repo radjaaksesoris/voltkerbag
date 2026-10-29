@@ -619,7 +619,6 @@ export default function Products() {
                     aria-expanded={actionMenuProductId === p.id}
                     onClick={(event) => toggleActionMenu(p, event)}
                   >
-                    <Icon name="more" size={15} />
                     <span>Aksi</span>
                   </button>
                 </td>
