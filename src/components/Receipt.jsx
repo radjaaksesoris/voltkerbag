@@ -37,7 +37,6 @@ export default function Receipt({ transaction }) {
           customer={{ phone: transaction.customerPhone, address: transaction.customerAddress }}
           className="receipt-customer-identity"
         /></div>
-        {transaction.expedition && <div><span>Ekspedisi</span><strong>{transaction.expedition}</strong></div>}
         <div><span>Pembayaran</span><strong>{isCredit ? 'Kredit' : 'Tunai'}</strong></div>
       </section>
 
