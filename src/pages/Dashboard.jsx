@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { getAll, getDashboardData, onRefresh } from '../db'
+import { getAll, getDashboardData, onRefresh, requestPageRefresh } from '../db'
 import { rupiah, dateOnly, dateTime } from '../format'
 import DateRangeFilter from '../components/DateRangeFilter'
 import { dateRangeTimestamps, hasDateRange, localDateValue } from '../dateFilter'
@@ -47,7 +47,7 @@ export default function Dashboard() {
       }
     }
     loadCustomers()
-    const unsubscribe = onRefresh(loadCustomers)
+    const unsubscribe = onRefresh(loadCustomers, 'dashboard')
     return () => {
       active = false
       unsubscribe()
@@ -99,7 +99,7 @@ export default function Dashboard() {
       }
     }
     load()
-    const unsubscribe = onRefresh(load)
+    const unsubscribe = onRefresh(load, 'dashboard')
     return () => {
       active = false
       unsubscribe()
@@ -109,7 +109,7 @@ export default function Dashboard() {
   if (!loaded) return <div className="page"><p className="muted">Memuat data dari server...</p></div>
   if (loadError) {
     return <div className="page"><p className="form-error" role="alert">{loadError}</p>
-      <button className="btn" onClick={() => window.dispatchEvent(new CustomEvent('voltker:refresh'))}>Coba lagi</button>
+      <button className="btn" onClick={() => requestPageRefresh('dashboard')}>Coba lagi</button>
     </div>
   }
 
@@ -177,7 +177,7 @@ export default function Dashboard() {
             type="button"
             disabled={refreshing}
             aria-label={refreshing ? 'Memuat data dashboard' : 'Refresh data dashboard'}
-            onClick={() => window.dispatchEvent(new CustomEvent('voltker:refresh'))}>
+            onClick={() => requestPageRefresh('dashboard')}>
             <Icon name="sync" size={14} />
             {refreshing ? 'Memuat...' : 'Refresh'}
           </button>

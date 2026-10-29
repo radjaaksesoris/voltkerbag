@@ -1,5 +1,4 @@
 import { getClient } from './supabaseSync'
-import JSZip from 'jszip'
 import {
   createBackupChunks,
   isValidBackupChunkManifestEntry,
@@ -107,6 +106,7 @@ export async function createBackupArchive() {
   }
   throwIfError(startRevisionError, 'Gagal memeriksa konsistensi data backup')
 
+  const { default: JSZip } = await import('jszip')
   const archive = new JSZip()
   const recordManifest = {}
   const imagePaths = new Set()
@@ -380,6 +380,7 @@ export async function restoreBackupArchive(file, onProgress = () => {}) {
   if (!user) throw new Error('Sesi login tidak ditemukan. Silakan masuk kembali.')
 
   onProgress('Membaca file backup...')
+  const { default: JSZip } = await import('jszip')
   let archive
   try {
     archive = await JSZip.loadAsync(file)
@@ -781,11 +782,19 @@ export function notifyRefresh() {
   window.dispatchEvent(new CustomEvent('voltker:refresh'))
 }
 
-export function onRefresh(fn) {
+export function requestPageRefresh(pageId) {
+  window.dispatchEvent(new CustomEvent('voltker:refresh', { detail: { pageId } }))
+}
+
+export function onRefresh(fn, pageId) {
   if (!refreshCacheInvalidationInstalled) {
     window.addEventListener('voltker:refresh', invalidateMasterDataCache)
     refreshCacheInvalidationInstalled = true
   }
-  window.addEventListener('voltker:refresh', fn)
-  return () => window.removeEventListener('voltker:refresh', fn)
+  function handleRefresh(event) {
+    if (event.detail?.pageId && event.detail.pageId !== pageId) return
+    fn()
+  }
+  window.addEventListener('voltker:refresh', handleRefresh)
+  return () => window.removeEventListener('voltker:refresh', handleRefresh)
 }

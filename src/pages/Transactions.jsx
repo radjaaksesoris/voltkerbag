@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { getAll, getProductImageUrl, getTransactionSummary, completeSale, recordTransactionPayment, onRefresh } from '../db'
+import { getAll, getProductImageUrl, getTransactionSummary, completeSale, recordTransactionPayment, onRefresh, requestPageRefresh } from '../db'
 import { rupiah } from '../format'
 import ReceiptPreview from '../components/ReceiptPreview'
 import Icon from '../components/Icon.jsx'
@@ -84,17 +84,34 @@ export default function Transactions() {
   }
   useEffect(() => {
     load()
-    return onRefresh(load)
+    return onRefresh(load, 'pos')
   }, [])
 
   const total = useMemo(() => cart.reduce((s, c) => s + c.price * c.qty, 0), [cart])
 
+  const productsById = useMemo(() => new Map(products.map((product) => [product.id, product])), [products])
+  const cartStockByProduct = useMemo(() => {
+    const stockByProduct = new Map()
+    for (const item of cart) {
+      let productStock = stockByProduct.get(item.productId)
+      if (!productStock) {
+        productStock = { totalPcs: 0, byUnit: new Map() }
+        stockByProduct.set(item.productId, productStock)
+      }
+      const quantityInPcs = item.qty * unitFactor(item.unit)
+      productStock.totalPcs += quantityInPcs
+      productStock.byUnit.set(item.unit, (productStock.byUnit.get(item.unit) || 0) + quantityInPcs)
+    }
+    return stockByProduct
+  }, [cart])
+
   function remainingStockPcs(productId, excludedUnit) {
-    const product = products.find((item) => item.id === productId)
+    const product = productsById.get(productId)
     if (!product) return 0
-    const reserved = cart
-      .filter((item) => item.productId === productId && item.unit !== excludedUnit)
-      .reduce((sum, item) => sum + item.qty * unitFactor(item.unit), 0)
+    const productStock = cartStockByProduct.get(productId)
+    const reserved = productStock
+      ? productStock.totalPcs - (productStock.byUnit.get(excludedUnit) || 0)
+      : 0
     return Math.max(0, stockInPcs(product) - reserved)
   }
 
@@ -103,9 +120,16 @@ export default function Transactions() {
   }
 
   function canAddOne(productId, unit) {
-    const existingQty = cart.find((item) => item.productId === productId && item.unit === unit)?.qty || 0
+    const existingQty = (cartStockByProduct.get(productId)?.byUnit.get(unit) || 0) / unitFactor(unit)
     return maxCartQuantity(productId, unit) > existingQty
   }
+
+  const filtered = useMemo(() => {
+    const query = q.toLowerCase()
+    return products.filter((product) =>
+      product.name.toLowerCase().includes(query) && stockInPcs(product) > 0
+    )
+  }, [products, q])
 
   function switchMobileView(showCart) {
     setMobileCartOpen(showCart)
@@ -120,13 +144,10 @@ export default function Transactions() {
   if (!loaded) return <div className="page"><p className="muted">Memuat data dari server...</p></div>
   if (loadError) {
     return <div className="page"><p className="form-error" role="alert">{loadError}</p>
-      <button className="btn" onClick={() => window.dispatchEvent(new CustomEvent('voltker:refresh'))}>Coba lagi</button>
+      <button className="btn" onClick={() => requestPageRefresh('pos')}>Coba lagi</button>
     </div>
   }
 
-  const filtered = products.filter((p) =>
-    p.name.toLowerCase().includes(q.toLowerCase()) && stockInPcs(p) > 0
-  )
   const paidNow = Number(pay || 0)
   const change = paidNow - total
 

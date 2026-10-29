@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { getAll, getFinanceData, put, remove, onRefresh, recordCustomerCreditPayment, addManualCustomerCredit, recordExpeditionCost } from '../db'
+import { getAll, getFinanceData, put, remove, onRefresh, requestPageRefresh, recordCustomerCreditPayment, addManualCustomerCredit, recordExpeditionCost } from '../db'
 import { rupiah, dateOnly } from '../format'
 import DateRangeFilter from '../components/DateRangeFilter.jsx'
 import { dateRangeTimestamps, hasDateRange, localDateValue } from '../dateFilter'
@@ -85,7 +85,7 @@ export default function Finance() {
       }
     }
     loadCustomers()
-    const unsubscribe = onRefresh(loadCustomers)
+    const unsubscribe = onRefresh(loadCustomers, 'finance')
     return () => {
       active = false
       unsubscribe()
@@ -124,7 +124,7 @@ export default function Finance() {
     }
 
     load()
-    const unsubscribe = onRefresh(load)
+    const unsubscribe = onRefresh(load, 'finance')
     return () => {
       active = false
       unsubscribe()
@@ -327,7 +327,7 @@ export default function Finance() {
   if (!loaded) return <div className="page"><p className="muted">Memuat data keuangan dari server...</p></div>
   if (loadError) {
     return <div className="page"><p className="form-error" role="alert">{loadError}</p>
-      <button className="btn" onClick={() => window.dispatchEvent(new CustomEvent('voltker:refresh'))}>Coba lagi</button>
+      <button className="btn" onClick={() => requestPageRefresh('finance')}>Coba lagi</button>
     </div>
   }
 

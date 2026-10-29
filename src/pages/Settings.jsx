@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { createBackupArchive, getAll, onRefresh, put, remove, resetStoreData, restoreBackupArchive } from '../db'
+import { createBackupArchive, getAll, onRefresh, requestPageRefresh, put, remove, resetStoreData, restoreBackupArchive } from '../db'
 import Icon from '../components/Icon.jsx'
 
 export default function Settings() {
@@ -58,7 +58,7 @@ export default function Settings() {
 
   useEffect(() => {
     load()
-    return onRefresh(load)
+    return onRefresh(load, 'settings')
   }, [])
 
   async function addCustomer(event) {
@@ -372,7 +372,7 @@ export default function Settings() {
   if (!loaded) return <div className="page"><p className="muted">Memuat data pelanggan, vendor, dan ekspedisi...</p></div>
   if (loadError) {
     return <div className="page"><p className="form-error" role="alert">{loadError}</p>
-      <button className="btn" onClick={() => window.dispatchEvent(new CustomEvent('voltker:refresh'))}>Coba lagi</button>
+      <button className="btn" onClick={() => requestPageRefresh('settings')}>Coba lagi</button>
     </div>
   }
 

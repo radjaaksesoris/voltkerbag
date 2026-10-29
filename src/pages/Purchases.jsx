@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { getAll, getPurchaseEntries, onRefresh, put } from '../db'
+import { getAll, getPurchaseEntries, onRefresh, requestPageRefresh, put } from '../db'
 import { dateOnly, rupiah } from '../format'
 import { dateRangeTimestamps, localDateValue } from '../dateFilter'
 import MoneyInput from '../components/MoneyInput.jsx'
@@ -72,7 +72,7 @@ export default function Purchases() {
     const unsubscribe = onRefresh(() => {
       load()
       loadVendors()
-    })
+    }, 'purchases')
     return () => {
       active = false
       unsubscribe()
@@ -147,7 +147,7 @@ export default function Purchases() {
     return (
       <div className="page">
         <p className="form-error" role="alert">{loadError}</p>
-        <button className="btn" type="button" onClick={() => window.dispatchEvent(new CustomEvent('voltker:refresh'))}>
+        <button className="btn" type="button" onClick={() => requestPageRefresh('purchases')}>
           Coba lagi
         </button>
       </div>

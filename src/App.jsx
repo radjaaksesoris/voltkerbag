@@ -230,7 +230,7 @@ export default function App() {
 
     function refreshVisiblePage() {
       if (document.visibilityState === 'visible') {
-        window.dispatchEvent(new CustomEvent('voltker:refresh'))
+        window.dispatchEvent(new CustomEvent('voltker:refresh', { detail: { pageId: page } }))
       }
     }
 
@@ -243,7 +243,7 @@ export default function App() {
       document.removeEventListener('visibilitychange', refreshVisiblePage)
       window.removeEventListener('online', refreshVisiblePage)
     }
-  }, [session])
+  }, [page, session])
 
   useEffect(() => {
     if (contentRef.current) contentRef.current.scrollTop = 0

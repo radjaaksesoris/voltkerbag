@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
-import { addProductStock, getAll, getProductImageUrl, put, remove, removeProductImage, setProductStock, updateProductDetails, uploadProductImage, onRefresh } from '../db'
+import { addProductStock, getAll, getProductImageUrl, put, remove, removeProductImage, setProductStock, updateProductDetails, uploadProductImage, onRefresh, requestPageRefresh } from '../db'
 import { rupiah } from '../format'
 import { isSafeRupiahAmount } from '../money'
 import { compressProductImage } from '../productImage'
@@ -151,7 +151,7 @@ export default function Products() {
   }
   useEffect(() => {
     load()
-    return onRefresh(load)
+    return onRefresh(load, 'stok')
   }, [])
 
   const filtered = items.filter((p) =>
@@ -547,7 +547,7 @@ export default function Products() {
   if (!loaded) return <div className="page"><p className="muted">Memuat produk dari server...</p></div>
   if (loadError) {
     return <div className="page"><p className="form-error" role="alert">{loadError}</p>
-      <button className="btn" onClick={() => window.dispatchEvent(new CustomEvent('voltker:refresh'))}>Coba lagi</button>
+      <button className="btn" onClick={() => requestPageRefresh('stok')}>Coba lagi</button>
     </div>
   }
 
