@@ -154,14 +154,6 @@ export default function Transactions() {
 
   const paidNow = Number(pay || 0)
   const change = paidNow - total
-  const checkoutGuidance = cart.length === 0
-    ? 'Tambahkan produk ke keranjang untuk memulai transaksi.'
-    : [
-        !customerName && (customers.length === 0
-          ? 'Tambahkan nama pelanggan di tab Setting.'
-          : 'Pilih nama pelanggan.'),
-        paymentType === 'cash' && pay === '' && 'Masukkan jumlah tunai yang diterima.'
-      ].filter(Boolean).join(' ')
 
   function addToCart(p, unit = p.unit || 'pcs') {
     const maxQty = maxCartQuantity(p.id, unit)
@@ -629,9 +621,6 @@ export default function Transactions() {
               <div className="change credit-balance">Sisa kredit: <strong>{rupiah(Math.max(0, total - paidNow))}</strong></div>
             )}
             {checkoutError && <p className="form-error" role="alert">{checkoutError}</p>}
-            {!saving && checkoutGuidance && (
-              <p className="checkout-guidance" role="status">{checkoutGuidance}</p>
-            )}
             <div className="cart-submit-bar">
               <button className="btn btn-primary btn-block btn-lg" onClick={checkout} disabled={cart.length === 0 || !customerName || (paymentType === 'cash' && pay === '') || saving}>
                 {saving ? 'Menyimpan…' : <><Icon name="bolt" size={17} /> Simpan Transaksi</>}

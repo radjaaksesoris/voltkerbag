@@ -1193,7 +1193,6 @@ label { display: block; margin-bottom: 6px; color: var(--muted); font-size: 11px
 .change { padding: 4px 0 8px; color: var(--muted); }
 .change.negative { color: var(--danger); }
 .change.credit-balance { color: var(--accent); }
-.checkout-guidance { margin-top: 2px; color: var(--muted); font-size: 11px; line-height: 1.4; }
 .cart-checkout .btn-block { margin-top: 7px; }
 .cart-checkout .btn-lg { padding: 11px; }
 .transaction-table { min-width: 1040px; }
@@ -1594,6 +1593,7 @@ label { display: block; margin-bottom: 6px; color: var(--muted); font-size: 11px
   .custom-numpad-keys .custom-numpad-backspace { color: var(--accent-dark); }
   .product-form-overlay { align-items: center; justify-content: center; padding: 12px; }
   .product-modal { height: auto; max-height: 90dvh; border-radius: 17px; }
+  .purchase-stock-notice { display: none; }
   .purchase-page { padding-top: 12px; }
   .app {
     -webkit-touch-callout: none;
@@ -1699,7 +1699,7 @@ label { display: block; margin-bottom: 6px; color: var(--muted); font-size: 11px
     padding: 8px 0;
     background: transparent;
   }
-  .product-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 9px; }
+  .product-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 7px; }
   .product-card { padding: 6px; }
   .product-card-heading { flex-direction: column; align-items: stretch; gap: 6px; }
   .product-image-trigger { width: 100%; height: auto; aspect-ratio: 1; flex: 0 0 auto; }
@@ -1724,15 +1724,15 @@ label { display: block; margin-bottom: 6px; color: var(--muted); font-size: 11px
     border-top: 1px solid var(--border);
     background: transparent;
     color: var(--muted);
-    font-size: 11px;
+    font-size: 9px;
     text-align: left;
   }
   .product-units-toggle .icon { transition: transform .16s ease; }
   .product-units-toggle[aria-expanded="true"] .icon { transform: rotate(180deg); }
   .product-sale-options.is-collapsed { display: none; }
   .product-sale-options.is-expanded { margin-top: 3px; }
-  .product-sale-option { min-height: 42px; padding-inline: 4px; font-size: 11px; }
-  .product-sale-option strong { font-size: 10px; }
+  .product-sale-option { min-height: 30px; padding-inline: 2px; font-size: 8px; }
+  .product-sale-option strong { font-size: 8px; }
   .cart { overflow: hidden; }
   .cart-items-heading { padding-bottom: 7px; }
   .cart-items-heading strong { font-size: 13px; }
