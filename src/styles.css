@@ -23,7 +23,7 @@ body {
   min-width: 320px;
   overflow: hidden;
   font-family: 'Avenir Next', system-ui, sans-serif;
-  background: var(--bg);
+  background: #343434;
   color: var(--text);
   line-height: 1.5;
 }
@@ -45,7 +45,7 @@ body {
   background:
     radial-gradient(ellipse at 12% 84%, rgba(145, 32, 39, .065), transparent 36%),
     radial-gradient(ellipse at 90% 8%, rgba(194, 170, 143, .13), transparent 34%),
-    #f4f0e8;
+    #343434;
 }
 .login-background { display: none; }
 .login-brand {
@@ -114,10 +114,10 @@ body {
     inset: 0;
     display: block;
     overflow: hidden;
-    background: #3b0d16;
+    background: #343434;
     pointer-events: none;
   }
-  .login-background img { width: 100%; height: 100%; object-fit: cover; opacity: .3; }
+  .login-background img { width: 100%; height: 100%; object-fit: cover; opacity: .12; }
   .login-brand,
   .login-panel { box-sizing: border-box; width: min(78vw, 420px); }
   .login-brand {
@@ -232,21 +232,21 @@ button:focus-visible, input:focus-visible, select:focus-visible {
   height: 100vh;
   height: 100dvh;
   overflow: hidden;
-  background: #000;
+  background: #343434;
 }
 .app-background {
   position: absolute;
   z-index: 0;
   inset: 0;
   overflow: hidden;
-  background: #000;
+  background: #343434;
   pointer-events: none;
 }
 .app-background img {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  opacity: .3;
+  opacity: .12;
 }
 
 /* Navigation */
