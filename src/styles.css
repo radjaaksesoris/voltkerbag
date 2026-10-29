@@ -1597,10 +1597,12 @@ label { display: block; margin-bottom: 6px; color: var(--muted); font-size: 11px
   h2 { font-size: 29px; }
   .stats-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin-bottom: 18px; }
   .stat-card { min-height: 98px; padding: 14px; gap: 8px; }
+  .dashboard-stats-grid .stat-card { min-height: 78px; padding: 11px 12px; gap: 5px; }
   .finance-summary-grid .stat-card { min-height: 78px; padding: 10px 12px; gap: 5px; }
   .stat-card span { font-size: 9px; letter-spacing: .65px; }
   .stat-card strong { font-size: 19px; }
-  .dashboard-stock-counts { gap: 8px; }
+  .dashboard-stock-counts { align-items: flex-start; justify-content: flex-start; gap: 8px; }
+  .dashboard-stock-counts .dashboard-stock-metric { justify-content: flex-start; }
   .dashboard-stock-counts .dashboard-stock-metric + .dashboard-stock-metric { padding-left: 8px; }
   .dashboard-stock-counts .dashboard-stock-metric strong { font-size: 18px; }
   .card { padding: 16px; border-radius: 13px; }
