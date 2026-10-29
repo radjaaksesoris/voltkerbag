@@ -1737,10 +1737,12 @@ label { display: block; margin-bottom: 6px; color: var(--muted); font-size: 11px
   .finance-date-filter .date-filter-caption span { display: none; }
   .finance-ledger-table { display: block; width: 100%; min-width: 0; table-layout: fixed; font-size: 10px; }
   .finance-ledger-table thead,
-  .finance-ledger-table tbody { display: block; }
-  .finance-ledger-table tr { display: grid; grid-template-columns: 7% 20% 16% 34% 23%; }
+  .finance-ledger-table tbody { display: block; width: 100%; }
+  .finance-ledger-table tr { display: grid; width: 100%; box-sizing: border-box; grid-template-columns: minmax(0, 7fr) minmax(0, 20fr) minmax(0, 16fr) minmax(0, 34fr) minmax(0, 23fr); }
   .finance-ledger-table th,
   .finance-ledger-table td { min-width: 0; padding: 7px 2px; font-size: 10px; letter-spacing: 0; overflow-wrap: anywhere; }
+  .finance-ledger-table th:nth-child(n),
+  .finance-ledger-table td:nth-child(n) { width: auto; }
   .finance-ledger-table th { min-width: 0; padding: 8px 2px; font-size: 9px; letter-spacing: 0; }
   .finance-ledger-table td[colspan="7"] { grid-column: 1 / -1; }
   .finance-ledger-table th:nth-child(1), .finance-ledger-table td:nth-child(1) { grid-column: 1; text-align: center; }
