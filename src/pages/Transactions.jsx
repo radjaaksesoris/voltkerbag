@@ -14,6 +14,8 @@ import { dateRangeTimestamps, localDateValue } from '../dateFilter'
 import { downloadInvoiceJpeg } from '../invoiceJpeg'
 import { isSafeRupiahAmount } from '../money'
 
+const PRODUCT_BATCH_SIZE = 40
+
 export default function Transactions() {
   const [products, setProducts] = useState([])
   const [customers, setCustomers] = useState([])
@@ -40,6 +42,7 @@ export default function Transactions() {
   const [saving, setSaving] = useState(false)
   const [previewTransaction, setPreviewTransaction] = useState(null)
   const [selectedTransaction, setSelectedTransaction] = useState(null)
+  const [visibleProductCount, setVisibleProductCount] = useState(PRODUCT_BATCH_SIZE)
   const operationLock = useRef(false)
   const saleRequest = useRef(null)
   const installmentRequest = useRef(null)
@@ -130,6 +133,7 @@ export default function Transactions() {
       product.name.toLowerCase().includes(query) && stockInPcs(product) > 0
     )
   }, [products, q])
+  const visibleProducts = filtered.slice(0, visibleProductCount)
 
   function switchMobileView(showCart) {
     setMobileCartOpen(showCart)
@@ -383,7 +387,10 @@ export default function Transactions() {
               placeholder="Cari Item Barang..."
               aria-label="Cari produk"
               value={q}
-              onChange={(e) => setQ(e.target.value)}
+              onChange={(e) => {
+                setQ(e.target.value)
+                setVisibleProductCount(PRODUCT_BATCH_SIZE)
+              }}
             />
             {q && (
               <button
@@ -393,6 +400,7 @@ export default function Transactions() {
                 title="Hapus pencarian"
                 onClick={() => {
                   setQ('')
+                  setVisibleProductCount(PRODUCT_BATCH_SIZE)
                   productSearchRef.current?.focus()
                 }}>
                 <Icon name="close" size={16} />
@@ -401,7 +409,7 @@ export default function Transactions() {
           </div>
           <div className="product-grid">
             {filtered.length === 0 && <p className="muted">Tidak ada produk. Tambahkan di menu Stok Barang.</p>}
-            {filtered.map((p, index) => (
+            {visibleProducts.map((p, index) => (
               <article
                 key={p.id}
                 className="product-card"
@@ -474,6 +482,19 @@ export default function Transactions() {
               </article>
             ))}
           </div>
+          {filtered.length > 0 && (
+            <div className="product-grid-pagination">
+              <span className="muted">Menampilkan {visibleProducts.length} dari {filtered.length} produk</span>
+              {visibleProducts.length < filtered.length && (
+                <button
+                  className="btn"
+                  type="button"
+                  onClick={() => setVisibleProductCount((count) => count + PRODUCT_BATCH_SIZE)}>
+                  Tampilkan {Math.min(PRODUCT_BATCH_SIZE, filtered.length - visibleProducts.length)} produk lagi
+                </button>
+              )}
+            </div>
+          )}
         </div>
 
         <div className="card cart">
