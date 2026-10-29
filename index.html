@@ -8,10 +8,41 @@
     <link rel="icon" type="image/png" sizes="192x192" href="%BASE_URL%voltker-icon-192.png" />
     <link rel="apple-touch-icon" sizes="180x180" href="%BASE_URL%voltker-icon-180.png" />
     <link rel="manifest" href="%BASE_URL%manifest.webmanifest" />
+    <style>
+      html, body, #root { min-height: 100%; margin: 0; }
+      .app-startup {
+        display: grid;
+        min-height: 100vh;
+        min-height: 100dvh;
+        place-content: center;
+        justify-items: center;
+        gap: 14px;
+        background: #343434;
+        color: #fffaf3;
+        font: 600 14px system-ui, sans-serif;
+      }
+      .app-startup-spinner {
+        width: 28px;
+        height: 28px;
+        border: 3px solid rgba(255, 250, 243, .25);
+        border-top-color: #fffaf3;
+        border-radius: 50%;
+        animation: app-startup-spin .8s linear infinite;
+      }
+      @keyframes app-startup-spin { to { transform: rotate(360deg); } }
+      @media (prefers-reduced-motion: reduce) {
+        .app-startup-spinner { animation-duration: 2s; }
+      }
+    </style>
     <title>VOLTKER — Toko Tas</title>
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root">
+      <div class="app-startup" role="status" aria-live="polite">
+        <span class="app-startup-spinner" aria-hidden="true"></span>
+        <span>Memuat VOLTKER...</span>
+      </div>
+    </div>
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>
