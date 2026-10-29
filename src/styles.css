@@ -1739,7 +1739,8 @@ label { display: block; margin-bottom: 6px; color: var(--muted); font-size: 11px
   .finance-ledger-table { display: block; width: 100%; min-width: 0; table-layout: fixed; font-size: 10px; }
   .finance-ledger-table thead,
   .finance-ledger-table tbody { display: block; width: 100%; }
-  .finance-ledger-table tr { display: flex; width: 100%; }
+  .finance-ledger-table tbody tr { display: flex; width: 100%; min-height: 58px; align-items: center; }
+  .finance-ledger-table thead tr { display: flex; width: 100%; }
   .finance-ledger-table th,
   .finance-ledger-table td { display: block; box-sizing: border-box; min-width: 0; padding: 7px 2px; font-size: 10px; letter-spacing: 0; overflow-wrap: anywhere; }
   .finance-ledger-table th:nth-child(n),
