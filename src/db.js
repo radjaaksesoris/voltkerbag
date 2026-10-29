@@ -754,6 +754,14 @@ export function getProductImageUrl(path) {
   return data.publicUrl
 }
 
+export function getProductThumbnailUrl(path) {
+  if (!path) return ''
+  const { data } = getClient().storage.from('product-images').getPublicUrl(path, {
+    transform: { width: 320, height: 320, resize: 'contain', quality: 72 }
+  })
+  return data.publicUrl
+}
+
 export async function remove(store, id) {
   if (store === 'categories' || store === 'units') {
     const rpc = store === 'categories' ? 'delete_product_category' : 'delete_product_unit'

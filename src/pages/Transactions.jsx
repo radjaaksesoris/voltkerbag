@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { getAll, getProductImageUrl, getTransactionSummary, completeSale, recordTransactionPayment, onRefresh, requestPageRefresh } from '../db'
+import { getAll, getProductImageUrl, getProductThumbnailUrl, getTransactionSummary, completeSale, recordTransactionPayment, onRefresh, requestPageRefresh } from '../db'
 import { rupiah } from '../format'
 import ReceiptPreview from '../components/ReceiptPreview'
 import Icon from '../components/Icon.jsx'
@@ -420,12 +420,17 @@ export default function Transactions() {
                     {p.image_path ? (
                       <img
                         className="product-card-image"
-                        src={getProductImageUrl(p.image_path)}
+                        src={getProductThumbnailUrl(p.image_path)}
+                        onError={(event) => {
+                          const image = event.currentTarget
+                          const originalUrl = getProductImageUrl(p.image_path)
+                          if (image.src !== originalUrl) image.src = originalUrl
+                        }}
                         width="48"
                         height="48"
                         alt=""
-                        loading={index < 4 ? 'eager' : 'lazy'}
-                        fetchPriority={index < 2 ? 'high' : 'auto'}
+                        loading={index < 8 ? 'eager' : 'lazy'}
+                        fetchPriority={index < 4 ? 'high' : 'auto'}
                         decoding="async"
                       />
                     ) : (
