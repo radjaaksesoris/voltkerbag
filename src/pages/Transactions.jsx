@@ -15,6 +15,7 @@ import { downloadInvoiceJpeg } from '../invoiceJpeg'
 import { isSafeRupiahAmount } from '../money'
 
 const PRODUCT_BATCH_SIZE = 20
+const PRODUCT_NAME_COLLATOR = new Intl.Collator('id', { numeric: true, sensitivity: 'base' })
 
 export default function Transactions() {
   const [products, setProducts] = useState([])
@@ -129,9 +130,9 @@ export default function Transactions() {
 
   const filtered = useMemo(() => {
     const query = q.toLowerCase()
-    return products.filter((product) =>
-      product.name.toLowerCase().includes(query) && stockInPcs(product) > 0
-    )
+    return products
+      .filter((product) => product.name.toLowerCase().includes(query) && stockInPcs(product) > 0)
+      .sort((left, right) => PRODUCT_NAME_COLLATOR.compare(left.name, right.name))
   }, [products, q])
   const visibleProducts = filtered.slice(0, visibleProductCount)
 
