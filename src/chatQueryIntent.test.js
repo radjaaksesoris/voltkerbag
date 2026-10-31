@@ -10,6 +10,16 @@ test('routes simple stock questions directly to the stock query', () => {
   })
 })
 
+test('routes HPP and modal questions directly to the stock query with costs enabled', () => {
+  for (const question of ['berapa harga HPP Aventador', 'modal aventador', 'harga pokok aventador']) {
+    assert.deepEqual(resolveFastQuery(question), {
+      kind: 'query',
+      query: 'stock',
+      args: { product: 'aventador', includeCost: true }
+    })
+  }
+})
+
 test('keeps product name words while removing generic stock wording', () => {
   assert.deepEqual(resolveFastQuery('cek stok tas ransel sekarang'), {
     kind: 'query',

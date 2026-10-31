@@ -125,6 +125,9 @@ function formatStockQuery(product) {
     stock: stockLabel(product),
     stock_pcs: stockInPcs(product),
     average_cost: Number(product.cost) || 0,
+    hpp: Object.fromEntries(
+      saleUnits(product.unit || 'pcs').map((unit) => [unit, (Number(product.cost) || 0) * unitFactor(unit)])
+    ),
     sale_prices: Object.fromEntries(
       saleUnits(product.unit || 'pcs').map((unit) => [unit, saleUnitPrice(product, unit)])
     )
@@ -140,7 +143,12 @@ export async function queryStore(intent, args = {}) {
       .sort((left, right) => PRODUCT_NAME_COLLATOR.compare(left.name, right.name))
     return {
       title: 'Data produk dan stok',
-      data: { total_products: products.length, matches: matches.slice(0, 40).map(formatStockQuery), truncated: matches.length > 40 }
+      data: {
+        total_products: products.length,
+        matches: matches.slice(0, 40).map(formatStockQuery),
+        truncated: matches.length > 40,
+        include_cost: args.includeCost === true
+      }
     }
   }
 

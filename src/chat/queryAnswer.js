@@ -21,7 +21,14 @@ function summarizeStock(data) {
     const prices = Object.entries(product.sale_prices || {})
       .filter(([, price]) => Number(price) > 0)
       .map(([unit, price]) => rupiah(price) + '/' + unit)
+    const costs = Object.entries(product.hpp || {})
+      .filter(([, cost]) => Number(cost) > 0)
+      .map(([unit, cost]) => rupiah(cost) + '/' + unit)
+    const costText = data.include_cost && costs.length
+      ? ' · HPP ' + costs.join(', ')
+      : ''
     return product.name + ': ' + product.stock +
+      costText +
       (prices.length ? ' · Harga jual ' + prices.join(', ') : '')
   })
   if (data.truncated || matches.length > 10) lines.push('Masih ada produk lainnya; buka rincian data untuk daftar lengkap.')

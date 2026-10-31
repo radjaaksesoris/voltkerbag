@@ -17,6 +17,20 @@ test('formats stock matches and sale prices without an AI summary request', () =
   assert.match(answer, /Rp\s?1\.200\.000\/lusin/)
 })
 
+test('includes HPP per sale unit for direct cost questions', () => {
+  const answer = formatQueryAnswer('stock', {
+    include_cost: true,
+    matches: [{
+      name: 'Aventador',
+      stock: '20 lusin',
+      hpp: { pcs: 10_000, lusin: 120_000 },
+      sale_prices: {}
+    }]
+  })
+
+  assert.match(answer, /HPP Rp\s?10\.000\/pcs, Rp\s?120\.000\/lusin/)
+})
+
 test('reports current customer debt totals and balances', () => {
   const answer = formatQueryAnswer('debts', {
     total_debt: 250_000,
