@@ -366,6 +366,7 @@ export async function queryStore(intent, args = {}) {
     return {
       title: range.from === range.to ? 'Ringkasan penjualan ' + range.from : 'Ringkasan penjualan',
       data: {
+        date_range: range,
         transaction_count: summary.transaction_count,
         sales_total: summary.total,
         gross_profit: dashboard.gross_profit,

@@ -198,6 +198,7 @@ test('answers purchase history, catalog counts, and customer contact questions',
 
 test('reports sales and finance metrics from query data', () => {
   const answer = formatQueryAnswer('daily_summary', {
+    date_range: { from: '2026-10-01', to: '2026-10-31' },
     transaction_count: 2,
     sales_total: 500_000,
     gross_profit: 100_000,
@@ -207,6 +208,7 @@ test('reports sales and finance metrics from query data', () => {
   })
 
   assert.match(answer, /Transaksi: 2/)
+  assert.match(answer, /Periode 1 Oktober 2026 sampai 31 Oktober 2026/)
   assert.match(answer, /Total penjualan: Rp\s?500\.000/)
   assert.match(answer, /Laba kotor: Rp\s?100\.000/)
   assert.match(formatQueryAnswer('finance_summary', {

@@ -1,3 +1,5 @@
+export const DASHBOARD_DATE_RANGE_STORAGE_KEY = 'voltker.dashboard.date-range'
+
 export function localDateValue(value) {
   if (!value) return ''
   const date = new Date(value)
@@ -6,6 +8,35 @@ export function localDateValue(value) {
   const month = String(date.getMonth() + 1).padStart(2, '0')
   const day = String(date.getDate()).padStart(2, '0')
   return `${year}-${month}-${day}`
+}
+
+export function readDashboardDateRange(storage = globalThis.localStorage) {
+  if (!storage) return null
+  try {
+    const saved = storage.getItem(DASHBOARD_DATE_RANGE_STORAGE_KEY)
+    if (!saved) return null
+    const range = JSON.parse(saved)
+    if (typeof range?.from !== 'string' || typeof range?.to !== 'string') {
+      throw new Error('Rentang tanggal tersimpan tidak valid.')
+    }
+    dateRangeTimestamps(range)
+    return range
+  } catch (error) {
+    console.error('Gagal membaca filter tanggal Rekap Harian:', error)
+    return null
+  }
+}
+
+export function saveDashboardDateRange(range, storage = globalThis.localStorage) {
+  if (!storage) return false
+  try {
+    dateRangeTimestamps(range)
+    storage.setItem(DASHBOARD_DATE_RANGE_STORAGE_KEY, JSON.stringify(range))
+    return true
+  } catch (error) {
+    console.error('Gagal menyimpan filter tanggal Rekap Harian:', error)
+    return false
+  }
 }
 
 export function hasDateRange(range) {

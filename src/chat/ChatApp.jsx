@@ -19,6 +19,7 @@ import {
 import { resolveDirectQuery, resolveFallbackQuery } from './queryIntent.js'
 import { clearRequestedAppMode, getRequestedAppMode } from '../appMode.js'
 import { stockEntryUnit } from '../productUnits.js'
+import { readDashboardDateRange } from '../dateFilter.js'
 
 function messageId() {
   return crypto.randomUUID()
@@ -344,6 +345,19 @@ export default function ChatApp() {
         if (fallbackQuery) {
           plan = fallbackQuery
           setProcessingStage('AI belum memahami pertanyaan; mencari data langsung...')
+        }
+      }
+
+      if (plan.kind === 'query' && [
+        'daily_summary', 'sales_summary', 'finance_summary', 'cashbook',
+        'transactions', 'purchases', 'product_performance'
+      ].includes(plan.query) && !plan.args?.period && !plan.args?.from && !plan.args?.to) {
+        const activeDateRange = readDashboardDateRange()
+        if (activeDateRange && (activeDateRange.from || activeDateRange.to)) {
+          plan = {
+            ...plan,
+            args: { ...plan.args, ...activeDateRange, useDashboardDateFilter: true }
+          }
         }
       }
 

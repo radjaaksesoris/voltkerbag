@@ -12,6 +12,13 @@ function date(value) {
   return Number.isNaN(parsed.getTime()) ? String(value) : parsed.toLocaleDateString('id-ID')
 }
 
+function formatDate(value) {
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value || '')
+  if (!match) return value || ''
+  return new Date(Number(match[1]), Number(match[2]) - 1, Number(match[3]))
+    .toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })
+}
+
 function dateTime(value) {
   if (!value) return '-'
   const parsed = new Date(value)
@@ -191,7 +198,12 @@ export function formatQueryAnswer(intent, data = {}) {
   }
 
   if (intent === 'daily_summary' || intent === 'sales_summary') {
+    const dateRange = data.date_range
+    const periodLabel = dateRange?.from || dateRange?.to
+      ? 'Periode ' + [dateRange.from, dateRange.to].filter(Boolean).map(formatDate).join(' sampai ')
+      : ''
     return [
+      ...(periodLabel ? [periodLabel] : []),
       'Transaksi: ' + (Number(data.transaction_count) || 0),
       'Total penjualan: ' + rupiah(data.sales_total),
       'Laba kotor: ' + rupiah(data.gross_profit),

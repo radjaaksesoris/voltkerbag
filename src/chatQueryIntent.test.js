@@ -165,6 +165,11 @@ test('routes cashbook details and pending expedition costs to ledger queries', (
 })
 
 test('falls back to supported sales, finance, transaction, catalog, and purchase queries', () => {
+  assert.deepEqual(resolveDirectQuery('berapa omzet sampai saat ini'), {
+    kind: 'query',
+    query: 'daily_summary',
+    args: {}
+  })
   assert.deepEqual(resolveFastQuery('ringkasan penjualan hari ini'), {
     kind: 'query',
     query: 'daily_summary',

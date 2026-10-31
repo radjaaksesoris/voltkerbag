@@ -2,7 +2,13 @@ import { useEffect, useRef, useState } from 'react'
 import { getAll, getDashboardData, onRefresh, requestPageRefresh } from '../db'
 import { rupiah, dateOnly, dateTime } from '../format'
 import DateRangeFilter from '../components/DateRangeFilter'
-import { dateRangeTimestamps, hasDateRange, localDateValue } from '../dateFilter'
+import {
+  dateRangeTimestamps,
+  hasDateRange,
+  localDateValue,
+  readDashboardDateRange,
+  saveDashboardDateRange
+} from '../dateFilter'
 import TransactionDetails from '../components/TransactionDetails'
 import { getInvoiceNumber } from '../invoice'
 import Icon from '../components/Icon.jsx'
@@ -20,6 +26,8 @@ export default function Dashboard() {
     inventory: { product_count: 0, low_stock_count: 0, total_asset: 0 }
   })
   const [dateRange, setDateRange] = useState(() => {
+    const savedRange = readDashboardDateRange()
+    if (savedRange) return savedRange
     const today = localDateValue(new Date())
     return { from: today, to: today }
   })
@@ -143,6 +151,7 @@ export default function Dashboard() {
         </div>
         <DateRangeFilter value={dateRange} onChange={(range) => {
           setDateRange(range)
+          saveDashboardDateRange(range)
           setTransactionPage(1)
         }} resetValue={{ from: today, to: today }} resetLabel="Hari ini" />
       </div>
