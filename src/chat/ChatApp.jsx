@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import LoginScreen from '../components/LoginScreen.jsx'
 import SessionControl from '../components/SessionControl.jsx'
+import AppModePicker from '../components/AppModePicker.jsx'
 import Icon from '../components/Icon.jsx'
 import ReceiptPreview from '../components/ReceiptPreview.jsx'
 import { downloadInvoiceJpeg } from '../invoiceJpeg'
@@ -9,6 +10,7 @@ import { executeAction, prepareAction, queryStore } from './chatDomain.js'
 import { requestAssistantPlan } from './assistantApi.js'
 import { formatQueryAnswer } from './queryAnswer.js'
 import { resolveDirectQuery, resolveFallbackQuery } from './queryIntent.js'
+import { clearRequestedAppMode, getRequestedAppMode } from '../appMode.js'
 
 function messageId() {
   return crypto.randomUUID()
@@ -41,6 +43,7 @@ export default function ChatApp() {
   const inputRef = useRef(null)
   const operationLock = useRef(false)
   const hasPendingAction = messages.some((message) => message.draft)
+  const requestedAppMode = getRequestedAppMode()
 
   useEffect(() => {
     let active = true
@@ -64,6 +67,7 @@ export default function ChatApp() {
     if (import.meta.env.VITE_SUPABASE_ANON_KEY) {
       unsubscribe = onAuthStateChange((event, nextSession) => {
         if (event === 'SIGNED_OUT') {
+          clearRequestedAppMode()
           setSession(null)
           setMessages([])
         } else if (nextSession) {
@@ -255,6 +259,19 @@ export default function ChatApp() {
     )
   }
 
+  if (requestedAppMode !== 'chat') {
+    return (
+      <AppModePicker
+        session={session}
+        onSignedOut={() => {
+          clearRequestedAppMode()
+          setSession(null)
+          setMessages([])
+        }}
+      />
+    )
+  }
+
   return (
     <main className="chat-app-shell">
       <header className="chat-topbar">
@@ -266,10 +283,11 @@ export default function ChatApp() {
           </div>
         </div>
         <div className="chat-topbar-actions">
-          <a className="chat-old-app-link" href={import.meta.env.BASE_URL} title="Buka aplikasi VOLTKER lama">
-            Aplikasi lama <Icon name="arrowRight" size={14} />
+          <a className="chat-old-app-link" href={import.meta.env.BASE_URL + '?mode=table'} title="Buka aplikasi VOLTKER tabel">
+            Aplikasi Tabel <Icon name="arrowRight" size={14} />
           </a>
           <SessionControl email={session.user.email} onSignedOut={() => {
+            clearRequestedAppMode()
             setSession(null)
             setMessages([])
           }} />

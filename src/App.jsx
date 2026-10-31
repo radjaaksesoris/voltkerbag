@@ -3,7 +3,9 @@ import LoginScreen from './components/LoginScreen.jsx'
 import SessionControl from './components/SessionControl.jsx'
 import PageErrorBoundary from './components/PageErrorBoundary.jsx'
 import CustomNumpad from './components/CustomNumpad.jsx'
+import AppModePicker from './components/AppModePicker.jsx'
 import Icon from './components/Icon.jsx'
+import { clearRequestedAppMode, getRequestedAppMode } from './appMode.js'
 
 const CHUNK_RELOAD_KEY = 'voltker:chunk-reload-attempted'
 
@@ -64,6 +66,7 @@ export default function App() {
   const [updateReady, setUpdateReady] = useState(false)
   const [applyingUpdate, setApplyingUpdate] = useState(false)
   const currentPage = NAV.find((n) => n.id === page)
+  const requestedAppMode = getRequestedAppMode()
   const contentRef = useRef(null)
   const serviceWorkerRegistration = useRef(null)
 
@@ -174,6 +177,7 @@ export default function App() {
         if (!authListenerInitialized) {
           unsubscribe = onAuthStateChange((event, nextSession) => {
             if (event === 'SIGNED_OUT') {
+              clearRequestedAppMode()
               setSession(null)
               setConnectionError('')
             } else if (nextSession) {
@@ -359,6 +363,18 @@ export default function App() {
     )
   }
 
+  if (requestedAppMode !== 'table') {
+    return (
+      <AppModePicker
+        session={session}
+        onSignedOut={() => {
+          clearRequestedAppMode()
+          setSession(null)
+        }}
+      />
+    )
+  }
+
   return (
     <div className={'app ' + (navHidden ? 'nav-hidden' : '')}>
       <div className="app-background" aria-hidden="true">
@@ -381,7 +397,7 @@ export default function App() {
               <span className="nav-icon"><Icon name={n.icon} size={19} /></span> {n.label}
             </button>
           ))}
-          <a className="nav-item nav-chat-link" href={import.meta.env.BASE_URL + 'chat/'}>
+          <a className="nav-item nav-chat-link" href={import.meta.env.BASE_URL + 'chat/?mode=chat'}>
             <span className="nav-icon"><Icon name="chat" size={19} /></span> VOLTKER Chat
           </a>
         </nav>
@@ -413,11 +429,14 @@ export default function App() {
               <span>Install</span>
             </button>
           )}
-          <a className="btn btn-sm chat-launch-button" href={import.meta.env.BASE_URL + 'chat/'} aria-label="Buka VOLTKER Chat">
+          <a className="btn btn-sm chat-launch-button" href={import.meta.env.BASE_URL + 'chat/?mode=chat'} aria-label="Buka VOLTKER Chat">
             <Icon name="chat" size={16} />
             <span>Chat</span>
           </a>
-          <SessionControl email={session.user.email} onSignedOut={() => setSession(null)} />
+          <SessionControl email={session.user.email} onSignedOut={() => {
+            clearRequestedAppMode()
+            setSession(null)
+          }} />
         </header>
 
         {connectionError && (

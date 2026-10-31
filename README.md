@@ -20,7 +20,7 @@ VOLTKER adalah aplikasi kasir React + Vite dengan Supabase sebagai sumber data u
 - Catatan buku kas yang berasal dari penjualan atau cicilan ditandai otomatis dan tidak dapat dihapus sebagai catatan manual.
 
 ## VOLTKER Chat
-VOLTKER Chat adalah aplikasi chat-only terpisah yang menggunakan akun, tabel, dan aturan keamanan Supabase yang sama dengan aplikasi utama. Aplikasi utama tetap tersedia; buka `/chat/` di deployment GitHub Pages atau `http://localhost:5173/chat/` saat menjalankan Vite.
+Setelah login, pilih **APLIKASI TABEL** untuk membuka dashboard standar atau **APLIKASI CHAT** untuk bekerja melalui percakapan. Pilihan yang sama tersedia di desktop dan mobile, dan pengguna dapat berpindah aplikasi melalui tautan di header. Untuk membuka halaman chat secara langsung, gunakan `/chat/?mode=chat` pada deployment GitHub Pages atau `http://localhost:5173/chat/?mode=chat` saat menjalankan Vite. VOLTKER Chat adalah aplikasi terpisah yang menggunakan akun, tabel, dan aturan keamanan Supabase yang sama dengan aplikasi utama.
 
 Chat dapat mencari stok/produk, pelanggan dan hutangnya, transaksi, pembelian, penjualan, performa produk, serta ringkasan buku kas; menjalankan penjualan tunai/kredit, penambahan stok per batch, pembayaran hutang, pencatatan hutang lama, pengeluaran/modal, pembelian, pengelolaan produk dan master data; membuat/memulihkan backup; dan mereset data toko. Hasil transaksi dapat dicetak atau diunduh sebagai faktur JPEG. Aksi perubahan ditampilkan sebagai pratinjau dan harus dikonfirmasi; reset juga meminta konfirmasi dengan mengetik `HAPUS DATA`. Foto produk dan file backup dapat dilampirkan lewat tombol lampiran chat.
 
