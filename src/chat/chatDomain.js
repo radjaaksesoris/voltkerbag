@@ -2,6 +2,7 @@ import { getAll, getDashboardData, getFinanceData, getPurchaseEntries, getTransa
 import { formatPurchaseNote } from '../purchaseNote'
 import { dateRangeTimestamps, localDateValue } from '../dateFilter'
 import { isSafeRupiahAmount } from '../money'
+import { filterCustomerDebts } from './customerDebt'
 import {
   purchaseCostPerPiece,
   saleMarkupPrice,
@@ -155,10 +156,20 @@ export async function queryStore(intent, args = {}) {
   if (intent === 'debts' || intent === 'finance_summary') {
     const range = intent === 'debts' ? { from: null, to: null } : dateRangeTimestamps(dateRangeForQuery(args))
     const finance = await getFinanceData({ ...range, page: 1, pageSize: PAGE_SIZE })
+    const customers = intent === 'debts'
+      ? filterCustomerDebts(finance.credit_balances, args.customer)
+      : finance.credit_balances
+    const debtTotal = args.customer
+      ? customers.reduce((total, customer) => total + Number(customer.balance_due || 0), 0)
+      : finance.total_credit
     return {
       title: intent === 'debts' ? 'Saldo hutang pelanggan saat ini' : 'Ringkasan keuangan',
       data: intent === 'debts'
-        ? { total_debt: finance.total_credit, customers: finance.credit_balances }
+        ? {
+            total_debt: debtTotal,
+            customers,
+            ...(args.customer ? { searched_customer: args.customer } : {})
+          }
         : {
             income: finance.income,
             expense: finance.expense,

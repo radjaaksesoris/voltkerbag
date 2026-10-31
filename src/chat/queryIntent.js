@@ -10,6 +10,16 @@ const STOCK_ACTION_TERMS = new Set([
   'setel', 'hapus', 'edit', 'perbarui', 'restok'
 ])
 const PERFORMANCE_TERMS = new Set(['laku', 'laris', 'terjual', 'performa', 'penjualan'])
+const DEBT_TERMS = new Set(['hutang', 'hutangnya', 'piutang', 'piutangnya'])
+const DEBT_QUESTION_TERMS = new Set([
+  'berapa', 'sisa', 'sisanya', 'tersisa', 'total', 'jumlah', 'cek', 'lihat',
+  'cari', 'tampilkan', 'apakah', 'tolong', 'dong', 'ada', 'siapa', 'pelanggan',
+  'customer', 'yang', 'masih', 'punya', 'milik', 'atas', 'nama', 'saja'
+])
+const DEBT_ACTION_TERMS = new Set([
+  'bayar', 'bayarkan', 'membayar', 'lunasi', 'melunasi', 'catat', 'tambahkan',
+  'tambah', 'ubah', 'hapus', 'kurangi', 'setor'
+])
 
 export function resolveFastQuery(message) {
   const words = String(message || '')
@@ -21,6 +31,18 @@ export function resolveFastQuery(message) {
     .filter(Boolean)
 
   if (words.some((word) => STOCK_ACTION_TERMS.has(word) || PERFORMANCE_TERMS.has(word))) return null
+
+  if (words.some((word) => DEBT_TERMS.has(word))) {
+    if (words.some((word) => DEBT_ACTION_TERMS.has(word))) return null
+    const customer = words
+      .filter((word) => !DEBT_TERMS.has(word) && !DEBT_QUESTION_TERMS.has(word))
+      .join(' ')
+    return {
+      kind: 'query',
+      query: 'debts',
+      args: customer ? { customer } : {}
+    }
+  }
 
   const asksStock = words.some((word) => STOCK_TERMS.has(word))
   const asksCost = words.includes('hpp') || words.includes('modal')

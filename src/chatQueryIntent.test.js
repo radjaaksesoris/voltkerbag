@@ -53,5 +53,23 @@ test('does not route stock changes or product performance through a read query',
 
 test('leaves other questions for the assistant', () => {
   assert.equal(resolveFastQuery('berapa harga tas aventador'), null)
-  assert.equal(resolveFastQuery('siapa yang masih punya hutang'), null)
+})
+
+test('routes customer debt questions to the debt query with an optional customer name', () => {
+  assert.deepEqual(resolveFastQuery('berapa hutang andri'), {
+    kind: 'query',
+    query: 'debts',
+    args: { customer: 'andri' }
+  })
+  assert.deepEqual(resolveFastQuery('berapa sisa hutang pelanggan Andri saja'), {
+    kind: 'query',
+    query: 'debts',
+    args: { customer: 'andri' }
+  })
+  assert.deepEqual(resolveFastQuery('berapa hutang pelanggan'), {
+    kind: 'query',
+    query: 'debts',
+    args: {}
+  })
+  assert.equal(resolveFastQuery('bayar hutang Andri'), null)
 })

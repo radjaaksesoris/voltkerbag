@@ -37,6 +37,12 @@ function summarizeStock(data) {
 
 function summarizeDebts(data) {
   const customers = (data.customers || []).filter((customer) => Number(customer.balance_due) > 0)
+  if (data.searched_customer) {
+    if (!customers.length) return 'Hutang pelanggan "' + data.searched_customer + '" tidak ditemukan atau tidak memiliki hutang berjalan.'
+    return customers.map((customer) =>
+      'Hutang ' + customer.customer_name + ': ' + rupiah(customer.balance_due)
+    ).join('\n')
+  }
   if (!customers.length) return 'Tidak ada hutang pelanggan yang masih berjalan.'
   return [
     'Total hutang pelanggan: ' + rupiah(data.total_debt),

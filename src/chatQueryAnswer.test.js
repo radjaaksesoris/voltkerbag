@@ -41,6 +41,24 @@ test('reports current customer debt totals and balances', () => {
   assert.match(answer, /Andi: Rp\s?250\.000/)
 })
 
+test('shows only the requested customer debt without the store-wide total', () => {
+  const answer = formatQueryAnswer('debts', {
+    total_debt: 768_750,
+    searched_customer: 'andri',
+    customers: [{ customer_name: 'Andri', balance_due: 615_000 }]
+  })
+
+  assert.equal(answer, 'Hutang Andri: Rp\u00a0615.000')
+  assert.doesNotMatch(answer, /Agus|Total hutang pelanggan/)
+})
+
+test('reports when a requested customer has no matching outstanding debt', () => {
+  assert.equal(formatQueryAnswer('debts', {
+    searched_customer: 'rudi',
+    customers: []
+  }), 'Hutang pelanggan "rudi" tidak ditemukan atau tidak memiliki hutang berjalan.')
+})
+
 test('formats an empty transaction result clearly', () => {
   assert.equal(formatQueryAnswer('transactions', { transactions: [] }), 'Tidak ada transaksi yang cocok.')
 })
