@@ -1,6 +1,30 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { validateAssistantPlan } from './chat/planValidation.js'
+import { getMissingProductDetails, validateAssistantPlan } from './chat/planValidation.js'
+
+test('lists all missing details needed to create a product', () => {
+  assert.deepEqual(getMissingProductDetails({ name: 'AIGNER' }), [
+    'satuan produk (pcs, lusin, atau satuan custom yang sudah tersedia)',
+    'jumlah stok awal dan satuannya',
+    'harga modal per satuan produk',
+    'harga jual (PCS dan lusin untuk satuan standar, atau per satuan custom)'
+  ])
+  assert.deepEqual(getMissingProductDetails({
+    name: 'Tas',
+    unit: 'pcs',
+    stock_quantity: 2,
+    unit_cost: 600_000,
+    sale_price_pcs: 75_000
+  }), ['harga jual lusin'])
+  assert.deepEqual(getMissingProductDetails({
+    name: 'Tas',
+    unit: 'pcs',
+    stock_quantity: 2,
+    unit_cost: 600_000,
+    sale_price_pcs: 75_000,
+    sale_price_lusin: 800_000
+  }), [])
+})
 
 test('accepts a supported query plan with structured arguments', () => {
   const plan = validateAssistantPlan({

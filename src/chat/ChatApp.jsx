@@ -8,6 +8,7 @@ import { onAuthStateChange, getAuthSession, verifyAuthSession } from '../supabas
 import { executeAction, prepareAction, queryStore } from './chatDomain.js'
 import { requestAssistantPlan } from './assistantApi.js'
 import { formatQueryAnswer } from './queryAnswer.js'
+import { getMissingProductDetails } from './planValidation.js'
 import { resolveDirectQuery, resolveFallbackQuery } from './queryIntent.js'
 import { clearRequestedAppMode, getRequestedAppMode } from '../appMode.js'
 
@@ -30,6 +31,20 @@ function renderChatText(text) {
       ? <strong key={index}>{part}</strong>
       : part
   )
+}
+
+function getIncompleteNewProductName(text) {
+  if (!/\b(?:buat|bikin|tambah|tambahkan|daftarkan|input)\b.*\b(?:produk|barang|stok)\s+baru\b/i.test(text)
+    || /\d/.test(text)) return ''
+  return text.match(/\bnama(?:nya)?\s+([^,.!?]+)/i)?.[1]?.trim() || ''
+}
+
+function newProductChecklist(name) {
+  return 'Untuk membuat produk baru' + (name ? ' "' + name + '"' : '') +
+    ', mohon kirim satuan produk (pcs/lusin atau satuan custom yang sudah tersedia), jumlah stok awal ' +
+    '(untuk pcs/lusin dalam lusin), harga modal (per lusin untuk pcs/lusin), dan harga jual ' +
+    '(harga PCS serta lusin, atau harga per satuan custom). Kategori boleh dikosongkan dan akan memakai Umum. ' +
+    'Foto opsional; lampirkan melalui tombol + bersama detailnya.'
 }
 
 export default function ChatApp() {
@@ -139,6 +154,12 @@ export default function ChatApp() {
     setBusy(true)
 
     try {
+      const incompleteProductName = getIncompleteNewProductName(text)
+      if (incompleteProductName) {
+        appendMessage(setMessages, { role: 'assistant', text: newProductChecklist(incompleteProductName) })
+        return
+      }
+
       const directQuery = resolveDirectQuery(text, Boolean(file))
       let plan
       let fallbackQuery = null
@@ -180,6 +201,18 @@ export default function ChatApp() {
           invoices: plan.query === 'transactions' ? result.data.transactions : null
         })
         return
+      }
+
+      if (plan.action === 'add_product') {
+        const missing = getMissingProductDetails(plan.args)
+        if (missing.length) {
+          appendMessage(setMessages, {
+            role: 'assistant',
+            text: 'Untuk membuat produk baru, mohon lengkapi: ' + missing.join('; ') +
+              '. Kategori boleh dikosongkan (akan memakai Umum). Foto produk opsional; lampirkan melalui tombol + bersama detailnya.'
+          })
+          return
+        }
       }
 
       setProcessingStage('Menyiapkan pratinjau tindakan...')

@@ -12,6 +12,37 @@ export const ACTION_INTENTS = new Set([
   'add_category', 'delete_category', 'add_unit', 'delete_unit', 'backup', 'restore_backup', 'reset_store'
 ])
 
+function hasValue(value) {
+  return value !== undefined && value !== null
+    && !(typeof value === 'string' && value.trim() === '')
+}
+
+export function getMissingProductDetails(args = {}) {
+  const missing = []
+  const unit = String(args.unit || '').trim().toLocaleLowerCase('id-ID')
+  const standardUnit = ['pcs', 'lusin'].includes(unit)
+  if (!String(args.name || '').trim()) missing.push('nama produk')
+  if (!unit) missing.push('satuan produk (pcs, lusin, atau satuan custom yang sudah tersedia)')
+  if (!hasValue(args.stock_quantity)) {
+    missing.push(standardUnit ? 'jumlah stok awal dalam lusin' : 'jumlah stok awal dan satuannya')
+  }
+  if (!hasValue(args.unit_cost)) {
+    missing.push(standardUnit ? 'harga modal per lusin' : 'harga modal per satuan produk')
+  }
+  if (standardUnit) {
+    for (const saleUnit of ['pcs', 'lusin']) {
+      if (!hasValue(args['sale_price_' + saleUnit]) && !hasValue(args['sale_markup_' + saleUnit + '_pct'])) {
+        missing.push('harga jual ' + saleUnit)
+      }
+    }
+  } else if (!unit) {
+    missing.push('harga jual (PCS dan lusin untuk satuan standar, atau per satuan custom)')
+  } else if (unit && !hasValue(args.sale_price)) {
+    missing.push('harga jual per ' + unit)
+  }
+  return missing
+}
+
 export function validateAssistantPlan(data) {
   if (!data || typeof data !== 'object' || Array.isArray(data)
     || !['reply', 'query', 'action'].includes(data.kind)

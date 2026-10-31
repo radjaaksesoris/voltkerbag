@@ -12,6 +12,7 @@ import {
   stockLabel,
   stockEntryUnit,
   isWholeStockQuantity,
+  saleMarkupPercentage,
   unitFactor,
   quantityToPcs
 } from '../productUnits'
@@ -815,28 +816,44 @@ export async function prepareAction(action, args = {}, attachment = null) {
     }
     const stockQuantity = Number(args.stock_quantity ?? 0)
     if (!Number.isFinite(stockQuantity) || stockQuantity < 0) throw new Error('Stok awal harus nol atau lebih.')
-    const markupPcs = Number(args.sale_markup_pcs_pct)
-    const markupLusin = Number(args.sale_markup_lusin_pct)
     const standard = saleUnits(unit).length === 2
     if (stockQuantity > 0 && !isWholeStockQuantity(stockQuantity, stockEntryUnit(unit))) {
       throw new Error('Stok awal harus menghasilkan jumlah PCS utuh.')
     }
     const cost = amount(args.unit_cost, 'Harga modal', !standard)
     const price = standard ? null : amount(args.sale_price, 'Harga jual')
-    if (standard && (!Number.isFinite(markupPcs) || !Number.isFinite(markupLusin))) {
-      throw new Error('Markup PCS dan LUSIN harus disebutkan untuk produk satuan standar.')
+    if (standard && ['pcs', 'lusin'].some((saleUnit) =>
+      args['sale_price_' + saleUnit] == null && args['sale_markup_' + saleUnit + '_pct'] == null
+    )) {
+      throw new Error('Harga jual PCS dan LUSIN perlu disebutkan.')
     }
     const stockUnit = stockEntryUnit(unit)
     const stockPcs = quantityToPcs(stockQuantity, stockUnit)
     if (!Number.isSafeInteger(stockPcs) || stockPcs > 2147483647) throw new Error('Stok awal melebihi batas penyimpanan.')
     const costPerPiece = purchaseCostPerPiece(unit, cost)
-    const prices = standard ? {
-      pcs: saleMarkupPrice(costPerPiece, 'pcs', markupPcs),
-      lusin: saleMarkupPrice(costPerPiece, 'lusin', markupLusin)
-    } : { [unit]: price }
+    const prices = standard
+      ? Object.fromEntries(['pcs', 'lusin'].map((saleUnit) => {
+          const directPrice = args['sale_price_' + saleUnit]
+          const rawMarkup = args['sale_markup_' + saleUnit + '_pct']
+          const hasDirectPrice = directPrice != null && directPrice !== ''
+          if (!hasDirectPrice && (rawMarkup == null || rawMarkup === '' || !Number.isFinite(Number(rawMarkup)))) {
+            throw new Error('Harga jual atau markup ' + saleUnit + ' harus disebutkan.')
+          }
+          const markup = Number(rawMarkup)
+          return [saleUnit, hasDirectPrice
+            ? amount(directPrice, 'Harga jual ' + saleUnit)
+            : saleMarkupPrice(costPerPiece, saleUnit, markup)]
+        }))
+      : { [unit]: price }
     for (const [priceUnit, priceAmount] of Object.entries(prices)) {
       if (!isSafeRupiahAmount(priceAmount)) throw new Error('Harga jual ' + priceUnit + ' harus lebih dari Rp0.')
     }
+    const markupPcs = standard
+      ? saleMarkupPercentage(prices.pcs, costPerPiece, 'pcs')
+      : null
+    const markupLusin = standard
+      ? saleMarkupPercentage(prices.lusin, costPerPiece, 'lusin')
+      : null
     return {
       action, title: 'Tambah produk ' + name,
       details: [
