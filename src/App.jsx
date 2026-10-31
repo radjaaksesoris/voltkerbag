@@ -381,6 +381,9 @@ export default function App() {
               <span className="nav-icon"><Icon name={n.icon} size={19} /></span> {n.label}
             </button>
           ))}
+          <a className="nav-item nav-chat-link" href={import.meta.env.BASE_URL + 'chat/'}>
+            <span className="nav-icon"><Icon name="chat" size={19} /></span> VOLTKER Chat
+          </a>
         </nav>
         <div className="sidebar-foot">
           <span className="dot-online"></span> Online · Database server
@@ -410,6 +413,10 @@ export default function App() {
               <span>Install</span>
             </button>
           )}
+          <a className="btn btn-sm chat-launch-button" href={import.meta.env.BASE_URL + 'chat/'} aria-label="Buka VOLTKER Chat">
+            <Icon name="chat" size={16} />
+            <span>Chat</span>
+          </a>
           <SessionControl email={session.user.email} onSignedOut={() => setSession(null)} />
         </header>
 

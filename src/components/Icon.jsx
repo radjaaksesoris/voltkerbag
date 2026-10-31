@@ -23,7 +23,8 @@ const ICONS = {
   check: <path d="m5 12 4 4L19 6" />,
   arrowUp: <><path d="M12 19V5" /><path d="m6 11 6-6 6 6" /></>,
   arrowRight: <><path d="M5 12h14" /><path d="m13 6 6 6-6 6" /></>,
-  image: <><rect x="3" y="4" width="18" height="16" rx="2" /><circle cx="8.5" cy="9" r="1.5" /><path d="m21 15-5-5L5 20" /></>
+  image: <><rect x="3" y="4" width="18" height="16" rx="2" /><circle cx="8.5" cy="9" r="1.5" /><path d="m21 15-5-5L5 20" /></>,
+  chat: <><path d="M20 11.5a7.5 7.5 0 0 1-7.5 7.5H6l-3 2v-6a7.5 7.5 0 1 1 17-3.5Z" /><path d="M8 11h8M8 14h5" /></>
 }
 
 export default function Icon({ name, size = 20, className = '' }) {
