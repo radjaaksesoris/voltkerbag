@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
 import LoginScreen from '../components/LoginScreen.jsx'
-import SessionControl from '../components/SessionControl.jsx'
 import AppModePicker from '../components/AppModePicker.jsx'
 import Icon from '../components/Icon.jsx'
 import ReceiptPreview from '../components/ReceiptPreview.jsx'
@@ -276,21 +275,22 @@ export default function ChatApp() {
     <main className="chat-app-shell">
       <header className="chat-topbar">
         <div className="chat-brand">
-          <div className="chat-brand-mark" aria-hidden="true">V</div>
+          <img
+            className="chat-brand-logo"
+            src={import.meta.env.BASE_URL + 'voltker-logo-320.png'}
+            alt="VOLTKER"
+            width="160"
+            height="40"
+          />
           <div>
-            <strong>VOLTKER <span>CHAT</span></strong>
+            <strong>CHAT</strong>
             <small>Asisten operasional toko</small>
           </div>
         </div>
         <div className="chat-topbar-actions">
           <a className="chat-old-app-link" href={import.meta.env.BASE_URL + '?mode=table'} title="Buka aplikasi VOLTKER tabel">
-            Aplikasi Tabel <Icon name="arrowRight" size={14} />
+            APLIKASI TABEL
           </a>
-          <SessionControl email={session.user.email} onSignedOut={() => {
-            clearRequestedAppMode()
-            setSession(null)
-            setMessages([])
-          }} />
         </div>
       </header>
 

@@ -58,6 +58,13 @@ body {
   gap: 12px;
 }
 
+.chat-brand-logo {
+  display: block;
+  width: 140px;
+  height: auto;
+  filter: brightness(0);
+}
+
 .chat-brand-mark,
 .chat-avatar {
   display: grid;
@@ -100,29 +107,24 @@ body {
 
 .chat-old-app-link {
   display: inline-flex;
+  min-height: 36px;
   align-items: center;
-  gap: 6px;
-  color: var(--chat-muted);
-  font-size: 12px;
+  justify-content: center;
+  border: 1px solid var(--chat-accent);
+  border-radius: 8px;
+  background: var(--chat-accent);
+  padding: 0 13px;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 750;
+  letter-spacing: .04em;
   text-decoration: none;
+  transition: border-color .16s ease, background .16s ease;
 }
 
 .chat-old-app-link:hover {
-  color: var(--chat-accent);
-}
-
-.chat-topbar .session-control {
-  padding: 0;
-}
-
-.chat-topbar .session-online {
-  display: none;
-}
-
-.chat-topbar .session-email {
-  max-width: 180px;
-  color: var(--chat-muted);
-  font-size: 11px;
+  border-color: #5f171c;
+  background: #5f171c;
 }
 
 .chat-connection-banner {
@@ -612,17 +614,27 @@ body {
     gap: 8px;
   }
 
+  .chat-brand-logo {
+    width: 108px;
+  }
+
+  .chat-brand {
+    gap: 8px;
+  }
+
+  .chat-brand strong {
+    font-size: 12px;
+  }
+
+  .chat-brand small {
+    font-size: 9px;
+  }
+
   .chat-old-app-link {
-    font-size: 0;
-  }
-
-  .chat-old-app-link svg {
-    width: 17px;
-    height: 17px;
-  }
-
-  .chat-topbar .session-email {
-    display: none;
+    min-height: 34px;
+    padding: 0 9px;
+    font-size: 9px;
+    letter-spacing: 0;
   }
 
   .chat-workspace {
