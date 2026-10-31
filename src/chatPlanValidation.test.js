@@ -14,6 +14,17 @@ test('accepts a supported query plan with structured arguments', () => {
   assert.deepEqual(plan.args, { customer: 'Nina' })
 })
 
+test('accepts the expanded catalog query plans', () => {
+  for (const query of ['categories', 'units', 'product_performance', 'inventory_summary']) {
+    assert.equal(validateAssistantPlan({
+      kind: 'query',
+      query,
+      message: 'Saya periksa data toko.',
+      args: { sortBy: 'quantity' }
+    }).query, query)
+  }
+})
+
 test('accepts only explicitly supported write actions', () => {
   assert.equal(validateAssistantPlan({
     kind: 'action',

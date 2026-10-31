@@ -1,6 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { resolveFastQuery } from './chat/queryIntent.js'
+import { resolveDirectQuery, resolveFallbackQuery, resolveFastQuery } from './chat/queryIntent.js'
 
 test('routes simple stock questions directly to the stock query', () => {
   assert.deepEqual(resolveFastQuery('berapa stok tas Aventador?'), {
@@ -67,13 +67,21 @@ test('supports listing all stock without a product name', () => {
   })
 })
 
-test('does not route stock changes or product performance through a read query', () => {
+test('does not route stock changes through a read query and recognizes product performance', () => {
   assert.equal(resolveFastQuery('tambahkan stok aventador'), null)
-  assert.equal(resolveFastQuery('produk apa paling laris dan stoknya'), null)
+  assert.deepEqual(resolveFastQuery('produk apa paling laris dan stoknya'), {
+    kind: 'query',
+    query: 'product_performance',
+    args: { sortBy: 'quantity' }
+  })
 })
 
 test('leaves other questions for the assistant', () => {
-  assert.equal(resolveFastQuery('berapa harga tas aventador'), null)
+  assert.deepEqual(resolveFastQuery('berapa harga tas aventador'), {
+    kind: 'query',
+    query: 'stock',
+    args: { product: 'tas aventador' }
+  })
 })
 
 test('routes customer debt questions to the debt query with an optional customer name', () => {
@@ -100,4 +108,79 @@ test('routes customer debt questions to the debt query with an optional customer
     })
   }
   assert.equal(resolveFastQuery('bayar hutang Andri'), null)
+})
+
+test('falls back to supported sales, finance, transaction, catalog, and purchase queries', () => {
+  assert.deepEqual(resolveFastQuery('ringkasan penjualan hari ini'), {
+    kind: 'query',
+    query: 'daily_summary',
+    args: { period: 'hari ini' }
+  })
+  assert.deepEqual(resolveFastQuery('berapa kas bulan ini'), {
+    kind: 'query',
+    query: 'finance_summary',
+    args: { period: 'bulan ini' }
+  })
+  assert.deepEqual(resolveFastQuery('produk paling laris minggu ini'), {
+    kind: 'query',
+    query: 'product_performance',
+    args: { sortBy: 'quantity', period: 'minggu ini' }
+  })
+  assert.deepEqual(resolveFastQuery('riwayat transaksi Andri kemarin'), {
+    kind: 'query',
+    query: 'transactions',
+    args: { customer: 'andri', period: 'kemarin' }
+  })
+  assert.deepEqual(resolveFastQuery('daftar nama vendor'), {
+    kind: 'query',
+    query: 'vendors',
+    args: {}
+  })
+  assert.deepEqual(resolveFastQuery('riwayat pembelian vendor Agus'), {
+    kind: 'query',
+    query: 'purchases',
+    args: { vendor: 'agus' }
+  })
+})
+
+test('uses app query only after AI replies instead of producing a query plan', () => {
+  assert.deepEqual(resolveFallbackQuery('berapa stok Bimo Oval', {
+    kind: 'reply',
+    message: 'Saya tidak memahami pertanyaan.'
+  }), {
+    kind: 'query',
+    query: 'stock',
+    args: { product: 'bimo oval' }
+  })
+
+  assert.equal(resolveFallbackQuery('berapa stok Bimo Oval', {
+    kind: 'query',
+    query: 'stock',
+    args: { product: 'bimo oval' }
+  }), null)
+  assert.equal(resolveFallbackQuery('berapa stok Bimo Oval', { kind: 'reply' }, true), null)
+  assert.equal(resolveFallbackQuery('apa kabar?', { kind: 'reply' }), null)
+})
+
+test('uses direct queries only for clear data questions', () => {
+  assert.deepEqual(resolveDirectQuery('berapa stok Bimo Oval'), {
+    kind: 'query',
+    query: 'stock',
+    args: { product: 'bimo oval' }
+  })
+  assert.deepEqual(resolveDirectQuery('berapa hutang Andri'), {
+    kind: 'query',
+    query: 'debts',
+    args: { customer: 'andri' }
+  })
+  assert.deepEqual(resolveDirectQuery('ringkasan penjualan hari ini'), {
+    kind: 'query',
+    query: 'daily_summary',
+    args: { period: 'hari ini' }
+  })
+
+  assert.equal(resolveDirectQuery('bagaimana strategi agar stok Bimo Oval lebih laris'), null)
+  assert.equal(resolveDirectQuery('berapa harga tas Aventador'), null)
+  assert.equal(resolveDirectQuery('produk apa paling laris dan stoknya'), null)
+  assert.equal(resolveDirectQuery('berapa stok Bimo Oval', true), null)
 })

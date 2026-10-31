@@ -70,6 +70,14 @@ function summarizeTransactions(data) {
 }
 
 export function formatQueryAnswer(intent, data = {}) {
+  if (intent === 'inventory_summary') {
+    return [
+      'Jumlah produk: ' + (Number(data.product_count) || 0),
+      'Produk dengan stok rendah (maksimal 5 satuan utama): ' + (Number(data.low_stock_count) || 0),
+      'Nilai modal seluruh stok: ' + rupiah(data.total_asset)
+    ].join('\n')
+  }
+
   if (intent === 'stock' || intent === 'products') return summarizeStock(data)
   if (intent === 'debts') return summarizeDebts(data)
 
@@ -104,8 +112,14 @@ export function formatQueryAnswer(intent, data = {}) {
   if (intent === 'product_performance') {
     const products = data.products || []
     if (!products.length) return 'Belum ada penjualan produk pada periode tersebut.'
+    const rankingLabel = {
+      quantity: 'Paling banyak terjual (jumlah sesuai satuan produk)',
+      sales: 'Penjualan tertinggi',
+      gross_profit: 'Laba kotor tertinggi'
+    }[data.sort_by] || 'Peringkat produk'
     return [
       'Jumlah transaksi: ' + (Number(data.transaction_count) || 0),
+      rankingLabel + ':',
       ...products.slice(0, 10).map((product) =>
         product.name + ': terjual ' + (Number(product.quantity) || 0) +
         ' · Penjualan ' + rupiah(product.sales) +
@@ -127,6 +141,12 @@ export function formatQueryAnswer(intent, data = {}) {
     const entries = data.entries || []
     if (!entries.length) return 'Daftar ' + intent + ' masih kosong.'
     return entries.slice(0, 20).map((entry) => entry.name).join('\n')
+  }
+
+  if (['categories', 'units'].includes(intent)) {
+    const entries = data.entries || []
+    if (!entries.length) return 'Daftar ' + (intent === 'categories' ? 'kategori' : 'satuan') + ' masih kosong.'
+    return entries.slice(0, 30).map((entry) => entry.name).join('\n')
   }
 
   return 'Data berhasil diambil. Buka rincian untuk melihat hasilnya.'

@@ -88,3 +88,32 @@ test('reports sales and finance metrics from query data', () => {
   assert.match(answer, /Total penjualan: Rp\s?500\.000/)
   assert.match(answer, /Laba kotor: Rp\s?100\.000/)
 })
+
+test('labels product performance ranking by the requested metric', () => {
+  const answer = formatQueryAnswer('product_performance', {
+    transaction_count: 3,
+    sort_by: 'quantity',
+    products: [{
+      name: 'Tas A',
+      quantity: 8,
+      sales: 500_000,
+      gross_profit: 100_000
+    }]
+  })
+
+  assert.match(answer, /Paling banyak terjual/)
+  assert.match(answer, /Tas A: terjual 8/)
+})
+
+test('formats category and unit catalog queries', () => {
+  assert.equal(formatQueryAnswer('categories', { entries: [{ name: 'Tas' }, { name: 'Dompet' }] }), 'Tas\nDompet')
+  assert.equal(formatQueryAnswer('units', { entries: [{ name: 'pcs' }] }), 'pcs')
+})
+
+test('reports current inventory count, low stock count, and recorded cost value', () => {
+  assert.equal(formatQueryAnswer('inventory_summary', {
+    product_count: 12,
+    low_stock_count: 3,
+    total_asset: 1_500_000
+  }), 'Jumlah produk: 12\nProduk dengan stok rendah (maksimal 5 satuan utama): 3\nNilai modal seluruh stok: Rp\u00a01.500.000')
+})

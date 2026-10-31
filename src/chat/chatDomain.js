@@ -136,6 +136,22 @@ function formatStockQuery(product) {
 }
 
 export async function queryStore(intent, args = {}) {
+  if (intent === 'inventory_summary') {
+    const products = await getAll('products')
+    return {
+      title: 'Ringkasan persediaan saat ini',
+      data: {
+        product_count: products.length,
+        low_stock_count: products.filter((product) =>
+          Math.floor(stockInPcs(product) / unitFactor(product.unit || 'pcs')) <= 5
+        ).length,
+        total_asset: products.reduce((total, product) =>
+          total + (Number(product.stock_cost_value) || (Number(product.cost) || 0) * stockInPcs(product)), 0
+        )
+      }
+    }
+  }
+
   if (intent === 'stock' || intent === 'products') {
     const products = await getAll('products')
     const query = String(args.product || args.search || '').trim().toLocaleLowerCase('id-ID')
@@ -286,11 +302,17 @@ export async function queryStore(intent, args = {}) {
         totals.set(key, aggregate)
       }
     }
+    const sortBy = ['quantity', 'sales', 'gross_profit'].includes(args.sortBy)
+      ? args.sortBy
+      : 'quantity'
     return {
       title: 'Performa produk ' + range.from + ' s.d. ' + range.to,
       data: {
         transaction_count: selected.length,
-        products: [...totals.values()].sort((left, right) => right.gross_profit - left.gross_profit).slice(0, 30)
+        sort_by: sortBy,
+        products: [...totals.values()]
+          .sort((left, right) => right[sortBy] - left[sortBy] || PRODUCT_NAME_COLLATOR.compare(left.name, right.name))
+          .slice(0, 30)
       }
     }
   }
@@ -305,10 +327,15 @@ export async function queryStore(intent, args = {}) {
     }
   }
 
-  if (['customers', 'vendors', 'expeditions'].includes(intent)) {
+  if (['customers', 'vendors', 'expeditions', 'categories', 'units'].includes(intent)) {
     const store = intent
     const rows = await getAll(store)
-    return { title: 'Daftar ' + intent, data: { entries: rows.map(({ name, phone, address }) => ({ name, phone, address })) } }
+    const search = String(args.search || '').trim().toLocaleLowerCase('id-ID')
+    const entries = rows
+      .filter((row) => !search || [row.name, row.phone, row.address]
+        .some((value) => String(value || '').toLocaleLowerCase('id-ID').includes(search)))
+      .map(({ name, phone, address }) => ({ name, phone, address }))
+    return { title: 'Daftar ' + intent, data: { entries } }
   }
 
   throw new Error('Jenis pertanyaan "' + intent + '" belum didukung.')

@@ -1,6 +1,7 @@
 export const QUERY_INTENTS = new Set([
-  'stock', 'products', 'debts', 'daily_summary', 'sales_summary', 'finance_summary',
-  'transactions', 'purchases', 'customers', 'vendors', 'expeditions', 'product_performance'
+  'stock', 'products', 'inventory_summary', 'debts', 'daily_summary', 'sales_summary', 'finance_summary',
+  'transactions', 'purchases', 'customers', 'vendors', 'expeditions', 'categories',
+  'units', 'product_performance'
 ])
 
 export const ACTION_INTENTS = new Set([

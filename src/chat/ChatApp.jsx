@@ -8,7 +8,7 @@ import { onAuthStateChange, getAuthSession, verifyAuthSession } from '../supabas
 import { executeAction, prepareAction, queryStore } from './chatDomain.js'
 import { requestAssistantPlan } from './assistantApi.js'
 import { formatQueryAnswer } from './queryAnswer.js'
-import { resolveFastQuery } from './queryIntent.js'
+import { resolveDirectQuery, resolveFallbackQuery } from './queryIntent.js'
 
 const STARTERS = [
   'Berapa stok tas hitam?',
@@ -118,10 +118,12 @@ export default function ChatApp() {
     setBusy(true)
 
     try {
-      const fastQuery = file ? null : resolveFastQuery(text)
-      let plan = fastQuery
-      if (fastQuery) {
-        setProcessingStage('Mengambil data stok...')
+      const directQuery = resolveDirectQuery(text, Boolean(file))
+      let plan
+      let fallbackQuery = null
+      if (directQuery) {
+        plan = directQuery
+        setProcessingStage('Mengambil data yang diminta...')
       } else {
         setProcessingStage('Memahami permintaan dengan AI...')
         const history = messages.slice(-12).map((message) => ({
@@ -133,6 +135,12 @@ export default function ChatApp() {
           history,
           attachmentName: file?.name || ''
         })
+
+        fallbackQuery = resolveFallbackQuery(text, plan, Boolean(file))
+        if (fallbackQuery) {
+          plan = fallbackQuery
+          setProcessingStage('AI belum memahami pertanyaan; mencari data langsung...')
+        }
       }
 
       if (plan.kind === 'reply') {
@@ -141,7 +149,7 @@ export default function ChatApp() {
       }
 
       if (plan.kind === 'query') {
-        setProcessingStage('Mengambil data toko...')
+        if (!directQuery && !fallbackQuery) setProcessingStage('Mengambil data toko...')
         const result = await queryStore(plan.query, plan.args)
         appendMessage(setMessages, {
           role: 'assistant',
