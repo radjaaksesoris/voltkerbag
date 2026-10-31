@@ -24,7 +24,7 @@ export default function AppModePicker({ session, onSignedOut }) {
             <span className="app-mode-icon"><Icon name="table" size={25} /></span>
             <span className="app-mode-option-copy">
               <strong>APLIKASI TABEL</strong>
-              <span>Kelola toko melalui dashboard, tabel stok, transaksi, pembelian, dan keuangan.</span>
+              <span>Kelola melalui dashboard, tabel stok, transaksi, pembelian, dan keuangan.</span>
             </span>
             <Icon className="app-mode-arrow" name="arrowRight" size={19} />
           </a>
