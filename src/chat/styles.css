@@ -596,13 +596,28 @@ body {
 }
 
 .chat-loading {
+  position: relative;
   display: grid;
   min-height: 100vh;
   min-height: 100dvh;
+  overflow: hidden;
+  isolation: isolate;
   place-items: center;
-  background: #f5f2ee;
+  background:
+    radial-gradient(ellipse at 68% 0%, rgba(255, 255, 255, .8), transparent 43rem),
+    #f5f2ee;
   color: #635b55;
   font: 13px system-ui, sans-serif;
+}
+
+.chat-loading::before {
+  position: absolute;
+  z-index: -1;
+  inset: 0;
+  background: url('./chat-wallpaper.jpg') center 18% / 420px auto repeat;
+  content: "";
+  opacity: .075;
+  pointer-events: none;
 }
 
 .chat-toast-error {
