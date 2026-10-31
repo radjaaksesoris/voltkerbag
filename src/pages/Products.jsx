@@ -8,7 +8,7 @@ import MoneyInput from '../components/MoneyInput.jsx'
 import CategorySelect from '../components/CategorySelect.jsx'
 import UnitSelect from '../components/UnitSelect.jsx'
 import Icon from '../components/Icon.jsx'
-import { availableQuantity, isWholeStockQuantity, productPrice, purchaseCostFactor, purchaseCostPerPiece, purchaseCostUnit, quantityToPcs, saleMarkupPercentage, saleMarkupPrice, salePricesFromMarkups, saleUnitPrice, saleUnits, stockCostValue, stockEntryUnit, stockInPcs, stockReceiptValuation, unitFactor, stockLabel } from '../productUnits'
+import { availableQuantity, isWholeStockQuantity, productMarkupPercentage, productPrice, purchaseCostFactor, purchaseCostPerPiece, purchaseCostUnit, quantityToPcs, saleMarkupPercentage, saleMarkupPrice, salePricesFromMarkups, saleUnitPrice, saleUnits, stockCostValue, stockEntryUnit, stockInPcs, stockReceiptValuation, unitFactor, stockLabel } from '../productUnits'
 
 const EMPTY = {
   name: '',
@@ -180,8 +180,8 @@ export default function Products() {
       unit: editUnit,
       price: p.price || '',
       markups: {
-        pcs: p.sale_markup_pcs_pct ?? saleMarkupPercentage(productPrice(p, 'pcs'), p.cost, 'pcs'),
-        lusin: p.sale_markup_lusin_pct ?? saleMarkupPercentage(productPrice(p, 'lusin'), p.cost, 'lusin')
+        pcs: productMarkupPercentage(p, 'pcs'),
+        lusin: productMarkupPercentage(p, 'lusin')
       },
       salePrices: {
         pcs: productPrice(p, 'pcs'),

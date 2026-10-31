@@ -128,6 +128,10 @@ export function saleMarkupPercentage(price, costPerPiece, unit) {
   return unit === 'lusin' ? Math.round(percentage) : Number(percentage.toFixed(2))
 }
 
+export function productMarkupPercentage(product, unit) {
+  return saleMarkupPercentage(productPrice(product, unit), product.cost, unit)
+}
+
 export function unitCost(product, unit) {
   return (Number(product.cost) || 0) * unitFactor(unit)
 }

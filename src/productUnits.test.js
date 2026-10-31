@@ -1,6 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { availableQuantity, isWholeStockQuantity, productPrice, purchaseCostFactor, purchaseCostPerPiece, purchaseCostUnit, quantityToPcs, saleMarkupPercentage, saleMarkupPrice, salePricesFromMarkups, saleUnitPrice, saleUnits, stockCostValue, stockEntryUnit, stockInPcs, stockLabel, stockReceiptValuation, unitCost, unitFactor } from './productUnits.js'
+import { availableQuantity, isWholeStockQuantity, productMarkupPercentage, productPrice, purchaseCostFactor, purchaseCostPerPiece, purchaseCostUnit, quantityToPcs, saleMarkupPercentage, saleMarkupPrice, salePricesFromMarkups, saleUnitPrice, saleUnits, stockCostValue, stockEntryUnit, stockInPcs, stockLabel, stockReceiptValuation, unitCost, unitFactor } from './productUnits.js'
 
 test('uses the standard conversion factors', () => {
   assert.equal(unitFactor('pcs'), 1)
@@ -111,6 +111,20 @@ test('calculates prices from cost markup and converts only stock quantities', ()
   assert.equal(saleUnitPrice({ ...product, price_lusin: 0, cost: 40000 }, 'lusin'), 480000)
   assert.equal(unitCost(product, 'pcs'), 30000)
   assert.equal(unitCost(product, 'lusin'), 360000)
+})
+
+test('derives edit-form markup from sale price and per-piece cost, not stale stored markup', () => {
+  const product = {
+    unit: 'lusin',
+    cost: 140_000 / 12,
+    price_pcs: 20_000,
+    price_lusin: 145_000,
+    sale_markup_pcs_pct: 1_185.71,
+    sale_markup_lusin_pct: 999
+  }
+
+  assert.equal(productMarkupPercentage(product, 'pcs'), 71.43)
+  assert.equal(productMarkupPercentage(product, 'lusin'), 4)
 })
 
 test('recalculates sale prices from existing markups when cost changes', () => {
