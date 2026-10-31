@@ -19,6 +19,29 @@ VOLTKER adalah aplikasi kasir React + Vite dengan Supabase sebagai sumber data u
 - CRUD stok produk dan pencatatan pengeluaran/modal di buku kas online.
 - Catatan buku kas yang berasal dari penjualan atau cicilan ditandai otomatis dan tidak dapat dihapus sebagai catatan manual.
 
+## VOLTKER Chat
+VOLTKER Chat adalah aplikasi chat-only terpisah yang menggunakan akun, tabel, dan aturan keamanan Supabase yang sama dengan aplikasi utama. Aplikasi utama tetap tersedia; buka `/chat/` di deployment GitHub Pages atau `http://localhost:5173/chat/` saat menjalankan Vite.
+
+Chat dapat mencari stok/produk, pelanggan dan hutangnya, transaksi, pembelian, penjualan, performa produk, serta ringkasan buku kas; menjalankan penjualan tunai/kredit, penambahan stok per batch, pembayaran hutang, pencatatan hutang lama, pengeluaran/modal, pembelian, pengelolaan produk dan master data; membuat/memulihkan backup; dan mereset data toko. Hasil transaksi dapat dicetak atau diunduh sebagai faktur JPEG. Aksi perubahan ditampilkan sebagai pratinjau dan harus dikonfirmasi; reset juga meminta konfirmasi dengan mengetik `HAPUS DATA`. Foto produk dan file backup dapat dilampirkan lewat tombol lampiran chat.
+
+Penambahan stok lewat chat tetap memerlukan jumlah dan harga modal batch, lalu memanggil RPC `add_product_stock` yang sama dengan aplikasi utama. Penjualan dan pembayaran juga memakai RPC yang sudah ada. AI tidak diberi akses SQL atau service-role key; rencana aksi hanya menerima daftar intent yang diizinkan dan semua akses data tetap menggunakan sesi Supabase pengguna. Data yang relevan untuk menjawab pertanyaan dikirim ke Gemini melalui Supabase Edge Function setelah pengguna menyetujui catatan privasi di layar chat. Riwayat percakapan tidak disimpan di database dan akan hilang saat halaman ditutup atau dimuat ulang.
+
+### Menyiapkan AI VOLTKER Chat
+1. Pastikan skema `supabase/schema.sql` yang sama sudah diterapkan dan `VITE_SUPABASE_ANON_KEY` sudah dikonfigurasi untuk build aplikasi.
+2. Deploy function dari root repository menggunakan Supabase CLI yang terhubung ke project toko:
+   ```sh
+   npx supabase login
+   npx supabase link --project-ref <project-ref>
+   npx supabase secrets set GEMINI_API_KEY=<Gemini-API-key>
+   npx supabase functions deploy chat-assistant
+   ```
+3. Function menggunakan model `gemini-2.5-flash` secara default. Jika perlu, atur secret `GEMINI_MODEL` sebelum deploy.
+4. Build/deploy aplikasi seperti biasa. GitHub Pages menerbitkan aplikasi utama di root dan chat di `/voltkerbag/chat/`.
+
+Simpan `GEMINI_API_KEY` hanya sebagai Supabase Function secret; jangan menaruhnya di `.env`, source code, GitHub Pages build variable, atau browser. Jangan gunakan `service_role` key. Jika function atau Gemini belum dikonfigurasi, chat menampilkan kesalahan dan tidak menjalankan aksi.
+
+Pembelian vendor masih dicatat sebagai pengeluaran lunas, sama seperti aplikasi utama; fitur hutang/tagihan vendor tidak tersedia. Semua operasi toko selain percakapan—termasuk unggah foto dan restore file backup—dilakukan melalui chat atau kartu tindakan di dalam percakapan, bukan melalui tab aplikasi utama.
+
 ## Setup Supabase
 1. Pastikan project Supabase yang dipakai adalah project VOLTKER yang benar.
 2. Di **Authentication → Users**, buat satu akun toko. Jangan aktifkan pendaftaran publik; hanya akun ini yang boleh digunakan.
