@@ -383,7 +383,7 @@ export default function ChatApp() {
           {!consent && (
             <div className="chat-consent">
               <strong>Catatan privasi AI</strong>
-              <p>Pesan dan riwayat percakapan yang diperlukan untuk memahami permintaan diproses oleh Google Gemini. Hasil query data toko diambil dari Supabase dan diringkas di perangkat; perubahan memerlukan konfirmasi.</p>
+              <p>Pesan dan riwayat percakapan yang diperlukan untuk memahami permintaan diproses oleh Groq. Hasil query data toko diambil dari Supabase dan diringkas di perangkat; perubahan memerlukan konfirmasi.</p>
               <button className="btn btn-primary" type="button" onClick={() => setConsent(true)}>Saya mengerti, mulai chat</button>
             </div>
           )}

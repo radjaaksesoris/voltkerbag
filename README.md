@@ -24,21 +24,23 @@ VOLTKER Chat adalah aplikasi chat-only terpisah yang menggunakan akun, tabel, da
 
 Chat dapat mencari stok/produk, pelanggan dan hutangnya, transaksi, pembelian, penjualan, performa produk, serta ringkasan buku kas; menjalankan penjualan tunai/kredit, penambahan stok per batch, pembayaran hutang, pencatatan hutang lama, pengeluaran/modal, pembelian, pengelolaan produk dan master data; membuat/memulihkan backup; dan mereset data toko. Hasil transaksi dapat dicetak atau diunduh sebagai faktur JPEG. Aksi perubahan ditampilkan sebagai pratinjau dan harus dikonfirmasi; reset juga meminta konfirmasi dengan mengetik `HAPUS DATA`. Foto produk dan file backup dapat dilampirkan lewat tombol lampiran chat.
 
-Penambahan stok lewat chat tetap memerlukan jumlah dan harga modal batch, lalu memanggil RPC `add_product_stock` yang sama dengan aplikasi utama. Penjualan dan pembayaran juga memakai RPC yang sudah ada. AI tidak diberi akses SQL atau service-role key; rencana aksi hanya menerima daftar intent yang diizinkan dan semua akses data tetap menggunakan sesi Supabase pengguna. Setelah persetujuan privasi, pesan dan riwayat percakapan yang relevan dikirim ke Gemini melalui Supabase Edge Function untuk menentukan query atau aksi. Hasil query data toko diambil langsung dari Supabase dan diringkas di perangkat; hasil tersebut tidak dikirim ke Gemini. Riwayat percakapan tidak disimpan di database dan akan hilang saat halaman ditutup atau dimuat ulang.
+Penambahan stok lewat chat tetap memerlukan jumlah dan harga modal batch, lalu memanggil RPC `add_product_stock` yang sama dengan aplikasi utama. Penjualan dan pembayaran juga memakai RPC yang sudah ada. AI tidak diberi akses SQL atau service-role key; rencana aksi hanya menerima daftar intent yang diizinkan dan semua akses data tetap menggunakan sesi Supabase pengguna. Setelah persetujuan privasi, pesan dan riwayat percakapan yang relevan dikirim ke Groq melalui Supabase Edge Function untuk menentukan query atau aksi. Hasil query data toko diambil langsung dari Supabase dan diringkas di perangkat; hasil tersebut tidak dikirim ke Groq. Riwayat percakapan tidak disimpan di database dan akan hilang saat halaman ditutup atau dimuat ulang.
 
-### Menyiapkan AI VOLTKER Chat
+### Menyiapkan Groq untuk VOLTKER Chat
 1. Pastikan skema `supabase/schema.sql` yang sama sudah diterapkan dan `VITE_SUPABASE_ANON_KEY` sudah dikonfigurasi untuk build aplikasi.
-2. Deploy function dari root repository menggunakan Supabase CLI yang terhubung ke project toko:
+2. Buat API key di [Groq Console](https://console.groq.com/keys). Simpan key sebagai secret Supabase Function, bukan di source code.
+3. Deploy function dari root repository menggunakan Supabase CLI yang terhubung ke project toko:
    ```sh
    npx supabase login
    npx supabase link --project-ref <project-ref>
-   npx supabase secrets set GEMINI_API_KEY=<Gemini-API-key>
+   npx supabase secrets set GROQ_API_KEY=<Groq-API-key>
    npx supabase functions deploy chat-assistant
    ```
-3. Function menggunakan model `gemini-3.8-flash` secara default. Pastikan secret `GEMINI_MODEL` tidak masih menunjuk ke model lama; jika secret tersebut sudah ada, ubah ke `gemini-3.8-flash` atau hapus agar default dipakai.
 4. Build/deploy aplikasi seperti biasa. GitHub Pages menerbitkan aplikasi utama di root dan chat di `/voltkerbag/chat/`.
 
-Simpan `GEMINI_API_KEY` hanya sebagai Supabase Function secret; jangan menaruhnya di `.env`, source code, GitHub Pages build variable, atau browser. Jangan gunakan `service_role` key. Jika function atau Gemini belum dikonfigurasi, chat menampilkan kesalahan dan tidak menjalankan aksi.
+Function menggunakan model `openai/gpt-oss-120b` secara default melalui Groq Chat Completions API. Jika menggunakan secret `GROQ_MODEL`, pastikan nilainya adalah ID model yang aktif di Groq. Hapus secret lama `GEMINI_API_KEY` dan `GEMINI_MODEL` dari Supabase jika sudah tidak digunakan.
+
+Simpan `GROQ_API_KEY` hanya sebagai Supabase Function secret; jangan menaruhnya di `.env`, source code, GitHub Pages build variable, atau browser. Jangan gunakan `service_role` key. Jika function atau Groq belum dikonfigurasi, chat menampilkan kesalahan dan tidak menjalankan aksi.
 
 Pembelian vendor masih dicatat sebagai pengeluaran lunas, sama seperti aplikasi utama; fitur hutang/tagihan vendor tidak tersedia. Semua operasi toko selain percakapan—termasuk unggah foto dan restore file backup—dilakukan melalui chat atau kartu tindakan di dalam percakapan, bukan melalui tab aplikasi utama.
 
