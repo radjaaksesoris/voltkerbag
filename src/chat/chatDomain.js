@@ -1,5 +1,5 @@
-import { getAll, getDashboardData, getFinanceData, getPurchaseEntries, getTransactionSummary } from '../db'
-import { formatPurchaseNote } from '../purchaseNote'
+import { getAll, getDashboardData, getFinanceData, getPurchaseEntries, getTransactionPayments, getTransactionSummary } from '../db'
+import { formatPurchaseNote, parsePurchaseNote } from '../purchaseNote'
 import { dateRangeTimestamps, localDateValue } from '../dateFilter'
 import { isSafeRupiahAmount } from '../money'
 import { filterCustomerDebts } from './customerDebt'
@@ -129,7 +129,9 @@ function dateRangeForQuery(args = {}) {
     const date = localDateValue(yesterday)
     return { from: date, to: date }
   }
-  if (typeof args.from === 'string' && typeof args.to === 'string') return { from: args.from, to: args.to }
+  if (typeof args.from === 'string' || typeof args.to === 'string') {
+    return { from: args.from || '', to: args.to || '' }
+  }
   return { from: today, to: today }
 }
 
@@ -194,6 +196,8 @@ export async function queryStore(intent, args = {}) {
     const stockOrder = ['asc', 'desc'].includes(args.stockOrder) ? args.stockOrder : ''
     const matches = products
       .filter((product) => !query || (product.name + ' ' + (product.category || '')).toLocaleLowerCase('id-ID').includes(query))
+      .filter((product) => !args.lowStockOnly
+        || Math.floor(stockInPcs(product) / unitFactor(product.unit || 'pcs')) <= 5)
       .sort((left, right) => stockOrder
         ? (stockOrder === 'asc' ? 1 : -1) * (stockInPcs(left) - stockInPcs(right))
           || PRODUCT_NAME_COLLATOR.compare(left.name, right.name)
@@ -202,10 +206,12 @@ export async function queryStore(intent, args = {}) {
       title: 'Data produk dan stok',
       data: {
         total_products: products.length,
+        searched_product: String(args.product || args.search || '').trim(),
         matches: matches.slice(0, 40).map(formatStockQuery),
         truncated: matches.length > 40,
         include_cost: args.includeCost === true,
-        stock_order: stockOrder
+        stock_order: stockOrder,
+        low_stock_only: args.lowStockOnly === true
       }
     }
   }
@@ -231,8 +237,10 @@ export async function queryStore(intent, args = {}) {
             income: finance.income,
             expense: finance.expense,
             capital: finance.capital,
+            cash_balance: Number(finance.income) + Number(finance.capital) - Number(finance.expense),
             total_debt: finance.total_credit,
             gross_profit: finance.gross_profit,
+            net_profit: Number(finance.gross_profit) - Number(finance.expense),
             pending_expedition_count: finance.pending_expedition_count,
             entries: finance.entries.slice(0, 30)
           }
@@ -363,7 +371,9 @@ export async function queryStore(intent, args = {}) {
         income: finance.income,
         expense: finance.expense,
         capital: finance.capital,
+        cash_balance: Number(finance.income) + Number(finance.capital) - Number(finance.expense),
         customer_debt: finance.total_credit,
+        net_profit: Number(dashboard.gross_profit) - Number(finance.expense),
         pending_expedition_count: finance.pending_expedition_count,
         inventory: dashboard.inventory,
         transactions: dashboard.transactions.slice(0, 20).map((transaction) => ({
@@ -381,18 +391,56 @@ export async function queryStore(intent, args = {}) {
   if (intent === 'transactions') {
     const [transactions, customers] = await Promise.all([getAll('transactions'), getAll('customers')])
     const name = String(args.customer || '').trim().toLocaleLowerCase('id-ID')
-    const hasDateFilter = Boolean(args.period || (args.from && args.to))
+    const search = String(args.search || args.product || '').trim().toLocaleLowerCase('id-ID')
+    const hasDateFilter = Boolean(
+      args.from || args.to || args.period && !['semua', 'semua waktu', 'all'].includes(String(args.period).toLocaleLowerCase('id-ID'))
+    )
+    if (args.paymentType && !['cash', 'credit'].includes(args.paymentType)) {
+      throw new Error('Jenis pembayaran transaksi harus tunai atau kredit.')
+    }
+    if (args.answerMode && !['existence', 'count', 'latest'].includes(args.answerMode)) {
+      throw new Error('Jenis jawaban transaksi tidak didukung.')
+    }
     const { from, to } = hasDateFilter ? dateRangeTimestamps(dateRangeForQuery(args)) : { from: null, to: null }
     const filtered = transactions
       .filter((transaction) => {
         const time = new Date(transaction.createdAt || 0).getTime()
+        const balanceDue = Number(transaction.balanceDue) || Math.max(
+          0,
+          (Number(transaction.total) || 0) - (Number(transaction.paidAmount ?? transaction.payment) || 0)
+        )
+        const searchMatches = !search
+          || String(transaction.invoiceNo || '').toLocaleLowerCase('id-ID').includes(search)
+          || (transaction.items || []).some((item) => String(item.name || '').toLocaleLowerCase('id-ID').includes(search))
         return (!name || String(transaction.customerName || '').toLocaleLowerCase('id-ID').includes(name))
+          && (!args.paymentType || transaction.paymentType === args.paymentType)
+          && (!args.unpaidOnly || transaction.paymentType === 'credit' && balanceDue > 0)
+          && searchMatches
           && (!from || time >= new Date(from).getTime())
           && (!to || time < new Date(to).getTime())
       })
       .sort((left, right) => new Date(right.createdAt || 0) - new Date(left.createdAt || 0))
     const matchingCount = filtered.length
     const matching = (args.answerMode === 'latest' ? filtered.slice(0, 1) : filtered.slice(0, 30))
+    const transactionRows = await Promise.all(matching.map(async (transaction) => ({
+      id: transaction.id,
+      invoiceNo: transaction.invoiceNo,
+      customerName: transaction.customerName,
+      customerPhone: transaction.customerPhone || '',
+      customerAddress: transaction.customerAddress || '',
+      items: transaction.items,
+      total: transaction.total,
+      paymentType: transaction.paymentType,
+      payment: transaction.payment,
+      paidAmount: transaction.paidAmount,
+      payments: args.includeDetails && transaction.paymentType === 'credit'
+        ? await getTransactionPayments(transaction.id)
+        : transaction.payments || [],
+      balanceDue: transaction.balanceDue,
+      change: transaction.change,
+      expedition: transaction.expedition || '',
+      createdAt: transaction.createdAt
+    })))
     return {
       title: 'Riwayat transaksi',
       data: {
@@ -400,23 +448,10 @@ export async function queryStore(intent, args = {}) {
         period: args.period || '',
         answer_mode: args.answerMode || '',
         matching_count: matchingCount,
-        transactions: matching.map((transaction) => ({
-          id: transaction.id,
-          invoiceNo: transaction.invoiceNo,
-          customerName: transaction.customerName,
-          customerPhone: transaction.customerPhone || '',
-          customerAddress: transaction.customerAddress || '',
-          items: transaction.items,
-          total: transaction.total,
-          paymentType: transaction.paymentType,
-          payment: transaction.payment,
-          paidAmount: transaction.paidAmount,
-          payments: transaction.payments || [],
-          balanceDue: transaction.balanceDue,
-          change: transaction.change,
-          expedition: transaction.expedition || '',
-          createdAt: transaction.createdAt
-        })),
+        payment_type: args.paymentType || '',
+        unpaid_only: args.unpaidOnly === true,
+        include_details: args.includeDetails === true,
+        transactions: transactionRows,
         truncated: matchingCount > matching.length
       }
     }
@@ -457,12 +492,45 @@ export async function queryStore(intent, args = {}) {
   }
 
   if (intent === 'purchases') {
-    const result = await getPurchaseEntries(1, PAGE_SIZE)
-    const vendor = String(args.vendor || '').trim().toLocaleLowerCase('id-ID')
-    const entries = result.entries.filter((entry) => !vendor || String(entry.note || '').toLocaleLowerCase('id-ID').includes(vendor))
+    if (args.answerMode && !['existence', 'count', 'latest'].includes(args.answerMode)) {
+      throw new Error('Jenis jawaban pembelian tidak didukung.')
+    }
+    const search = String(args.search || args.vendor || '').trim().toLocaleLowerCase('id-ID')
+    const hasDateFilter = Boolean(
+      args.from || args.to || args.period && !['semua', 'semua waktu', 'all'].includes(String(args.period).toLocaleLowerCase('id-ID'))
+    )
+    const range = hasDateFilter ? dateRangeTimestamps(dateRangeForQuery(args)) : null
+    const entries = []
+    let totalCount = 0
+    for (let page = 1; ; page += 1) {
+      const result = await getPurchaseEntries(page, PAGE_SIZE)
+      totalCount = result.totalCount
+      entries.push(...result.entries.filter((entry) => {
+        const time = new Date(entry.date || entry.createdAt || 0).getTime()
+        const { purchase, vendor } = parsePurchaseNote(entry.note)
+        const matchesSearch = !search || [purchase, vendor, entry.category]
+          .some((value) => String(value || '').toLocaleLowerCase('id-ID').includes(search))
+        return matchesSearch
+          && (!range?.from || time >= new Date(range.from).getTime())
+          && (!range?.to || time < new Date(range.to).getTime())
+      }))
+      if (result.entries.length < PAGE_SIZE || page * PAGE_SIZE >= totalCount) break
+    }
+    const matchingCount = entries.length
+    const selected = args.answerMode === 'latest' ? entries.slice(0, 1) : entries.slice(0, 30)
     return {
       title: 'Riwayat pembelian (dicatat sebagai pengeluaran lunas)',
-      data: { total_count: result.totalCount, entries: entries.slice(0, 30), truncated: result.totalCount > entries.length }
+      data: {
+        total_count: totalCount,
+        matching_count: matchingCount,
+        answer_mode: args.answerMode || '',
+        period: args.period || '',
+        entries: selected.map((entry) => ({
+          ...entry,
+          ...parsePurchaseNote(entry.note)
+        })),
+        truncated: matchingCount > selected.length
+      }
     }
   }
 
@@ -474,7 +542,16 @@ export async function queryStore(intent, args = {}) {
       .filter((row) => !search || [row.name, row.phone, row.address]
         .some((value) => String(value || '').toLocaleLowerCase('id-ID').includes(search)))
       .map(({ name, phone, address }) => ({ name, phone, address }))
-    return { title: 'Daftar ' + intent, data: { entries } }
+    return {
+      title: 'Daftar ' + intent,
+      data: {
+        entries,
+        matching_count: entries.length,
+        searched_text: search,
+        include_details: args.includeDetails === true,
+        answer_mode: args.answerMode || ''
+      }
+    }
   }
 
   throw new Error('Jenis pertanyaan "' + intent + '" belum didukung.')

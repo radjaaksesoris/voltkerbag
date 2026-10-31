@@ -1,12 +1,12 @@
 const STOCK_TERMS = new Set(['stok', 'stoknya', 'stock', 'stocknya', 'persediaan'])
 const STOCK_QUESTION_TERMS = new Set([
-  'berapa', 'cek', 'lihat', 'cari', 'tampilkan', 'jumlah', 'ada', 'tersedia',
+  'berapa', 'cek', 'lihat', 'cari', 'tampilkan', 'jumlah', 'ada', 'tersedia', 'menipis',
   'masih', 'sisa', 'sisanya', 'tersisa', 'sekarang', 'saat', 'ini', 'apakah',
   'tolong', 'dong', 'produk', 'barang', 'item', 'apa', 'nya', 'di', 'toko',
   'yang', 'dengan', 'untuk', 'harga', 'harganya', 'hpp', 'modal', 'pokok',
   'jual', 'per', 'pcs', 'lusin', 'paling', 'sedikit', 'minim', 'minimum', 'rendah',
   'terendah', 'terkecil', 'banyak', 'terbanyak', 'tinggi', 'tertinggi',
-  'terbesar', 'low', 'lowest', 'high', 'highest'
+  'terbesar', 'low', 'lowest', 'high', 'highest', 'saja', 'semua', 'seluruh'
 ])
 const STOCK_ACTION_TERMS = new Set([
   'tambah', 'tambahkan', 'menambah', 'masukkan', 'catat', 'kurangi', 'ubah',
@@ -94,8 +94,9 @@ export function resolveFastQuery(message) {
     'tolong', 'dong', 'terakhir', 'terbaru', 'riwayat', 'detail', 'rincian',
     'hari', 'ini', 'kemarin', 'kemaren', 'minggu', 'bulan', 'lalu',
     'tahun', 'semua', 'seluruh', 'sepanjang', 'periode', 'dari', 'untuk',
-    'tanggal', 'berapa', 'yang', 'belum', 'sudah', 'diisi', 'tertunda',
-    'pending', 'lunas', 'tercatat'
+    'tanggal', 'berapa', 'jumlah', 'total', 'saldo', 'bersih', 'ada', 'apakah',
+    'pernah', 'sudah', 'yang', 'belum', 'diisi', 'tertunda', 'pending',
+    'lunas', 'tercatat'
   ])
   const cashbookSearch = removeTerms(words, cashbookSearchTerms)
   const explicitCashbook = words.includes('buku') && words.includes('kas')
@@ -143,25 +144,47 @@ export function resolveFastQuery(message) {
 
   const asksPurchaseActivity = words.some((word) => ['beli', 'membeli'].includes(word))
     && words.some((word) => ['ada', 'apakah', 'sudah', 'pernah', 'siapa', 'berapa'].includes(word))
-  if (words.some((word) => ['transaksi', 'transaksinya', 'nota'].includes(word)) || asksPurchaseActivity) {
+  const asksTransactions = words.some((word) => ['transaksi', 'transaksinya', 'nota', 'invoice', 'faktur'].includes(word))
+    || asksPurchaseActivity
+  if (asksTransactions) {
     const customerTerms = new Set([
       'berapa', 'ada', 'apakah', 'sudah', 'belum', 'pernah', 'cek', 'tolong',
       'dong', 'lihat', 'cari', 'tampilkan', 'daftar', 'riwayat', 'semua',
-      'seluruh', 'jumlah', 'total', 'transaksi', 'transaksinya', 'bertransaksi', 'nota', 'beli', 'membeli',
-      'pelanggan', 'customer', 'milik', 'atas', 'nama', 'yang', 'di', 'pada',
+      'seluruh', 'jumlah', 'total', 'transaksi', 'transaksinya', 'bertransaksi',
+      'nota', 'invoice', 'faktur', 'produk', 'barang', 'beli', 'membeli', 'pelanggan', 'customer', 'milik', 'atas',
+      'nama', 'yang', 'di', 'pada', 'kapan', 'terjadi', 'terjadinya', 'detail',
+      'rincian', 'pembayaran', 'cicilan', 'dp', 'dibayar', 'isi',
       'hari', 'ini', 'kemarin', 'kemaren', 'minggu', 'bulan', 'tahun',
-      'sekarang', 'tadi', 'saja', 'terakhir', 'terbaru', 'paling', 'baru'
+      'sekarang', 'tadi', 'saja', 'terakhir', 'terbaru', 'paling', 'baru',
+      'kredit', 'tunai', 'cash', 'lunas', 'lunasnya', 'utang', 'hutang',
+      'sisa', 'menunggak', 'belum', 'dibayar', 'by', 'nomor', 'no'
     ])
-    const customer = removeTerms(words, customerTerms)
-    const asksExistence = words.some((word) => ['apakah', 'ada', 'sudah', 'belum', 'pernah'].includes(word))
+    const hasItemOrInvoiceSearch = words.some((word) => ['produk', 'barang', 'invoice', 'faktur'].includes(word))
+    const customer = hasItemOrInvoiceSearch ? '' : removeTerms(words, customerTerms)
+    const search = hasItemOrInvoiceSearch ? removeTerms(words, customerTerms) : ''
+    const asksExistence = words.some((word) => ['apakah', 'ada', 'sudah', 'pernah'].includes(word))
     const asksCount = words.some((word) => ['berapa', 'jumlah', 'total'].includes(word))
-    const asksLatest = words.some((word) => ['terakhir', 'terbaru', 'tadi'].includes(word))
+    const asksLatest = words.some((word) => ['terakhir', 'terbaru', 'tadi', 'kapan'].includes(word))
+    const asksDetails = words.some((word) =>
+      ['detail', 'rincian', 'pembayaran', 'cicilan', 'dp', 'dibayar', 'barang', 'produk', 'item'].includes(word)
+    )
+    const paymentType = words.some((word) => ['kredit', 'hutang', 'utang'].includes(word))
+      ? 'credit'
+      : words.some((word) => ['tunai', 'cash'].includes(word))
+        ? 'cash'
+        : ''
+    const unpaidOnly = words.some((word) => ['menunggak', 'sisa'].includes(word))
+      || words.includes('belum') && words.some((word) => ['lunas', 'dibayar'].includes(word))
     return {
       kind: 'query',
       query: 'transactions',
       args: {
         ...(customer ? { customer } : {}),
+        ...(search ? { search } : {}),
         ...(period ? { period } : {}),
+        ...(paymentType ? { paymentType } : {}),
+        ...(unpaidOnly ? { unpaidOnly: true } : {}),
+        ...(asksDetails ? { includeDetails: true } : {}),
         ...(asksExistence ? { answerMode: asksCount ? 'count' : 'existence' } : {}),
         ...(asksCount ? { answerMode: 'count' } : {}),
         ...(asksLatest ? { answerMode: 'latest' } : {})
@@ -169,17 +192,43 @@ export function resolveFastQuery(message) {
     }
   }
 
-  if (words.some((word) => ['pembelian', 'belanja'].includes(word))) {
-    const vendorTerms = new Set([
-      'daftar', 'riwayat', 'tampilkan', 'lihat', 'cari', 'pembelian',
-      'belanja', 'dari', 'vendor', 'pemasok', 'tanggal', 'bulan', 'minggu',
-      'hari', 'ini', 'kemarin'
+  const asksPurchases = words.some((word) => ['pembelian', 'belanja'].includes(word))
+    || words.some((word) => ['beli', 'membeli'].includes(word))
+      && words.some((word) => ['bahan', 'barang', 'vendor', 'pemasok'].includes(word))
+  if (asksPurchases) {
+    const purchaseTerms = new Set([
+      'berapa', 'ada', 'apakah', 'sudah', 'belum', 'pernah', 'jumlah', 'total',
+      'terakhir', 'terbaru', 'tadi', 'kapan', 'cek', 'lihat', 'cari', 'tampilkan',
+      'daftar', 'riwayat', 'semua', 'seluruh', 'pembelian', 'belanja', 'beli',
+      'membeli', 'catatan', 'dari', 'untuk', 'ke', 'vendor', 'pemasok', 'bahan',
+      'barang', 'tanggal', 'hari', 'ini', 'kemarin', 'kemaren', 'minggu', 'bulan',
+      'tahun', 'lalu', 'sekarang', 'yang', 'di', 'pada'
     ])
-    const vendor = removeTerms(words, vendorTerms)
-    return { kind: 'query', query: 'purchases', args: vendor ? { vendor } : {} }
+    const search = removeTerms(words, purchaseTerms)
+    const asksCount = words.some((word) => ['berapa', 'jumlah', 'total'].includes(word))
+    const asksExistence = words.some((word) => ['ada', 'apakah', 'sudah', 'belum', 'pernah'].includes(word))
+    const asksLatest = words.some((word) => ['terakhir', 'terbaru', 'tadi', 'kapan'].includes(word))
+    const vendor = words.some((word) => ['vendor', 'pemasok'].includes(word)) ? search : ''
+    return {
+      kind: 'query',
+      query: 'purchases',
+      args: {
+        ...(vendor ? { vendor } : search ? { search } : {}),
+        ...(period ? { period } : {}),
+        ...(asksCount ? { answerMode: 'count' } : {}),
+        ...(asksExistence && !asksCount ? { answerMode: 'existence' } : {}),
+        ...(asksLatest ? { answerMode: 'latest' } : {})
+      }
+    }
   }
 
-  if (words.some((word) => ['pelanggan', 'customer', 'vendor', 'pemasok', 'ekspedisi', 'kategori', 'satuan'].includes(word))) {
+  const asksCustomerContact = words.some((word) =>
+    ['telepon', 'telp', 'nomor', 'no', 'hp', 'alamat', 'kontak'].includes(word)
+  )
+  const asksCatalogCount = words.some((word) => ['berapa', 'jumlah', 'total'].includes(word))
+    && words.some((word) => ['pelanggan', 'customer', 'vendor', 'pemasok', 'ekspedisi', 'kategori', 'satuan'].includes(word))
+  if (asksCustomerContact || asksCatalogCount
+    || words.some((word) => ['pelanggan', 'customer', 'vendor', 'pemasok', 'ekspedisi', 'kategori', 'satuan'].includes(word))) {
     const catalog = words.some((word) => ['vendor', 'pemasok'].includes(word))
       ? 'vendors'
       : words.includes('ekspedisi')
@@ -191,11 +240,22 @@ export function resolveFastQuery(message) {
             : 'customers'
     const listTerms = new Set([
       'daftar', 'list', 'semua', 'seluruh', 'nama', 'data', 'tampilkan',
-      'lihat', 'cari', 'siapa', 'pelanggan', 'customer', 'vendor', 'pemasok',
-      'ekspedisi', 'kategori', 'satuan', 'yang', 'ada', 'di', 'toko'
+      'lihat', 'cari', 'siapa', 'berapa', 'jumlah', 'total', 'pelanggan',
+      'customer', 'vendor', 'pemasok', 'ekspedisi', 'kategori', 'satuan',
+      'yang', 'ada', 'di', 'toko', 'tolong', 'dong', 'berapa', 'nomor',
+      'no', 'telepon', 'telp', 'hp', 'alamat', 'kontak', 'apa', 'untuk',
+      'milik', 'punya', 'dari', 'nya'
     ])
     const search = removeTerms(words, listTerms)
-    return { kind: 'query', query: catalog, args: search ? { search } : {} }
+    return {
+      kind: 'query',
+      query: catalog,
+      args: {
+        ...(search ? { search } : {}),
+        ...(asksCustomerContact ? { includeDetails: true } : {}),
+        ...(asksCatalogCount ? { answerMode: 'count' } : {})
+      }
+    }
   }
 
   const asksDaily = words.some((word) =>
@@ -212,8 +272,13 @@ export function resolveFastQuery(message) {
     }
   }
 
-  if (words.some((word) => ['jumlah', 'total', 'nilai', 'aset', 'persediaan', 'inventaris'].includes(word))
-    && words.some((word) => ['produk', 'stok', 'persediaan', 'inventaris', 'aset'].includes(word))) {
+  const inventorySearch = removeTerms(words, new Set([
+    ...STOCK_TERMS, ...STOCK_QUESTION_TERMS, 'produk', 'jumlah', 'total',
+    'nilai', 'aset', 'inventaris', 'persediaan'
+  ]))
+  if (words.some((word) => ['berapa', 'jumlah', 'total', 'nilai', 'aset', 'persediaan', 'inventaris'].includes(word))
+    && words.some((word) => ['produk', 'stok', 'persediaan', 'inventaris', 'aset'].includes(word))
+    && !inventorySearch) {
     return { kind: 'query', query: 'inventory_summary', args: {} }
   }
 
@@ -224,8 +289,9 @@ export function resolveFastQuery(message) {
   if (!asksStock && !asksCost && !asksPrice) return null
 
   const asksLowestStock = words.some((word) =>
-    ['sedikit', 'minim', 'minimum', 'rendah', 'terendah', 'terkecil', 'low', 'lowest'].includes(word)
+    ['sedikit', 'minim', 'minimum', 'rendah', 'menipis', 'terendah', 'terkecil', 'low', 'lowest'].includes(word)
   )
+  const asksLowStockOnly = words.some((word) => ['menipis', 'rendah', 'minimum', 'low'].includes(word))
   const asksHighestStock = words.some((word) =>
     ['banyak', 'terbanyak', 'tinggi', 'tertinggi', 'terbesar', 'high', 'highest'].includes(word)
   )
@@ -239,6 +305,7 @@ export function resolveFastQuery(message) {
       ...(product ? { product } : {}),
       ...(asksLowestStock ? { stockOrder: 'asc' } : {}),
       ...(asksHighestStock ? { stockOrder: 'desc' } : {}),
+      ...(asksLowStockOnly ? { lowStockOnly: true } : {}),
       ...(asksCost ? { includeCost: true } : {})
     }
   }
@@ -265,7 +332,9 @@ export function resolveDirectQuery(message, hasAttachment = false) {
   const hasStockAnchor = words.some((word) => STOCK_TERMS.has(word))
     || words.some((word) => ['hpp', 'modal'].includes(word))
   const hasPerformanceAnchor = words.some((word) =>
-    [...PERFORMANCE_TERMS, 'produk'].includes(word)
+    PERFORMANCE_TERMS.has(word)
+  ) || words.includes('produk') && words.some((word) =>
+    ['penjualan', 'omzet', 'omset', 'laba'].includes(word)
   )
   const hasOtherDataAnchor = words.some((word) =>
     [...DEBT_TERMS, 'transaksi', 'transaksinya', 'nota', 'pembelian', 'belanja'].includes(word)

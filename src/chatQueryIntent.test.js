@@ -39,6 +39,12 @@ test('routes low and high stock ranking questions without treating wording as pr
     query: 'stock',
     args: { stockOrder: 'desc' }
   })
+
+  assert.deepEqual(resolveDirectQuery('produk apa saja yang stoknya menipis'), {
+    kind: 'query',
+    query: 'stock',
+    args: { stockOrder: 'asc', lowStockOnly: true }
+  })
 })
 
 test('routes HPP and modal questions directly to the stock query with costs enabled', () => {
@@ -146,6 +152,16 @@ test('routes cashbook details and pending expedition costs to ledger queries', (
     query: 'cashbook',
     args: { period: 'bulan lalu' }
   })
+  assert.deepEqual(resolveDirectQuery('berapa pengeluaran hari ini'), {
+    kind: 'query',
+    query: 'daily_summary',
+    args: { period: 'hari ini' }
+  })
+  assert.deepEqual(resolveDirectQuery('catatan pengeluaran apa saja hari ini'), {
+    kind: 'query',
+    query: 'cashbook',
+    args: { type: 'expense', period: 'hari ini' }
+  })
 })
 
 test('falls back to supported sales, finance, transaction, catalog, and purchase queries', () => {
@@ -206,6 +222,59 @@ test('understands transaction existence, counts, latest records, and common ques
     kind: 'query',
     query: 'transactions',
     args: { customer: 'andri', answerMode: 'latest' }
+  })
+  assert.deepEqual(resolveDirectQuery('Terakhir ada transaksi kapan?'), {
+    kind: 'query',
+    query: 'transactions',
+    args: { answerMode: 'latest' }
+  })
+  assert.deepEqual(resolveDirectQuery('transaksi kredit belum lunas'), {
+    kind: 'query',
+    query: 'transactions',
+    args: { paymentType: 'credit', unpaidOnly: true }
+  })
+  assert.deepEqual(resolveDirectQuery('transaksi produk Aventador'), {
+    kind: 'query',
+    query: 'transactions',
+    args: { search: 'aventador', includeDetails: true }
+  })
+  assert.deepEqual(resolveDirectQuery('cari invoice INV 123'), {
+    kind: 'query',
+    query: 'transactions',
+    args: { search: 'inv 123' }
+  })
+  assert.deepEqual(resolveDirectQuery('detail transaksi Andri'), {
+    kind: 'query',
+    query: 'transactions',
+    args: { customer: 'andri', includeDetails: true }
+  })
+})
+
+test('routes common questions for purchases, inventory, and settings catalogs', () => {
+  assert.deepEqual(resolveDirectQuery('Apakah hari ini ada pembelian?'), {
+    kind: 'query',
+    query: 'purchases',
+    args: { period: 'hari ini', answerMode: 'existence' }
+  })
+  assert.deepEqual(resolveDirectQuery('berapa total pembelian vendor Agus bulan ini'), {
+    kind: 'query',
+    query: 'purchases',
+    args: { vendor: 'agus', period: 'bulan ini', answerMode: 'count' }
+  })
+  assert.deepEqual(resolveDirectQuery('berapa produk di toko'), {
+    kind: 'query',
+    query: 'inventory_summary',
+    args: {}
+  })
+  assert.deepEqual(resolveDirectQuery('berapa jumlah pelanggan'), {
+    kind: 'query',
+    query: 'customers',
+    args: { answerMode: 'count' }
+  })
+  assert.deepEqual(resolveDirectQuery('nomor telepon Andri berapa'), {
+    kind: 'query',
+    query: 'customers',
+    args: { search: 'andri', includeDetails: true }
   })
 })
 

@@ -12,9 +12,20 @@ function date(value) {
   return Number.isNaN(parsed.getTime()) ? String(value) : parsed.toLocaleDateString('id-ID')
 }
 
+function dateTime(value) {
+  if (!value) return '-'
+  const parsed = new Date(value)
+  return Number.isNaN(parsed.getTime())
+    ? String(value)
+    : parsed.toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short', timeZone: 'Asia/Jakarta' })
+}
+
 function summarizeStock(data) {
   const matches = data.matches || []
   if (matches.length === 0) {
+    if (data.low_stock_only && !data.searched_product) {
+      return 'Tidak ada produk dengan stok rendah (maksimal 5 satuan utama).'
+    }
     return data.total_products ? 'Produk yang cocok tidak ditemukan.' : 'Belum ada produk di toko.'
   }
   const lines = matches.slice(0, 10).map((product) => {
@@ -32,7 +43,9 @@ function summarizeStock(data) {
       (prices.length ? ' · Harga jual ' + prices.join(', ') : '')
   })
   if (data.truncated || matches.length > 10) lines.push('Masih ada produk lainnya; buka rincian data untuk daftar lengkap.')
-  const orderLabel = data.stock_order === 'asc'
+  const orderLabel = data.low_stock_only
+    ? 'Produk dengan stok rendah (maksimal 5 satuan utama):'
+    : data.stock_order === 'asc'
     ? 'Produk dengan stok paling sedikit (diurutkan berdasarkan jumlah PCS):'
     : data.stock_order === 'desc'
       ? 'Produk dengan stok paling banyak (diurutkan berdasarkan jumlah PCS):'
@@ -69,29 +82,58 @@ function summarizeTransactions(data) {
   }
   const periodLabel = periodLabels[data.period] || ''
   const matchingCount = Number(data.matching_count ?? transactions.length) || 0
+  const filterLabel = [
+    data.payment_type === 'credit' ? 'kredit' : data.payment_type === 'cash' ? 'tunai' : '',
+    data.unpaid_only ? 'belum lunas' : ''
+  ].filter(Boolean).join(' ')
+  const transactionLabel = 'transaksi' + (filterLabel ? ' ' + filterLabel : '')
+  function transactionDetails(transaction) {
+    if (!data.include_details) return ''
+    const items = (transaction.items || []).map((item) =>
+      String(item.name || 'Produk') + ' × ' + (Number(item.qty) || 0) +
+      (item.unit ? ' ' + item.unit : '')
+    )
+    const payments = (transaction.payments || []).map((payment) =>
+      rupiah(payment.amount) + ' (' + date(payment.date) + ')'
+    )
+    return [
+      ...(items.length ? ['Barang: ' + items.join(', ')] : []),
+      ...(transaction.paidAmount != null ? ['Dibayar: ' + rupiah(transaction.paidAmount)] : []),
+      ...(payments.length ? ['Riwayat bayar: ' + payments.join(', ')] : []),
+      ...(transaction.expedition ? ['Ekspedisi: ' + transaction.expedition] : [])
+    ].join(' · ')
+  }
   if (data.answer_mode === 'existence') {
     return matchingCount
-      ? 'Ya, ada ' + matchingCount + ' transaksi' + (periodLabel ? ' ' + periodLabel : '') + '.'
-      : 'Belum ada transaksi' + (periodLabel ? ' ' + periodLabel : '') + '.'
+      ? 'Ya, ada ' + matchingCount + ' ' + transactionLabel + (periodLabel ? ' ' + periodLabel : '') + '.'
+      : 'Belum ada ' + transactionLabel + (periodLabel ? ' ' + periodLabel : '') + '.'
   }
   if (data.answer_mode === 'count') {
-    return 'Jumlah transaksi' + (periodLabel ? ' ' + periodLabel : '') + ': ' + matchingCount + '.'
+    return 'Jumlah ' + transactionLabel + (periodLabel ? ' ' + periodLabel : '') + ': ' + matchingCount + '.'
   }
-  if (!transactions.length) return 'Tidak ada transaksi yang cocok' + (periodLabel ? ' ' + periodLabel : '') + '.'
+  if (!transactions.length) {
+    return data.answer_mode === 'latest'
+      ? 'Belum ada transaksi yang tercatat' + (periodLabel ? ' ' + periodLabel : '') + '.'
+      : 'Tidak ada transaksi yang cocok' + (periodLabel ? ' ' + periodLabel : '') + '.'
+  }
   if (data.answer_mode === 'latest') {
     const transaction = transactions[0]
-    return 'Transaksi terakhir' + (data.matching_customer ? ' pelanggan ' + data.matching_customer : '') +
+    return 'Transaksi terakhir' + (filterLabel ? ' ' + filterLabel : '') +
+      (data.matching_customer ? ' pelanggan ' + data.matching_customer : '') +
       ': ' + (transaction.invoiceNo || '#' + transaction.id) + ' · ' +
-      (transaction.customerName || 'Pelanggan') + ' · ' + date(transaction.createdAt) +
+      (transaction.customerName || 'Pelanggan') + ' · ' + dateTime(transaction.createdAt) +
       ' · ' + rupiah(transaction.total) +
-      (transaction.paymentType === 'credit' ? ' · Sisa hutang ' + rupiah(transaction.balanceDue) : ' · Tunai')
+      (transaction.paymentType === 'credit' ? ' · Sisa hutang ' + rupiah(transaction.balanceDue) : ' · Tunai') +
+      (transactionDetails(transaction) ? ' · ' + transactionDetails(transaction) : '')
   }
   const lines = transactions.slice(0, 10).map((transaction) =>
     (transaction.invoiceNo || '#' + transaction.id) + ' · ' +
     (transaction.customerName || 'Pelanggan') + ' · ' +
     date(transaction.createdAt) + ' · ' + rupiah(transaction.total) +
-    (transaction.paymentType === 'credit' ? ' · Sisa hutang ' + rupiah(transaction.balanceDue) : ' · Tunai')
+    (transaction.paymentType === 'credit' ? ' · Sisa hutang ' + rupiah(transaction.balanceDue) : ' · Tunai') +
+    (transactionDetails(transaction) ? ' · ' + transactionDetails(transaction) : '')
   )
+  if (filterLabel) lines.unshift('Daftar ' + transactionLabel + (periodLabel ? ' ' + periodLabel : '') + ':')
   if (data.truncated || transactions.length > 10) lines.push('Rincian lainnya dapat dilihat pada data transaksi.')
   return lines.join('\n')
 }
@@ -153,7 +195,9 @@ export function formatQueryAnswer(intent, data = {}) {
       'Transaksi: ' + (Number(data.transaction_count) || 0),
       'Total penjualan: ' + rupiah(data.sales_total),
       'Laba kotor: ' + rupiah(data.gross_profit),
+      'Laba bersih setelah pengeluaran: ' + rupiah(data.net_profit),
       'Pemasukan: ' + rupiah(data.income) + ' · Pengeluaran: ' + rupiah(data.expense),
+      'Saldo kas periode: ' + rupiah(data.cash_balance),
       'Hutang pelanggan berjalan: ' + rupiah(data.customer_debt),
       ...(Number(data.pending_expedition_count) > 0
         ? ['Biaya ekspedisi tertunda: ' + data.pending_expedition_count]
@@ -167,6 +211,8 @@ export function formatQueryAnswer(intent, data = {}) {
       'Pengeluaran: ' + rupiah(data.expense),
       'Modal: ' + rupiah(data.capital),
       'Laba kotor: ' + rupiah(data.gross_profit),
+      'Laba bersih setelah pengeluaran: ' + rupiah(data.net_profit),
+      'Saldo kas: ' + rupiah(data.cash_balance),
       'Total hutang pelanggan: ' + rupiah(data.total_debt),
       ...(Number(data.pending_expedition_count) > 0
         ? ['Biaya ekspedisi tertunda: ' + data.pending_expedition_count]
@@ -197,22 +243,74 @@ export function formatQueryAnswer(intent, data = {}) {
 
   if (intent === 'purchases') {
     const entries = data.entries || []
-    if (!entries.length) return 'Tidak ada catatan pembelian yang cocok.'
+    const periodLabels = {
+      'hari ini': 'hari ini',
+      kemarin: 'kemarin',
+      'minggu ini': 'minggu ini',
+      'bulan ini': 'bulan ini',
+      'bulan lalu': 'bulan lalu',
+      'tahun ini': 'tahun ini',
+      'tahun lalu': 'tahun lalu'
+    }
+    const periodLabel = periodLabels[data.period] || ''
+    const matchingCount = Number(data.matching_count ?? entries.length) || 0
+    if (data.answer_mode === 'existence') {
+      return matchingCount
+        ? 'Ya, ada ' + matchingCount + ' catatan pembelian' + (periodLabel ? ' ' + periodLabel : '') + '.'
+        : 'Belum ada catatan pembelian' + (periodLabel ? ' ' + periodLabel : '') + '.'
+    }
+    if (data.answer_mode === 'count') {
+      return 'Jumlah catatan pembelian' + (periodLabel ? ' ' + periodLabel : '') + ': ' + matchingCount + '.'
+    }
+    if (!entries.length) {
+      return data.answer_mode === 'latest'
+        ? 'Belum ada catatan pembelian' + (periodLabel ? ' ' + periodLabel : '') + '.'
+        : 'Tidak ada catatan pembelian yang cocok' + (periodLabel ? ' ' + periodLabel : '') + '.'
+    }
+    if (data.answer_mode === 'latest') {
+      const entry = entries[0]
+      return 'Pembelian terakhir' + (periodLabel ? ' ' + periodLabel : '') +
+        ': ' + date(entry.date) + ' · ' + (entry.purchase || entry.note || 'Pembelian') +
+        (entry.vendor ? ' · Vendor ' + entry.vendor : '') + ' · ' + rupiah(entry.amount)
+    }
     return entries.slice(0, 10).map((entry) =>
-      date(entry.date) + ' · ' + (entry.note || entry.category || 'Pembelian') +
+      date(entry.date) + ' · ' + (entry.purchase || entry.note || entry.category || 'Pembelian') +
+      (entry.vendor ? ' · Vendor ' + entry.vendor : '') +
       ' · ' + rupiah(entry.amount)
     ).join('\n')
   }
 
   if (['customers', 'vendors', 'expeditions'].includes(intent)) {
     const entries = data.entries || []
-    if (!entries.length) return 'Daftar ' + intent + ' masih kosong.'
-    return entries.slice(0, 20).map((entry) => entry.name).join('\n')
+    if (data.answer_mode === 'count') {
+      return 'Jumlah ' + ({ customers: 'pelanggan', vendors: 'vendor', expeditions: 'ekspedisi' }[intent] || intent) +
+        ': ' + (Number(data.matching_count) || 0) + '.'
+    }
+    if (!entries.length) {
+      return data.searched_text
+        ? 'Tidak ditemukan ' + ({ customers: 'pelanggan', vendors: 'vendor', expeditions: 'ekspedisi' }[intent] || intent) +
+            ' yang cocok dengan "' + data.searched_text + '".'
+        : 'Daftar ' + intent + ' masih kosong.'
+    }
+    return entries.slice(0, 20).map((entry) =>
+      entry.name +
+      (data.include_details && intent === 'customers' && entry.phone ? ' · Telepon ' + entry.phone : '') +
+      (data.include_details && intent === 'customers' && entry.address ? ' · Alamat ' + entry.address : '')
+    ).join('\n')
   }
 
   if (['categories', 'units'].includes(intent)) {
     const entries = data.entries || []
-    if (!entries.length) return 'Daftar ' + (intent === 'categories' ? 'kategori' : 'satuan') + ' masih kosong.'
+    if (data.answer_mode === 'count') {
+      return 'Jumlah ' + (intent === 'categories' ? 'kategori' : 'pilihan satuan') +
+        ': ' + (Number(data.matching_count) || 0) + '.'
+    }
+    if (!entries.length) {
+      return data.searched_text
+        ? 'Tidak ditemukan ' + (intent === 'categories' ? 'kategori' : 'satuan') +
+            ' yang cocok dengan "' + data.searched_text + '".'
+        : 'Daftar ' + (intent === 'categories' ? 'kategori' : 'satuan') + ' masih kosong.'
+    }
     return entries.slice(0, 30).map((entry) => entry.name).join('\n')
   }
 

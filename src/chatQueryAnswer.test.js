@@ -23,6 +23,18 @@ test('labels ranked stock answers and reports stock units', () => {
     matches: [{ name: 'Tas A', stock: '2 lusin', sale_prices: {} }]
   })
 
+  test('reports genuinely low-stock products instead of only ranking all products', () => {
+    const answer = formatQueryAnswer('stock', {
+      low_stock_only: true,
+      matches: [{ name: 'Tas A', stock: '3 pcs', sale_prices: {} }]
+    })
+    assert.match(answer, /Produk dengan stok rendah/)
+    assert.equal(formatQueryAnswer('stock', {
+      low_stock_only: true,
+      matches: []
+    }), 'Tidak ada produk dengan stok rendah (maksimal 5 satuan utama).')
+  })
+
   assert.match(answer, /Produk dengan stok paling sedikit/)
   assert.match(answer, /berdasarkan jumlah PCS/)
   assert.match(answer, /Tas A: 2 lusin/)
@@ -133,6 +145,55 @@ test('answers transaction existence, count, and latest-record questions concisel
       balanceDue: 100_000
     }]
   }), /Transaksi terakhir pelanggan Andri: INV-9/)
+  assert.match(formatQueryAnswer('transactions', {
+    answer_mode: 'latest',
+    transactions: []
+  }), /Belum ada transaksi yang tercatat/)
+  assert.match(formatQueryAnswer('transactions', {
+    include_details: true,
+    transactions: [{
+      invoiceNo: 'INV-1',
+      customerName: 'Andri',
+      createdAt: '2026-10-30',
+      total: 250_000,
+      paymentType: 'credit',
+      balanceDue: 100_000,
+      paidAmount: 150_000,
+      items: [{ name: 'Tas A', qty: 2, unit: 'pcs' }],
+      payments: [{ amount: 150_000, date: '2026-10-30' }]
+    }]
+  }), /Barang: Tas A × 2 pcs/)
+})
+
+test('answers purchase history, catalog counts, and customer contact questions', () => {
+  assert.equal(formatQueryAnswer('purchases', {
+    answer_mode: 'existence',
+    period: 'hari ini',
+    matching_count: 0,
+    entries: []
+  }), 'Belum ada catatan pembelian hari ini.')
+  assert.equal(formatQueryAnswer('purchases', {
+    answer_mode: 'count',
+    matching_count: 2,
+    entries: []
+  }), 'Jumlah catatan pembelian: 2.')
+  assert.equal(formatQueryAnswer('purchases', {
+    entries: [{
+      date: '2026-10-30',
+      purchase: 'Kain kanvas',
+      vendor: 'Agus',
+      amount: 350_000
+    }]
+  }), '30/10/2026 · Kain kanvas · Vendor Agus · Rp\u00a0350.000')
+  assert.equal(formatQueryAnswer('customers', {
+    answer_mode: 'count',
+    matching_count: 4,
+    entries: []
+  }), 'Jumlah pelanggan: 4.')
+  assert.equal(formatQueryAnswer('customers', {
+    include_details: true,
+    entries: [{ name: 'Andri', phone: '08123456789', address: 'Bandung' }]
+  }), 'Andri · Telepon 08123456789 · Alamat Bandung')
 })
 
 test('reports sales and finance metrics from query data', () => {
@@ -148,6 +209,15 @@ test('reports sales and finance metrics from query data', () => {
   assert.match(answer, /Transaksi: 2/)
   assert.match(answer, /Total penjualan: Rp\s?500\.000/)
   assert.match(answer, /Laba kotor: Rp\s?100\.000/)
+  assert.match(formatQueryAnswer('finance_summary', {
+    income: 500_000,
+    expense: 50_000,
+    capital: 0,
+    gross_profit: 100_000,
+    net_profit: 50_000,
+    cash_balance: 450_000,
+    total_debt: 0
+  }), /Saldo kas: Rp\s?450\.000/)
 })
 
 test('labels product performance ranking by the requested metric', () => {
