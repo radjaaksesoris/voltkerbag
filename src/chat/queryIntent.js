@@ -141,17 +141,31 @@ export function resolveFastQuery(message) {
     }
   }
 
-  if (words.some((word) => ['transaksi', 'transaksinya', 'nota'].includes(word))) {
+  const asksPurchaseActivity = words.some((word) => ['beli', 'membeli'].includes(word))
+    && words.some((word) => ['ada', 'apakah', 'sudah', 'pernah', 'siapa', 'berapa'].includes(word))
+  if (words.some((word) => ['transaksi', 'transaksinya', 'nota'].includes(word)) || asksPurchaseActivity) {
     const customerTerms = new Set([
-      'berapa', 'cek', 'lihat', 'cari', 'tampilkan', 'riwayat', 'transaksi',
-      'transaksinya', 'nota', 'pelanggan', 'customer', 'milik', 'atas', 'nama',
-      'hari', 'ini', 'kemarin', 'kemaren', 'minggu', 'bulan', 'sekarang', 'saja'
+      'berapa', 'ada', 'apakah', 'sudah', 'belum', 'pernah', 'cek', 'tolong',
+      'dong', 'lihat', 'cari', 'tampilkan', 'daftar', 'riwayat', 'semua',
+      'seluruh', 'jumlah', 'total', 'transaksi', 'transaksinya', 'bertransaksi', 'nota', 'beli', 'membeli',
+      'pelanggan', 'customer', 'milik', 'atas', 'nama', 'yang', 'di', 'pada',
+      'hari', 'ini', 'kemarin', 'kemaren', 'minggu', 'bulan', 'tahun',
+      'sekarang', 'tadi', 'saja', 'terakhir', 'terbaru', 'paling', 'baru'
     ])
     const customer = removeTerms(words, customerTerms)
+    const asksExistence = words.some((word) => ['apakah', 'ada', 'sudah', 'belum', 'pernah'].includes(word))
+    const asksCount = words.some((word) => ['berapa', 'jumlah', 'total'].includes(word))
+    const asksLatest = words.some((word) => ['terakhir', 'terbaru', 'tadi'].includes(word))
     return {
       kind: 'query',
       query: 'transactions',
-      args: { ...(customer ? { customer } : {}), ...(period ? { period } : {}) }
+      args: {
+        ...(customer ? { customer } : {}),
+        ...(period ? { period } : {}),
+        ...(asksExistence ? { answerMode: asksCount ? 'count' : 'existence' } : {}),
+        ...(asksCount ? { answerMode: 'count' } : {}),
+        ...(asksLatest ? { answerMode: 'latest' } : {})
+      }
     }
   }
 

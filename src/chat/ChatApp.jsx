@@ -322,7 +322,11 @@ export default function ChatApp() {
 
           {messages.map((message) => (
             <article key={message.id} className={'chat-message chat-message-' + message.role}>
-              {message.role === 'assistant' && <div className="chat-avatar" aria-hidden="true">V</div>}
+              {message.role === 'assistant' && (
+                <div className="chat-avatar" aria-hidden="true">
+                  <img src={import.meta.env.BASE_URL + 'voltker-icon-192.png'} alt="" />
+                </div>
+              )}
               <div className="chat-message-content">
                 <div className={'chat-bubble' + (message.error ? ' is-error' : '') + (message.success ? ' is-success' : '')}>
                   <p>{message.text}</p>

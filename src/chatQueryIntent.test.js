@@ -181,6 +181,34 @@ test('falls back to supported sales, finance, transaction, catalog, and purchase
   })
 })
 
+test('understands transaction existence, counts, latest records, and common question wording', () => {
+  assert.deepEqual(resolveDirectQuery('Apakah hari ini ada transaksi?'), {
+    kind: 'query',
+    query: 'transactions',
+    args: { period: 'hari ini', answerMode: 'existence' }
+  })
+  assert.deepEqual(resolveDirectQuery('sudah ada yang beli hari ini?'), {
+    kind: 'query',
+    query: 'transactions',
+    args: { period: 'hari ini', answerMode: 'existence' }
+  })
+  assert.deepEqual(resolveDirectQuery('berapa jumlah transaksi hari ini'), {
+    kind: 'query',
+    query: 'transactions',
+    args: { period: 'hari ini', answerMode: 'count' }
+  })
+  assert.deepEqual(resolveDirectQuery('transaksi Andri hari ini'), {
+    kind: 'query',
+    query: 'transactions',
+    args: { customer: 'andri', period: 'hari ini' }
+  })
+  assert.deepEqual(resolveDirectQuery('nota terakhir Andri'), {
+    kind: 'query',
+    query: 'transactions',
+    args: { customer: 'andri', answerMode: 'latest' }
+  })
+})
+
 test('uses app query only after AI replies instead of producing a query plan', () => {
   assert.deepEqual(resolveFallbackQuery('berapa stok Bimo Oval', {
     kind: 'reply',

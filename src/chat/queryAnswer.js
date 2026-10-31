@@ -58,7 +58,34 @@ function summarizeDebts(data) {
 
 function summarizeTransactions(data) {
   const transactions = data.transactions || []
-  if (!transactions.length) return 'Tidak ada transaksi yang cocok.'
+  const periodLabels = {
+    'hari ini': 'hari ini',
+    kemarin: 'kemarin',
+    'minggu ini': 'minggu ini',
+    'bulan ini': 'bulan ini',
+    'bulan lalu': 'bulan lalu',
+    'tahun ini': 'tahun ini',
+    'tahun lalu': 'tahun lalu'
+  }
+  const periodLabel = periodLabels[data.period] || ''
+  const matchingCount = Number(data.matching_count ?? transactions.length) || 0
+  if (data.answer_mode === 'existence') {
+    return matchingCount
+      ? 'Ya, ada ' + matchingCount + ' transaksi' + (periodLabel ? ' ' + periodLabel : '') + '.'
+      : 'Belum ada transaksi' + (periodLabel ? ' ' + periodLabel : '') + '.'
+  }
+  if (data.answer_mode === 'count') {
+    return 'Jumlah transaksi' + (periodLabel ? ' ' + periodLabel : '') + ': ' + matchingCount + '.'
+  }
+  if (!transactions.length) return 'Tidak ada transaksi yang cocok' + (periodLabel ? ' ' + periodLabel : '') + '.'
+  if (data.answer_mode === 'latest') {
+    const transaction = transactions[0]
+    return 'Transaksi terakhir' + (data.matching_customer ? ' pelanggan ' + data.matching_customer : '') +
+      ': ' + (transaction.invoiceNo || '#' + transaction.id) + ' · ' +
+      (transaction.customerName || 'Pelanggan') + ' · ' + date(transaction.createdAt) +
+      ' · ' + rupiah(transaction.total) +
+      (transaction.paymentType === 'credit' ? ' · Sisa hutang ' + rupiah(transaction.balanceDue) : ' · Tunai')
+  }
   const lines = transactions.slice(0, 10).map((transaction) =>
     (transaction.invoiceNo || '#' + transaction.id) + ' · ' +
     (transaction.customerName || 'Pelanggan') + ' · ' +

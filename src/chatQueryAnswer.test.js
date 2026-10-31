@@ -102,6 +102,39 @@ test('formats an empty transaction result clearly', () => {
   assert.equal(formatQueryAnswer('transactions', { transactions: [] }), 'Tidak ada transaksi yang cocok.')
 })
 
+test('answers transaction existence, count, and latest-record questions concisely', () => {
+  assert.equal(formatQueryAnswer('transactions', {
+    answer_mode: 'existence',
+    period: 'hari ini',
+    matching_count: 2,
+    transactions: [{ invoiceNo: 'INV-1' }]
+  }), 'Ya, ada 2 transaksi hari ini.')
+  assert.equal(formatQueryAnswer('transactions', {
+    answer_mode: 'existence',
+    period: 'hari ini',
+    matching_count: 0,
+    transactions: []
+  }), 'Belum ada transaksi hari ini.')
+  assert.equal(formatQueryAnswer('transactions', {
+    answer_mode: 'count',
+    period: 'kemarin',
+    matching_count: 3,
+    transactions: []
+  }), 'Jumlah transaksi kemarin: 3.')
+  assert.match(formatQueryAnswer('transactions', {
+    answer_mode: 'latest',
+    matching_customer: 'Andri',
+    transactions: [{
+      invoiceNo: 'INV-9',
+      customerName: 'Andri',
+      createdAt: '2026-10-30T10:00:00.000Z',
+      total: 250_000,
+      paymentType: 'credit',
+      balanceDue: 100_000
+    }]
+  }), /Transaksi terakhir pelanggan Andri: INV-9/)
+})
+
 test('reports sales and finance metrics from query data', () => {
   const answer = formatQueryAnswer('daily_summary', {
     transaction_count: 2,

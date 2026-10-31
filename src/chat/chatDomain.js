@@ -383,7 +383,7 @@ export async function queryStore(intent, args = {}) {
     const name = String(args.customer || '').trim().toLocaleLowerCase('id-ID')
     const hasDateFilter = Boolean(args.period || (args.from && args.to))
     const { from, to } = hasDateFilter ? dateRangeTimestamps(dateRangeForQuery(args)) : { from: null, to: null }
-    const matching = transactions
+    const filtered = transactions
       .filter((transaction) => {
         const time = new Date(transaction.createdAt || 0).getTime()
         return (!name || String(transaction.customerName || '').toLocaleLowerCase('id-ID').includes(name))
@@ -391,11 +391,15 @@ export async function queryStore(intent, args = {}) {
           && (!to || time < new Date(to).getTime())
       })
       .sort((left, right) => new Date(right.createdAt || 0) - new Date(left.createdAt || 0))
-      .slice(0, 30)
+    const matchingCount = filtered.length
+    const matching = (args.answerMode === 'latest' ? filtered.slice(0, 1) : filtered.slice(0, 30))
     return {
       title: 'Riwayat transaksi',
       data: {
         matching_customer: name ? customers.find((customer) => customer.name.toLocaleLowerCase('id-ID').includes(name))?.name || null : null,
+        period: args.period || '',
+        answer_mode: args.answerMode || '',
+        matching_count: matchingCount,
         transactions: matching.map((transaction) => ({
           id: transaction.id,
           invoiceNo: transaction.invoiceNo,
@@ -413,7 +417,7 @@ export async function queryStore(intent, args = {}) {
           expedition: transaction.expedition || '',
           createdAt: transaction.createdAt
         })),
-        truncated: transactions.length > matching.length
+        truncated: matchingCount > matching.length
       }
     }
   }
