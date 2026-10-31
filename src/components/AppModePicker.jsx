@@ -19,7 +19,6 @@ export default function AppModePicker({ session, onSignedOut }) {
       <section className="app-mode-content" aria-labelledby="app-mode-title">
         <p className="app-mode-eyebrow">RUANG KERJA ADMINISTRATOR</p>
         <h1 id="app-mode-title">Pilih cara Anda bekerja.</h1>
-        <p className="app-mode-description">Gunakan tampilan yang paling nyaman untuk mengelola toko hari ini.</p>
         <div className="app-mode-options">
           <a className="app-mode-option" href={import.meta.env.BASE_URL + '?mode=table'}>
             <span className="app-mode-icon"><Icon name="table" size={25} /></span>
