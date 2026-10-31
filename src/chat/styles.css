@@ -43,9 +43,10 @@ body {
   align-items: center;
   justify-content: space-between;
   gap: 20px;
-  border-bottom: 1px solid var(--chat-line);
-  background: rgba(255, 255, 255, .72);
+  border-bottom: 1px solid rgba(255, 255, 255, .18);
+  background: #7b1e24;
   padding: 0 5vw;
+  color: #fffaf4;
 }
 
 .chat-brand,
@@ -62,7 +63,7 @@ body {
   display: block;
   width: 140px;
   height: auto;
-  filter: brightness(0);
+  filter: brightness(0) invert(1);
 }
 
 .chat-brand-mark,
@@ -90,14 +91,14 @@ body {
 }
 
 .chat-brand strong span {
-  color: var(--chat-accent);
+  color: #f0c9c5;
   font-size: 10px;
 }
 
 .chat-brand small {
   display: block;
   margin-top: 3px;
-  color: var(--chat-muted);
+  color: rgba(255, 250, 244, .76);
   font-size: 11px;
 }
 
@@ -110,11 +111,11 @@ body {
   min-height: 36px;
   align-items: center;
   justify-content: center;
-  border: 1px solid var(--chat-accent);
+  border: 1px solid rgba(255, 255, 255, .25);
   border-radius: 8px;
-  background: var(--chat-accent);
+  background: rgba(83, 14, 20, .52);
   padding: 0 13px;
-  color: #fff;
+  color: #fffaf4;
   font-size: 11px;
   font-weight: 750;
   letter-spacing: .04em;
@@ -123,8 +124,8 @@ body {
 }
 
 .chat-old-app-link:hover {
-  border-color: #5f171c;
-  background: #5f171c;
+  border-color: rgba(255, 255, 255, .6);
+  background: rgba(83, 14, 20, .78);
 }
 
 .chat-connection-banner {
