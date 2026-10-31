@@ -1,7 +1,7 @@
 const STOCK_TERMS = new Set(['stok', 'stoknya', 'stock', 'stocknya', 'persediaan'])
 const STOCK_QUESTION_TERMS = new Set([
   'berapa', 'cek', 'lihat', 'cari', 'tampilkan', 'jumlah', 'ada', 'tersedia',
-  'masih', 'sekarang', 'saat', 'ini', 'apakah', 'tolong', 'dong', 'produk',
+  'masih', 'sisa', 'sisanya', 'tersisa', 'sekarang', 'saat', 'ini', 'apakah', 'tolong', 'dong', 'produk',
   'barang', 'di', 'toko', 'yang', 'harga', 'harganya', 'hpp', 'modal',
   'pokok', 'per', 'pcs', 'lusin'
 ])
