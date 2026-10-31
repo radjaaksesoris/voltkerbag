@@ -13,6 +13,9 @@ body,
 }
 
 body {
+  height: 100vh;
+  height: 100dvh;
+  overflow: hidden;
   background: #f5f2ee;
 }
 
@@ -22,9 +25,11 @@ body {
   --chat-line: #e8e2dc;
   --chat-accent: #7b1e24;
   display: flex;
-  min-height: 100vh;
-  min-height: 100dvh;
+  height: 100vh;
+  height: 100dvh;
+  min-height: 0;
   flex-direction: column;
+  overflow: hidden;
   background:
     radial-gradient(ellipse at 68% 0%, rgba(255, 255, 255, .8), transparent 43rem),
     #f5f2ee;
@@ -33,6 +38,7 @@ body {
 
 .chat-topbar {
   display: flex;
+  flex: 0 0 auto;
   min-height: 72px;
   align-items: center;
   justify-content: space-between;
@@ -133,7 +139,7 @@ body {
   display: flex;
   width: min(100% - 32px, 900px);
   min-height: 0;
-  flex: 1;
+  flex: 1 1 0;
   flex-direction: column;
   align-self: center;
 }
@@ -141,10 +147,14 @@ body {
 .chat-feed {
   display: flex;
   min-height: 0;
-  flex: 1;
+  flex: 1 1 0;
   flex-direction: column;
   gap: 22px;
-  overflow: auto;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior-y: contain;
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-y;
   padding: 40px 10px 24px;
 }
 
@@ -474,8 +484,7 @@ body {
 }
 
 .chat-composer-wrap {
-  position: sticky;
-  bottom: 0;
+  flex: 0 0 auto;
   padding: 12px 10px max(16px, env(safe-area-inset-bottom));
   background: linear-gradient(transparent, #f5f2ee 14px);
 }
@@ -619,6 +628,7 @@ body {
 .chat-loading {
   display: grid;
   min-height: 100vh;
+  min-height: 100dvh;
   place-items: center;
   background: #f5f2ee;
   color: #635b55;
