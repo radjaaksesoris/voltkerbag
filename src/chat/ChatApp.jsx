@@ -8,7 +8,11 @@ import { onAuthStateChange, getAuthSession, verifyAuthSession } from '../supabas
 import { executeAction, prepareAction, queryStore } from './chatDomain.js'
 import { requestAssistantPlan } from './assistantApi.js'
 import { formatQueryAnswer } from './queryAnswer.js'
-import { getMissingProductDetails } from './planValidation.js'
+import {
+  advanceProductCreation,
+  productCreationPrompt,
+  startProductCreationRequest
+} from './productCreation.js'
 import { resolveDirectQuery, resolveFallbackQuery } from './queryIntent.js'
 import { clearRequestedAppMode, getRequestedAppMode } from '../appMode.js'
 
@@ -33,20 +37,6 @@ function renderChatText(text) {
   )
 }
 
-function getIncompleteNewProductName(text) {
-  if (!/\b(?:buat|bikin|tambah|tambahkan|daftarkan|input)\b.*\b(?:produk|barang|stok)\s+baru\b/i.test(text)
-    || /\d/.test(text)) return ''
-  return text.match(/\bnama(?:nya)?\s+([^,.!?]+)/i)?.[1]?.trim() || ''
-}
-
-function newProductChecklist(name) {
-  return 'Untuk membuat produk baru' + (name ? ' "' + name + '"' : '') +
-    ', mohon kirim satuan produk (pcs/lusin atau satuan custom yang sudah tersedia), jumlah stok awal ' +
-    '(untuk pcs/lusin dalam lusin), harga modal (per lusin untuk pcs/lusin), dan harga jual ' +
-    '(harga PCS serta lusin, atau harga per satuan custom). Kategori boleh dikosongkan dan akan memakai Umum. ' +
-    'Foto opsional; lampirkan melalui tombol + bersama detailnya.'
-}
-
 export default function ChatApp() {
   const [session, setSession] = useState(null)
   const [checkingSession, setCheckingSession] = useState(true)
@@ -58,6 +48,7 @@ export default function ChatApp() {
   const [processingStage, setProcessingStage] = useState('')
   const [actionBusy, setActionBusy] = useState(false)
   const [attachment, setAttachment] = useState(null)
+  const [productCreation, setProductCreation] = useState(null)
   const [confirmationText, setConfirmationText] = useState('')
   const [receiptTransaction, setReceiptTransaction] = useState(null)
   const [receiptError, setReceiptError] = useState('')
@@ -111,6 +102,7 @@ export default function ChatApp() {
           clearRequestedAppMode()
           setSession(null)
           setMessages([])
+          setProductCreation(null)
         } else if (nextSession) {
           setSession(nextSession)
           setConnectionError('')
@@ -141,9 +133,9 @@ export default function ChatApp() {
   async function sendMessage(event, suggestedText) {
     event?.preventDefault()
     if (busy || actionBusy || hasPendingAction || operationLock.current) return
-    const text = (suggestedText ?? input).trim()
-    if (!text) return
     const file = attachment
+    const text = (suggestedText ?? input).trim() || (file ? 'Foto produk' : '')
+    if (!text) return
     setInput('')
     setAttachment(null)
     appendMessage(setMessages, {
@@ -154,9 +146,86 @@ export default function ChatApp() {
     setBusy(true)
 
     try {
-      const incompleteProductName = getIncompleteNewProductName(text)
-      if (incompleteProductName) {
-        appendMessage(setMessages, { role: 'assistant', text: newProductChecklist(incompleteProductName) })
+      if (productCreation) {
+        if (productCreation.step === 'unit' && text.trim()) {
+          const { data } = await queryStore('units')
+          const selectedUnit = (data.entries || []).find((entry) =>
+            entry.name.toLocaleLowerCase('id-ID') === text.trim().toLocaleLowerCase('id-ID')
+            && entry.name.toLocaleLowerCase('id-ID') !== 'kodi'
+          )
+          if (!selectedUnit) {
+            const choices = (data.entries || [])
+              .map((entry) => entry.name)
+              .filter((name) => name.toLocaleLowerCase('id-ID') !== 'kodi')
+            appendMessage(setMessages, {
+              role: 'assistant',
+              text: choices.length
+                ? 'Satuan "' + text.trim() + '" belum tersedia. Pilih salah satu satuan terdaftar: ' + choices.join(', ') + '.'
+                : 'Belum ada satuan produk yang terdaftar. Tambahkan satuan melalui aplikasi tabel terlebih dahulu.'
+            })
+            return
+          }
+        }
+        if (productCreation.step === 'category'
+          && text.trim()
+          && !/^(lewati|skip|tidak ada|tidak punya|belum ada|nanti)$/i.test(text.trim())) {
+          const { data } = await queryStore('categories')
+          const selectedCategory = (data.entries || []).find((entry) =>
+            entry.name.toLocaleLowerCase('id-ID') === text.trim().toLocaleLowerCase('id-ID')
+          )
+          if (!selectedCategory) {
+            const choices = (data.entries || []).map((entry) => entry.name)
+            appendMessage(setMessages, {
+              role: 'assistant',
+              text: choices.length
+                ? 'Kategori "' + text.trim() + '" belum terdaftar. Pilih salah satu: ' + choices.join(', ') + ', atau balas "lewati".'
+                : 'Belum ada kategori terdaftar. Balas "lewati" untuk memakai kategori kosong.'
+            })
+            return
+          }
+        }
+        const progress = advanceProductCreation(productCreation, { text, attachment: file })
+        if (progress.cancelled) {
+          setProductCreation(null)
+          appendMessage(setMessages, { role: 'assistant', text: 'Pembuatan produk baru dibatalkan.' })
+          return
+        }
+        if (!progress.complete) {
+          setProductCreation(progress.creation)
+          appendMessage(setMessages, { role: 'assistant', text: progress.prompt })
+          return
+        }
+        try {
+          const draft = await prepareAction('add_product', progress.actionArgs, progress.attachment)
+          draft.requestId = crypto.randomUUID()
+          setProductCreation(null)
+          appendMessage(setMessages, {
+            role: 'assistant',
+            text: 'Data produk sudah lengkap. Periksa pratinjau berikut sebelum menyimpan.',
+            draft
+          })
+        } catch (error) {
+          setProductCreation(progress.creation)
+          appendMessage(setMessages, {
+            role: 'assistant',
+            text: (error.message || 'Produk belum dapat disiapkan.') + ' ' + productCreationPrompt(progress.creation),
+            error: true
+          })
+        }
+        return
+      }
+
+      const newProductRequest = startProductCreationRequest(text)
+      if (newProductRequest) {
+        if (file?.type?.startsWith('image/')) {
+          newProductRequest.image = file
+          newProductRequest.step = 'category'
+        }
+        setProductCreation(newProductRequest)
+        appendMessage(setMessages, {
+          role: 'assistant',
+          text: productCreationPrompt(newProductRequest)
+        })
         return
       }
 
@@ -326,6 +395,7 @@ export default function ChatApp() {
           clearRequestedAppMode()
           setSession(null)
           setMessages([])
+          setProductCreation(null)
         }}
       />
     )
@@ -502,7 +572,7 @@ export default function ChatApp() {
                 }
               }}
             />
-            <button className="chat-send-button" type="submit" disabled={busy || actionBusy || hasPendingAction || !input.trim()} aria-label="Kirim pesan">
+            <button className="chat-send-button" type="submit" disabled={busy || actionBusy || hasPendingAction || !(input.trim() || attachment)} aria-label="Kirim pesan">
               <Icon name="arrowUp" size={18} />
             </button>
           </form>
