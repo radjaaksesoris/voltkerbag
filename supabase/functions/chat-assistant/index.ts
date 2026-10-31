@@ -145,7 +145,7 @@ Deno.serve(async (request) => {
       })
     }
 
-    const model = Deno.env.get('GEMINI_MODEL') || 'gemini-2.5-flash'
+    const model = Deno.env.get('GEMINI_MODEL') || 'gemini-3.8-flash'
     const text = await generate(prompt, geminiApiKey, model)
     if (body.mode === 'summarize') {
       let parsed: unknown

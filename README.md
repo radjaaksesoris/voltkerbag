@@ -35,7 +35,7 @@ Penambahan stok lewat chat tetap memerlukan jumlah dan harga modal batch, lalu m
    npx supabase secrets set GEMINI_API_KEY=<Gemini-API-key>
    npx supabase functions deploy chat-assistant
    ```
-3. Function menggunakan model `gemini-2.5-flash` secara default. Jika perlu, atur secret `GEMINI_MODEL` sebelum deploy.
+3. Function menggunakan model `gemini-3.8-flash` secara default. Pastikan secret `GEMINI_MODEL` tidak masih menunjuk ke model lama; jika secret tersebut sudah ada, ubah ke `gemini-3.8-flash` atau hapus agar default dipakai.
 4. Build/deploy aplikasi seperti biasa. GitHub Pages menerbitkan aplikasi utama di root dan chat di `/voltkerbag/chat/`.
 
 Simpan `GEMINI_API_KEY` hanya sebagai Supabase Function secret; jangan menaruhnya di `.env`, source code, GitHub Pages build variable, atau browser. Jangan gunakan `service_role` key. Jika function atau Gemini belum dikonfigurasi, chat menampilkan kesalahan dan tidak menjalankan aksi.
