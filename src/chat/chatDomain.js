@@ -607,7 +607,7 @@ export async function prepareAction(action, args = {}, attachment = null) {
         'Stok sesudah: ' + stockLabel({ ...product, stock_pcs: previousPcs + quantityPcs })
       ],
       payload: {
-        productId: product.id, quantityPcs, enteredCost, unit, previousPcs, product,
+        productId: product.id, quantity, quantityPcs, enteredCost, unit, previousPcs, product,
         pricePolicy, salePricePcs, salePriceLusin, salePrice
       }
     }
