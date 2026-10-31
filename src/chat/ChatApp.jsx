@@ -45,6 +45,24 @@ export default function ChatApp() {
   const requestedAppMode = getRequestedAppMode()
 
   useEffect(() => {
+    const viewport = window.visualViewport
+    if (!viewport) return undefined
+
+    const updateViewportHeight = () => {
+      document.documentElement.style.setProperty('--chat-viewport-height', `${viewport.height}px`)
+    }
+
+    updateViewportHeight()
+    viewport.addEventListener('resize', updateViewportHeight)
+    window.addEventListener('resize', updateViewportHeight)
+    return () => {
+      viewport.removeEventListener('resize', updateViewportHeight)
+      window.removeEventListener('resize', updateViewportHeight)
+      document.documentElement.style.removeProperty('--chat-viewport-height')
+    }
+  }, [])
+
+  useEffect(() => {
     let active = true
     let unsubscribe = () => {}
 

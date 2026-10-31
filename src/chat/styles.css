@@ -13,8 +13,8 @@ body,
 }
 
 body {
-  height: 100vh;
-  height: 100dvh;
+  height: var(--chat-viewport-height, 100vh);
+  height: var(--chat-viewport-height, 100dvh);
   overflow: hidden;
   background: #f5f2ee;
 }
@@ -25,8 +25,8 @@ body {
   --chat-line: #e8e2dc;
   --chat-accent: #7b1e24;
   display: flex;
-  height: 100vh;
-  height: 100dvh;
+  height: var(--chat-viewport-height, 100vh);
+  height: var(--chat-viewport-height, 100dvh);
   min-height: 0;
   flex-direction: column;
   overflow: hidden;
