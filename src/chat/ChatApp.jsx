@@ -8,6 +8,7 @@ import { onAuthStateChange, getAuthSession, verifyAuthSession } from '../supabas
 import { executeAction, prepareAction, queryStore } from './chatDomain.js'
 import { requestAssistantPlan } from './assistantApi.js'
 import { formatQueryAnswer } from './queryAnswer.js'
+import { resolveFastQuery } from './queryIntent.js'
 
 const STARTERS = [
   'Berapa stok tas hitam?',
@@ -115,18 +116,24 @@ export default function ChatApp() {
       attachmentName: file?.name || ''
     })
     setBusy(true)
-    setProcessingStage('Memahami permintaan...')
 
     try {
-      const history = messages.slice(-12).map((message) => ({
-        role: message.role,
-        content: message.text || message.message || ''
-      })).filter((message) => message.content)
-      const plan = await requestAssistantPlan({
-        message: text,
-        history,
-        attachmentName: file?.name || ''
-      })
+      const fastQuery = file ? null : resolveFastQuery(text)
+      let plan = fastQuery
+      if (fastQuery) {
+        setProcessingStage('Mengambil data stok...')
+      } else {
+        setProcessingStage('Memahami permintaan dengan AI...')
+        const history = messages.slice(-12).map((message) => ({
+          role: message.role,
+          content: message.text || message.message || ''
+        })).filter((message) => message.content)
+        plan = await requestAssistantPlan({
+          message: text,
+          history,
+          attachmentName: file?.name || ''
+        })
+      }
 
       if (plan.kind === 'reply') {
         appendMessage(setMessages, { role: 'assistant', text: plan.message })

@@ -10,6 +10,7 @@ const corsHeaders = {
 const MAX_MESSAGE_LENGTH = 4_000
 const MAX_HISTORY_TURNS = 12
 const MAX_REQUEST_LENGTH = 64_000
+const GEMINI_TIMEOUT_MS = 30_000
 
 const SYSTEM_INSTRUCTIONS = `Kamu adalah asisten operasional VOLTKER, aplikasi toko berbahasa Indonesia.
 Untuk task plan, kembalikan tepat satu objek JSON dengan bentuk {"kind":"reply|query|action","message":"...","query":"...","action":"...","args":{}}.
@@ -68,6 +69,7 @@ async function generate(modelInput: string, apiKey: string, model: string) {
     {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
+      signal: AbortSignal.timeout(GEMINI_TIMEOUT_MS),
       body: JSON.stringify({
         systemInstruction: { parts: [{ text: SYSTEM_INSTRUCTIONS }] },
         contents: [{ role: 'user', parts: [{ text: modelInput }] }],
@@ -150,6 +152,9 @@ Deno.serve(async (request) => {
     })
   } catch (error) {
     console.error('Chat assistant request failed:', error)
+    if (error instanceof DOMException && error.name === 'TimeoutError') {
+      return jsonResponse(504, { error: 'Gemini belum merespons setelah 30 detik. Coba kembali beberapa saat lagi.' })
+    }
     return jsonResponse(502, { error: error instanceof Error ? error.message : 'Asisten chat gagal memproses pesan.' })
   }
 })
