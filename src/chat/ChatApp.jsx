@@ -282,10 +282,6 @@ export default function ChatApp() {
             width="160"
             height="40"
           />
-          <div>
-            <strong>CHAT</strong>
-            <small>Asisten operasional toko</small>
-          </div>
         </div>
         <div className="chat-topbar-actions">
           <a className="chat-old-app-link" href={import.meta.env.BASE_URL + '?mode=table'} title="Buka aplikasi VOLTKER tabel">
