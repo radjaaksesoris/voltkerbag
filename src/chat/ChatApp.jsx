@@ -10,13 +10,6 @@ import { requestAssistantPlan } from './assistantApi.js'
 import { formatQueryAnswer } from './queryAnswer.js'
 import { resolveDirectQuery, resolveFallbackQuery } from './queryIntent.js'
 
-const STARTERS = [
-  'Berapa stok tas hitam?',
-  'Siapa pelanggan yang masih punya hutang?',
-  'Buat ringkasan penjualan hari ini',
-  'Tambahkan stok 2 lusin Tas Ransel, modal Rp1.500.000 per lusin'
-]
-
 function messageId() {
   return crypto.randomUUID()
 }
@@ -39,7 +32,6 @@ export default function ChatApp() {
   const [busy, setBusy] = useState(false)
   const [processingStage, setProcessingStage] = useState('')
   const [actionBusy, setActionBusy] = useState(false)
-  const [consent, setConsent] = useState(false)
   const [attachment, setAttachment] = useState(null)
   const [confirmationText, setConfirmationText] = useState('')
   const [receiptTransaction, setReceiptTransaction] = useState(null)
@@ -74,7 +66,6 @@ export default function ChatApp() {
         if (event === 'SIGNED_OUT') {
           setSession(null)
           setMessages([])
-          setConsent(false)
         } else if (nextSession) {
           setSession(nextSession)
           setConnectionError('')
@@ -104,7 +95,7 @@ export default function ChatApp() {
 
   async function sendMessage(event, suggestedText) {
     event?.preventDefault()
-    if (!consent || busy || actionBusy || hasPendingAction || operationLock.current) return
+    if (busy || actionBusy || hasPendingAction || operationLock.current) return
     const text = (suggestedText ?? input).trim()
     if (!text) return
     const file = attachment
@@ -281,7 +272,6 @@ export default function ChatApp() {
           <SessionControl email={session.user.email} onSignedOut={() => {
             setSession(null)
             setMessages([])
-            setConsent(false)
           }} />
         </div>
       </header>
@@ -295,15 +285,6 @@ export default function ChatApp() {
               <span className="chat-welcome-eyebrow">RUANG KERJA TOKO</span>
               <h1>Selamat datang.<br /><em>Apa yang perlu dibantu?</em></h1>
               <p>Tanyakan stok, penjualan, hutang, atau minta bantuan mencatat transaksi dan kegiatan toko.</p>
-              {consent && (
-                <div className="chat-starter-list">
-                  {STARTERS.map((starter) => (
-                    <button key={starter} type="button" onClick={(event) => sendMessage(event, starter)}>
-                      <span>{starter}</span><Icon name="arrowUp" size={16} />
-                    </button>
-                  ))}
-                </div>
-              )}
             </div>
           )}
 
@@ -388,13 +369,6 @@ export default function ChatApp() {
         </div>
 
         <div className="chat-composer-wrap">
-          {!consent && (
-            <div className="chat-consent">
-              <strong>Catatan privasi AI</strong>
-              <p>Pesan dan riwayat percakapan yang diperlukan untuk memahami permintaan diproses oleh Groq. Hasil query data toko diambil dari Supabase dan diringkas di perangkat; perubahan memerlukan konfirmasi.</p>
-              <button className="btn btn-primary" type="button" onClick={() => setConsent(true)}>Saya mengerti, mulai chat</button>
-            </div>
-          )}
           {attachment && (
             <div className="chat-queued-attachment">
               <Icon name={attachment.type === 'application/zip' ? 'download' : 'image'} size={15} />
@@ -408,7 +382,7 @@ export default function ChatApp() {
               type="button"
               aria-label="Lampirkan foto produk atau backup ZIP"
               title="Lampirkan foto produk atau backup ZIP"
-              disabled={!consent || busy || actionBusy || hasPendingAction}
+              disabled={busy || actionBusy || hasPendingAction}
               onClick={() => fileInputRef.current?.click()}>
               <Icon name="plus" size={19} />
             </button>
@@ -438,11 +412,11 @@ export default function ChatApp() {
               ref={inputRef}
               value={input}
               onChange={(event) => setInput(event.target.value)}
-              placeholder={consent ? 'Ketik pesan atau perintah toko...' : 'Setujui catatan privasi untuk memulai...'}
+              placeholder="Ketik pesan atau perintah toko..."
               aria-label="Pesan untuk asisten VOLTKER"
               rows={1}
               maxLength={4000}
-              disabled={!consent || busy || actionBusy || hasPendingAction}
+              disabled={busy || actionBusy || hasPendingAction}
               onKeyDown={(event) => {
                 if (event.key === 'Enter' && !event.shiftKey) {
                   event.preventDefault()
@@ -450,11 +424,11 @@ export default function ChatApp() {
                 }
               }}
             />
-            <button className="chat-send-button" type="submit" disabled={!consent || busy || actionBusy || hasPendingAction || !input.trim()} aria-label="Kirim pesan">
+            <button className="chat-send-button" type="submit" disabled={busy || actionBusy || hasPendingAction || !input.trim()} aria-label="Kirim pesan">
               <Icon name="arrowUp" size={18} />
             </button>
           </form>
-          <p className="chat-composer-footnote">AI bisa keliru. Periksa ringkasan sebelum mengonfirmasi tindakan.</p>
+          <p className="chat-composer-footnote">Pesan tertentu diproses Groq · AI bisa keliru, periksa ringkasan sebelum mengonfirmasi tindakan.</p>
         </div>
       </section>
 
