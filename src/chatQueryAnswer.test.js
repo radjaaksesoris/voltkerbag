@@ -17,6 +17,17 @@ test('formats stock matches and sale prices without an AI summary request', () =
   assert.match(answer, /Rp\s?1\.200\.000\/lusin/)
 })
 
+test('labels ranked stock answers and reports stock units', () => {
+  const answer = formatQueryAnswer('stock', {
+    stock_order: 'asc',
+    matches: [{ name: 'Tas A', stock: '2 lusin', sale_prices: {} }]
+  })
+
+  assert.match(answer, /Produk dengan stok paling sedikit/)
+  assert.match(answer, /berdasarkan jumlah PCS/)
+  assert.match(answer, /Tas A: 2 lusin/)
+})
+
 test('includes HPP per sale unit for direct cost questions', () => {
   const answer = formatQueryAnswer('stock', {
     include_cost: true,

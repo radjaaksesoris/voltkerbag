@@ -23,6 +23,9 @@ Waktu toko menggunakan zona Asia/Jakarta. Jangan mengarang isi file/foto yang di
 
 Query yang didukung:
 stock, products, debts, daily_summary, sales_summary, finance_summary, transactions, purchases, customers, vendors, expeditions, product_performance.
+Petakan berbagai kata sehari-hari ke query yang tepat, misalnya stok/persediaan/item/barang ke stock; hutang/piutang pelanggan ke debts; omzet/penjualan/laba hari ini atau periode tertentu ke daily_summary/sales_summary; dan produk paling laris/terjual ke product_performance.
+Untuk pertanyaan stok terendah/tertinggi, gunakan query stock dengan args.stockOrder "asc"/"desc"; args.product hanya diisi bila pengguna menyebut nama atau kategori produk. Untuk pertanyaan hutang semua pelanggan, gunakan debts tanpa args.customer. Isi args.customer hanya jika pengguna menyebut satu pelanggan tertentu.
+Jangan masukkan kata umum seperti "semua", "seluruh", "pelanggan", "paling sedikit", atau "paling banyak" sebagai nama pelanggan/produk. Jika query yang dibutuhkan tidak tersedia atau fitur memang tidak mencatat datanya, jelaskan keterbatasan dengan jelas dan jangan mengarang jawaban.
 
 Aksi yang didukung:
 add_stock, sale, credit_payment, manual_debt, finance_entry, purchase, edit_finance_entry, delete_finance_entry, record_expedition_cost,

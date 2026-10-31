@@ -139,16 +139,21 @@ export async function queryStore(intent, args = {}) {
   if (intent === 'stock' || intent === 'products') {
     const products = await getAll('products')
     const query = String(args.product || args.search || '').trim().toLocaleLowerCase('id-ID')
+    const stockOrder = ['asc', 'desc'].includes(args.stockOrder) ? args.stockOrder : ''
     const matches = products
       .filter((product) => !query || (product.name + ' ' + (product.category || '')).toLocaleLowerCase('id-ID').includes(query))
-      .sort((left, right) => PRODUCT_NAME_COLLATOR.compare(left.name, right.name))
+      .sort((left, right) => stockOrder
+        ? (stockOrder === 'asc' ? 1 : -1) * (stockInPcs(left) - stockInPcs(right))
+          || PRODUCT_NAME_COLLATOR.compare(left.name, right.name)
+        : PRODUCT_NAME_COLLATOR.compare(left.name, right.name))
     return {
       title: 'Data produk dan stok',
       data: {
         total_products: products.length,
         matches: matches.slice(0, 40).map(formatStockQuery),
         truncated: matches.length > 40,
-        include_cost: args.includeCost === true
+        include_cost: args.includeCost === true,
+        stock_order: stockOrder
       }
     }
   }

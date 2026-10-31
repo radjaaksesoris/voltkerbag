@@ -32,7 +32,12 @@ function summarizeStock(data) {
       (prices.length ? ' · Harga jual ' + prices.join(', ') : '')
   })
   if (data.truncated || matches.length > 10) lines.push('Masih ada produk lainnya; buka rincian data untuk daftar lengkap.')
-  return lines.join('\n')
+  const orderLabel = data.stock_order === 'asc'
+    ? 'Produk dengan stok paling sedikit (diurutkan berdasarkan jumlah PCS):'
+    : data.stock_order === 'desc'
+      ? 'Produk dengan stok paling banyak (diurutkan berdasarkan jumlah PCS):'
+      : ''
+  return [orderLabel, ...lines].filter(Boolean).join('\n')
 }
 
 function summarizeDebts(data) {

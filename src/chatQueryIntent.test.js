@@ -20,6 +20,27 @@ test('removes remaining-stock wording before searching for the product', () => {
   }
 })
 
+test('routes low and high stock ranking questions without treating wording as product names', () => {
+  for (const question of [
+    'Sisa stok paling minim',
+    'Item apa yang stok nya paling sedikit',
+    'Barang apa yang stok nya paling sedikit',
+    'produk dengan stok terendah'
+  ]) {
+    assert.deepEqual(resolveFastQuery(question), {
+      kind: 'query',
+      query: 'stock',
+      args: { stockOrder: 'asc' }
+    })
+  }
+
+  assert.deepEqual(resolveFastQuery('produk dengan stok paling banyak'), {
+    kind: 'query',
+    query: 'stock',
+    args: { stockOrder: 'desc' }
+  })
+})
+
 test('routes HPP and modal questions directly to the stock query with costs enabled', () => {
   for (const question of ['berapa harga HPP Aventador', 'modal aventador', 'harga pokok aventador']) {
     assert.deepEqual(resolveFastQuery(question), {
@@ -71,5 +92,12 @@ test('routes customer debt questions to the debt query with an optional customer
     query: 'debts',
     args: {}
   })
+  for (const question of ['total hutang semua pelanggan', 'berapa total hutang seluruh pelanggan']) {
+    assert.deepEqual(resolveFastQuery(question), {
+      kind: 'query',
+      query: 'debts',
+      args: {}
+    })
+  }
   assert.equal(resolveFastQuery('bayar hutang Andri'), null)
 })
