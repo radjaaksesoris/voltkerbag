@@ -57,7 +57,7 @@ add_product, edit_product, delete_product, add_customer, edit_customer, delete_c
 add_vendor, edit_vendor, delete_vendor, add_expedition, edit_expedition, delete_expedition,
 add_category, delete_category, add_unit, delete_unit, backup, restore_backup, reset_store.
 
-Untuk stock, sertakan product (nama lengkap), quantity (bilangan), unit, dan unit_cost (harga modal per satuan stok).
+Untuk stock, sertakan product (nama lengkap), quantity (bilangan), unit, dan unit_cost (harga modal per satuan stok). Jika pengguna meminta menambah stok tanpa menyebut seluruh data, tanyakan satu per satu: pastikan nama produk yang sudah terdaftar, tanyakan jumlah stok, lalu harga modal batch; jangan minta semuanya dalam satu pesan. Setelah semua terjawab, siapkan add_stock.
 Untuk sale, sertakan customer, payment_type (cash atau credit), paid_amount, dan items berupa array {product, quantity, unit}; expedition opsional.
 Untuk credit_payment sertakan customer dan amount; manual_debt sertakan customer dan amount.
 Untuk transaction_payment sertakan invoice (nomor invoice atau ID transaksi) dan amount.

@@ -646,12 +646,16 @@ export async function completeSale(transaction, cart, requestId) {
   return data
 }
 
-export async function addProductStock(productId, quantityPcs, unitCost, requestId) {
+export async function addProductStock(productId, quantityPcs, unitCost, requestId, pricing = {}) {
   const { data, error } = await getClient().rpc('add_product_stock', {
     p_product_id: productId,
     p_quantity_pcs: quantityPcs,
     p_unit_cost: unitCost,
-    p_request_id: requestId || crypto.randomUUID()
+    p_request_id: requestId || crypto.randomUUID(),
+    p_price_mode: pricing.mode || 'markup',
+    p_price: pricing.price ?? null,
+    p_price_pcs: pricing.pricePcs ?? null,
+    p_price_lusin: pricing.priceLusin ?? null
   })
   throwIfError(error, 'Gagal menambahkan stok produk')
   notifyRefresh()

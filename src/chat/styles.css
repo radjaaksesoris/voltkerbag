@@ -451,8 +451,14 @@ body {
   align-items: center;
   gap: 5px;
   align-self: flex-start;
+  margin-left: 41px;
+  border: 1px solid var(--chat-line);
+  border-radius: 4px 15px 15px 15px;
+  background: #fff;
+  padding: 9px 12px;
   color: var(--chat-muted);
   font-size: 11px;
+  box-shadow: 0 6px 22px rgba(49, 37, 27, .035);
 }
 
 .chat-thinking span {
@@ -667,6 +673,10 @@ body {
 
   .chat-message {
     gap: 7px;
+  }
+
+  .chat-thinking {
+    margin-left: 33px;
   }
 
   .chat-avatar {

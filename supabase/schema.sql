@@ -814,12 +814,17 @@ $$;
 revoke all on function public.product_unit_factor(text) from public, anon, authenticated;
 
 drop function if exists public.add_product_stock(bigint, integer, uuid);
+drop function if exists public.add_product_stock(bigint, integer, double precision, uuid);
 
 create or replace function public.add_product_stock(
   p_product_id bigint,
   p_quantity_pcs integer,
   p_unit_cost double precision,
-  p_request_id uuid
+  p_request_id uuid,
+  p_price_mode text default 'markup',
+  p_price double precision default null,
+  p_price_pcs double precision default null,
+  p_price_lusin double precision default null
 )
 returns integer
 language plpgsql
@@ -842,6 +847,14 @@ begin
     raise exception 'Harga modal stok tidak valid.';
   end if;
   if p_request_id is null then raise exception 'ID permintaan penambahan stok wajib diisi.'; end if;
+  if p_price_mode is null or p_price_mode not in ('markup', 'keep', 'replace') then
+    raise exception 'Pilihan harga jual tidak valid.';
+  end if;
+  if (p_price is not null and (p_price <= 0 or p_price::text in ('NaN', 'Infinity', '-Infinity')))
+     or (p_price_pcs is not null and (p_price_pcs <= 0 or p_price_pcs::text in ('NaN', 'Infinity', '-Infinity')))
+     or (p_price_lusin is not null and (p_price_lusin <= 0 or p_price_lusin::text in ('NaN', 'Infinity', '-Infinity'))) then
+    raise exception 'Harga jual tidak valid.';
+  end if;
 
   select * into prior_adjustment
   from public.product_stock_adjustments
@@ -860,6 +873,12 @@ begin
   where id = p_product_id and owner_id = current_user_id
   for update;
   if not found then raise exception 'Produk tidak ditemukan atau tidak dapat diakses.'; end if;
+  if p_price_mode = 'replace' and (
+    (lower(trim(product_row.unit)) in ('pcs', 'lusin', 'kodi') and (p_price_pcs is null or p_price_lusin is null))
+    or (lower(trim(product_row.unit)) not in ('pcs', 'lusin', 'kodi') and p_price is null)
+  ) then
+    raise exception 'Harga jual baru belum lengkap.';
+  end if;
 
   select * into prior_adjustment
   from public.product_stock_adjustments
@@ -888,20 +907,45 @@ begin
       stock = next_stock_pcs::double precision / public.product_unit_factor(product_row.unit),
       stock_cost_value = next_stock_cost_value,
       cost = next_stock_cost_value / next_stock_pcs,
+      price = case
+        when p_price_mode = 'replace' and lower(trim(product_row.unit)) = 'pcs' then p_price_pcs
+        when p_price_mode = 'replace' and lower(trim(product_row.unit)) = 'lusin' then p_price_lusin
+        when p_price_mode = 'replace' and lower(trim(product_row.unit)) = 'kodi' then product_row.price
+        when p_price_mode = 'replace' then p_price
+        when p_price_mode = 'markup' and lower(trim(product_row.unit)) in ('pcs', 'lusin')
+             and product_row.sale_markup_pcs_pct is not null
+          then round((next_stock_cost_value / next_stock_pcs * (100 + product_row.sale_markup_pcs_pct) / 100)::numeric)::double precision
+        else product_row.price
+      end,
       price_pcs = case
-        when product_row.sale_markup_pcs_pct is not null
+        when p_price_mode = 'replace' and lower(trim(product_row.unit)) in ('pcs', 'lusin', 'kodi')
+          then p_price_pcs
+        when p_price_mode = 'markup' and product_row.sale_markup_pcs_pct is not null
           then round((next_stock_cost_value / next_stock_pcs * (100 + product_row.sale_markup_pcs_pct) / 100)::numeric)::double precision
         else product_row.price_pcs
       end,
       price_lusin = case
-        when product_row.sale_markup_lusin_pct is not null
+        when p_price_mode = 'replace' and lower(trim(product_row.unit)) in ('pcs', 'lusin', 'kodi')
+          then p_price_lusin
+        when p_price_mode = 'markup' and product_row.sale_markup_lusin_pct is not null
           then round((next_stock_cost_value / next_stock_pcs * 12 * (100 + product_row.sale_markup_lusin_pct) / 100)::numeric)::double precision
         else product_row.price_lusin
       end,
-      price = case
-        when lower(trim(product_row.unit)) in ('pcs', 'lusin') and product_row.sale_markup_pcs_pct is not null
-          then round((next_stock_cost_value / next_stock_pcs * (100 + product_row.sale_markup_pcs_pct) / 100)::numeric)::double precision
-        else product_row.price
+      sale_markup_pcs_pct = case
+        when p_price_mode = 'replace' and lower(trim(product_row.unit)) in ('pcs', 'lusin', 'kodi')
+          then case when next_stock_cost_value > 0
+            then ((p_price_pcs / (next_stock_cost_value / next_stock_pcs)) - 1) * 100
+            else null
+          end
+        else product_row.sale_markup_pcs_pct
+      end,
+      sale_markup_lusin_pct = case
+        when p_price_mode = 'replace' and lower(trim(product_row.unit)) in ('pcs', 'lusin', 'kodi')
+          then case when next_stock_cost_value > 0
+            then ((p_price_lusin / (next_stock_cost_value / next_stock_pcs * 12)) - 1) * 100
+            else null
+          end
+        else product_row.sale_markup_lusin_pct
       end,
       "updatedAt" = clock_timestamp()
   where id = p_product_id and owner_id = current_user_id;
@@ -920,8 +964,8 @@ $$;
 revoke all on public.product_stock_adjustments from public, anon;
 revoke insert, update, delete on public.product_stock_adjustments from authenticated;
 grant select on public.product_stock_adjustments to authenticated;
-revoke all on function public.add_product_stock(bigint, integer, double precision, uuid) from public, anon;
-grant execute on function public.add_product_stock(bigint, integer, double precision, uuid) to authenticated;
+revoke all on function public.add_product_stock(bigint, integer, double precision, uuid, text, double precision, double precision, double precision) from public, anon;
+grant execute on function public.add_product_stock(bigint, integer, double precision, uuid, text, double precision, double precision, double precision) to authenticated;
 
 create or replace function public.set_product_stock(
   p_product_id bigint,

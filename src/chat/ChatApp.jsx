@@ -9,12 +9,16 @@ import { executeAction, prepareAction, queryStore } from './chatDomain.js'
 import { requestAssistantPlan } from './assistantApi.js'
 import { formatQueryAnswer } from './queryAnswer.js'
 import {
+  advanceStockAddition,
   advanceProductCreation,
   productCreationPrompt,
-  startProductCreationRequest
+  startProductCreationRequest,
+  startStockAdditionRequest,
+  stockAdditionPrompt
 } from './productCreation.js'
 import { resolveDirectQuery, resolveFallbackQuery } from './queryIntent.js'
 import { clearRequestedAppMode, getRequestedAppMode } from '../appMode.js'
+import { stockEntryUnit } from '../productUnits.js'
 
 function messageId() {
   return crypto.randomUUID()
@@ -146,7 +150,67 @@ export default function ChatApp() {
     setBusy(true)
 
     try {
+      setProcessingStage('VOLTKER sedang berpikir...')
+      await new Promise((resolve) => window.setTimeout(resolve, 450))
+
       if (productCreation) {
+        if (productCreation.kind === 'stock_addition') {
+          const progress = advanceStockAddition(productCreation, text)
+          if (progress.cancelled) {
+            setProductCreation(null)
+            appendMessage(setMessages, { role: 'assistant', text: 'Penambahan stok dibatalkan.' })
+            return
+          }
+          if (progress.resolveProduct) {
+            const { data } = await queryStore('stock', { product: progress.addition.product })
+            const matches = data.matches || []
+            const exact = matches.find((product) =>
+              product.name.toLocaleLowerCase('id-ID') === progress.addition.product.toLocaleLowerCase('id-ID')
+            )
+            const product = exact || (matches.length === 1 ? matches[0] : null)
+            if (!product) {
+              const reply = matches.length
+                ? 'Nama produk cocok dengan beberapa pilihan: ' + matches.map((entry) => entry.name).join(', ') + '. Sebutkan nama yang lebih spesifik.'
+                : 'Produk "' + progress.addition.product + '" tidak ditemukan. Sebutkan nama produk yang sudah terdaftar.'
+              setProductCreation(progress.addition)
+              appendMessage(setMessages, { role: 'assistant', text: reply })
+              return
+            }
+            const next = {
+              ...progress.addition,
+              product: product.name,
+              current: product,
+              unit: stockEntryUnit(product.unit || 'pcs'),
+              step: 'quantity'
+            }
+            setProductCreation(next)
+            appendMessage(setMessages, { role: 'assistant', text: stockAdditionPrompt(next) })
+            return
+          }
+          if (!progress.complete) {
+            setProductCreation(progress.addition)
+            appendMessage(setMessages, { role: 'assistant', text: progress.prompt })
+            return
+          }
+          try {
+            const draft = await prepareAction('add_stock', progress.actionArgs)
+            draft.requestId = crypto.randomUUID()
+            setProductCreation(null)
+            appendMessage(setMessages, {
+              role: 'assistant',
+              text: 'Detail penambahan stok sudah lengkap. Periksa pratinjau sebelum menyimpan.',
+              draft
+            })
+          } catch (error) {
+            setProductCreation({ ...productCreation, step: 'unit_cost' })
+            appendMessage(setMessages, {
+              role: 'assistant',
+              text: (error.message || 'Penambahan stok belum dapat disiapkan.') + ' ' + stockAdditionPrompt(productCreation),
+              error: true
+            })
+          }
+          return
+        }
         if (productCreation.step === 'unit' && text.trim()) {
           const { data } = await queryStore('units')
           const selectedUnit = (data.entries || []).find((entry) =>
@@ -225,6 +289,35 @@ export default function ChatApp() {
         appendMessage(setMessages, {
           role: 'assistant',
           text: productCreationPrompt(newProductRequest)
+        })
+        return
+      }
+
+      const newStockAddition = startStockAdditionRequest(text)
+      if (newStockAddition) {
+        let productResolution = ''
+        if (newStockAddition.product) {
+          const { data } = await queryStore('stock', { product: newStockAddition.product })
+          const matches = data.matches || []
+          const exact = matches.find((product) =>
+            product.name.toLocaleLowerCase('id-ID') === newStockAddition.product.toLocaleLowerCase('id-ID')
+          )
+          const product = exact || (matches.length === 1 ? matches[0] : null)
+          if (product) {
+            newStockAddition.product = product.name
+            newStockAddition.current = product
+            newStockAddition.unit = stockEntryUnit(product.unit || 'pcs')
+            newStockAddition.step = 'quantity'
+          } else {
+            productResolution = matches.length
+              ? 'Nama produk cocok dengan beberapa pilihan: ' + matches.map((entry) => entry.name).join(', ') + '. '
+              : 'Produk "' + newStockAddition.product + '" tidak ditemukan di daftar stok. '
+          }
+        }
+        setProductCreation(newStockAddition)
+        appendMessage(setMessages, {
+          role: 'assistant',
+          text: productResolution + stockAdditionPrompt(newStockAddition)
         })
         return
       }
@@ -511,7 +604,9 @@ export default function ChatApp() {
             </article>
           ))}
           {(busy || actionBusy) && (
-            <div className="chat-thinking" role="status"><span /><span /><span />{actionBusy ? 'Menyimpan perubahan...' : processingStage}</div>
+            <div className="chat-thinking" role="status" aria-live="polite">
+              <span /><span /><span />{actionBusy ? 'Menyimpan perubahan...' : processingStage}
+            </div>
           )}
           <div ref={endOfMessagesRef} />
         </div>

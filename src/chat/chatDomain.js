@@ -573,15 +573,43 @@ export async function prepareAction(action, args = {}, attachment = null) {
     if (!Number.isSafeInteger(quantityPcs) || previousPcs + quantityPcs > 2147483647) {
       throw new Error('Jumlah stok melebihi batas yang dapat disimpan.')
     }
+    const pricePolicy = args.pricePolicy || 'markup'
+    if (!['markup', 'keep', 'replace'].includes(pricePolicy)) {
+      throw new Error('Pilihan harga jual tidak valid.')
+    }
+    const salePricePcs = pricePolicy === 'replace' && saleUnits(product.unit || 'pcs').includes('pcs')
+      ? amount(args.sale_price_pcs, 'Harga jual PCS')
+      : null
+    const salePriceLusin = pricePolicy === 'replace' && saleUnits(product.unit || 'pcs').includes('lusin')
+      ? amount(args.sale_price_lusin, 'Harga jual lusin')
+      : null
+    const salePrice = pricePolicy === 'replace' && !saleUnits(product.unit || 'pcs').includes('pcs')
+      ? amount(args.sale_price, 'Harga jual ' + product.unit)
+      : null
     return {
       action, title: 'Tambah stok ' + product.name,
       details: [
         'Stok saat ini: ' + stockLabel(product),
         'Penambahan: ' + quantity + ' ' + unit,
         'Harga modal batch: Rp' + enteredCost.toLocaleString('id-ID') + '/' + unit,
+        ...(pricePolicy === 'keep'
+          ? ['Harga jual dipertahankan: ' + saleUnits(product.unit || 'pcs')
+            .map((saleUnit) => saleUnit.toUpperCase() + ' Rp' + saleUnitPrice(product, saleUnit).toLocaleString('id-ID'))
+            .join(', ')]
+          : []),
+        ...(pricePolicy === 'replace'
+          ? ['Harga jual baru: ' + saleUnits(product.unit || 'pcs')
+            .map((saleUnit) => saleUnit.toUpperCase() + ' Rp' +
+              (saleUnit === 'pcs' ? salePricePcs : saleUnit === 'lusin' ? salePriceLusin : salePrice)
+                .toLocaleString('id-ID'))
+            .join(', ')]
+          : []),
         'Stok sesudah: ' + stockLabel({ ...product, stock_pcs: previousPcs + quantityPcs })
       ],
-      payload: { productId: product.id, quantityPcs, enteredCost, unit, previousPcs, product }
+      payload: {
+        productId: product.id, quantityPcs, enteredCost, unit, previousPcs, product,
+        pricePolicy, salePricePcs, salePriceLusin, salePrice
+      }
     }
   }
 
@@ -1042,13 +1070,21 @@ export async function executeAction(draft) {
       draft.payload.productId,
       draft.payload.quantityPcs,
       purchaseCostPerPiece(draft.payload.product.unit, draft.payload.enteredCost),
-      id
+      id,
+      {
+        mode: draft.payload.pricePolicy,
+        price: draft.payload.salePrice,
+        pricePcs: draft.payload.salePricePcs,
+        priceLusin: draft.payload.salePriceLusin
+      }
     )
     const beforePcs = afterPcs - draft.payload.quantityPcs
     return 'Berhasil menambahkan stok "' + draft.payload.product.name + '". Stok sebelumnya ' +
       stockLabel({ ...draft.payload.product, stock_pcs: beforePcs }) + ', ditambah ' +
       draft.payload.quantity + ' ' + draft.payload.unit + ' (' + draft.payload.quantityPcs +
-      ' pcs), menjadi ' + stockLabel({ ...draft.payload.product, stock_pcs: afterPcs }) + '.'
+      ' pcs), menjadi ' + stockLabel({ ...draft.payload.product, stock_pcs: afterPcs }) + '.' +
+      (draft.payload.pricePolicy === 'keep' ? ' Harga jual lama dipertahankan.' :
+        draft.payload.pricePolicy === 'replace' ? ' Harga jual diperbarui sesuai pilihan Anda.' : '')
   }
 
   if (draft.action === 'sale') {

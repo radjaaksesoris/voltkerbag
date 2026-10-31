@@ -1,3 +1,5 @@
+import { unitFactor } from '../productUnits.js'
+
 function isSkip(text) {
   return /^(lewati|skip)(\s+(foto|kategori))?$|^(tidak ada|tidak punya|belum ada)(\s+foto)?$|^nanti$/i.test(String(text).trim())
 }
@@ -38,6 +40,138 @@ export function startProductCreationRequest(text) {
     step: name ? 'photo' : 'name',
     image: null
   }
+}
+
+export function startStockAdditionRequest(text) {
+  const match = String(text).match(/\b(?:tambah(?:kan)?|menambah(?:kan)?|isi)\s+stok\b(.*)$/i)
+  if (!match || /^\s*(?:baru|produk baru)\b/i.test(match[1])) return null
+  const product = match[1]
+    .replace(/^\s*(?:(?:untuk)\s+)?(?:produk|barang)\s+/i, '')
+    .replace(/^\s*untuk\s+/i, '')
+    .replace(/\b(?:dong|tolong|ya|untuk produk)$/i, '')
+    .replace(/[,.!?;]+$/, '')
+    .trim()
+  return {
+    kind: 'stock_addition',
+    product,
+    step: 'product'
+  }
+}
+
+export function stockAdditionPrompt(addition) {
+  if (addition.step === 'product') return 'Produk mana yang ingin ditambahkan stoknya?'
+  const factor = unitFactor(addition.unit)
+  const oldAverageCost = Number(addition.current?.average_cost) * factor
+  const previousPrices = addition.unit === 'lusin'
+    ? 'Harga jual saat ini: PCS ' + formatRupiah(addition.current?.sale_prices?.pcs) +
+      ' · lusin ' + formatRupiah(addition.current?.sale_prices?.lusin) + '.'
+    : 'Harga jual saat ini: ' + addition.unit + ' ' + formatRupiah(addition.current?.sale_prices?.[addition.unit]) + '.'
+  const currentInfo = [
+    addition.current?.stock ? 'Stok saat ini: ' + addition.current.stock + '.' : '',
+    Number.isFinite(oldAverageCost) ? 'Modal rata-rata saat ini: ' + formatRupiah(oldAverageCost) + '/' + addition.unit + '.' : '',
+    previousPrices
+  ].filter(Boolean).join(' ')
+  if (addition.step === 'quantity') {
+    return 'Baik, saya akan menambahkan stok ' + addition.product + '. ' + currentInfo +
+      ' Berapa jumlah stok yang ingin ditambahkan dalam ' + addition.unit + '?'
+  }
+  if (addition.step === 'unit_cost') {
+    return currentInfo + ' Berapa harga modal batch baru per ' + addition.unit + '?'
+  }
+  if (addition.step === 'price_policy') {
+    return 'Harga modal batch yang baru: ' + formatRupiah(addition.unitCost) + '/' + addition.unit +
+      '. ' + previousPrices + ' Apakah harga jual ingin diganti? Balas "ganti" untuk memasukkan harga baru, atau "tetap" untuk mempertahankan harga lama.'
+  }
+  if (addition.step === 'sale_price_pcs') {
+    return 'Harga jual PCS sebelumnya ' + formatRupiah(addition.current?.sale_prices?.pcs) +
+      '. Berapa harga jual PCS yang baru?'
+  }
+  if (addition.step === 'sale_price_lusin') {
+    return 'Harga jual lusin sebelumnya ' + formatRupiah(addition.current?.sale_prices?.lusin) +
+      '. Berapa harga jual lusin yang baru?'
+  }
+  return 'Harga jual ' + addition.unit + ' sebelumnya ' +
+    formatRupiah(addition.current?.sale_prices?.[addition.unit]) + '. Berapa harga jual ' + addition.unit + ' yang baru?'
+}
+
+function formatRupiah(value) {
+  const amount = Number(value)
+  return Number.isFinite(amount) && amount > 0
+    ? 'Rp' + amount.toLocaleString('id-ID')
+    : 'belum tersedia'
+}
+
+function completeStockAddition(addition, pricePolicy) {
+  return {
+    complete: true,
+    actionArgs: {
+      product: addition.product,
+      quantity: addition.quantity,
+      unit: addition.unit,
+      unit_cost: addition.unitCost,
+      pricePolicy,
+      ...(pricePolicy === 'replace' && addition.sale_price_pcs != null
+        ? { sale_price_pcs: addition.sale_price_pcs, sale_price_lusin: addition.sale_price_lusin }
+        : {}),
+      ...(pricePolicy === 'replace' && addition.sale_price != null
+        ? { sale_price: addition.sale_price }
+        : {})
+    }
+  }
+}
+
+export function advanceStockAddition(addition, text) {
+  const answer = String(text).trim()
+  if (/^(batal|batalkan|cancel)$/i.test(answer)) return { cancelled: true }
+  if (addition.step === 'product') {
+    if (!answer) return { addition, prompt: stockAdditionPrompt(addition) }
+    return { addition: { ...addition, product: answer }, resolveProduct: true }
+  }
+  if (addition.step === 'quantity') {
+    const quantity = parseQuantity(answer)
+    if (quantity == null) {
+      return { addition, prompt: 'Jumlah stok harus bilangan bulat lebih dari nol. Berapa jumlah stok yang ingin ditambahkan dalam ' + addition.unit + '?' }
+    }
+    const next = { ...addition, quantity, step: 'unit_cost' }
+    return { addition: next, prompt: stockAdditionPrompt(next) }
+  }
+  if (addition.step === 'unit_cost') {
+    const unitCost = parseRupiah(answer)
+    if (unitCost == null) {
+      return { addition, prompt: stockAdditionPrompt(addition) }
+    }
+    const next = { ...addition, unitCost, step: 'price_policy' }
+    return { addition: next, prompt: stockAdditionPrompt(next) }
+  }
+  if (addition.step === 'price_policy') {
+    if (/\b(tetap|pakai yang lama|gunakan yang lama|pertahankan|jangan diganti)\b/i.test(answer)
+        || /^(tidak|nggak|enggak)$/i.test(answer)) {
+      return completeStockAddition(addition, 'keep')
+    }
+    if (!/\b(ganti|ubah|diganti|sesuaikan|harga baru)\b/i.test(answer)
+        && !/^(ya|iya)$/i.test(answer)) {
+      return { addition, prompt: stockAdditionPrompt(addition) }
+    }
+    const next = {
+      ...addition,
+      step: addition.unit === 'pcs' || addition.unit === 'lusin' ? 'sale_price_pcs' : 'sale_price'
+    }
+    return { addition: next, prompt: stockAdditionPrompt(next) }
+  }
+  if (addition.step === 'sale_price_pcs') {
+    const price = parseRupiah(answer)
+    if (price == null) return { addition, prompt: stockAdditionPrompt(addition) }
+    const next = { ...addition, sale_price_pcs: price, step: 'sale_price_lusin' }
+    return { addition: next, prompt: stockAdditionPrompt(next) }
+  }
+  if (addition.step === 'sale_price_lusin') {
+    const price = parseRupiah(answer)
+    if (price == null) return { addition, prompt: stockAdditionPrompt(addition) }
+    return completeStockAddition({ ...addition, sale_price_lusin: price }, 'replace')
+  }
+  const price = parseRupiah(answer)
+  if (price == null) return { addition, prompt: stockAdditionPrompt(addition) }
+  return completeStockAddition({ ...addition, sale_price: price }, 'replace')
 }
 
 export function productCreationPrompt(creation) {
