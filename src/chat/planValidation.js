@@ -1,5 +1,5 @@
 export const QUERY_INTENTS = new Set([
-  'stock', 'products', 'inventory_summary', 'debts', 'daily_summary', 'sales_summary', 'finance_summary',
+  'stock', 'products', 'inventory_summary', 'debts', 'debt_payments', 'cashbook', 'daily_summary', 'sales_summary', 'finance_summary',
   'transactions', 'purchases', 'customers', 'vendors', 'expeditions', 'categories',
   'units', 'product_performance'
 ])

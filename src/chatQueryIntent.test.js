@@ -110,6 +110,44 @@ test('routes customer debt questions to the debt query with an optional customer
   assert.equal(resolveFastQuery('bayar hutang Andri'), null)
 })
 
+test('routes last customer debt payment questions to the cashbook query', () => {
+  for (const question of [
+    'Pelanggan Andri pembayaran terakhir hutang kapan',
+    'kapan cicilan hutang terakhir Andri',
+    'kapan Andri membayar hutang'
+  ]) {
+    assert.deepEqual(resolveDirectQuery(question), {
+      kind: 'query',
+      query: 'debt_payments',
+      args: { customer: 'andri' }
+    })
+  }
+  assert.equal(resolveFastQuery('bayar hutang Andri'), null)
+})
+
+test('routes cashbook details and pending expedition costs to ledger queries', () => {
+  assert.deepEqual(resolveDirectQuery('pengeluaran apa saja bulan ini'), {
+    kind: 'query',
+    query: 'cashbook',
+    args: { type: 'expense', period: 'bulan ini' }
+  })
+  assert.deepEqual(resolveDirectQuery('berapa biaya ekspedisi Andri'), {
+    kind: 'query',
+    query: 'cashbook',
+    args: { type: 'expense', search: 'ekspedisi andri', period: 'semua' }
+  })
+  assert.deepEqual(resolveDirectQuery('catatan biaya ekspedisi yang belum diisi'), {
+    kind: 'query',
+    query: 'cashbook',
+    args: { type: 'expense', search: 'ekspedisi', pending: true, period: 'semua' }
+  })
+  assert.deepEqual(resolveDirectQuery('tampilkan buku kas bulan lalu'), {
+    kind: 'query',
+    query: 'cashbook',
+    args: { period: 'bulan lalu' }
+  })
+})
+
 test('falls back to supported sales, finance, transaction, catalog, and purchase queries', () => {
   assert.deepEqual(resolveFastQuery('ringkasan penjualan hari ini'), {
     kind: 'query',

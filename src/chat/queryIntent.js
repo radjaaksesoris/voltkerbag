@@ -20,6 +20,13 @@ const DEBT_QUESTION_TERMS = new Set([
   'customer', 'yang', 'masih', 'punya', 'milik', 'atas', 'nama', 'saja', 'dari',
   'semua', 'seluruh', 'seluruhnya', 'keseluruhan'
 ])
+const DEBT_PAYMENT_HISTORY_TERMS = new Set([
+  ...DEBT_TERMS, 'pembayaran', 'bayar', 'bayarkan', 'membayar', 'dibayar',
+  'cicilan', 'mencicil', 'pelunasan',
+  'terakhir', 'terbaru', 'kapan', 'tanggal', 'riwayat', 'catatan', 'buku',
+  'kas', 'pelanggan', 'customer', 'yang', 'di', 'dari', 'atas', 'nama',
+  'saya', 'berapa', 'apa', 'tolong', 'dong'
+])
 const DEBT_ACTION_TERMS = new Set([
   'bayar', 'bayarkan', 'membayar', 'lunasi', 'melunasi', 'catat', 'tambahkan',
   'tambah', 'ubah', 'hapus', 'kurangi', 'setor'
@@ -41,7 +48,10 @@ function normalizeMessage(message) {
 function queryPeriod(normalized) {
   if (/\b(kemarin|kemaren)\b/.test(normalized)) return 'kemarin'
   if (/\b(minggu ini|minggu)\b/.test(normalized)) return 'minggu ini'
+  if (/\b(bulan lalu|bulan kemarin)\b/.test(normalized)) return 'bulan lalu'
   if (/\b(bulan ini|bulan)\b/.test(normalized)) return 'bulan ini'
+  if (/\b(tahun lalu|tahun kemarin)\b/.test(normalized)) return 'tahun lalu'
+  if (/\b(tahun ini)\b/.test(normalized)) return 'tahun ini'
   if (/\b(hari ini|hari|sekarang|today)\b/.test(normalized)) return 'hari ini'
   return ''
 }
@@ -52,6 +62,17 @@ function removeTerms(words, terms) {
 
 export function resolveFastQuery(message) {
   const { normalized, words } = normalizeMessage(message)
+  const asksDebtPaymentHistory = words.some((word) => DEBT_TERMS.has(word))
+    && words.some((word) => ['pembayaran', 'cicilan', 'pelunasan', 'terakhir', 'terbaru', 'kapan'].includes(word))
+  if (asksDebtPaymentHistory) {
+    const customer = removeTerms(words, DEBT_PAYMENT_HISTORY_TERMS)
+    return {
+      kind: 'query',
+      query: 'debt_payments',
+      args: customer ? { customer } : {}
+    }
+  }
+
   if (words.some((word) => WRITE_TERMS.has(word))) return null
 
   if (words.some((word) => DEBT_TERMS.has(word))) {
@@ -64,6 +85,47 @@ export function resolveFastQuery(message) {
   }
 
   const period = queryPeriod(normalized)
+  const financeTerms = new Set([
+    'kas', 'keuangan', 'pemasukan', 'pengeluaran', 'modal', 'biaya',
+    'income', 'expense', 'catatan', 'buku'
+  ])
+  const cashbookSearchTerms = new Set([
+    ...financeTerms, 'apa', 'saja', 'daftar', 'tampilkan', 'lihat', 'cari',
+    'tolong', 'dong', 'terakhir', 'terbaru', 'riwayat', 'detail', 'rincian',
+    'hari', 'ini', 'kemarin', 'kemaren', 'minggu', 'bulan', 'lalu',
+    'tahun', 'semua', 'seluruh', 'sepanjang', 'periode', 'dari', 'untuk',
+    'tanggal', 'berapa', 'yang', 'belum', 'sudah', 'diisi', 'tertunda',
+    'pending', 'lunas', 'tercatat'
+  ])
+  const cashbookSearch = removeTerms(words, cashbookSearchTerms)
+  const explicitCashbook = words.includes('buku') && words.includes('kas')
+    || words.some((word) => ['catatan', 'riwayat', 'daftar', 'detail', 'rincian'].includes(word))
+      && words.some((word) => financeTerms.has(word))
+  const asksCashbook = explicitCashbook
+    || words.some((word) => ['pemasukan', 'pengeluaran', 'biaya', 'income', 'expense'].includes(word))
+      && (words.some((word) => ['apa', 'saja', 'catatan', 'terakhir', 'terbaru', 'riwayat'].includes(word))
+        || Boolean(cashbookSearch))
+  if (asksCashbook) {
+    const type = words.some((word) => ['pengeluaran', 'biaya', 'expense'].includes(word))
+      ? 'expense'
+      : words.some((word) => ['pemasukan', 'income'].includes(word))
+        ? 'income'
+        : words.includes('modal')
+          ? 'capital'
+          : ''
+    return {
+      kind: 'query',
+      query: 'cashbook',
+      args: {
+        ...(type ? { type } : {}),
+        ...(cashbookSearch ? { search: cashbookSearch } : {}),
+        ...(words.some((word) => ['belum', 'tertunda', 'pending'].includes(word)) ? { pending: true } : {}),
+        ...(words.some((word) => ['sudah', 'tercatat', 'lunas'].includes(word)) ? { pending: false } : {}),
+        period: period || 'semua'
+      }
+    }
+  }
+
   const asksProductPerformance = words.some((word) => PERFORMANCE_TERMS.has(word))
     || words.includes('produk') && words.some((word) => ['penjualan', 'omzet', 'omset', 'laba'].includes(word))
   if (asksProductPerformance) {
@@ -197,7 +259,7 @@ export function resolveDirectQuery(message, hasAttachment = false) {
   if (hasPerformanceAnchor && (hasStockAnchor || hasOtherDataAnchor)) return null
 
   const directIntents = new Set([
-    'debts', 'inventory_summary', 'daily_summary', 'finance_summary',
+    'debts', 'debt_payments', 'cashbook', 'inventory_summary', 'daily_summary', 'finance_summary',
     'product_performance', 'transactions', 'purchases', 'customers',
     'vendors', 'expeditions', 'categories', 'units'
   ])

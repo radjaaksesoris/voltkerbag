@@ -80,6 +80,46 @@ export function formatQueryAnswer(intent, data = {}) {
 
   if (intent === 'stock' || intent === 'products') return summarizeStock(data)
   if (intent === 'debts') return summarizeDebts(data)
+  if (intent === 'debt_payments') {
+    if (!data.searched_customer) return 'Sebutkan nama pelanggan untuk memeriksa pembayaran hutang terakhir.'
+    if (!data.payment) return 'Tidak ditemukan catatan pembayaran hutang untuk pelanggan "' + data.searched_customer + '" di Buku Kas.'
+    return 'Pembayaran hutang terakhir ' + data.payment.customer_name +
+      ': ' + date(data.payment.date) + ' · ' + rupiah(data.payment.amount) + '.'
+  }
+  if (intent === 'cashbook') {
+    const entries = data.entries || []
+    if (!entries.length) {
+      return data.pending_count
+        ? 'Tidak ditemukan catatan Buku Kas yang cocok. Ada ' + data.pending_count + ' biaya tertunda yang belum memiliki nominal.'
+        : 'Tidak ditemukan catatan Buku Kas yang cocok.'
+    }
+    const lines = [
+      ...(data.type === 'expense'
+        ? ['Total pengeluaran: ' + rupiah(data.totals?.expense)]
+        : data.type === 'income'
+          ? ['Total pemasukan: ' + rupiah(data.totals?.income)]
+          : data.type === 'capital'
+            ? ['Total modal: ' + rupiah(data.totals?.capital)]
+            : [
+                'Pemasukan: ' + rupiah(data.totals?.income),
+                'Pengeluaran: ' + rupiah(data.totals?.expense),
+                'Modal: ' + rupiah(data.totals?.capital),
+                'Saldo bersih catatan: ' + rupiah(data.net_amount)
+              ]),
+      ...entries.slice(0, 10).map((entry) =>
+        date(entry.date) + ' · ' +
+        ({ income: 'Pemasukan', expense: 'Pengeluaran', capital: 'Modal' }[entry.type] || entry.type) +
+        (entry.category ? ' · ' + entry.category : '') +
+        (entry.note ? ' · ' + entry.note : '') +
+        (entry.pending ? ' · Nominal belum diisi' : ' · ' + rupiah(entry.amount))
+      ),
+      ...(Number(data.pending_count) > 0
+        ? ['Ada ' + data.pending_count + ' biaya tertunda yang belum memiliki nominal.']
+        : []),
+      ...(data.truncated ? ['Rincian dibatasi 30 catatan; persempit periode atau kata pencarian.'] : [])
+    ]
+    return lines.join('\n')
+  }
 
   if (intent === 'daily_summary' || intent === 'sales_summary') {
     return [

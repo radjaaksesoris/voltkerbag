@@ -70,6 +70,34 @@ test('reports when a requested customer has no matching outstanding debt', () =>
   }), 'Hutang pelanggan "rudi" tidak ditemukan atau tidak memiliki hutang berjalan.')
 })
 
+test('formats the last debt installment from cashbook data', () => {
+  const paymentDate = new Date('2026-10-28T10:00:00.000Z').toLocaleDateString('id-ID')
+  assert.equal(formatQueryAnswer('debt_payments', {
+    searched_customer: 'Andri',
+    payment: { customer_name: 'Andri', date: '2026-10-28T10:00:00.000Z', amount: 1_000_000 }
+  }), 'Pembayaran hutang terakhir Andri: ' + paymentDate + ' · Rp\u00a01.000.000.')
+  assert.equal(formatQueryAnswer('debt_payments', {
+    searched_customer: 'Andri',
+    payment: null
+  }), 'Tidak ditemukan catatan pembayaran hutang untuk pelanggan "Andri" di Buku Kas.')
+})
+
+test('formats filtered cashbook entries with transparent type totals', () => {
+  const answer = formatQueryAnswer('cashbook', {
+    type: 'expense',
+    totals: { expense: 80_000 },
+    pending_count: 1,
+    entries: [
+      { date: '2026-10-29T10:00:00.000Z', type: 'expense', category: 'Biaya Ekspedisi JNT (Andri)', note: 'Invoice INV-1', amount: 50_000 },
+      { date: '2026-10-30T10:00:00.000Z', type: 'expense', category: 'Biaya Ekspedisi TIKI (Andri)', pending: true }
+    ]
+  })
+  assert.match(answer, /Total pengeluaran: Rp\s?80\.000/)
+  assert.match(answer, /Biaya Ekspedisi JNT \(Andri\)/)
+  assert.match(answer, /Nominal belum diisi/)
+  assert.match(answer, /1 biaya tertunda/)
+})
+
 test('formats an empty transaction result clearly', () => {
   assert.equal(formatQueryAnswer('transactions', { transactions: [] }), 'Tidak ada transaksi yang cocok.')
 })

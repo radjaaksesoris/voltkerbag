@@ -95,17 +95,26 @@ function findByName(rows, name, label) {
 function dateRangeForQuery(args = {}) {
   const today = localDateValue(new Date())
   const range = String(args.period || '').toLocaleLowerCase('id-ID')
-  if (range.includes('kemarin')) {
-    const yesterday = new Date()
-    yesterday.setDate(yesterday.getDate() - 1)
-    const date = localDateValue(yesterday)
-    return { from: date, to: date }
-  }
   if (range.includes('bulan')) {
+    if (range.includes('lalu') || range.includes('kemarin')) {
+      const current = new Date()
+      return {
+        from: localDateValue(new Date(current.getFullYear(), current.getMonth() - 1, 1)),
+        to: localDateValue(new Date(current.getFullYear(), current.getMonth(), 0))
+      }
+    }
     const current = new Date()
     return {
       from: localDateValue(new Date(current.getFullYear(), current.getMonth(), 1)),
       to: localDateValue(new Date(current.getFullYear(), current.getMonth() + 1, 0))
+    }
+  }
+  if (range.includes('tahun')) {
+    const current = new Date()
+    const year = current.getFullYear() - (range.includes('lalu') || range.includes('kemarin') ? 1 : 0)
+    return {
+      from: localDateValue(new Date(year, 0, 1)),
+      to: localDateValue(new Date(year, 11, 31))
     }
   }
   if (range.includes('minggu')) {
@@ -113,6 +122,12 @@ function dateRangeForQuery(args = {}) {
     const mondayOffset = (current.getDay() + 6) % 7
     const monday = new Date(current.getFullYear(), current.getMonth(), current.getDate() - mondayOffset)
     return { from: localDateValue(monday), to: today }
+  }
+  if (range.includes('kemarin')) {
+    const yesterday = new Date()
+    yesterday.setDate(yesterday.getDate() - 1)
+    const date = localDateValue(yesterday)
+    return { from: date, to: date }
   }
   if (typeof args.from === 'string' && typeof args.to === 'string') return { from: args.from, to: args.to }
   return { from: today, to: today }
@@ -133,6 +148,27 @@ function formatStockQuery(product) {
       saleUnits(product.unit || 'pcs').map((unit) => [unit, saleUnitPrice(product, unit)])
     )
   }
+}
+
+function financeEntryCustomerName(entry) {
+  if (entry.type !== 'income') return ''
+  const note = String(entry.note || '').trim()
+  const manualPaymentPrefix = 'Cicilan kredit pelanggan · '
+  if (note.startsWith(manualPaymentPrefix)) return note.slice(manualPaymentPrefix.length).trim()
+  if (note.startsWith('Cicilan transaksi ')) {
+    const separatorIndex = note.lastIndexOf(' · ')
+    if (separatorIndex !== -1) return note.slice(separatorIndex + 3).trim()
+  }
+  return ''
+}
+
+function matchesCashbookEntry(entry, { type, search, pending }) {
+  if (type && entry.type !== type) return false
+  if (typeof pending === 'boolean' && Boolean(entry.pending) !== pending) return false
+  const query = String(search || '').trim().toLocaleLowerCase('id-ID')
+  if (!query) return true
+  return [entry.category, entry.note, financeEntryCustomerName(entry)]
+    .some((value) => String(value || '').toLocaleLowerCase('id-ID').includes(query))
 }
 
 export async function queryStore(intent, args = {}) {
@@ -200,6 +236,105 @@ export async function queryStore(intent, args = {}) {
             pending_expedition_count: finance.pending_expedition_count,
             entries: finance.entries.slice(0, 30)
           }
+    }
+  }
+
+  if (intent === 'debt_payments') {
+    const customer = String(args.customer || '').trim()
+    if (!customer) {
+      return {
+        title: 'Riwayat pembayaran hutang pelanggan',
+        data: { searched_customer: '', payment: null }
+      }
+    }
+
+    const normalizedCustomer = customer.toLocaleLowerCase('id-ID')
+    let exactPayment = null
+    let partialPayment = null
+    for (let page = 1; ; page += 1) {
+      const finance = await getFinanceData({ from: null, to: null, page, pageSize: PAGE_SIZE })
+      const customerPayments = (finance.entries || []).filter((entry) => {
+        if (String(entry.category || '').trim().toLocaleLowerCase('id-ID') !== 'cicilan kredit') return false
+        const entryCustomer = financeEntryCustomerName(entry).toLocaleLowerCase('id-ID')
+        return entryCustomer.includes(normalizedCustomer)
+      })
+      exactPayment = customerPayments.find((entry) =>
+        financeEntryCustomerName(entry).toLocaleLowerCase('id-ID') === normalizedCustomer
+      ) || null
+      partialPayment ||= customerPayments[0] || null
+      if (exactPayment || (finance.entries || []).length < PAGE_SIZE || page * PAGE_SIZE >= Number(finance.total_count || 0)) break
+    }
+
+    const payment = exactPayment || partialPayment
+    const paymentCustomer = payment ? financeEntryCustomerName(payment) : ''
+    return {
+      title: 'Riwayat pembayaran hutang pelanggan',
+      data: {
+        searched_customer: customer,
+        payment: payment ? {
+          customer_name: paymentCustomer,
+          date: payment.date || payment.createdAt || null,
+          amount: Number(payment.amount) || 0
+        } : null
+      }
+    }
+  }
+
+  if (intent === 'cashbook') {
+    const period = String(args.period || 'semua').toLocaleLowerCase('id-ID')
+    if (args.type && !['income', 'expense', 'capital'].includes(args.type)) {
+      throw new Error('Jenis Buku Kas harus pemasukan, pengeluaran, atau modal.')
+    }
+    if (args.pending != null && typeof args.pending !== 'boolean') {
+      throw new Error('Status catatan tertunda tidak valid.')
+    }
+    const supportedPeriods = new Set([
+      'semua', 'semua waktu', 'all', 'hari ini', 'kemarin',
+      'minggu ini', 'bulan ini', 'bulan lalu', 'tahun ini', 'tahun lalu'
+    ])
+    if (!supportedPeriods.has(period) && !(typeof args.from === 'string' && typeof args.to === 'string')) {
+      throw new Error('Periode Buku Kas belum didukung. Sebutkan hari ini, kemarin, minggu ini, bulan ini, bulan lalu, tahun ini, atau rentang tanggal.')
+    }
+    const range = period === 'semua' || period === 'semua waktu' || period === 'all'
+      ? { from: null, to: null }
+      : dateRangeTimestamps(typeof args.from === 'string' && typeof args.to === 'string'
+        ? { from: args.from, to: args.to }
+        : dateRangeForQuery(args))
+    const matches = []
+    let totalCount = 0
+    for (let page = 1; ; page += 1) {
+      const finance = await getFinanceData({ ...range, page, pageSize: PAGE_SIZE })
+      const pageEntries = finance.entries || []
+      totalCount = Number(finance.total_count) || 0
+      matches.push(...pageEntries.filter((entry) => matchesCashbookEntry(entry, args)))
+      if (pageEntries.length < PAGE_SIZE || page * PAGE_SIZE >= totalCount) break
+    }
+    const finalized = matches.filter((entry) => !entry.pending)
+    const pending = matches.filter((entry) => entry.pending)
+    const totals = finalized.reduce((sum, entry) => {
+      sum[entry.type] += Number(entry.amount) || 0
+      return sum
+    }, { income: 0, expense: 0, capital: 0 })
+    return {
+      title: 'Rincian Buku Kas',
+      data: {
+        searched_text: String(args.search || '').trim(),
+        type: args.type || '',
+        period,
+        totals,
+        net_amount: totals.income + totals.capital - totals.expense,
+        matched_count: matches.length,
+        pending_count: pending.length,
+        entries: matches.slice(0, 30).map((entry) => ({
+          date: entry.date || entry.createdAt || null,
+          type: entry.type,
+          category: entry.category || '',
+          note: entry.note || '',
+          amount: Number(entry.amount) || 0,
+          pending: Boolean(entry.pending)
+        })),
+        truncated: matches.length > 30
+      }
     }
   }
 
