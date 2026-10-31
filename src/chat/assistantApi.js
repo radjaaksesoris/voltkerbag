@@ -27,14 +27,3 @@ export async function requestAssistantPlan({ message, history, pendingAction, at
   if (error) throw new Error(await getErrorMessage(error, 'Gagal menghubungi asisten chat.'))
   return validateAssistantPlan(data)
 }
-
-export async function summarizeAssistantAnswer(question, data) {
-  const { data: result, error } = await getClient().functions.invoke('chat-assistant', {
-    body: { mode: 'summarize', question, data }
-  })
-  if (error) throw new Error(await getErrorMessage(error, 'Gagal merangkum hasil data toko.'))
-  if (typeof result?.answer !== 'string' || !result.answer.trim()) {
-    throw new Error('Asisten tidak mengembalikan ringkasan yang valid.')
-  }
-  return result.answer
-}

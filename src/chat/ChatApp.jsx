@@ -6,7 +6,8 @@ import ReceiptPreview from '../components/ReceiptPreview.jsx'
 import { downloadInvoiceJpeg } from '../invoiceJpeg'
 import { onAuthStateChange, getAuthSession, verifyAuthSession } from '../supabaseSync'
 import { executeAction, prepareAction, queryStore } from './chatDomain.js'
-import { requestAssistantPlan, summarizeAssistantAnswer } from './assistantApi.js'
+import { requestAssistantPlan } from './assistantApi.js'
+import { formatQueryAnswer } from './queryAnswer.js'
 
 const STARTERS = [
   'Berapa stok tas hitam?',
@@ -35,6 +36,7 @@ export default function ChatApp() {
   const [messages, setMessages] = useState([])
   const [input, setInput] = useState('')
   const [busy, setBusy] = useState(false)
+  const [processingStage, setProcessingStage] = useState('')
   const [actionBusy, setActionBusy] = useState(false)
   const [consent, setConsent] = useState(false)
   const [attachment, setAttachment] = useState(null)
@@ -113,6 +115,7 @@ export default function ChatApp() {
       attachmentName: file?.name || ''
     })
     setBusy(true)
+    setProcessingStage('Memahami permintaan...')
 
     try {
       const history = messages.slice(-12).map((message) => ({
@@ -131,28 +134,19 @@ export default function ChatApp() {
       }
 
       if (plan.kind === 'query') {
+        setProcessingStage('Mengambil data toko...')
         const result = await queryStore(plan.query, plan.args)
-        try {
-          const answer = await summarizeAssistantAnswer(text, result.summaryData || result.data)
-          appendMessage(setMessages, {
-            role: 'assistant',
-            text: answer,
-            detailTitle: result.title,
-            detailText: formatData(result.data),
-            invoices: plan.query === 'transactions' ? result.data.transactions : null
-          })
-        } catch (error) {
-          appendMessage(setMessages, {
-            role: 'assistant',
-            text: 'Data berhasil dibaca, tetapi ringkasan AI gagal dibuat: ' + error.message,
-            detailTitle: result.title,
-            detailText: formatData(result.data),
-            error: true
-          })
-        }
+        appendMessage(setMessages, {
+          role: 'assistant',
+          text: formatQueryAnswer(plan.query, result.data),
+          detailTitle: result.title,
+          detailText: formatData(result.data),
+          invoices: plan.query === 'transactions' ? result.data.transactions : null
+        })
         return
       }
 
+      setProcessingStage('Menyiapkan pratinjau tindakan...')
       try {
         const draft = await prepareAction(plan.action, plan.args, file)
         draft.requestId = crypto.randomUUID()
@@ -176,6 +170,7 @@ export default function ChatApp() {
       })
     } finally {
       setBusy(false)
+      setProcessingStage('')
       inputRef.current?.focus()
     }
   }
@@ -372,7 +367,7 @@ export default function ChatApp() {
             </article>
           ))}
           {(busy || actionBusy) && (
-            <div className="chat-thinking" role="status"><span /><span /><span />{actionBusy ? 'Menyimpan perubahan...' : 'VOLTKER sedang memeriksa...'}</div>
+            <div className="chat-thinking" role="status"><span /><span /><span />{actionBusy ? 'Menyimpan perubahan...' : processingStage}</div>
           )}
           <div ref={endOfMessagesRef} />
         </div>
@@ -381,7 +376,7 @@ export default function ChatApp() {
           {!consent && (
             <div className="chat-consent">
               <strong>Catatan privasi AI</strong>
-              <p>Pertanyaan dan data yang diperlukan untuk menjawabnya dapat diproses oleh Google Gemini. Data toko hanya diambil setelah Anda meminta informasi; perubahan tetap memakai database Supabase dan memerlukan konfirmasi.</p>
+              <p>Pesan dan riwayat percakapan yang diperlukan untuk memahami permintaan diproses oleh Google Gemini. Hasil query data toko diambil dari Supabase dan diringkas di perangkat; perubahan memerlukan konfirmasi.</p>
               <button className="btn btn-primary" type="button" onClick={() => setConsent(true)}>Saya mengerti, mulai chat</button>
             </div>
           )}

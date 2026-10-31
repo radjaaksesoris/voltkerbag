@@ -9,7 +9,6 @@ const corsHeaders = {
 
 const MAX_MESSAGE_LENGTH = 4_000
 const MAX_HISTORY_TURNS = 12
-const MAX_CONTEXT_LENGTH = 24_000
 const MAX_REQUEST_LENGTH = 64_000
 
 const SYSTEM_INSTRUCTIONS = `Kamu adalah asisten operasional VOLTKER, aplikasi toko berbahasa Indonesia.
@@ -112,54 +111,26 @@ Deno.serve(async (request) => {
     if (authError || !user) return jsonResponse(401, { error: 'Sesi login berakhir. Silakan masuk kembali.' })
 
     const body = await request.json()
-    if (!isRecord(body) || !['plan', 'summarize'].includes(String(body.mode))) {
+    if (!isRecord(body) || body.mode !== 'plan') {
       return jsonResponse(400, { error: 'Permintaan chat tidak valid.' })
     }
     if (JSON.stringify(body).length > MAX_REQUEST_LENGTH) {
       return jsonResponse(413, { error: 'Permintaan chat terlalu besar.' })
     }
 
-    let prompt: string
-    if (body.mode === 'plan') {
-      if (typeof body.message !== 'string' || !body.message.trim() || body.message.length > MAX_MESSAGE_LENGTH) {
-        return jsonResponse(400, { error: 'Pesan harus berisi 1–4.000 karakter.' })
-      }
-      prompt = JSON.stringify({
-        task: 'Tentukan apakah pesan butuh jawaban umum, query data, atau rancangan aksi. Jangan menjalankan aksi.',
-        recentConversation: cleanHistory(body.history),
-        pendingAction: isRecord(body.pendingAction) ? body.pendingAction : null,
-        attachmentName: typeof body.attachmentName === 'string' ? body.attachmentName.slice(0, 180) : '',
-        message: body.message
-      })
-    } else {
-      if (typeof body.question !== 'string' || body.question.length > MAX_MESSAGE_LENGTH
-        || !isRecord(body.data)) {
-        return jsonResponse(400, { error: 'Konteks jawaban tidak valid.' })
-      }
-      const context = JSON.stringify(body.data)
-      if (context.length > MAX_CONTEXT_LENGTH) return jsonResponse(413, { error: 'Konteks data terlalu besar untuk diringkas.' })
-      prompt = JSON.stringify({
-        task: 'Jawab pertanyaan pengguna hanya menggunakan data toko di bawah. Jika data tidak cukup, nyatakan batasannya. Jangan menyatakan bahwa perubahan data telah berhasil.',
-        question: body.question,
-        data: body.data
-      })
+    if (typeof body.message !== 'string' || !body.message.trim() || body.message.length > MAX_MESSAGE_LENGTH) {
+      return jsonResponse(400, { error: 'Pesan harus berisi 1–4.000 karakter.' })
     }
+    const prompt = JSON.stringify({
+      task: 'Tentukan apakah pesan butuh jawaban umum, query data, atau rancangan aksi. Jangan menjalankan aksi.',
+      recentConversation: cleanHistory(body.history),
+      pendingAction: isRecord(body.pendingAction) ? body.pendingAction : null,
+      attachmentName: typeof body.attachmentName === 'string' ? body.attachmentName.slice(0, 180) : '',
+      message: body.message
+    })
 
     const model = Deno.env.get('GEMINI_MODEL') || 'gemini-3.8-flash'
     const text = await generate(prompt, geminiApiKey, model)
-    if (body.mode === 'summarize') {
-      let parsed: unknown
-      try {
-        parsed = JSON.parse(text)
-      } catch {
-        return jsonResponse(502, { error: 'Jawaban AI tidak valid.' })
-      }
-      if (!isRecord(parsed) || typeof parsed.answer !== 'string' || !parsed.answer.trim()) {
-        return jsonResponse(502, { error: 'Jawaban AI tidak memiliki format yang benar.' })
-      }
-      return jsonResponse(200, { answer: parsed.answer.slice(0, 4_000) })
-    }
-
     let plan: unknown
     try {
       plan = JSON.parse(text)

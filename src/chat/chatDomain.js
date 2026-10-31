@@ -239,20 +239,6 @@ export async function queryStore(intent, args = {}) {
           createdAt: transaction.createdAt
         })),
         truncated: transactions.length > matching.length
-      },
-      summaryData: {
-        matching_customer: name || null,
-        transactions: matching.slice(0, 20).map((transaction) => ({
-          invoiceNo: transaction.invoiceNo,
-          customerName: transaction.customerName,
-          total: transaction.total,
-          paymentType: transaction.paymentType,
-          balanceDue: transaction.balanceDue,
-          createdAt: transaction.createdAt,
-          items: (transaction.items || []).slice(0, 10).map((item) => ({
-            name: item.name, quantity: item.qty, unit: item.unit, total: Number(item.price) * Number(item.qty)
-          }))
-        }))
       }
     }
   }
