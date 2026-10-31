@@ -23,6 +23,15 @@ function formatData(data) {
   return JSON.stringify(data, null, 2)
 }
 
+function renderChatText(text) {
+  const currencyParts = String(text).split(/([−-]?Rp[\s\u00a0]*\d[\d.,]*)/gi)
+  return currencyParts.map((part, index) =>
+    /^[−-]?Rp[\s\u00a0]*\d[\d.,]*$/i.test(part)
+      ? <strong key={index}>{part}</strong>
+      : part
+  )
+}
+
 export default function ChatApp() {
   const [session, setSession] = useState(null)
   const [checkingSession, setCheckingSession] = useState(true)
@@ -329,7 +338,7 @@ export default function ChatApp() {
               )}
               <div className="chat-message-content">
                 <div className={'chat-bubble' + (message.error ? ' is-error' : '') + (message.success ? ' is-success' : '')}>
-                  <p>{message.text}</p>
+                  <p>{renderChatText(message.text)}</p>
                   {message.attachmentName && <span className="chat-attachment-label"><Icon name="image" size={14} />{message.attachmentName}</span>}
                 </div>
 
@@ -340,7 +349,7 @@ export default function ChatApp() {
                       <div><small>PRATINJAU TINDAKAN</small><strong>{message.draft.title}</strong></div>
                     </div>
                     <ul>
-                      {message.draft.details.map((detail) => <li key={detail}>{detail}</li>)}
+                      {message.draft.details.map((detail) => <li key={detail}>{renderChatText(detail)}</li>)}
                     </ul>
                     {message.draft.action === 'reset_store' && (
                       <label className="chat-confirm-reset">
