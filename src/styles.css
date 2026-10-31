@@ -198,23 +198,24 @@ body {
   min-height: 140px;
   align-items: center;
   gap: 16px;
-  border: 1px solid rgba(255, 255, 255, .58);
+  border: 1px solid rgba(246, 190, 185, .3);
   border-radius: 16px;
-  background: linear-gradient(135deg, rgba(255, 253, 248, .48), rgba(255, 253, 248, .3));
+  background:
+    linear-gradient(145deg, rgba(112, 31, 39, .7), rgba(91, 24, 33, .58));
   padding: 22px 18px;
-  color: var(--text);
+  color: #fff8f4;
   text-decoration: none;
-  box-shadow: 0 12px 32px rgba(0, 0, 0, .2), inset 0 1px 0 rgba(255, 255, 255, .58);
-  -webkit-backdrop-filter: blur(24px) saturate(145%);
-  backdrop-filter: blur(24px) saturate(145%);
+  box-shadow: 0 14px 38px rgba(37, 5, 11, .25), inset 0 1px 0 rgba(255, 255, 255, .08);
+  -webkit-backdrop-filter: blur(18px) saturate(125%);
+  backdrop-filter: blur(18px) saturate(125%);
   transition: transform .18s ease, border-color .18s ease, box-shadow .18s ease;
 }
-.app-mode-option:hover { transform: translateY(-3px); border-color: rgba(255, 255, 255, .82); background: linear-gradient(135deg, rgba(255, 253, 248, .58), rgba(255, 253, 248, .4)); box-shadow: 0 18px 42px rgba(0, 0, 0, .25), inset 0 1px 0 rgba(255, 255, 255, .68); }
-.app-mode-icon { display: grid; width: 48px; height: 48px; flex: 0 0 auto; place-items: center; border-radius: 13px; background: #f5e5e0; color: var(--accent-dark); }
+.app-mode-option:hover { transform: translateY(-3px); border-color: rgba(255, 205, 198, .58); background: linear-gradient(145deg, rgba(128, 37, 46, .78), rgba(104, 29, 39, .68)); box-shadow: 0 18px 42px rgba(37, 5, 11, .34), inset 0 1px 0 rgba(255, 255, 255, .12); }
+.app-mode-icon { display: grid; width: 48px; height: 48px; flex: 0 0 auto; place-items: center; border: 1px solid rgba(255, 218, 212, .2); border-radius: 13px; background: rgba(72, 18, 27, .32); color: #ffe4e1; }
 .app-mode-option-copy { display: grid; gap: 9px; padding-top: 2px; }
-.app-mode-option-copy strong { color: #28221e; font-size: 13px; letter-spacing: .8px; }
-.app-mode-option-copy > span { color: #756b62; font-size: 12px; line-height: 1.65; }
-.app-mode-arrow { flex: 0 0 auto; margin: 3px 0 0 auto; color: var(--accent-dark); }
+.app-mode-option-copy strong { color: #fff8f4; font-size: 13px; letter-spacing: .8px; }
+.app-mode-option-copy > span { color: rgba(255, 238, 234, .9); font-size: 12px; line-height: 1.65; }
+.app-mode-arrow { flex: 0 0 auto; margin: 3px 0 0 auto; color: #ffd2cd; }
 @media (prefers-reduced-motion: reduce) {
   .login-loading-spinner { animation-duration: 2s; }
   .app-mode-option { transition: none; }
