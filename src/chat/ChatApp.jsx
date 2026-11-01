@@ -17,6 +17,7 @@ import {
   stockAdditionPrompt
 } from './productCreation.js'
 import { resolveDirectQuery, resolveFallbackQuery } from './queryIntent.js'
+import { getChatDayKey } from './chatDay.js'
 import { clearRequestedAppMode, getRequestedAppMode } from '../appMode.js'
 import { stockEntryUnit } from '../productUnits.js'
 import { readDashboardDateRange } from '../dateFilter.js'
@@ -63,12 +64,43 @@ export default function ChatApp() {
   const inputRef = useRef(null)
   const operationLock = useRef(false)
   const attachmentPreviewUrls = useRef(new Set())
+  const chatDayRef = useRef(getChatDayKey())
+  const chatBusyRef = useRef(false)
   const hasPendingAction = messages.some((message) => message.draft)
   const requestedAppMode = getRequestedAppMode()
+
+  useEffect(() => {
+    chatBusyRef.current = busy || actionBusy
+  }, [busy, actionBusy])
 
   useEffect(() => () => {
     attachmentPreviewUrls.current.forEach((url) => URL.revokeObjectURL(url))
     attachmentPreviewUrls.current.clear()
+  }, [])
+
+  useEffect(() => {
+    const resetIfNewDay = () => {
+      const currentDay = getChatDayKey()
+      if (currentDay === chatDayRef.current || chatBusyRef.current) return
+
+      chatDayRef.current = currentDay
+      setMessages([])
+      setProductCreation(null)
+      setInput('')
+      setAttachment(null)
+      attachmentPreviewUrls.current.forEach((url) => URL.revokeObjectURL(url))
+      attachmentPreviewUrls.current.clear()
+      setAttachmentPreviewUrl('')
+    }
+
+    const intervalId = window.setInterval(resetIfNewDay, 30_000)
+    window.addEventListener('focus', resetIfNewDay)
+    document.addEventListener('visibilitychange', resetIfNewDay)
+    return () => {
+      window.clearInterval(intervalId)
+      window.removeEventListener('focus', resetIfNewDay)
+      document.removeEventListener('visibilitychange', resetIfNewDay)
+    }
   }, [])
 
   useEffect(() => {
