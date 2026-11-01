@@ -10,6 +10,19 @@ test('routes simple stock questions directly to the stock query', () => {
   })
 })
 
+test('supports exact sales recap and modal-price questions from chat examples', () => {
+  assert.deepEqual(resolveFastQuery('Rekap penjualan'), {
+    kind: 'query',
+    query: 'daily_summary',
+    args: {}
+  })
+  assert.deepEqual(resolveFastQuery('Berapa harga modal Aigner'), {
+    kind: 'query',
+    query: 'stock',
+    args: { product: 'aigner', includeCost: true }
+  })
+})
+
 test('removes remaining-stock wording before searching for the product', () => {
   for (const question of ['berapa sisa stok bimo oval', 'berapa stok yang tersisa Bimo Oval']) {
     assert.deepEqual(resolveFastQuery(question), {

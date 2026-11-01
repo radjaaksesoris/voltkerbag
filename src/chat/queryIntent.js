@@ -259,7 +259,7 @@ export function resolveFastQuery(message) {
   }
 
   const asksDaily = words.some((word) =>
-    ['penjualan', 'omzet', 'omset', 'pemasukan', 'pengeluaran', 'laba', 'ringkasan'].includes(word)
+    ['penjualan', 'omzet', 'omset', 'pemasukan', 'pengeluaran', 'laba', 'ringkasan', 'rekap'].includes(word)
   )
   const asksFinance = words.some((word) => ['keuangan', 'kas'].includes(word))
   if (asksDaily || asksFinance) {
@@ -283,8 +283,10 @@ export function resolveFastQuery(message) {
   }
 
   const asksStock = words.some((word) => STOCK_TERMS.has(word))
-  const asksCost = words.includes('hpp') || words.includes('modal')
-    || words.includes('pokok') && words.includes('harga')
+  const asksCost = words.includes('hpp')
+    || words.includes('modal')
+    || (words.includes('pokok') && words.includes('harga'))
+    || (words.includes('harga') && words.includes('modal'))
   const asksPrice = words.includes('harga') || words.includes('harganya')
   if (!asksStock && !asksCost && !asksPrice) return null
 
