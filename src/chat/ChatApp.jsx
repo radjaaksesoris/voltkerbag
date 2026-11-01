@@ -135,6 +135,11 @@ export default function ChatApp() {
     endOfMessagesRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' })
   }, [messages, busy, actionBusy])
 
+  function fillInputExample(text) {
+    setInput(text)
+    requestAnimationFrame(() => inputRef.current?.focus())
+  }
+
   async function sendMessage(event, suggestedText) {
     event?.preventDefault()
     if (busy || actionBusy || hasPendingAction || operationLock.current) return
@@ -532,7 +537,7 @@ export default function ChatApp() {
             <div className="chat-welcome">
               <span className="chat-welcome-eyebrow">RUANG KERJA TOKO</span>
               <h1>Selamat datang.<br /><em>Apa yang perlu dibantu?</em></h1>
-              <p>Tanyakan stok, penjualan, hutang, atau minta bantuan mencatat transaksi dan kegiatan toko.</p>
+              <p>Tanyakan data toko atau tulis perintah dengan bahasa sehari-hari. Untuk tambah atau edit, sebutkan nama objek dan perubahan yang diinginkan. Jika detail belum lengkap, asisten akan bertanya sebelum menyiapkan pratinjau.</p>
               <div className="chat-suggestion-row" aria-label="Contoh pertanyaan cepat">
                 {["Rekap penjualan", "Cek stok Aigner", "Berapa hutang Andri", "Buku kas bulan ini"].map((suggestion) => (
                   <button
@@ -543,6 +548,25 @@ export default function ChatApp() {
                     disabled={busy || actionBusy || hasPendingAction}
                   >
                     {suggestion}
+                  </button>
+                ))}
+              </div>
+              <p className="chat-example-label">Contoh perintah · pilih untuk mengisi kolom, lalu sesuaikan:</p>
+              <div className="chat-suggestion-row" aria-label="Contoh perintah yang dapat diedit">
+                {[
+                  "Tambah stok",
+                  "Buat produk baru",
+                  "Ubah harga jual [nama produk] menjadi [nominal] per [satuan]",
+                  "Catat pengeluaran [nominal] untuk [keperluan]"
+                ].map((example) => (
+                  <button
+                    key={example}
+                    type="button"
+                    className="chat-suggestion"
+                    onClick={() => fillInputExample(example)}
+                    disabled={busy || actionBusy || hasPendingAction}
+                  >
+                    {example}
                   </button>
                 ))}
               </div>
@@ -667,7 +691,7 @@ export default function ChatApp() {
               <Icon name="arrowUp" size={18} />
             </button>
           </form>
-          <p className="chat-composer-footnote">Pesan tertentu diproses Groq · AI bisa keliru, periksa ringkasan sebelum mengonfirmasi tindakan.</p>
+          <p className="chat-composer-footnote">Tulis maksud, nama objek, dan detail perubahan. Jika ada yang kurang, asisten akan bertanya. Periksa pratinjau sebelum mengonfirmasi.</p>
         </div>
       </section>
 

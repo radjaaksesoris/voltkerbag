@@ -209,6 +209,13 @@ body {
   line-height: 1.7;
 }
 
+.chat-welcome > .chat-example-label {
+  margin: 14px 0 -10px;
+  color: #766b64;
+  font-size: 12px;
+  font-weight: 650;
+}
+
 .chat-suggestion-row {
   display: flex;
   flex-wrap: wrap;

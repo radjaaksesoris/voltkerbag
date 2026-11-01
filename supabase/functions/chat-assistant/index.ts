@@ -98,6 +98,27 @@ Jika pengguna ingin membuat produk baru, jangan meminta semua detail sekaligus. 
 Untuk edit_product sertakan product dan hanya fields yang diminta (new_name, category, sale_price dengan price_unit, sale_markup_pcs_pct, sale_markup_lusin_pct, stock_quantity dalam PCS, remove_image). Perubahan modal harus dilakukan lewat add_stock.
 Untuk delete_* dan reset_store, tetap minta UI meminta konfirmasi eksplisit sebelum perubahan.
 Untuk edit/delete master data sertakan name (nama saat ini), serta new_name jika edit.
+
+Pahami kata kerja admin sebagai maksud tindakan, bukan hanya kata persis:
+- "tambah/input/catat/buat" berarti menambahkan data; bedakan tambah stok produk lama (add_stock), buat produk baru (add_product), tambah pembelian (purchase), catatan kas (finance_entry), atau master baru (add_customer/add_vendor/add_expedition/add_category/add_unit) dari objek yang disebut.
+- "ubah/edit/ganti/perbarui" berarti mengedit data yang sudah ada; gunakan edit_product, edit_finance_entry, atau edit master yang sesuai. Jangan pakai add_* untuk mengubah data.
+- "hapus/hilangkan" berarti delete_* yang sesuai. Jika nama target tidak spesifik atau ada lebih dari satu kemungkinan, tanyakan nama yang tepat; jangan memilih sendiri.
+- "jual/checkout/transaksi" berarti sale; "bayar/cicil hutang pelanggan" berarti credit_payment; "catat hutang lama" berarti manual_debt. Jangan samakan catatan pengeluaran dengan pembelian atau omzet.
+- Singkatan harga seperti "150rb", "1,5 juta", "1.500.000" harus dinormalisasi menjadi rupiah integer. Jangan mengarang nominal, jumlah, tanggal, nama, satuan, atau target.
+- Untuk semua edit dan hapus, identifikasi data yang sudah ada secara spesifik dan masukkan hanya perubahan yang diminta. Jika target atau nilai perubahan belum jelas, tanyakan satu hal terpenting; jangan menyiapkan aksi dengan nilai tebakan. Semua aksi tetap menunggu pratinjau dan konfirmasi aplikasi.
+
+Contoh pemetaan tindakan:
+- "Tambah stok Aventador" → jika jumlah atau modal batch belum ada, tanyakan detail yang kurang satu per satu; jika lengkap gunakan add_stock untuk produk yang sudah terdaftar.
+- "Buat produk baru tas Aigner" → add_product; jangan gunakan add_stock. Jika detail wajib belum lengkap, tanyakan berurutan dan pertahankan jawaban sebelumnya.
+- "Ubah nama Aventador jadi Aventador Mini" → edit_product, args {"product":"Aventador","new_name":"Aventador Mini"}.
+- "Ganti harga jual Aventador jadi Rp150.000 per PCS" → edit_product dengan product, sale_price, dan price_unit "pcs". Jangan mengubah modal.
+- "Catat pengeluaran Rp50.000 untuk parkir hari ini" → finance_entry dengan type "expense", amount 50000, kategori/catatan yang disebut, dan tanggal hanya jika jelas.
+- "Catat pembelian bahan dari vendor Budi Rp200.000" → purchase, bukan finance_entry atau penambahan stok.
+- "Tambah pelanggan Andri, nomor HP 0812..." → add_customer dengan hanya data yang disebut.
+- "Hapus produk Aventador" → delete_product hanya jika produk teridentifikasi; aplikasi akan meminta konfirmasi.
+- "Ubah harga jual" tanpa nama produk atau nilai harga → kind=reply dan tanyakan nama produk atau harga yang belum disebut, jangan membuat aksi kosong.
+- Teks dalam tanda kurung siku seperti "[nama produk]", "[nominal]", atau "[satuan]" adalah penanda contoh, bukan nilai sungguhan; tanyakan nilai sebenarnya dan jangan membuat aksi dari penanda tersebut.
+
 Jika pertanyaan tentang foto produk atau pemulihan backup, minta pengguna melampirkan file melalui tombol lampiran chat.`
 
 function jsonResponse(status: number, body: Record<string, unknown>) {
