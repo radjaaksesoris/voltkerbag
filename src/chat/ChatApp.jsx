@@ -18,6 +18,7 @@ import {
 } from './productCreation.js'
 import { resolveDirectQuery, resolveFallbackQuery } from './queryIntent.js'
 import { getChatDayKey } from './chatDay.js'
+import { loadChatHistory, saveChatHistory } from './chatHistory.js'
 import { clearRequestedAppMode, getRequestedAppMode } from '../appMode.js'
 import { stockEntryUnit } from '../productUnits.js'
 import { readDashboardDateRange } from '../dateFilter.js'
@@ -48,6 +49,8 @@ export default function ChatApp() {
   const [checkingSession, setCheckingSession] = useState(true)
   const [sharedStylesReady, setSharedStylesReady] = useState(false)
   const [connectionError, setConnectionError] = useState('')
+  const [historyError, setHistoryError] = useState('')
+  const [historyOwner, setHistoryOwner] = useState(null)
   const [authCheckKey, setAuthCheckKey] = useState(0)
   const [messages, setMessages] = useState([])
   const [input, setInput] = useState('')
@@ -67,6 +70,8 @@ export default function ChatApp() {
   const attachmentPreviewUrls = useRef(new Set())
   const chatDayRef = useRef(getChatDayKey())
   const chatBusyRef = useRef(false)
+  const chatUserId = session?.user?.id
+  const chatDayKey = getChatDayKey()
   const hasPendingAction = messages.some((message) => message.draft)
   const requestedAppMode = getRequestedAppMode()
   const needsSharedStyles = !session || requestedAppMode !== 'chat'
@@ -94,6 +99,36 @@ export default function ChatApp() {
   useEffect(() => {
     chatBusyRef.current = busy || actionBusy
   }, [busy, actionBusy])
+
+  useEffect(() => {
+    setHistoryOwner(null)
+    setMessages([])
+    if (!chatUserId) return
+
+    try {
+      const currentDay = getChatDayKey()
+      const savedMessages = loadChatHistory(window.localStorage, chatUserId, currentDay)
+      chatDayRef.current = currentDay
+      setMessages(savedMessages)
+      setHistoryError('')
+      setHistoryOwner(chatUserId)
+    } catch (error) {
+      console.error('Gagal memuat riwayat chat:', error)
+      setHistoryError('Riwayat chat tidak dapat dimuat atau disimpan di perangkat ini.')
+    }
+  }, [chatUserId])
+
+  useEffect(() => {
+    if (!chatUserId || historyOwner !== chatUserId) return
+
+    try {
+      saveChatHistory(window.localStorage, chatUserId, chatDayKey, messages)
+      setHistoryError('')
+    } catch (error) {
+      console.error('Gagal menyimpan riwayat chat:', error)
+      setHistoryError('Riwayat chat tidak dapat disimpan di perangkat ini.')
+    }
+  }, [chatDayKey, chatUserId, historyOwner, messages])
 
   useEffect(() => () => {
     attachmentPreviewUrls.current.forEach((url) => URL.revokeObjectURL(url))
@@ -597,7 +632,11 @@ export default function ChatApp() {
         </div>
       </header>
 
-      {connectionError && <div className="chat-connection-banner" role="status">{connectionError}</div>}
+      {(connectionError || historyError) && (
+        <div className="chat-connection-banner" role="status">
+          {[connectionError, historyError].filter(Boolean).join(' ')}
+        </div>
+      )}
 
       <section className="chat-workspace" aria-label="Percakapan dengan asisten VOLTKER">
         <div className="chat-feed" aria-live="polite">
