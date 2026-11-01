@@ -35,6 +35,10 @@ const WRITE_TERMS = new Set([
   ...STOCK_ACTION_TERMS, ...DEBT_ACTION_TERMS, 'jualkan', 'buat',
   'belikan', 'simpan', 'ganti'
 ])
+const PERIOD_MONTHS = [
+  'januari', 'februari', 'maret', 'april', 'mei', 'juni',
+  'juli', 'agustus', 'september', 'oktober', 'november', 'desember'
+]
 
 function normalizeMessage(message) {
   const normalized = String(message || '')
@@ -46,8 +50,10 @@ function normalizeMessage(message) {
 }
 
 function queryPeriod(normalized) {
-  const monthMatch = normalized.match(/\b(?:bulan\s+)?(januari|februari|maret|april|mei|juni|juli|agustus|september|oktober|november|desember)\b/)
-  if (monthMatch) return monthMatch[1]
+  const monthMatch = normalized.match(new RegExp(
+    String.raw`\b(?:bulan\s+)?(${PERIOD_MONTHS.join('|')})(?:\s+(\d{4}))?\b`
+  ))
+  if (monthMatch) return [monthMatch[1], monthMatch[2]].filter(Boolean).join(' ')
   if (/\b(kemarin|kemaren)\b/.test(normalized)) return 'kemarin'
   if (/\b(minggu ini|minggu)\b/.test(normalized)) return 'minggu ini'
   if (/\b(bulan lalu|bulan kemarin)\b/.test(normalized)) return 'bulan lalu'
@@ -66,6 +72,25 @@ export function resolveFastQuery(message) {
   const { normalized, words } = normalizeMessage(message)
   const asksDebtPaymentHistory = words.some((word) => DEBT_TERMS.has(word))
     && words.some((word) => ['pembayaran', 'cicilan', 'pelunasan', 'terakhir', 'terbaru', 'kapan'].includes(word))
+  const asksDebtPaymentTotal = words.some((word) =>
+    ['cicilan', 'pembayaran', 'pelunasan', 'dibayar', 'membayar'].includes(word)
+  ) && words.some((word) => ['berapa', 'jumlah', 'total'].includes(word))
+  if (asksDebtPaymentTotal) {
+    const search = removeTerms(words, new Set([
+      ...DEBT_PAYMENT_HISTORY_TERMS, 'total', 'jumlah', 'semua', 'seluruh',
+      'hari', 'ini', 'kemarin', 'kemaren', 'minggu', 'bulan', 'tahun', 'lalu',
+      'periode', 'berapa', 'nominal', 'yang', 'sudah', 'telah'
+    ]))
+    return {
+      kind: 'query',
+      query: 'cashbook',
+      args: {
+        type: 'income',
+        ...(search ? { search } : {}),
+        period: queryPeriod(normalized) || 'semua'
+      }
+    }
+  }
   if (asksDebtPaymentHistory) {
     const customer = removeTerms(words, DEBT_PAYMENT_HISTORY_TERMS)
     return {
@@ -137,10 +162,18 @@ export function resolveFastQuery(message) {
       : words.some((word) => ['omzet', 'omset', 'pendapatan', 'penjualan'].includes(word))
         ? 'sales'
         : 'quantity'
+    const product = removeTerms(words, new Set([
+      'produk', 'barang', 'item', 'apa', 'yang', 'paling', 'banyak', 'terbanyak',
+      'laku', 'laris', 'terjual', 'performa', 'penjualan', 'omzet', 'omset',
+      'pendapatan', 'laba', 'untung', 'profit', 'berapa', 'jumlah', 'total',
+      'tertinggi', 'terbesar', 'terendah', 'terkecil', 'dan', 'di', 'pada',
+      'hari', 'ini', 'kemarin', 'kemaren', 'minggu', 'bulan', 'tahun', 'lalu',
+      ...PERIOD_MONTHS, ...STOCK_TERMS, ...STOCK_QUESTION_TERMS
+    ]))
     return {
       kind: 'query',
       query: 'product_performance',
-      args: { sortBy, ...(period ? { period } : {}) }
+      args: { sortBy, ...(product ? { product } : {}), ...(period ? { period } : {}) }
     }
   }
 
@@ -224,6 +257,26 @@ export function resolveFastQuery(message) {
     }
   }
 
+  const productCatalogTerms = new Set([
+    'produk', 'barang', 'item', ...STOCK_TERMS, 'kategori', 'category',
+    'daftar', 'list', 'cari', 'tampilkan', 'dalam'
+  ])
+  const asksProductCatalog = words.some((word) => ['produk', 'barang', 'item'].includes(word))
+    && (words.some((word) => ['kategori', 'category'].includes(word))
+      || words.some((word) => ['daftar', 'list', 'cari', 'tampilkan'].includes(word))
+        && !words.some((word) => STOCK_TERMS.has(word)))
+  if (asksProductCatalog) {
+    const product = removeTerms(words, new Set([
+      ...productCatalogTerms, ...STOCK_QUESTION_TERMS,
+      'stok', 'stock', 'persediaan', 'nama', 'semua', 'seluruh', 'di', 'toko'
+    ]))
+    return {
+      kind: 'query',
+      query: 'stock',
+      args: product ? { product } : {}
+    }
+  }
+
   const asksCustomerContact = words.some((word) =>
     ['telepon', 'telp', 'nomor', 'no', 'hp', 'alamat', 'kontak'].includes(word)
   )
@@ -246,7 +299,7 @@ export function resolveFastQuery(message) {
       'customer', 'vendor', 'pemasok', 'ekspedisi', 'kategori', 'satuan',
       'yang', 'ada', 'di', 'toko', 'tolong', 'dong', 'berapa', 'nomor',
       'no', 'telepon', 'telp', 'hp', 'alamat', 'kontak', 'apa', 'untuk',
-      'milik', 'punya', 'dari', 'nya'
+      'milik', 'punya', 'dari', 'nya', 'dan'
     ])
     const search = removeTerms(words, listTerms)
     return {
@@ -279,11 +332,23 @@ export function resolveFastQuery(message) {
     }
   }
 
-  const asksDaily = words.some((word) =>
-    ['penjualan', 'omzet', 'omset', 'pemasukan', 'pengeluaran', 'laba', 'ringkasan', 'ringkas', 'rekap', 'summary'].includes(word)
+  const asksSalesSummary = words.some((word) =>
+    ['penjualan', 'omzet', 'omset', 'laba', 'ringkasan', 'ringkas', 'rekap', 'summary'].includes(word)
   )
-  const asksFinance = words.some((word) => ['keuangan', 'kas', 'saldo', 'modal', 'untung', 'rugi'].includes(word))
-  if (asksDaily || asksFinance) {
+  const asksCashFlow = words.some((word) =>
+    ['pemasukan', 'pengeluaran', 'biaya', 'income', 'expense'].includes(word)
+  )
+  const asksFinance = words.some((word) =>
+    ['keuangan', 'kas', 'saldo', 'modal', 'untung', 'rugi'].includes(word)
+  ) || asksCashFlow
+  if (asksCashFlow && !words.some((word) => ['penjualan', 'omzet', 'omset', 'laba'].includes(word))) {
+    return {
+      kind: 'query',
+      query: 'finance_summary',
+      args: period ? { period } : {}
+    }
+  }
+  if (asksSalesSummary || asksFinance) {
     const asksFinanceOnly = words.some((word) => ['keuangan', 'kas', 'saldo', 'modal', 'untung', 'rugi'].includes(word))
       && !words.some((word) => ['penjualan', 'omzet', 'omset'].includes(word))
     return {
@@ -354,6 +419,8 @@ export function resolveDirectQuery(message, hasAttachment = false) {
 
   const hasStockAnchor = words.some((word) => STOCK_TERMS.has(word))
     || words.some((word) => ['hpp', 'modal'].includes(word))
+    || words.some((word) => ['produk', 'barang', 'item'].includes(word))
+      && words.some((word) => ['kategori', 'category', 'daftar', 'list', 'cari', 'tampilkan'].includes(word))
   const hasPerformanceAnchor = words.some((word) =>
     PERFORMANCE_TERMS.has(word)
   ) || words.includes('produk') && words.some((word) =>

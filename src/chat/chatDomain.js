@@ -3,6 +3,7 @@ import { formatPurchaseNote, parsePurchaseNote } from '../purchaseNote'
 import { dateRangeTimestamps, localDateValue } from '../dateFilter'
 import { isSafeRupiahAmount } from '../money'
 import { filterCustomerDebts } from './customerDebt'
+import { namedMonthDateRange } from './dateRange.js'
 import {
   purchaseCostPerPiece,
   saleMarkupPrice,
@@ -93,31 +94,11 @@ function findByName(rows, name, label) {
   throw new Error(label + ' "' + cleanName + '" tidak ditemukan.')
 }
 
-function dateRangeForQuery(args = {}) {
+export function dateRangeForQuery(args = {}) {
   const today = localDateValue(new Date())
   const range = String(args.period || '').toLocaleLowerCase('id-ID')
-  const monthNames = {
-    januari: 0,
-    februari: 1,
-    maret: 2,
-    april: 3,
-    mei: 4,
-    juni: 5,
-    juli: 6,
-    agustus: 7,
-    september: 8,
-    oktober: 9,
-    november: 10,
-    desember: 11
-  }
-  if (Object.hasOwn(monthNames, range)) {
-    const current = new Date()
-    const monthIndex = monthNames[range]
-    return {
-      from: localDateValue(new Date(current.getFullYear(), monthIndex, 1)),
-      to: localDateValue(new Date(current.getFullYear(), monthIndex + 1, 0))
-    }
-  }
+  const namedMonthRange = namedMonthDateRange(range)
+  if (namedMonthRange) return namedMonthRange
   if (range.includes('bulan')) {
     if (range.includes('lalu') || range.includes('kemarin')) {
       const current = new Date()
@@ -323,7 +304,9 @@ export async function queryStore(intent, args = {}) {
       'semua', 'semua waktu', 'all', 'hari ini', 'kemarin',
       'minggu ini', 'bulan ini', 'bulan lalu', 'tahun ini', 'tahun lalu'
     ])
-    if (!supportedPeriods.has(period) && !(typeof args.from === 'string' && typeof args.to === 'string')) {
+    const namedMonthPeriod = Boolean(namedMonthDateRange(period))
+    if (!supportedPeriods.has(period) && !namedMonthPeriod
+      && !(typeof args.from === 'string' && typeof args.to === 'string')) {
       throw new Error('Periode Buku Kas belum didukung. Sebutkan hari ini, kemarin, minggu ini, bulan ini, bulan lalu, tahun ini, atau rentang tanggal.')
     }
     const range = period === 'semua' || period === 'semua waktu' || period === 'all'
@@ -485,14 +468,20 @@ export async function queryStore(intent, args = {}) {
     const transactions = await getAll('transactions')
     const range = dateRangeForQuery(args)
     const { from, to } = dateRangeTimestamps(range)
+    const productSearch = String(args.product || '').trim().toLocaleLowerCase('id-ID')
     const selected = transactions.filter((transaction) => {
       const time = new Date(transaction.createdAt || 0).getTime()
-      return (!from || time >= new Date(from).getTime()) && (!to || time < new Date(to).getTime())
+      return (!from || time >= new Date(from).getTime())
+        && (!to || time < new Date(to).getTime())
+        && (!productSearch || (transaction.items || []).some((item) =>
+          String(item.name || '').toLocaleLowerCase('id-ID').includes(productSearch)
+        ))
     })
     const totals = new Map()
     for (const transaction of selected) {
       for (const item of transaction.items || []) {
         const key = String(item.name || 'Produk tanpa nama')
+        if (productSearch && !key.toLocaleLowerCase('id-ID').includes(productSearch)) continue
         const aggregate = totals.get(key) || { name: key, quantity: 0, sales: 0, gross_profit: 0 }
         aggregate.quantity += Number(item.qty) || 0
         aggregate.sales += (Number(item.price) || 0) * (Number(item.qty) || 0)

@@ -27,6 +27,11 @@ test('supports exact sales recap and modal-price questions from chat examples', 
     query: 'daily_summary',
     args: { period: 'oktober' }
   })
+  assert.deepEqual(resolveFastQuery('Rekap Oktober 2025'), {
+    kind: 'query',
+    query: 'daily_summary',
+    args: { period: 'oktober 2025' }
+  })
 })
 
 test('removes remaining-stock wording before searching for the product', () => {
@@ -173,7 +178,7 @@ test('routes cashbook details and pending expedition costs to ledger queries', (
   })
   assert.deepEqual(resolveDirectQuery('berapa pengeluaran hari ini'), {
     kind: 'query',
-    query: 'daily_summary',
+    query: 'finance_summary',
     args: { period: 'hari ini' }
   })
   assert.deepEqual(resolveDirectQuery('catatan pengeluaran apa saja hari ini'), {
@@ -383,5 +388,53 @@ test('covers common admin report and contact questions', () => {
     kind: 'query',
     query: 'customers',
     args: { search: 'andri', includeDetails: true }
+  })
+  assert.deepEqual(resolveDirectQuery('nama dan nomor hp pelanggan Andri'), {
+    kind: 'query',
+    query: 'customers',
+    args: { search: 'andri', includeDetails: true }
+  })
+})
+
+test('routes product-category searches to stock and filters product sales by name', () => {
+  for (const question of ['daftar produk kategori tas', 'berapa stok produk kategori tas']) {
+    assert.deepEqual(resolveDirectQuery(question), {
+      kind: 'query',
+      query: 'stock',
+      args: { product: 'tas' }
+    })
+  }
+  assert.deepEqual(resolveDirectQuery('produk apa saja dalam kategori tas'), {
+    kind: 'query',
+    query: 'stock',
+    args: { product: 'tas' }
+  })
+  assert.deepEqual(resolveDirectQuery('produk Aigner terjual berapa bulan ini'), {
+    kind: 'query',
+    query: 'product_performance',
+    args: { sortBy: 'quantity', product: 'aigner', period: 'bulan ini' }
+  })
+  assert.deepEqual(resolveDirectQuery('produk apa paling laris bulan ini'), {
+    kind: 'query',
+    query: 'product_performance',
+    args: { sortBy: 'quantity', period: 'bulan ini' }
+  })
+})
+
+test('distinguishes cash-flow totals from sales summaries and debt payment totals', () => {
+  assert.deepEqual(resolveDirectQuery('berapa total pemasukan bulan ini'), {
+    kind: 'query',
+    query: 'finance_summary',
+    args: { period: 'bulan ini' }
+  })
+  assert.deepEqual(resolveDirectQuery('berapa hutang yang sudah dibayar Andri'), {
+    kind: 'query',
+    query: 'cashbook',
+    args: { type: 'income', search: 'andri', period: 'semua' }
+  })
+  assert.deepEqual(resolveDirectQuery('total cicilan Andri bulan ini berapa'), {
+    kind: 'query',
+    query: 'cashbook',
+    args: { type: 'income', search: 'andri', period: 'bulan ini' }
   })
 })
