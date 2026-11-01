@@ -53,6 +53,7 @@ export default function ChatApp() {
   const [processingStage, setProcessingStage] = useState('')
   const [actionBusy, setActionBusy] = useState(false)
   const [attachment, setAttachment] = useState(null)
+  const [attachmentPreviewUrl, setAttachmentPreviewUrl] = useState('')
   const [productCreation, setProductCreation] = useState(null)
   const [confirmationText, setConfirmationText] = useState('')
   const [receiptTransaction, setReceiptTransaction] = useState(null)
@@ -61,8 +62,14 @@ export default function ChatApp() {
   const endOfMessagesRef = useRef(null)
   const inputRef = useRef(null)
   const operationLock = useRef(false)
+  const attachmentPreviewUrls = useRef(new Set())
   const hasPendingAction = messages.some((message) => message.draft)
   const requestedAppMode = getRequestedAppMode()
+
+  useEffect(() => () => {
+    attachmentPreviewUrls.current.forEach((url) => URL.revokeObjectURL(url))
+    attachmentPreviewUrls.current.clear()
+  }, [])
 
   useEffect(() => {
     const viewport = window.visualViewport
@@ -140,6 +147,12 @@ export default function ChatApp() {
     requestAnimationFrame(() => inputRef.current?.focus())
   }
 
+  function revokeAttachmentPreview(url) {
+    if (!url) return
+    URL.revokeObjectURL(url)
+    attachmentPreviewUrls.current.delete(url)
+  }
+
   async function sendMessage(event, suggestedText) {
     event?.preventDefault()
     if (busy || actionBusy || hasPendingAction || operationLock.current) return
@@ -148,10 +161,12 @@ export default function ChatApp() {
     if (!text) return
     setInput('')
     setAttachment(null)
+    setAttachmentPreviewUrl('')
     appendMessage(setMessages, {
       role: 'user',
       text,
-      attachmentName: file?.name || ''
+      attachmentName: file?.name || '',
+      attachmentPreviewUrl
     })
     setBusy(true)
 
@@ -583,6 +598,13 @@ export default function ChatApp() {
               <div className="chat-message-content">
                 <div className={'chat-bubble' + (message.error ? ' is-error' : '') + (message.success ? ' is-success' : '')}>
                   <p>{renderChatText(message.text)}</p>
+                  {message.attachmentPreviewUrl && (
+                    <img
+                      className="chat-message-image"
+                      src={message.attachmentPreviewUrl}
+                      alt={'Lampiran ' + (message.attachmentName || 'gambar')}
+                    />
+                  )}
                   {message.attachmentName && <span className="chat-attachment-label"><Icon name="image" size={14} />{message.attachmentName}</span>}
                 </div>
 
@@ -634,9 +656,20 @@ export default function ChatApp() {
         <div className="chat-composer-wrap">
           {attachment && (
             <div className="chat-queued-attachment">
-              <Icon name={attachment.type === 'application/zip' ? 'download' : 'image'} size={15} />
+              {attachmentPreviewUrl
+                ? <img className="chat-queued-image" src={attachmentPreviewUrl} alt="Pratinjau gambar yang akan dikirim" />
+                : <Icon name="download" size={15} />}
               <span>{attachment.name}</span>
-              <button type="button" aria-label="Hapus lampiran" onClick={() => setAttachment(null)}><Icon name="close" size={15} /></button>
+              <button
+                type="button"
+                aria-label="Hapus lampiran"
+                onClick={() => {
+                  revokeAttachmentPreview(attachmentPreviewUrl)
+                  setAttachmentPreviewUrl('')
+                  setAttachment(null)
+                }}>
+                <Icon name="close" size={15} />
+              </button>
             </div>
           )}
           <form className="chat-composer" onSubmit={sendMessage}>
@@ -667,6 +700,10 @@ export default function ChatApp() {
                   event.target.value = ''
                   return
                 }
+                revokeAttachmentPreview(attachmentPreviewUrl)
+                const previewUrl = file.type.startsWith('image/') ? URL.createObjectURL(file) : ''
+                if (previewUrl) attachmentPreviewUrls.current.add(previewUrl)
+                setAttachmentPreviewUrl(previewUrl)
                 setAttachment(file)
                 event.target.value = ''
               }}

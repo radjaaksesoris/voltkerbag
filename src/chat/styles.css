@@ -314,6 +314,15 @@ body {
   font-weight: 800;
 }
 
+.chat-message-image {
+  display: block;
+  max-width: min(100%, 360px);
+  max-height: 360px;
+  margin-top: 9px;
+  border-radius: 12px;
+  object-fit: contain;
+}
+
 .chat-bubble.is-error {
   border-color: #e4b7aa;
   background: #fff2ed;
@@ -549,6 +558,14 @@ body {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.chat-queued-image {
+  width: 48px;
+  height: 48px;
+  flex: 0 0 auto;
+  border-radius: 8px;
+  object-fit: cover;
 }
 
 .chat-queued-attachment button {
