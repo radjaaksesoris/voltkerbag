@@ -96,6 +96,28 @@ function findByName(rows, name, label) {
 function dateRangeForQuery(args = {}) {
   const today = localDateValue(new Date())
   const range = String(args.period || '').toLocaleLowerCase('id-ID')
+  const monthNames = {
+    januari: 0,
+    februari: 1,
+    maret: 2,
+    april: 3,
+    mei: 4,
+    juni: 5,
+    juli: 6,
+    agustus: 7,
+    september: 8,
+    oktober: 9,
+    november: 10,
+    desember: 11
+  }
+  if (Object.hasOwn(monthNames, range)) {
+    const current = new Date()
+    const monthIndex = monthNames[range]
+    return {
+      from: localDateValue(new Date(current.getFullYear(), monthIndex, 1)),
+      to: localDateValue(new Date(current.getFullYear(), monthIndex + 1, 0))
+    }
+  }
   if (range.includes('bulan')) {
     if (range.includes('lalu') || range.includes('kemarin')) {
       const current = new Date()

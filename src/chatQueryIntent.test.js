@@ -21,6 +21,11 @@ test('supports exact sales recap and modal-price questions from chat examples', 
     query: 'stock',
     args: { product: 'aigner', includeCost: true }
   })
+  assert.deepEqual(resolveFastQuery('Rekap bulan Oktober'), {
+    kind: 'query',
+    query: 'daily_summary',
+    args: { period: 'oktober' }
+  })
 })
 
 test('removes remaining-stock wording before searching for the product', () => {

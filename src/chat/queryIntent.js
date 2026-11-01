@@ -46,6 +46,8 @@ function normalizeMessage(message) {
 }
 
 function queryPeriod(normalized) {
+  const monthMatch = normalized.match(/\b(?:bulan\s+)?(januari|februari|maret|april|mei|juni|juli|agustus|september|oktober|november|desember)\b/)
+  if (monthMatch) return monthMatch[1]
   if (/\b(kemarin|kemaren)\b/.test(normalized)) return 'kemarin'
   if (/\b(minggu ini|minggu)\b/.test(normalized)) return 'minggu ini'
   if (/\b(bulan lalu|bulan kemarin)\b/.test(normalized)) return 'bulan lalu'
