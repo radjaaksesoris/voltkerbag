@@ -46,6 +46,7 @@ function renderChatText(text) {
 export default function ChatApp() {
   const [session, setSession] = useState(null)
   const [checkingSession, setCheckingSession] = useState(true)
+  const [sharedStylesReady, setSharedStylesReady] = useState(false)
   const [connectionError, setConnectionError] = useState('')
   const [authCheckKey, setAuthCheckKey] = useState(0)
   const [messages, setMessages] = useState([])
@@ -68,6 +69,27 @@ export default function ChatApp() {
   const chatBusyRef = useRef(false)
   const hasPendingAction = messages.some((message) => message.draft)
   const requestedAppMode = getRequestedAppMode()
+  const needsSharedStyles = !session || requestedAppMode !== 'chat'
+
+  useEffect(() => {
+    let active = true
+    if (!needsSharedStyles) {
+      setSharedStylesReady(true)
+      return () => { active = false }
+    }
+
+    setSharedStylesReady(false)
+    import('../styles.css').then(() => {
+      if (active) setSharedStylesReady(true)
+    }).catch((error) => {
+      console.error('Gagal memuat gaya aplikasi VOLTKER:', error)
+      if (active) {
+        setConnectionError('Sebagian tampilan aplikasi gagal dimuat. Muat ulang halaman untuk mencoba kembali.')
+        setSharedStylesReady(true)
+      }
+    })
+    return () => { active = false }
+  }, [needsSharedStyles])
 
   useEffect(() => {
     chatBusyRef.current = busy || actionBusy
@@ -522,6 +544,10 @@ export default function ChatApp() {
 
   if (checkingSession && !session && !connectionError) {
     return <main className="chat-loading" role="status">Memeriksa koneksi dan sesi VOLTKER...</main>
+  }
+
+  if (needsSharedStyles && !sharedStylesReady) {
+    return <main className="chat-loading" role="status">Memuat tampilan VOLTKER...</main>
   }
 
   if (!session) {

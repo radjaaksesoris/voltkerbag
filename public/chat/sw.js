@@ -1,4 +1,4 @@
-const CACHE_NAME = 'voltker-chat-v1'
+const CACHE_NAME = 'voltker-chat-v2'
 const APP_SHELL = [
   './',
   './index.html',
