@@ -533,6 +533,19 @@ export default function ChatApp() {
               <span className="chat-welcome-eyebrow">RUANG KERJA TOKO</span>
               <h1>Selamat datang.<br /><em>Apa yang perlu dibantu?</em></h1>
               <p>Tanyakan stok, penjualan, hutang, atau minta bantuan mencatat transaksi dan kegiatan toko.</p>
+              <div className="chat-suggestion-row" aria-label="Contoh pertanyaan cepat">
+                {["Rekap penjualan", "Cek stok Aigner", "Berapa hutang Andri", "Buku kas bulan ini"].map((suggestion) => (
+                  <button
+                    key={suggestion}
+                    type="button"
+                    className="chat-suggestion"
+                    onClick={(event) => sendMessage(event, suggestion)}
+                    disabled={busy || actionBusy || hasPendingAction}
+                  >
+                    {suggestion}
+                  </button>
+                ))}
+              </div>
             </div>
           )}
 
