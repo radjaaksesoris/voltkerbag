@@ -7,13 +7,13 @@
 6 silly config load:file:/usr/local/etc/npmrc
 7 verbose title npm test --runInBand
 8 verbose argv "test" "--" "--runInBand"
-9 verbose logfile logs-max:10 dir:/Volumes/Macintosh HD - Data 1/voltkerbag/npm-cache/_logs/2026-11-01T11_31_41_536Z-
-10 verbose logfile /Volumes/Macintosh HD - Data 1/voltkerbag/npm-cache/_logs/2026-11-01T11_31_41_536Z-debug-0.log
+9 verbose logfile logs-max:10 dir:/Volumes/Macintosh HD - Data 1/voltkerbag/npm-cache/_logs/2026-11-01T12_16_23_059Z-
+10 verbose logfile /Volumes/Macintosh HD - Data 1/voltkerbag/npm-cache/_logs/2026-11-01T12_16_23_059Z-debug-0.log
 11 silly logfile start cleaning logs, removing 1 files
 12 silly logfile done cleaning log files
 13 verbose cwd /Volumes/Macintosh HD - Data 1/voltkerbag
 14 verbose os Darwin 21.6.0
 15 verbose node v24.15.0
 16 verbose npm  v11.12.1
-17 verbose exit 0
-18 info ok
+17 verbose exit 1
+18 verbose code 1

@@ -260,12 +260,31 @@ export function resolveFastQuery(message) {
     }
   }
 
+  const asksProductCost = words.includes('hpp')
+    || words.includes('modal')
+    || (words.includes('pokok') && words.includes('harga'))
+    || (words.includes('harga') && words.includes('modal'))
+  if (asksProductCost) {
+    const product = removeTerms(words, new Set([
+      ...STOCK_TERMS, ...STOCK_QUESTION_TERMS,
+      'harga', 'harganya', 'hpp', 'modal', 'pokok', 'produk', 'barang', 'item'
+    ]))
+    return {
+      kind: 'query',
+      query: 'stock',
+      args: {
+        ...(product ? { product } : {}),
+        includeCost: true
+      }
+    }
+  }
+
   const asksDaily = words.some((word) =>
-    ['penjualan', 'omzet', 'omset', 'pemasukan', 'pengeluaran', 'laba', 'ringkasan', 'rekap'].includes(word)
+    ['penjualan', 'omzet', 'omset', 'pemasukan', 'pengeluaran', 'laba', 'ringkasan', 'ringkas', 'rekap', 'summary'].includes(word)
   )
-  const asksFinance = words.some((word) => ['keuangan', 'kas'].includes(word))
+  const asksFinance = words.some((word) => ['keuangan', 'kas', 'saldo', 'modal', 'untung', 'rugi'].includes(word))
   if (asksDaily || asksFinance) {
-    const asksFinanceOnly = words.some((word) => ['keuangan', 'kas', 'modal'].includes(word))
+    const asksFinanceOnly = words.some((word) => ['keuangan', 'kas', 'saldo', 'modal', 'untung', 'rugi'].includes(word))
       && !words.some((word) => ['penjualan', 'omzet', 'omset'].includes(word))
     return {
       kind: 'query',

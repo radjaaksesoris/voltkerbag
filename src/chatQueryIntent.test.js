@@ -362,3 +362,26 @@ test('formats sales and finance summaries in a more natural chat style', () => {
   assert.match(answer, /Total penjualan: Rp/)
   assert.match(answer, /Laba bersih: Rp/)
 })
+
+test('covers common admin report and contact questions', () => {
+  assert.deepEqual(resolveDirectQuery('laporan penjualan bulan Oktober'), {
+    kind: 'query',
+    query: 'daily_summary',
+    args: { period: 'oktober' }
+  })
+  assert.deepEqual(resolveDirectQuery('cek saldo kas hari ini'), {
+    kind: 'query',
+    query: 'finance_summary',
+    args: { period: 'hari ini' }
+  })
+  assert.deepEqual(resolveDirectQuery('rekap keuangan bulan ini'), {
+    kind: 'query',
+    query: 'finance_summary',
+    args: { period: 'bulan ini' }
+  })
+  assert.deepEqual(resolveDirectQuery('kontak Andri'), {
+    kind: 'query',
+    query: 'customers',
+    args: { search: 'andri', includeDetails: true }
+  })
+})
