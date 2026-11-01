@@ -1,6 +1,7 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import { resolveDirectQuery, resolveFallbackQuery, resolveFastQuery } from './chat/queryIntent.js'
+import { formatQueryAnswer } from './chat/queryAnswer.js'
 
 test('routes simple stock questions directly to the stock query', () => {
   assert.deepEqual(resolveFastQuery('berapa stok tas Aventador?'), {
@@ -341,4 +342,23 @@ test('uses direct queries only for clear data questions', () => {
   assert.equal(resolveDirectQuery('berapa harga tas Aventador'), null)
   assert.equal(resolveDirectQuery('produk apa paling laris dan stoknya'), null)
   assert.equal(resolveDirectQuery('berapa stok Bimo Oval', true), null)
+})
+
+test('formats sales and finance summaries in a more natural chat style', () => {
+  const answer = formatQueryAnswer('daily_summary', {
+    transaction_count: 18,
+    sales_total: 15000000,
+    gross_profit: 5200000,
+    net_profit: 3400000,
+    income: 17000000,
+    expense: 9000000,
+    cash_balance: 2200000,
+    customer_debt: 3500000,
+    date_range: { from: '2026-10-01', to: '2026-10-31' }
+  })
+
+  assert.match(answer, /Ringkasan penjualan/)
+  assert.match(answer, /Periode 1 Oktober 2026 sampai 31 Oktober 2026/)
+  assert.match(answer, /Total penjualan: Rp/)
+  assert.match(answer, /Laba bersih: Rp/)
 })

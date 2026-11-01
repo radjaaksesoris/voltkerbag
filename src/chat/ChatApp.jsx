@@ -371,10 +371,7 @@ export default function ChatApp() {
         const result = await queryStore(plan.query, plan.args)
         appendMessage(setMessages, {
           role: 'assistant',
-          text: formatQueryAnswer(plan.query, result.data),
-          detailTitle: result.title,
-          detailText: formatData(result.data),
-          invoices: plan.query === 'transactions' ? result.data.transactions : null
+          text: formatQueryAnswer(plan.query, result.data)
         })
         return
       }
@@ -585,34 +582,6 @@ export default function ChatApp() {
                       </button>
                     </div>
                   </section>
-                )}
-                {message.cancelled && <span className="chat-message-note">Tindakan dibatalkan.</span>}
-                {message.completed && <span className="chat-message-note">Tindakan berhasil dikonfirmasi.</span>}
-
-                {message.detailText && (
-                  <details className="chat-data-details">
-                    <summary>{message.detailTitle || 'Data yang digunakan'}</summary>
-                    <pre>{message.detailText}</pre>
-                  </details>
-                )}
-                {message.transaction && (
-                  <div className="chat-result-actions">
-                    <button className="btn btn-sm" type="button" onClick={() => setReceiptTransaction(message.transaction)}>Pratinjau / cetak faktur</button>
-                    <button className="btn btn-sm" type="button" onClick={() => downloadInvoice(message.transaction)}>Unduh faktur JPEG</button>
-                  </div>
-                )}
-                {message.invoices?.length > 0 && (
-                  <div className="chat-invoice-list" aria-label="Faktur dari hasil pencarian">
-                    {message.invoices.slice(0, 10).map((transaction) => (
-                      <div key={transaction.id} className="chat-invoice-row">
-                        <span><strong>{transaction.invoiceNo || '#' + transaction.id}</strong><small>{transaction.customerName} · {new Date(transaction.createdAt).toLocaleDateString('id-ID')}</small></span>
-                        <div>
-                          <button className="btn btn-sm" type="button" onClick={() => setReceiptTransaction(transaction)}>Cetak</button>
-                          <button className="btn btn-sm" type="button" onClick={() => downloadInvoice(transaction)}>JPEG</button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
                 )}
               </div>
             </article>

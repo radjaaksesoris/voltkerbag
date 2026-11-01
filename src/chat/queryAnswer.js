@@ -17,6 +17,7 @@ function formatDate(value) {
   if (!match) return value || ''
   return new Date(Number(match[1]), Number(match[2]) - 1, Number(match[3]))
     .toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })
+    .replace(/\b\w/g, (char) => char.toLocaleUpperCase('id-ID'))
 }
 
 function dateTime(value) {
@@ -171,16 +172,17 @@ export function formatQueryAnswer(intent, data = {}) {
     }
     const lines = [
       ...(data.type === 'expense'
-        ? ['Total pengeluaran: ' + rupiah(data.totals?.expense)]
+        ? ['Ringkasan pengeluaran', 'Total pengeluaran: ' + rupiah(data.totals?.expense)]
         : data.type === 'income'
-          ? ['Total pemasukan: ' + rupiah(data.totals?.income)]
+          ? ['Ringkasan pemasukan', 'Total pemasukan: ' + rupiah(data.totals?.income)]
           : data.type === 'capital'
-            ? ['Total modal: ' + rupiah(data.totals?.capital)]
+            ? ['Ringkasan modal', 'Total modal: ' + rupiah(data.totals?.capital)]
             : [
+                'Ringkasan Buku Kas',
                 'Pemasukan: ' + rupiah(data.totals?.income),
                 'Pengeluaran: ' + rupiah(data.totals?.expense),
                 'Modal: ' + rupiah(data.totals?.capital),
-                'Saldo bersih catatan: ' + rupiah(data.net_amount)
+                'Saldo bersih: ' + rupiah(data.net_amount)
               ]),
       ...entries.slice(0, 10).map((entry) =>
         date(entry.date) + ' · ' +
@@ -203,14 +205,15 @@ export function formatQueryAnswer(intent, data = {}) {
       ? 'Periode ' + [dateRange.from, dateRange.to].filter(Boolean).map(formatDate).join(' sampai ')
       : ''
     return [
+      'Ringkasan penjualan',
       ...(periodLabel ? [periodLabel] : []),
       'Transaksi: ' + (Number(data.transaction_count) || 0),
       'Total penjualan: ' + rupiah(data.sales_total),
       'Laba kotor: ' + rupiah(data.gross_profit),
-      'Laba bersih setelah pengeluaran: ' + rupiah(data.net_profit),
+      'Laba bersih: ' + rupiah(data.net_profit),
       'Pemasukan: ' + rupiah(data.income) + ' · Pengeluaran: ' + rupiah(data.expense),
-      'Saldo kas periode: ' + rupiah(data.cash_balance),
-      'Hutang pelanggan berjalan: ' + rupiah(data.customer_debt),
+      'Saldo kas: ' + rupiah(data.cash_balance),
+      'Hutang pelanggan: ' + rupiah(data.customer_debt),
       ...(Number(data.pending_expedition_count) > 0
         ? ['Biaya ekspedisi tertunda: ' + data.pending_expedition_count]
         : [])
@@ -219,11 +222,12 @@ export function formatQueryAnswer(intent, data = {}) {
 
   if (intent === 'finance_summary') {
     return [
+      'Ringkasan keuangan',
       'Pemasukan: ' + rupiah(data.income),
       'Pengeluaran: ' + rupiah(data.expense),
       'Modal: ' + rupiah(data.capital),
       'Laba kotor: ' + rupiah(data.gross_profit),
-      'Laba bersih setelah pengeluaran: ' + rupiah(data.net_profit),
+      'Laba bersih: ' + rupiah(data.net_profit),
       'Saldo kas: ' + rupiah(data.cash_balance),
       'Total hutang pelanggan: ' + rupiah(data.total_debt),
       ...(Number(data.pending_expedition_count) > 0
