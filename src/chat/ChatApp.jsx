@@ -610,6 +610,9 @@ export default function ChatApp() {
               )}
               <div className="chat-message-content">
                 <div className={'chat-bubble' + (message.error ? ' is-error' : '') + (message.success ? ' is-success' : '')}>
+                  <span className="chat-bubble-kicker" aria-hidden="true">
+                    {message.role === 'user' ? 'PESAN ADMIN' : 'VOLTKER · ASISTEN TOKO'}
+                  </span>
                   <p>{renderChatText(message.text)}</p>
                   {message.attachmentPreviewUrl && (
                     <img
