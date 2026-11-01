@@ -196,22 +196,17 @@ export default function ChatApp() {
     endOfMessagesRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' })
   }, [messages, busy, actionBusy])
 
-  function fillInputExample(text) {
-    setInput(text)
-    requestAnimationFrame(() => inputRef.current?.focus())
-  }
-
   function revokeAttachmentPreview(url) {
     if (!url) return
     URL.revokeObjectURL(url)
     attachmentPreviewUrls.current.delete(url)
   }
 
-  async function sendMessage(event, suggestedText) {
+  async function sendMessage(event) {
     event?.preventDefault()
     if (busy || actionBusy || hasPendingAction || operationLock.current) return
     const file = attachment
-    const text = (suggestedText ?? input).trim() || (file ? 'Foto produk' : '')
+    const text = input.trim() || (file ? 'Foto produk' : '')
     if (!text) return
     setInput('')
     setAttachment(null)
@@ -606,46 +601,6 @@ export default function ChatApp() {
 
       <section className="chat-workspace" aria-label="Percakapan dengan asisten VOLTKER">
         <div className="chat-feed" aria-live="polite">
-          {messages.length === 0 && (
-            <div className="chat-welcome">
-              <span className="chat-welcome-eyebrow">RUANG KERJA TOKO</span>
-              <h1>Selamat datang.<br /><em>Apa yang perlu dibantu?</em></h1>
-              <p>Tanyakan data toko atau tulis perintah dengan bahasa sehari-hari. Untuk tambah atau edit, sebutkan nama objek dan perubahan yang diinginkan. Jika detail belum lengkap, asisten akan bertanya sebelum menyiapkan pratinjau.</p>
-              <div className="chat-suggestion-row" aria-label="Contoh pertanyaan cepat">
-                {["Rekap penjualan", "Cek stok Aigner", "Berapa hutang Andri", "Buku kas bulan ini"].map((suggestion) => (
-                  <button
-                    key={suggestion}
-                    type="button"
-                    className="chat-suggestion"
-                    onClick={(event) => sendMessage(event, suggestion)}
-                    disabled={busy || actionBusy || hasPendingAction}
-                  >
-                    {suggestion}
-                  </button>
-                ))}
-              </div>
-              <p className="chat-example-label">Contoh perintah · pilih untuk mengisi kolom, lalu sesuaikan:</p>
-              <div className="chat-suggestion-row" aria-label="Contoh perintah yang dapat diedit">
-                {[
-                  "Tambah stok",
-                  "Buat produk baru",
-                  "Ubah harga jual [nama produk] menjadi [nominal] per [satuan]",
-                  "Catat pengeluaran [nominal] untuk [keperluan]"
-                ].map((example) => (
-                  <button
-                    key={example}
-                    type="button"
-                    className="chat-suggestion"
-                    onClick={() => fillInputExample(example)}
-                    disabled={busy || actionBusy || hasPendingAction}
-                  >
-                    {example}
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-
           {messages.map((message) => (
             <article key={message.id} className={'chat-message chat-message-' + message.role}>
               {message.role === 'assistant' && (
