@@ -641,10 +641,13 @@ body {
 
 .chat-attach-button:focus-visible,
 .chat-send-button:focus-visible,
-.chat-composer textarea:focus-visible,
 .chat-old-app-link:focus-visible {
   outline: 2px solid #a56d60;
   outline-offset: 3px;
+}
+
+.chat-composer textarea:focus {
+  outline: none;
 }
 
 .chat-send-button:disabled,
