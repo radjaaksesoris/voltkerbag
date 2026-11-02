@@ -1,4 +1,5 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { formatRateLimitMessage, getRetryAfterSeconds } from '../_shared/rateLimit.js'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -8,9 +9,20 @@ const corsHeaders = {
 }
 
 const MAX_MESSAGE_LENGTH = 4_000
-const MAX_HISTORY_TURNS = 12
+const MAX_HISTORY_MESSAGES = 6
 const MAX_REQUEST_LENGTH = 64_000
 const GROQ_TIMEOUT_MS = 30_000
+
+class GroqRateLimitError extends Error {
+  status = 429
+  retryAfterSeconds: number
+
+  constructor(retryAfterSeconds: number) {
+    super(formatRateLimitMessage(retryAfterSeconds))
+    this.name = 'GroqRateLimitError'
+    this.retryAfterSeconds = retryAfterSeconds
+  }
+}
 
 async function checkGroqAvailability(apiKey: string, model: string) {
   const response = await fetch('https://api.groq.com/openai/v1/models', {
@@ -26,7 +38,7 @@ async function checkGroqAvailability(apiKey: string, model: string) {
 
   const result = await response.json()
   const models = Array.isArray(result?.data) ? result.data : []
-  if (!models.some((entry) => entry?.id === model)) {
+  if (!models.some((entry: unknown) => isRecord(entry) && entry.id === model)) {
     return { connected: false, message: 'Model AI "' + model + '" tidak tersedia untuk akun Groq ini.' }
   }
   return { connected: true, message: 'Groq terhubung.' }
@@ -156,9 +168,9 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 
 function cleanHistory(value: unknown) {
   if (!Array.isArray(value)) return []
-  return value.slice(-MAX_HISTORY_TURNS).flatMap((turn) => {
+  return value.slice(-MAX_HISTORY_MESSAGES).flatMap((turn) => {
     if (!isRecord(turn) || !['user', 'assistant'].includes(String(turn.role))) return []
-    const content = typeof turn.content === 'string' ? turn.content.slice(0, MAX_MESSAGE_LENGTH) : ''
+    const content = typeof turn.content === 'string' ? turn.content.slice(0, 1_600) : ''
     return content ? [{ role: turn.role, content }] : []
   })
 }
@@ -181,13 +193,16 @@ async function generate(modelInput: string, apiKey: string, model: string) {
         ],
         response_format: { type: 'json_object' },
         temperature: 0.1,
-        max_tokens: 1_200
+        max_tokens: 700
       })
     }
   )
   const result = await response.json().catch(() => null)
   if (!response.ok) {
     const providerMessage = result?.error?.message
+    if (response.status === 429) {
+      throw new GroqRateLimitError(getRetryAfterSeconds(response.headers, providerMessage))
+    }
     throw new Error(typeof providerMessage === 'string' ? providerMessage : 'Groq menolak permintaan.')
   }
   const text = result?.choices?.[0]?.message?.content
@@ -221,7 +236,7 @@ Deno.serve(async (request) => {
     if (authError || !user) return jsonResponse(401, { error: 'Sesi login berakhir. Silakan masuk kembali.' })
 
     const body = await request.json()
-    if (!isRecord(body) || !['health', 'plan'].includes(body.mode)) {
+    if (!isRecord(body) || !['health', 'plan'].includes(String(body.mode))) {
       return jsonResponse(400, { error: 'Permintaan chat tidak valid.' })
     }
     if (body.mode === 'health') {
@@ -247,7 +262,7 @@ Deno.serve(async (request) => {
     const prompt = JSON.stringify({
       task: 'Tentukan apakah pesan butuh jawaban umum, query data, atau rancangan aksi. Jangan menjalankan aksi.',
       recentConversation: cleanHistory(body.history),
-      responseStyle: ['concise', 'friendly', 'detailed'].includes(body.responseStyle)
+      responseStyle: ['concise', 'friendly', 'detailed'].includes(String(body.responseStyle))
         ? body.responseStyle
         : 'friendly',
       pendingAction: isRecord(body.pendingAction) ? body.pendingAction : null,
@@ -276,6 +291,12 @@ Deno.serve(async (request) => {
     })
   } catch (error) {
     console.error('Chat assistant request failed:', error)
+    if (error instanceof GroqRateLimitError) {
+      return jsonResponse(error.status, {
+        error: error.message,
+        retryAfterSeconds: error.retryAfterSeconds
+      })
+    }
     if (error instanceof DOMException && error.name === 'TimeoutError') {
       return jsonResponse(504, { error: 'Groq belum merespons setelah 30 detik. Coba kembali beberapa saat lagi.' })
     }

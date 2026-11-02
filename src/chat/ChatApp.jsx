@@ -61,6 +61,7 @@ export default function ChatApp() {
     message: ''
   })
   const [checkingAssistant, setCheckingAssistant] = useState(false)
+  const [rateLimitWait, setRateLimitWait] = useState(0)
   const [historyError, setHistoryError] = useState('')
   const [historyOwner, setHistoryOwner] = useState(null)
   const [preferences, setPreferences] = useState(DEFAULT_CHAT_PREFERENCES)
@@ -95,6 +96,14 @@ export default function ChatApp() {
   const hasPendingAction = messages.some((message) => message.draft)
   const requestedAppMode = getRequestedAppMode()
   const needsSharedStyles = !session || requestedAppMode !== 'chat'
+
+  useEffect(() => {
+    if (!rateLimitWait) return undefined
+    const timeout = window.setTimeout(() => {
+      setRateLimitWait((remaining) => Math.max(0, remaining - 1))
+    }, 1_000)
+    return () => window.clearTimeout(timeout)
+  }, [rateLimitWait])
 
   useEffect(() => {
     let active = true
@@ -370,7 +379,7 @@ export default function ChatApp() {
 
   async function sendMessage(event) {
     event?.preventDefault()
-    if (busy || actionBusy || hasPendingAction || operationLock.current) return
+    if (busy || actionBusy || hasPendingAction || rateLimitWait > 0 || operationLock.current) return
     const file = attachment
     const text = input.trim() || (file ? 'Foto produk' : '')
     if (!text) return
@@ -575,10 +584,18 @@ export default function ChatApp() {
             attachmentName: file?.name || ''
           })
         } catch (error) {
-          setAssistantConnection({
-            status: 'disconnected',
-            message: error.message || 'AI Groq tidak dapat memproses permintaan.'
-          })
+          if (error.status === 429) {
+            setAssistantConnection({
+              status: 'connected',
+              message: 'AI Groq terhubung; permintaan menunggu batas penggunaan.'
+            })
+            setRateLimitWait(error.retryAfterSeconds || 0)
+          } else {
+            setAssistantConnection({
+              status: 'disconnected',
+              message: error.message || 'AI Groq tidak dapat memproses permintaan.'
+            })
+          }
           throw error
         }
         setAssistantConnection({ status: 'connected', message: 'AI Groq terhubung.' })
@@ -953,6 +970,11 @@ export default function ChatApp() {
         </div>
 
         <div className="chat-composer-wrap">
+          {rateLimitWait > 0 && (
+            <p className="chat-rate-limit-wait" role="status" aria-live="polite">
+              Batas penggunaan AI sementara tercapai. Anda bisa mencoba lagi dalam {rateLimitWait} detik.
+            </p>
+          )}
           {attachment && (
             <div className="chat-queued-attachment">
               {attachmentPreviewUrl
@@ -1023,7 +1045,7 @@ export default function ChatApp() {
                 }
               }}
             />
-            <button className="chat-send-button" type="submit" disabled={busy || actionBusy || hasPendingAction || !(input.trim() || attachment)} aria-label="Kirim pesan">
+            <button className="chat-send-button" type="submit" disabled={busy || actionBusy || hasPendingAction || rateLimitWait > 0 || !(input.trim() || attachment)} aria-label="Kirim pesan">
               <Icon name="arrowUp" size={18} />
             </button>
           </form>

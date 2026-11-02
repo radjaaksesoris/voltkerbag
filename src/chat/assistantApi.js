@@ -1,24 +1,42 @@
 import { getClient } from '../supabaseSync'
 import { validateAssistantPlan } from './planValidation.js'
 
-async function getErrorMessage(error, fallback) {
+async function getErrorDetails(error, fallback) {
   const context = error?.context
-  let message = context?.body?.error || context?.body?.message
-  if (typeof message === 'string' && message.trim()) return message
-
+  let body
   if (typeof context?.clone === 'function') {
     try {
-      const body = await context.clone().json()
-      const bodyMessage = body?.error || body?.message
-      if (typeof bodyMessage === 'string' && bodyMessage.trim()) return bodyMessage
+      body = await context.clone().json()
     } catch {
-      if (context.status) return 'Edge Function gagal (HTTP ' + context.status + ').'
+      body = null
     }
-    if (context.status) return 'Edge Function gagal (HTTP ' + context.status + ').'
+  } else {
+    body = context?.body
   }
 
-  message = error?.message
-  return typeof message === 'string' && message.trim() ? message : fallback
+  const bodyMessage = body?.error || body?.message
+  const message = typeof bodyMessage === 'string' && bodyMessage.trim()
+    ? bodyMessage
+    : typeof error?.message === 'string' && error.message.trim()
+      ? error.message
+      : context?.status
+        ? 'Edge Function gagal (HTTP ' + context.status + ').'
+        : fallback
+  return {
+    message,
+    status: context?.status || 0,
+    retryAfterSeconds: Number.isFinite(body?.retryAfterSeconds)
+      ? Math.max(0, body.retryAfterSeconds)
+      : 0
+  }
+}
+
+async function throwAssistantError(error, fallback) {
+  const details = await getErrorDetails(error, fallback)
+  const assistantError = new Error(details.message)
+  assistantError.status = details.status
+  assistantError.retryAfterSeconds = details.retryAfterSeconds
+  throw assistantError
 }
 
 export async function requestAssistantPlan({ message, history, pendingAction, attachmentName, responseStyle }) {
@@ -32,7 +50,7 @@ export async function requestAssistantPlan({ message, history, pendingAction, at
       responseStyle
     }
   })
-  if (error) throw new Error(await getErrorMessage(error, 'Gagal menghubungi asisten chat.'))
+  if (error) await throwAssistantError(error, 'Gagal menghubungi asisten chat.')
   return validateAssistantPlan(data)
 }
 
@@ -40,7 +58,7 @@ export async function checkAssistantConnection() {
   const { data, error } = await getClient().functions.invoke('chat-assistant', {
     body: { mode: 'health' }
   })
-  if (error) throw new Error(await getErrorMessage(error, 'Tidak dapat memeriksa koneksi AI Groq.'))
+  if (error) await throwAssistantError(error, 'Tidak dapat memeriksa koneksi AI Groq.')
   if (!data || data.connected !== true) {
     throw new Error(typeof data?.message === 'string' ? data.message : 'AI Groq tidak dapat dihubungi.')
   }

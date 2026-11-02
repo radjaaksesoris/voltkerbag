@@ -83,10 +83,10 @@ export function applyChatPreferencesToPlan(plan, preferences) {
 export function buildAssistantHistory(messages) {
   return messages
     .filter((message) => message.role === 'user' || message.contextSafe === true)
-    .slice(-12)
+    .slice(-6)
     .map((message) => ({
       role: message.role,
-      content: String(message.text || '').slice(0, 4_000)
+      content: String(message.text || '').slice(0, 1_600)
     }))
     .filter((message) => message.content)
 }

@@ -79,6 +79,17 @@ test('sends only user messages and explicitly safe clarification replies as cont
   ])
 })
 
+test('limits assistant context to six recent messages and 1,600 characters each', () => {
+  const history = buildAssistantHistory(Array.from({ length: 8 }, (_, index) => ({
+    role: 'user',
+    text: String(index).repeat(2_000)
+  })))
+
+  assert.equal(history.length, 6)
+  assert.deepEqual(history.map(({ content }) => content[0]), ['2', '3', '4', '5', '6', '7'])
+  assert.ok(history.every(({ content }) => content.length === 1_600))
+})
+
 test('reports malformed stored preferences instead of silently resetting them', () => {
   const storage = createStorage()
   storage.setItem('voltker-chat-preferences:v1:user-123', '{invalid')
