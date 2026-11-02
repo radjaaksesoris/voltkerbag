@@ -6,7 +6,7 @@ import ReceiptPreview from '../components/ReceiptPreview.jsx'
 import { downloadInvoiceJpeg } from '../invoiceJpeg'
 import { onAuthStateChange, getAuthSession, verifyAuthSession } from '../supabaseSync'
 import { executeAction, prepareAction, queryStore } from './chatDomain.js'
-import { requestAssistantPlan } from './assistantApi.js'
+import { checkAssistantConnection, requestAssistantPlan } from './assistantApi.js'
 import { formatQueryAnswer } from './queryAnswer.js'
 import {
   advanceStockAddition,
@@ -56,6 +56,11 @@ export default function ChatApp() {
   const [checkingSession, setCheckingSession] = useState(true)
   const [sharedStylesReady, setSharedStylesReady] = useState(false)
   const [connectionError, setConnectionError] = useState('')
+  const [assistantConnection, setAssistantConnection] = useState({
+    status: 'checking',
+    message: ''
+  })
+  const [checkingAssistant, setCheckingAssistant] = useState(false)
   const [historyError, setHistoryError] = useState('')
   const [historyOwner, setHistoryOwner] = useState(null)
   const [preferences, setPreferences] = useState(DEFAULT_CHAT_PREFERENCES)
@@ -114,6 +119,65 @@ export default function ChatApp() {
   useEffect(() => {
     chatBusyRef.current = busy || actionBusy
   }, [busy, actionBusy])
+
+  async function refreshAssistantConnection() {
+    if (!chatUserId || requestedAppMode !== 'chat') return
+    setCheckingAssistant(true)
+    setAssistantConnection({ status: 'checking', message: '' })
+    try {
+      await checkAssistantConnection()
+      setAssistantConnection({ status: 'connected', message: 'AI Groq terhubung.' })
+    } catch (error) {
+      console.error('Pemeriksaan koneksi AI Groq gagal:', error)
+      setAssistantConnection({
+        status: 'disconnected',
+        message: error.message || 'AI Groq tidak dapat dihubungi.'
+      })
+    } finally {
+      setCheckingAssistant(false)
+    }
+  }
+
+  useEffect(() => {
+    if (!chatUserId || requestedAppMode !== 'chat') {
+      setAssistantConnection({ status: 'checking', message: '' })
+      return
+    }
+    let active = true
+    const check = async () => {
+      setCheckingAssistant(true)
+      setAssistantConnection({ status: 'checking', message: '' })
+      try {
+        await checkAssistantConnection()
+        if (active) setAssistantConnection({ status: 'connected', message: 'AI Groq terhubung.' })
+      } catch (error) {
+        console.error('Pemeriksaan koneksi AI Groq gagal:', error)
+        if (active) {
+          setAssistantConnection({
+            status: 'disconnected',
+            message: error.message || 'AI Groq tidak dapat dihubungi.'
+          })
+        }
+      } finally {
+        if (active) setCheckingAssistant(false)
+      }
+    }
+    const onOnline = () => check()
+    const onOffline = () => {
+      setAssistantConnection({
+        status: 'disconnected',
+        message: 'Perangkat sedang offline; AI Groq tidak dapat dihubungi.'
+      })
+    }
+    check()
+    window.addEventListener('online', onOnline)
+    window.addEventListener('offline', onOffline)
+    return () => {
+      active = false
+      window.removeEventListener('online', onOnline)
+      window.removeEventListener('offline', onOffline)
+    }
+  }, [chatUserId, requestedAppMode])
 
   useEffect(() => {
     setHistoryOwner(null)
@@ -503,12 +567,21 @@ export default function ChatApp() {
       } else {
         setProcessingStage('Memahami permintaan dengan AI...')
         const history = buildAssistantHistory(messages)
-        plan = await requestAssistantPlan({
-          message: text,
-          history,
-          responseStyle: preferences.responseStyle,
-          attachmentName: file?.name || ''
-        })
+        try {
+          plan = await requestAssistantPlan({
+            message: text,
+            history,
+            responseStyle: preferences.responseStyle,
+            attachmentName: file?.name || ''
+          })
+        } catch (error) {
+          setAssistantConnection({
+            status: 'disconnected',
+            message: error.message || 'AI Groq tidak dapat memproses permintaan.'
+          })
+          throw error
+        }
+        setAssistantConnection({ status: 'connected', message: 'AI Groq terhubung.' })
 
         fallbackQuery = resolveFallbackQuery(text, plan, Boolean(file))
         if (fallbackQuery) {
@@ -712,6 +785,23 @@ export default function ChatApp() {
           </a>
         </div>
       </header>
+
+      {assistantConnection.status === 'disconnected' && (
+        <div className="chat-ai-status chat-ai-status-error" role="alert">
+          <div>
+            <strong>AI Groq tidak terhubung</strong>
+            <span>{assistantConnection.message}</span>
+          </div>
+          <button type="button" disabled={checkingAssistant} onClick={refreshAssistantConnection}>
+            {checkingAssistant ? 'Memeriksa...' : 'Coba lagi'}
+          </button>
+        </div>
+      )}
+      {assistantConnection.status === 'checking' && (
+        <div className="chat-ai-status chat-ai-status-checking" role="status">
+          Memeriksa koneksi AI Groq...
+        </div>
+      )}
 
       {preferencesOpen && (
         <section className="chat-preferences" id="chat-preferences" role="dialog" aria-modal="false" aria-labelledby="chat-preferences-title">

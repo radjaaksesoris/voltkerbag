@@ -12,6 +12,26 @@ const MAX_HISTORY_TURNS = 12
 const MAX_REQUEST_LENGTH = 64_000
 const GROQ_TIMEOUT_MS = 30_000
 
+async function checkGroqAvailability(apiKey: string, model: string) {
+  const response = await fetch('https://api.groq.com/openai/v1/models', {
+    headers: { Authorization: 'Bearer ' + apiKey },
+    signal: AbortSignal.timeout(10_000)
+  })
+  if (response.status === 401 || response.status === 403) {
+    return { connected: false, message: 'Kredensial Groq tidak valid. Periksa secret GROQ_API_KEY di Supabase.' }
+  }
+  if (!response.ok) {
+    return { connected: false, message: 'Layanan Groq sedang tidak dapat diakses (HTTP ' + response.status + ').' }
+  }
+
+  const result = await response.json()
+  const models = Array.isArray(result?.data) ? result.data : []
+  if (!models.some((entry) => entry?.id === model)) {
+    return { connected: false, message: 'Model AI "' + model + '" tidak tersedia untuk akun Groq ini.' }
+  }
+  return { connected: true, message: 'Groq terhubung.' }
+}
+
 const SYSTEM_INSTRUCTIONS = `Kamu adalah asisten operasional VOLTKER, aplikasi toko berbahasa Indonesia.
 Untuk task plan, kembalikan tepat satu objek JSON dengan bentuk {"kind":"reply|query|action","message":"...","query":"...","action":"...","args":{}}.
 Kamu hanya menyusun rencana. Kamu TIDAK punya wewenang mengubah data, dan tidak boleh menyatakan perubahan berhasil.
@@ -201,9 +221,22 @@ Deno.serve(async (request) => {
     if (authError || !user) return jsonResponse(401, { error: 'Sesi login berakhir. Silakan masuk kembali.' })
 
     const body = await request.json()
-    if (!isRecord(body) || body.mode !== 'plan') {
+    if (!isRecord(body) || !['health', 'plan'].includes(body.mode)) {
       return jsonResponse(400, { error: 'Permintaan chat tidak valid.' })
     }
+    if (body.mode === 'health') {
+      try {
+        const model = Deno.env.get('GROQ_MODEL') || 'openai/gpt-oss-120b'
+        const status = await checkGroqAvailability(groqApiKey, model)
+        return jsonResponse(status.connected ? 200 : 503, status)
+      } catch (error) {
+        const message = error instanceof DOMException && error.name === 'TimeoutError'
+          ? 'Pemeriksaan koneksi Groq melewati batas waktu.'
+          : 'Tidak dapat menghubungi layanan Groq saat ini.'
+        return jsonResponse(503, { connected: false, message })
+      }
+    }
+
     if (JSON.stringify(body).length > MAX_REQUEST_LENGTH) {
       return jsonResponse(413, { error: 'Permintaan chat terlalu besar.' })
     }
