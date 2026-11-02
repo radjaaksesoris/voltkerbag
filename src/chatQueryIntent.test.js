@@ -34,6 +34,27 @@ test('supports exact sales recap and modal-price questions from chat examples', 
   })
 })
 
+test('routes explicit store-operation analysis to the read-only operational briefing', () => {
+  for (const question of [
+    'Analisis kondisi toko hari ini',
+    'Buat insight operasional bulan ini',
+    'Evaluasi bisnis bulan Oktober 2025'
+  ]) {
+    assert.equal(resolveDirectQuery(question)?.query, 'operational_insights')
+  }
+
+  assert.deepEqual(resolveFastQuery('Evaluasi bisnis bulan Oktober 2025'), {
+    kind: 'query',
+    query: 'operational_insights',
+    args: { period: 'oktober 2025' }
+  })
+  assert.deepEqual(resolveFastQuery('Analisis kondisi toko'), {
+    kind: 'query',
+    query: 'operational_insights',
+    args: {}
+  })
+})
+
 test('removes remaining-stock wording before searching for the product', () => {
   for (const question of ['berapa sisa stok bimo oval', 'berapa stok yang tersisa Bimo Oval']) {
     assert.deepEqual(resolveFastQuery(question), {

@@ -23,6 +23,7 @@ function normalizeMessage(message) {
 
   if (message.error) normalized.error = true
   if (message.success) normalized.success = true
+  if (message.contextSafe === true) normalized.contextSafe = true
   if (typeof message.attachmentName === 'string') normalized.attachmentName = message.attachmentName
   if (message.draft) {
     normalized.text += '\n\nPratinjau tindakan tidak disimpan. Kirim ulang perintah jika ingin membuatnya kembali.'

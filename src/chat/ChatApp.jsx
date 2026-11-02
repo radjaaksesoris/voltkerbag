@@ -19,6 +19,13 @@ import {
 import { resolveDirectQuery, resolveFallbackQuery } from './queryIntent.js'
 import { getChatDayKey } from './chatDay.js'
 import { loadChatHistory, saveChatHistory } from './chatHistory.js'
+import {
+  applyChatPreferencesToPlan,
+  buildAssistantHistory,
+  DEFAULT_CHAT_PREFERENCES,
+  loadChatPreferences,
+  saveChatPreferences
+} from './chatPreferences.js'
 import { clearRequestedAppMode, getRequestedAppMode } from '../appMode.js'
 import { stockEntryUnit } from '../productUnits.js'
 import { readDashboardDateRange } from '../dateFilter.js'
@@ -51,6 +58,14 @@ export default function ChatApp() {
   const [connectionError, setConnectionError] = useState('')
   const [historyError, setHistoryError] = useState('')
   const [historyOwner, setHistoryOwner] = useState(null)
+  const [preferences, setPreferences] = useState(DEFAULT_CHAT_PREFERENCES)
+  const [preferenceDraft, setPreferenceDraft] = useState({
+    ...DEFAULT_CHAT_PREFERENCES,
+    watchedProductsText: ''
+  })
+  const [preferencesOwner, setPreferencesOwner] = useState(null)
+  const [preferencesError, setPreferencesError] = useState('')
+  const [preferencesOpen, setPreferencesOpen] = useState(false)
   const [authCheckKey, setAuthCheckKey] = useState(0)
   const [messages, setMessages] = useState([])
   const [input, setInput] = useState('')
@@ -115,6 +130,29 @@ export default function ChatApp() {
     } catch (error) {
       console.error('Gagal memuat riwayat chat:', error)
       setHistoryError('Riwayat chat tidak dapat dimuat atau disimpan di perangkat ini.')
+    }
+  }, [chatUserId])
+
+  useEffect(() => {
+    setPreferencesOwner(null)
+    setPreferences(DEFAULT_CHAT_PREFERENCES)
+    setPreferenceDraft({ ...DEFAULT_CHAT_PREFERENCES, watchedProductsText: '' })
+    setPreferencesError('')
+    setPreferencesOpen(false)
+    if (!chatUserId) return
+
+    try {
+      const saved = loadChatPreferences(window.localStorage, chatUserId)
+      setPreferences(saved)
+      setPreferenceDraft({
+        ...saved,
+        watchedProductsText: saved.watchedProducts.join(', ')
+      })
+      setPreferencesOwner(chatUserId)
+    } catch (error) {
+      console.error('Gagal memuat preferensi asisten:', error)
+      setPreferencesError(error.message || 'Preferensi asisten tidak dapat dimuat.')
+      setPreferencesOwner(chatUserId)
     }
   }, [chatUserId])
 
@@ -235,6 +273,35 @@ export default function ChatApp() {
     if (!url) return
     URL.revokeObjectURL(url)
     attachmentPreviewUrls.current.delete(url)
+  }
+
+  function savePreferences(event) {
+    event.preventDefault()
+    if (!chatUserId || preferencesOwner !== chatUserId) return
+    const watchlist = preferenceDraft.watchedProductsText
+      .split(/[,\n]/)
+      .map((name) => name.trim())
+      .filter(Boolean)
+    if (watchlist.length > 5) {
+      setPreferencesError('Daftar produk pantauan maksimal 5 nama.')
+      return
+    }
+    try {
+      const saved = saveChatPreferences(window.localStorage, chatUserId, {
+        ...preferenceDraft,
+        watchedProducts: watchlist
+      })
+      setPreferences(saved)
+      setPreferenceDraft({
+        ...saved,
+        watchedProductsText: saved.watchedProducts.join(', ')
+      })
+      setPreferencesError('')
+      setPreferencesOpen(false)
+    } catch (error) {
+      console.error('Gagal menyimpan preferensi asisten:', error)
+      setPreferencesError(error.message || 'Preferensi asisten tidak dapat disimpan.')
+    }
   }
 
   async function sendMessage(event) {
@@ -435,13 +502,11 @@ export default function ChatApp() {
         setProcessingStage('Mengambil data yang diminta...')
       } else {
         setProcessingStage('Memahami permintaan dengan AI...')
-        const history = messages.slice(-12).map((message) => ({
-          role: message.role,
-          content: message.text || message.message || ''
-        })).filter((message) => message.content)
+        const history = buildAssistantHistory(messages)
         plan = await requestAssistantPlan({
           message: text,
           history,
+          responseStyle: preferences.responseStyle,
           attachmentName: file?.name || ''
         })
 
@@ -452,9 +517,11 @@ export default function ChatApp() {
         }
       }
 
+      plan = applyChatPreferencesToPlan(plan, preferences)
+
       if (plan.kind === 'query' && [
         'daily_summary', 'sales_summary', 'finance_summary', 'cashbook',
-        'transactions', 'purchases', 'product_performance'
+        'transactions', 'purchases', 'product_performance', 'operational_insights'
       ].includes(plan.query) && !plan.args?.period && !plan.args?.from && !plan.args?.to) {
         const activeDateRange = readDashboardDateRange()
         if (activeDateRange && (activeDateRange.from || activeDateRange.to)) {
@@ -466,13 +533,18 @@ export default function ChatApp() {
       }
 
       if (plan.kind === 'reply') {
-        appendMessage(setMessages, { role: 'assistant', text: plan.message })
+        appendMessage(setMessages, { role: 'assistant', text: plan.message, contextSafe: true })
         return
       }
 
       if (plan.kind === 'query') {
         if (!directQuery && !fallbackQuery) setProcessingStage('Mengambil data toko...')
-        const result = await queryStore(plan.query, plan.args)
+        const result = await queryStore(plan.query, {
+          ...plan.args,
+          ...(plan.query === 'operational_insights'
+            ? { watchedProducts: preferences.watchedProducts }
+            : {})
+        })
         appendMessage(setMessages, {
           role: 'assistant',
           text: formatQueryAnswer(plan.query, result.data)
@@ -499,6 +571,7 @@ export default function ChatApp() {
         appendMessage(setMessages, {
           role: 'assistant',
           text: plan.message,
+          contextSafe: true,
           draft
         })
       } catch (error) {
@@ -626,20 +699,101 @@ export default function ChatApp() {
           />
         </div>
         <div className="chat-topbar-actions">
+          <button
+            type="button"
+            className="chat-preferences-button"
+            aria-expanded={preferencesOpen}
+            aria-controls="chat-preferences"
+            onClick={() => setPreferencesOpen((open) => !open)}>
+            Preferensi
+          </button>
           <a className="chat-old-app-link" href={import.meta.env.BASE_URL + '?mode=table'} title="Buka aplikasi VOLTKER tabel">
             APLIKASI TABEL
           </a>
         </div>
       </header>
 
-      {(connectionError || historyError) && (
+      {preferencesOpen && (
+        <section className="chat-preferences" id="chat-preferences" role="dialog" aria-modal="false" aria-labelledby="chat-preferences-title">
+          <form onSubmit={savePreferences}>
+            <div className="chat-preferences-heading">
+              <div>
+                <strong id="chat-preferences-title">Preferensi asisten</strong>
+                <span>Disimpan lokal di perangkat ini untuk akun Anda.</span>
+              </div>
+              <button type="button" aria-label="Tutup preferensi" onClick={() => setPreferencesOpen(false)}>×</button>
+            </div>
+            <label>
+              Periode default untuk ringkasan
+              <select
+                value={preferenceDraft.defaultPeriod}
+                onChange={(event) => setPreferenceDraft((current) => ({ ...current, defaultPeriod: event.target.value }))}>
+                <option value="dashboard">Ikuti filter Rekap Harian</option>
+                <option value="hari ini">Hari ini</option>
+                <option value="minggu ini">Minggu ini</option>
+                <option value="bulan ini">Bulan ini</option>
+                <option value="bulan lalu">Bulan lalu</option>
+              </select>
+            </label>
+            <label>
+              Gaya balasan AI
+              <select
+                value={preferenceDraft.responseStyle}
+                onChange={(event) => setPreferenceDraft((current) => ({ ...current, responseStyle: event.target.value }))}>
+                <option value="concise">Singkat</option>
+                <option value="friendly">Ramah dan ringkas</option>
+                <option value="detailed">Lebih terperinci</option>
+              </select>
+            </label>
+            <label>
+              Produk pantauan (maksimal 5, pisahkan dengan koma)
+              <input
+                value={preferenceDraft.watchedProductsText}
+                maxLength={420}
+                placeholder="Contoh: Tas A, Tas B"
+                onChange={(event) => setPreferenceDraft((current) => ({
+                  ...current,
+                  watchedProductsText: event.target.value
+                }))} />
+            </label>
+            <p className="chat-preferences-note">Daftar pantauan dan hasil data toko hanya diproses lokal. Hanya pilihan gaya balasan yang disertakan saat AI memahami pesan.</p>
+            {preferencesError && <p className="chat-preferences-error" role="alert">{preferencesError}</p>}
+            <div className="chat-preferences-actions">
+              <button type="button" onClick={() => {
+                setPreferenceDraft({ ...preferences, watchedProductsText: preferences.watchedProducts.join(', ') })
+                setPreferencesError('')
+                setPreferencesOpen(false)
+              }}>Batal</button>
+              <button type="submit" disabled={preferencesOwner !== chatUserId}>Simpan preferensi</button>
+            </div>
+          </form>
+        </section>
+      )}
+
+      {(connectionError || historyError || preferencesError) && (
         <div className="chat-connection-banner" role="status">
-          {[connectionError, historyError].filter(Boolean).join(' ')}
+          {[connectionError, historyError, preferencesError].filter(Boolean).join(' ')}
         </div>
       )}
 
       <section className="chat-workspace" aria-label="Percakapan dengan asisten VOLTKER">
         <div className="chat-feed" aria-live="polite">
+          {messages.length === 0 && (
+            <div className="chat-starter">
+              <strong>Briefing kondisi toko</strong>
+              <span>Ringkasan berbasis data toko, tanpa mengubah data.</span>
+              <button
+                type="button"
+                className="chat-starter-button"
+                disabled={busy || actionBusy || hasPendingAction}
+                onClick={() => {
+                  setInput('Analisis kondisi toko hari ini')
+                  inputRef.current?.focus()
+                }}>
+                Analisis toko hari ini
+              </button>
+            </div>
+          )}
           {messages.map((message) => (
             <article key={message.id} className={'chat-message chat-message-' + message.role}>
               {message.role === 'assistant' && (

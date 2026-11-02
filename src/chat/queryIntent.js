@@ -70,6 +70,18 @@ function removeTerms(words, terms) {
 
 export function resolveFastQuery(message) {
   const { normalized, words } = normalizeMessage(message)
+  const asksOperationalInsights = words.some((word) =>
+    ['analisis', 'analisa', 'insight', 'evaluasi'].includes(word)
+  ) && words.some((word) => ['toko', 'operasional', 'bisnis'].includes(word))
+  if (asksOperationalInsights) {
+    const period = queryPeriod(normalized)
+    return {
+      kind: 'query',
+      query: 'operational_insights',
+      args: period ? { period } : {}
+    }
+  }
+
   const asksDebtPaymentHistory = words.some((word) => DEBT_TERMS.has(word))
     && words.some((word) => ['pembayaran', 'cicilan', 'pelunasan', 'terakhir', 'terbaru', 'kapan'].includes(word))
   const asksDebtPaymentTotal = words.some((word) =>
@@ -410,6 +422,7 @@ export function resolveDirectQuery(message, hasAttachment = false) {
   const { words } = normalizeMessage(message)
   const plan = resolveFastQuery(message)
   if (!plan) return null
+  if (plan.query === 'operational_insights') return plan
 
   const ambiguousTerms = new Set([
     'bagaimana', 'kenapa', 'mengapa', 'sebaiknya', 'rekomendasi', 'prediksi',
@@ -433,7 +446,7 @@ export function resolveDirectQuery(message, hasAttachment = false) {
 
   const directIntents = new Set([
     'debts', 'debt_payments', 'cashbook', 'inventory_summary', 'daily_summary', 'finance_summary',
-    'product_performance', 'transactions', 'purchases', 'customers',
+    'product_performance', 'operational_insights', 'transactions', 'purchases', 'customers',
     'vendors', 'expeditions', 'categories', 'units'
   ])
 

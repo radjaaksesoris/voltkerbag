@@ -4,11 +4,13 @@ import { dateRangeTimestamps, localDateValue } from '../dateFilter'
 import { isSafeRupiahAmount } from '../money'
 import { filterCustomerDebts } from './customerDebt'
 import { namedMonthDateRange } from './dateRange.js'
+import { createOperationalInsights } from './operationalInsights.js'
 import {
   purchaseCostPerPiece,
   saleMarkupPrice,
   saleUnitPrice,
   saleUnits,
+  isLowStock,
   stockInPcs,
   stockLabel,
   stockEntryUnit,
@@ -177,6 +179,46 @@ function matchesCashbookEntry(entry, { type, search, pending }) {
     .some((value) => String(value || '').toLocaleLowerCase('id-ID').includes(query))
 }
 
+async function loadSalesSummary(args) {
+  const range = dateRangeForQuery(args)
+  const timestamps = dateRangeTimestamps(range)
+  const [summary, dashboard, finance] = await Promise.all([
+    getTransactionSummary(timestamps),
+    getDashboardData({
+      ...timestamps,
+      summaryFrom: timestamps.from,
+      summaryTo: timestamps.to,
+      page: 1,
+      pageSize: PAGE_SIZE,
+      creditFirst: false,
+      nameSort: 'date'
+    }),
+    getFinanceData({ ...timestamps, page: 1, pageSize: PAGE_SIZE })
+  ])
+  return {
+    date_range: range,
+    transaction_count: summary.transaction_count,
+    sales_total: summary.total,
+    gross_profit: dashboard.gross_profit,
+    income: finance.income,
+    expense: finance.expense,
+    capital: finance.capital,
+    cash_balance: Number(finance.income) + Number(finance.capital) - Number(finance.expense),
+    customer_debt: finance.total_credit,
+    net_profit: Number(dashboard.gross_profit) - Number(finance.expense),
+    pending_expedition_count: finance.pending_expedition_count,
+    inventory: dashboard.inventory,
+    transactions: dashboard.transactions.slice(0, 20).map((transaction) => ({
+      invoiceNo: transaction.invoiceNo,
+      customerName: transaction.customerName,
+      total: transaction.total,
+      paymentType: transaction.paymentType,
+      balanceDue: transaction.balanceDue,
+      createdAt: transaction.createdAt
+    }))
+  }
+}
+
 export async function queryStore(intent, args = {}) {
   if (intent === 'inventory_summary') {
     const products = await getAll('products')
@@ -184,13 +226,27 @@ export async function queryStore(intent, args = {}) {
       title: 'Ringkasan persediaan saat ini',
       data: {
         product_count: products.length,
-        low_stock_count: products.filter((product) =>
-          Math.floor(stockInPcs(product) / unitFactor(product.unit || 'pcs')) <= 5
-        ).length,
+        low_stock_count: products.filter(isLowStock).length,
         total_asset: products.reduce((total, product) =>
           total + (Number(product.stock_cost_value) || (Number(product.cost) || 0) * stockInPcs(product)), 0
         )
       }
+    }
+  }
+
+  if (intent === 'operational_insights') {
+    const [products, summary] = await Promise.all([
+      getAll('products'),
+      loadSalesSummary(args)
+    ])
+    return {
+      title: 'Briefing operasional VOLTKER',
+      data: createOperationalInsights({
+        dateRange: summary.date_range,
+        summary,
+        products,
+        watchedProducts: Array.isArray(args.watchedProducts) ? args.watchedProducts : []
+      })
     }
   }
 
@@ -200,8 +256,7 @@ export async function queryStore(intent, args = {}) {
     const stockOrder = ['asc', 'desc'].includes(args.stockOrder) ? args.stockOrder : ''
     const matches = products
       .filter((product) => !query || (product.name + ' ' + (product.category || '')).toLocaleLowerCase('id-ID').includes(query))
-      .filter((product) => !args.lowStockOnly
-        || Math.floor(stockInPcs(product) / unitFactor(product.unit || 'pcs')) <= 5)
+      .filter((product) => !args.lowStockOnly || isLowStock(product))
       .sort((left, right) => stockOrder
         ? (stockOrder === 'asc' ? 1 : -1) * (stockInPcs(left) - stockInPcs(right))
           || PRODUCT_NAME_COLLATOR.compare(left.name, right.name)
@@ -353,45 +408,12 @@ export async function queryStore(intent, args = {}) {
   }
 
   if (intent === 'daily_summary' || intent === 'sales_summary') {
-    const range = dateRangeForQuery(args)
-    const timestamps = dateRangeTimestamps(range)
-    const [summary, dashboard, finance] = await Promise.all([
-      getTransactionSummary(timestamps),
-      getDashboardData({
-        ...timestamps,
-        summaryFrom: timestamps.from,
-        summaryTo: timestamps.to,
-        page: 1,
-        pageSize: PAGE_SIZE,
-        creditFirst: false,
-        nameSort: 'date'
-      }),
-      getFinanceData({ ...timestamps, page: 1, pageSize: PAGE_SIZE })
-    ])
+    const summary = await loadSalesSummary(args)
     return {
-      title: range.from === range.to ? 'Ringkasan penjualan ' + range.from : 'Ringkasan penjualan',
-      data: {
-        date_range: range,
-        transaction_count: summary.transaction_count,
-        sales_total: summary.total,
-        gross_profit: dashboard.gross_profit,
-        income: finance.income,
-        expense: finance.expense,
-        capital: finance.capital,
-        cash_balance: Number(finance.income) + Number(finance.capital) - Number(finance.expense),
-        customer_debt: finance.total_credit,
-        net_profit: Number(dashboard.gross_profit) - Number(finance.expense),
-        pending_expedition_count: finance.pending_expedition_count,
-        inventory: dashboard.inventory,
-        transactions: dashboard.transactions.slice(0, 20).map((transaction) => ({
-          invoiceNo: transaction.invoiceNo,
-          customerName: transaction.customerName,
-          total: transaction.total,
-          paymentType: transaction.paymentType,
-          balanceDue: transaction.balanceDue,
-          createdAt: transaction.createdAt
-        }))
-      }
+      title: summary.date_range.from === summary.date_range.to
+        ? 'Ringkasan penjualan ' + summary.date_range.from
+        : 'Ringkasan penjualan',
+      data: summary
     }
   }
 

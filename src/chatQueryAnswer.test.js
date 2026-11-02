@@ -17,6 +17,33 @@ test('formats stock matches and sale prices without an AI summary request', () =
   assert.match(answer, /Rp\s?1\.200\.000\/lusin/)
 })
 
+test('formats operational insights with the analyzed period and read-only recommendations', () => {
+  const answer = formatQueryAnswer('operational_insights', {
+    date_range: { from: '2026-11-02', to: '2026-11-02' },
+    transaction_count: 2,
+    sales_total: 250000,
+    gross_profit: 50000,
+    net_profit: 30000,
+    cash_balance: 200000,
+    product_count: 10,
+    inventory_asset: 800000,
+    customer_debt: 125000,
+    pending_expedition_count: 1,
+    low_stock_count: 1,
+    low_stock_products: [{ name: 'Tas A', stock: '3 pcs' }],
+    watched_products: [{ name: 'Tas A', stock: '3 pcs', low_stock: true }],
+    recommendations: ['Periksa stok Tas A.']
+  })
+
+  assert.match(answer, /Periode 2 November 2026/)
+  assert.match(answer, /Penjualan: Rp\s?250\.000/)
+  assert.match(answer, /Produk dengan stok rendah: Tas A \(3 pcs\)/)
+  assert.match(answer, /Produk pantauan:/)
+  assert.match(answer, /Tas A: 3 pcs · stok rendah/)
+  assert.match(answer, /Periksa stok Tas A/)
+  assert.match(answer, /hanya membaca data toko/)
+})
+
 test('labels ranked stock answers and reports stock units', () => {
   const answer = formatQueryAnswer('stock', {
     stock_order: 'asc',

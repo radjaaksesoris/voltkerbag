@@ -84,6 +84,10 @@ export function availableQuantity(product, unit) {
   return Math.floor(stockInPcs(product) / unitFactor(unit))
 }
 
+export function isLowStock(product) {
+  return availableQuantity(product, product.unit || 'pcs') <= 5
+}
+
 export function productPrice(product, unit) {
   const normalizedUnitName = normalizedUnit(unit)
   if (STANDARD_UNITS.some((option) => option.name === normalizedUnitName)) {

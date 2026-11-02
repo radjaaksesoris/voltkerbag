@@ -20,9 +20,16 @@ async function getErrorMessage(error, fallback) {
   return typeof message === 'string' && message.trim() ? message : fallback
 }
 
-export async function requestAssistantPlan({ message, history, pendingAction, attachmentName }) {
+export async function requestAssistantPlan({ message, history, pendingAction, attachmentName, responseStyle }) {
   const { data, error } = await getClient().functions.invoke('chat-assistant', {
-    body: { mode: 'plan', message, history, pendingAction: pendingAction || null, attachmentName: attachmentName || '' }
+    body: {
+      mode: 'plan',
+      message,
+      history,
+      pendingAction: pendingAction || null,
+      attachmentName: attachmentName || '',
+      responseStyle
+    }
   })
   if (error) throw new Error(await getErrorMessage(error, 'Gagal menghubungi asisten chat.'))
   return validateAssistantPlan(data)

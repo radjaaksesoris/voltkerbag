@@ -15,7 +15,7 @@ test('restores the current user chat history for the current Jakarta day', () =>
   const storage = createStorage()
   const messages = [
     { id: 'user-1', role: 'user', text: 'Berapa stok tas?' },
-    { id: 'assistant-1', role: 'assistant', text: 'Stok tas ada 12.' }
+    { id: 'assistant-1', role: 'assistant', text: 'Stok tas ada 12.', contextSafe: true }
   ]
 
   saveChatHistory(storage, 'user-123', '2026-11-01', messages)

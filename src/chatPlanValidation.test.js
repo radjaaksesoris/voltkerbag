@@ -39,7 +39,10 @@ test('accepts a supported query plan with structured arguments', () => {
 })
 
 test('accepts the expanded catalog query plans', () => {
-  for (const query of ['categories', 'units', 'product_performance', 'inventory_summary', 'debt_payments', 'cashbook']) {
+  for (const query of [
+    'categories', 'units', 'product_performance', 'inventory_summary',
+    'debt_payments', 'cashbook', 'operational_insights'
+  ]) {
     assert.equal(validateAssistantPlan({
       kind: 'query',
       query,

@@ -155,6 +155,41 @@ export function formatQueryAnswer(intent, data = {}) {
     ].join('\n')
   }
 
+  if (intent === 'operational_insights') {
+    const dateRange = data.date_range
+    const periodLabel = dateRange?.from || dateRange?.to
+      ? 'Periode ' + [dateRange.from, dateRange.to].filter(Boolean).map(formatDate).join(' sampai ')
+      : ''
+    return [
+      'Briefing operasional VOLTKER',
+      ...(periodLabel ? [periodLabel] : []),
+      'Penjualan: ' + rupiah(data.sales_total) + ' · ' + (Number(data.transaction_count) || 0) + ' transaksi',
+      'Laba kotor: ' + rupiah(data.gross_profit) + ' · Laba bersih: ' + rupiah(data.net_profit),
+      'Saldo kas: ' + rupiah(data.cash_balance),
+      'Persediaan: ' + (Number(data.product_count) || 0) + ' produk · Nilai modal ' + rupiah(data.inventory_asset),
+      'Hutang pelanggan berjalan: ' + rupiah(data.customer_debt),
+      'Biaya ekspedisi tertunda: ' + (Number(data.pending_expedition_count) || 0),
+      ...(data.low_stock_products?.length
+        ? ['Produk dengan stok rendah: ' + data.low_stock_products.map((product) =>
+            product.name + ' (' + product.stock + ')'
+          ).join(', ') + (Number(data.low_stock_count) > data.low_stock_products.length
+            ? ', dan ' + (Number(data.low_stock_count) - data.low_stock_products.length) + ' lainnya.'
+            : '.')]
+        : ['Produk dengan stok rendah: tidak ada.']),
+      ...(data.watched_products?.length
+        ? [
+            'Produk pantauan:',
+            ...data.watched_products.map((product) => product.not_found
+              ? '• ' + product.name + ': tidak ditemukan, periksa nama di Preferensi.'
+              : '• ' + product.name + ': ' + product.stock + (product.low_stock ? ' · stok rendah' : ''))
+          ]
+        : []),
+      'Saran tindak lanjut:',
+      ...(data.recommendations || []).map((recommendation) => '• ' + recommendation),
+      'Analisis ini hanya membaca data toko dan tidak mengubah apa pun.'
+    ].join('\n')
+  }
+
   if (intent === 'stock' || intent === 'products') return summarizeStock(data)
   if (intent === 'debts') return summarizeDebts(data)
   if (intent === 'debt_payments') {

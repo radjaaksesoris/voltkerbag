@@ -1,6 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { availableQuantity, isWholeStockQuantity, productMarkupPercentage, productPrice, purchaseCostFactor, purchaseCostPerPiece, purchaseCostUnit, quantityToPcs, saleMarkupPercentage, saleMarkupPrice, salePricesFromMarkups, saleUnitPrice, saleUnits, stockCostValue, stockEntryUnit, stockInPcs, stockLabel, stockReceiptValuation, unitCost, unitFactor } from './productUnits.js'
+import { availableQuantity, isLowStock, isWholeStockQuantity, productMarkupPercentage, productPrice, purchaseCostFactor, purchaseCostPerPiece, purchaseCostUnit, quantityToPcs, saleMarkupPercentage, saleMarkupPrice, salePricesFromMarkups, saleUnitPrice, saleUnits, stockCostValue, stockEntryUnit, stockInPcs, stockLabel, stockReceiptValuation, unitCost, unitFactor } from './productUnits.js'
 
 test('uses the standard conversion factors', () => {
   assert.equal(unitFactor('pcs'), 1)
@@ -24,6 +24,13 @@ test('reads legacy stock in the product main unit', () => {
   assert.equal(stockLabel({ unit: 'kodi', stock_pcs: 19 }), '19 pcs')
   assert.equal(stockLabel({ unit: 'kodi', stock_pcs: 28 }), '28 pcs')
   assert.equal(stockLabel({ unit: 'lusin', stock: 215 / 12 }), '17 lusin 11 pcs')
+})
+
+test('uses the main product unit consistently for the low-stock threshold', () => {
+  assert.equal(isLowStock({ unit: 'pcs', stock_pcs: 5 }), true)
+  assert.equal(isLowStock({ unit: 'pcs', stock_pcs: 6 }), false)
+  assert.equal(isLowStock({ unit: 'lusin', stock_pcs: 60 }), true)
+  assert.equal(isLowStock({ unit: 'lusin', stock_pcs: 72 }), false)
 })
 
 test('enters initial stock in lusin for standard products', () => {
