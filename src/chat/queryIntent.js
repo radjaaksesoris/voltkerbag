@@ -132,6 +132,14 @@ export function resolveFastQuery(message) {
   }
 
   const period = queryPeriod(normalized)
+  const asksInventoryValue = words.includes('nilai')
+    && (words.some((word) => [...STOCK_TERMS, 'persediaan', 'inventaris', 'aset'].includes(word))
+      || words.includes('modal')
+        && !words.some((word) => ['keuangan', 'kas', 'pemasukan', 'pengeluaran', 'untung', 'rugi'].includes(word)))
+  if (asksInventoryValue) {
+    return { kind: 'query', query: 'inventory_summary', args: {} }
+  }
+
   const financeTerms = new Set([
     'kas', 'keuangan', 'pemasukan', 'pengeluaran', 'modal', 'biaya',
     'income', 'expense', 'catatan', 'buku'

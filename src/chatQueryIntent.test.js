@@ -338,6 +338,16 @@ test('routes common questions for purchases, inventory, and settings catalogs', 
     query: 'inventory_summary',
     args: {}
   })
+  for (const question of [
+    'Berapa nilai modal sampai saat ini',
+    'Berapa nilai stok modal sampai saat ini'
+  ]) {
+    assert.deepEqual(resolveDirectQuery(question), {
+      kind: 'query',
+      query: 'inventory_summary',
+      args: {}
+    })
+  }
   assert.deepEqual(resolveDirectQuery('berapa jumlah pelanggan'), {
     kind: 'query',
     query: 'customers',
