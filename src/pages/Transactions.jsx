@@ -139,7 +139,7 @@ export default function Transactions() {
     [products]
   )
   const filtered = useMemo(() => {
-    const query = q.toLowerCase()
+    const query = q.trim().toLowerCase()
     return searchableProducts
       .filter(({ searchName, inStock }) => inStock && searchName.includes(query))
       .map(({ product }) => product)
@@ -419,7 +419,15 @@ export default function Transactions() {
             )}
           </div>
           <div className="product-grid">
-            {filtered.length === 0 && <p className="muted">Tidak ada produk. Tambahkan di menu Stok Barang.</p>}
+            {filtered.length === 0 && (
+              <p className="muted">
+                {products.length === 0
+                  ? 'Belum ada produk. Tambahkan di menu Stok Barang.'
+                  : q.trim()
+                    ? 'Tidak ada produk tersedia yang cocok dengan pencarian.'
+                    : 'Tidak ada produk dengan stok tersedia.'}
+              </p>
+            )}
             {visibleProducts.map((p, index) => (
               <article
                 key={p.id}

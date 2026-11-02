@@ -168,7 +168,7 @@ export default function Products() {
     [items]
   )
   const filtered = useMemo(() => {
-    const query = q.toLowerCase()
+    const query = q.trim().toLowerCase()
     return searchableProducts
       .filter(({ searchText }) => searchText.includes(query))
       .map(({ product }) => product)
@@ -594,7 +594,11 @@ export default function Products() {
           </thead>
           <tbody>
             {filtered.length === 0 && (
-              <tr><td colSpan="8" className="muted center">Belum ada produk. Klik "+ Tambah Produk".</td></tr>
+              <tr><td colSpan="8" className="muted center">
+                {items.length === 0
+                  ? 'Belum ada produk. Klik "+ Tambah Produk".'
+                  : 'Tidak ada produk yang cocok dengan pencarian.'}
+              </td></tr>
             )}
             {visibleProducts.map((p, index) => (
               <tr key={p.id}>
