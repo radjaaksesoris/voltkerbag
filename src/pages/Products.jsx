@@ -158,12 +158,21 @@ export default function Products() {
     return onRefresh(load, 'stok')
   }, [])
 
+  const searchableProducts = useMemo(
+    () => items
+      .map((product) => ({
+        product,
+        searchText: (product.name + ' ' + (product.category || '')).toLowerCase()
+      }))
+      .sort((left, right) => PRODUCT_NAME_COLLATOR.compare(left.product.name, right.product.name)),
+    [items]
+  )
   const filtered = useMemo(() => {
     const query = q.toLowerCase()
-    return items
-      .filter((p) => (p.name + ' ' + (p.category || '')).toLowerCase().includes(query))
-      .sort((left, right) => PRODUCT_NAME_COLLATOR.compare(left.name, right.name))
-  }, [items, q])
+    return searchableProducts
+      .filter(({ searchText }) => searchText.includes(query))
+      .map(({ product }) => product)
+  }, [searchableProducts, q])
   const lowStock = useMemo(
     () => items.filter((p) => availableQuantity(p, p.unit || 'pcs') <= 5),
     [items]

@@ -128,12 +128,22 @@ export default function Transactions() {
     return maxCartQuantity(productId, unit) > existingQty
   }
 
+  const searchableProducts = useMemo(
+    () => products
+      .map((product) => ({
+        product,
+        searchName: product.name.toLowerCase(),
+        inStock: stockInPcs(product) > 0
+      }))
+      .sort((left, right) => PRODUCT_NAME_COLLATOR.compare(left.product.name, right.product.name)),
+    [products]
+  )
   const filtered = useMemo(() => {
     const query = q.toLowerCase()
-    return products
-      .filter((product) => product.name.toLowerCase().includes(query) && stockInPcs(product) > 0)
-      .sort((left, right) => PRODUCT_NAME_COLLATOR.compare(left.name, right.name))
-  }, [products, q])
+    return searchableProducts
+      .filter(({ searchName, inStock }) => inStock && searchName.includes(query))
+      .map(({ product }) => product)
+  }, [searchableProducts, q])
   const visibleProducts = filtered.slice(0, visibleProductCount)
 
   function switchMobileView(showCart) {
