@@ -158,7 +158,29 @@ test('routes customer debt questions to the debt query with an optional customer
       args: {}
     })
   }
+  for (const question of [
+    'berapa banyak pelanggan yang berhutang',
+    'jumlah pelanggan yang berutang',
+    'berapa jumlah customer yang punya hutang'
+  ]) {
+    assert.deepEqual(resolveDirectQuery(question), {
+      kind: 'query',
+      query: 'debts',
+      args: { answerMode: 'count' }
+    })
+  }
   assert.equal(resolveFastQuery('bayar hutang Andri'), null)
+})
+
+test('formats a count of customers with a positive outstanding debt balance', () => {
+  assert.equal(formatQueryAnswer('debts', {
+    answer_mode: 'count',
+    customers: [
+      { customer_name: 'Andri', balance_due: 615_000 },
+      { customer_name: 'Agus Salim', balance_due: 153_750 },
+      { customer_name: 'Sari', balance_due: 0 }
+    ]
+  }), 'Jumlah pelanggan yang masih berhutang: 2.')
 })
 
 test('routes last customer debt payment questions to the cashbook query', () => {

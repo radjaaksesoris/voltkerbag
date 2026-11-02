@@ -13,9 +13,12 @@ const STOCK_ACTION_TERMS = new Set([
   'setel', 'hapus', 'edit', 'perbarui', 'restok'
 ])
 const PERFORMANCE_TERMS = new Set(['laku', 'laris', 'terjual', 'performa'])
-const DEBT_TERMS = new Set(['hutang', 'hutangnya', 'piutang', 'piutangnya'])
+const DEBT_TERMS = new Set([
+  'hutang', 'hutangnya', 'berhutang', 'utang', 'utangnya', 'berutang',
+  'piutang', 'piutangnya'
+])
 const DEBT_QUESTION_TERMS = new Set([
-  'berapa', 'sisa', 'sisanya', 'tersisa', 'total', 'jumlah', 'cek', 'lihat',
+  'berapa', 'banyak', 'sisa', 'sisanya', 'tersisa', 'total', 'jumlah', 'cek', 'lihat',
   'cari', 'tampilkan', 'apakah', 'tolong', 'dong', 'ada', 'siapa', 'pelanggan',
   'customer', 'yang', 'masih', 'punya', 'milik', 'atas', 'nama', 'saja', 'dari',
   'semua', 'seluruh', 'seluruhnya', 'keseluruhan'
@@ -116,10 +119,15 @@ export function resolveFastQuery(message) {
 
   if (words.some((word) => DEBT_TERMS.has(word))) {
     const customer = removeTerms(words, new Set([...DEBT_TERMS, ...DEBT_QUESTION_TERMS]))
+    const asksCustomerCount = words.some((word) => ['pelanggan', 'customer'].includes(word))
+      && (words.includes('banyak') || words.includes('jumlah'))
     return {
       kind: 'query',
       query: 'debts',
-      args: customer ? { customer } : {}
+      args: {
+        ...(customer ? { customer } : {}),
+        ...(asksCustomerCount ? { answerMode: 'count' } : {})
+      }
     }
   }
 

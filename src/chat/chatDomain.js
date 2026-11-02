@@ -290,6 +290,7 @@ export async function queryStore(intent, args = {}) {
         ? {
             total_debt: debtTotal,
             customers,
+            answer_mode: args.answerMode || '',
             ...(args.customer ? { searched_customer: args.customer } : {})
           }
         : {
