@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { addProductStock, getAll, getProductImageUrl, put, remove, removeProductImage, setProductStock, updateProductDetails, uploadProductImage, onRefresh, requestPageRefresh } from '../db'
 import { rupiah } from '../format'
@@ -23,12 +23,14 @@ const EMPTY = {
 }
 
 const PRODUCT_NAME_COLLATOR = new Intl.Collator('id', { numeric: true, sensitivity: 'base' })
+const PRODUCT_PAGE_SIZE = 50
 
 export default function Products() {
   const [items, setItems] = useState([])
   const [categories, setCategories] = useState([])
   const [units, setUnits] = useState([])
   const [q, setQ] = useState('')
+  const [visibleProductCount, setVisibleProductCount] = useState(PRODUCT_PAGE_SIZE)
   const [form, setForm] = useState(EMPTY)
   const [editId, setEditId] = useState(null)
   const [showForm, setShowForm] = useState(false)
@@ -156,10 +158,17 @@ export default function Products() {
     return onRefresh(load, 'stok')
   }, [])
 
-  const filtered = items
-    .filter((p) => (p.name + ' ' + (p.category || '')).toLowerCase().includes(q.toLowerCase()))
-    .sort((left, right) => PRODUCT_NAME_COLLATOR.compare(left.name, right.name))
-  const lowStock = items.filter((p) => availableQuantity(p, p.unit || 'pcs') <= 5)
+  const filtered = useMemo(() => {
+    const query = q.toLowerCase()
+    return items
+      .filter((p) => (p.name + ' ' + (p.category || '')).toLowerCase().includes(query))
+      .sort((left, right) => PRODUCT_NAME_COLLATOR.compare(left.name, right.name))
+  }, [items, q])
+  const lowStock = useMemo(
+    () => items.filter((p) => availableQuantity(p, p.unit || 'pcs') <= 5),
+    [items]
+  )
+  const visibleProducts = filtered.slice(0, visibleProductCount)
   const stockReceiptPreview = stockProduct && Number(stockAmount) > 0 && stockUnitCost !== '' && Number(stockUnitCost) >= 0
     ? stockReceiptValuation({
         stockPcs: stockInPcs(stockProduct),
@@ -564,7 +573,10 @@ export default function Products() {
       </div>
 
       <input className="input search products-search" placeholder="Cari produk atau kategori..."
-        value={q} onChange={(e) => setQ(e.target.value)} />
+        value={q} onChange={(e) => {
+          setQ(e.target.value)
+          setVisibleProductCount(PRODUCT_PAGE_SIZE)
+        }} />
 
       <div className="card table-card products-table-card">
         <table className="products-table">
@@ -575,7 +587,7 @@ export default function Products() {
             {filtered.length === 0 && (
               <tr><td colSpan="8" className="muted center">Belum ada produk. Klik "+ Tambah Produk".</td></tr>
             )}
-            {filtered.map((p, index) => (
+            {visibleProducts.map((p, index) => (
               <tr key={p.id}>
                 <td className="product-number-cell">{index + 1}</td>
                 <td className="product-name-cell">
@@ -629,6 +641,19 @@ export default function Products() {
           </tbody>
         </table>
       </div>
+      {filtered.length > 0 && (
+        <div className="product-grid-pagination">
+          <span className="muted">Menampilkan {visibleProducts.length} dari {filtered.length} produk</span>
+          {visibleProducts.length < filtered.length && (
+            <button
+              className="btn"
+              type="button"
+              onClick={() => setVisibleProductCount((count) => count + PRODUCT_PAGE_SIZE)}>
+              Tampilkan {Math.min(PRODUCT_PAGE_SIZE, filtered.length - visibleProducts.length)} produk lagi
+            </button>
+          )}
+        </div>
+      )}
 
       {actionMenuProductId !== null && actionMenuPosition && createPortal(
         <div
