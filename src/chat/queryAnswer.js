@@ -158,7 +158,9 @@ export function formatQueryAnswer(intent, data = {}) {
   if (intent === 'operational_insights') {
     const dateRange = data.date_range
     const periodLabel = dateRange?.from || dateRange?.to
-      ? 'Periode ' + [dateRange.from, dateRange.to].filter(Boolean).map(formatDate).join(' sampai ')
+      ? dateRange.from
+        ? 'Periode ' + [dateRange.from, dateRange.to].filter(Boolean).map(formatDate).join(' sampai ')
+        : 'Sejak awal pencatatan sampai ' + formatDate(dateRange.to)
       : ''
     return [
       'Briefing operasional VOLTKER',
@@ -299,7 +301,9 @@ export function formatQueryAnswer(intent, data = {}) {
   if (intent === 'daily_summary' || intent === 'sales_summary') {
     const dateRange = data.date_range
     const periodLabel = dateRange?.from || dateRange?.to
-      ? 'Periode ' + [dateRange.from, dateRange.to].filter(Boolean).map(formatDate).join(' sampai ')
+      ? dateRange.from
+        ? 'Periode ' + [dateRange.from, dateRange.to].filter(Boolean).map(formatDate).join(' sampai ')
+        : 'Sejak awal pencatatan sampai ' + formatDate(dateRange.to)
       : ''
     return [
       'Ringkasan penjualan',

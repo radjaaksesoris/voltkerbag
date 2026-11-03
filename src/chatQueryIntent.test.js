@@ -37,6 +37,17 @@ test('supports exact sales recap and modal-price questions from chat examples', 
     query: 'daily_summary',
     args: { period: 'hari ini' }
   })
+  for (const question of [
+    'Berapa total pendapatan sampai hari ini',
+    'Berapa omzet sampai saat ini',
+    'Berapa pendapatan hingga sekarang'
+  ]) {
+    assert.deepEqual(resolveDirectQuery(question), {
+      kind: 'query',
+      query: 'daily_summary',
+      args: { period: 'sejak awal' }
+    })
+  }
   assert.deepEqual(resolveFallbackQuery('Berapa pendapatan hari ini', {
     kind: 'query',
     query: 'cashbook',
@@ -280,7 +291,7 @@ test('falls back to supported sales, finance, transaction, catalog, and purchase
   assert.deepEqual(resolveDirectQuery('berapa omzet sampai saat ini'), {
     kind: 'query',
     query: 'daily_summary',
-    args: {}
+    args: { period: 'sejak awal' }
   })
   assert.deepEqual(resolveFastQuery('ringkasan penjualan hari ini'), {
     kind: 'query',

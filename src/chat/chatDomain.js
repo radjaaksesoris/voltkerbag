@@ -11,7 +11,11 @@ import { formatPurchaseNote, parsePurchaseNote } from '../purchaseNote'
 import { dateRangeTimestamps, localDateValue } from '../dateFilter'
 import { isSafeRupiahAmount } from '../money'
 import { filterCustomerDebts } from './customerDebt'
-import { namedMonthDateRange, specificDateRangeForPeriod } from './dateRange.js'
+import {
+  allTimeDateRangeThroughToday,
+  namedMonthDateRange,
+  specificDateRangeForPeriod
+} from './dateRange.js'
 import { createOperationalInsights } from './operationalInsights.js'
 import { compareSalesPeriods, getPreviousDateRange, rankLowStockSellers, recommendRestock } from './smartInsights.js'
 import {
@@ -108,6 +112,9 @@ function findByName(rows, name, label) {
 export function dateRangeForQuery(args = {}, now = new Date()) {
   const today = localDateValue(now)
   const range = String(args.period || '').toLocaleLowerCase('id-ID')
+  if (['sejak awal', 'semua', 'semua waktu', 'all time'].includes(range)) {
+    return allTimeDateRangeThroughToday(now)
+  }
   const specificDateRange = specificDateRangeForPeriod(range, now)
   if (specificDateRange) return specificDateRange
   const namedMonthRange = namedMonthDateRange(range)

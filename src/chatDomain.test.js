@@ -1,6 +1,10 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { namedMonthDateRange, specificDateRangeForPeriod } from './chat/dateRange.js'
+import {
+  allTimeDateRangeThroughToday,
+  namedMonthDateRange,
+  specificDateRangeForPeriod
+} from './chat/dateRange.js'
 
 test('resolves named months using the requested year when provided', () => {
   assert.deepEqual(namedMonthDateRange('oktober 2025'), {
@@ -44,4 +48,11 @@ test('rejects a requested day that does not exist in the referenced month', () =
     () => specificDateRangeForPeriod('tanggal 31 bulan lalu', new Date(2026, 2, 3, 12)),
     /Tanggal tersebut tidak ada pada bulan lalu/
   )
+})
+
+test('represents all recorded history through today as an open-start date range', () => {
+  assert.deepEqual(allTimeDateRangeThroughToday(new Date(2026, 10, 3, 12)), {
+    from: '',
+    to: '2026-11-03'
+  })
 })

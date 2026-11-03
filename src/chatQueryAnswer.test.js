@@ -247,7 +247,6 @@ test('reports sales and finance metrics from query data', () => {
     expense: 50_000,
     customer_debt: 75_000
   })
-
   assert.match(answer, /• Transaksi: \*\*2\*\*/)
   assert.match(answer, /Periode 1 Oktober 2026 sampai 31 Oktober 2026/)
   assert.match(answer, /• Omzet \(total penjualan\): Rp\s?500\.000/)
@@ -262,6 +261,15 @@ test('reports sales and finance metrics from query data', () => {
     cash_balance: 450_000,
     total_debt: 0
   }), /Saldo kas: Rp\s?450\.000/)
+})
+
+test('labels all-time sales summaries as history through today', () => {
+  const answer = formatQueryAnswer('daily_summary', {
+    date_range: { from: '', to: '2026-11-03' },
+    sales_total: 1_500_000
+  })
+  assert.match(answer, /Sejak awal pencatatan sampai 3 November 2026/)
+  assert.match(answer, /Omzet \(total penjualan\): Rp\s?1\.500\.000/)
 })
 
 test('labels product performance ranking by the requested metric', () => {

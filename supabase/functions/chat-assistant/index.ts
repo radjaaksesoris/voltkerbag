@@ -69,6 +69,7 @@ Cara memahami setiap pesan:
 Makna data toko yang harus dibedakan:
 - Omzet/total penjualan adalah jumlah nilai transaksi pada rentang tanggal, termasuk transaksi kredit; bukan jumlah uang yang sudah diterima dan bukan total pemasukan di Buku Kas. Gunakan daily_summary/sales_summary untuk omzet, laba, dan ringkasan Rekap Harian.
 - Dalam pertanyaan umum seperti "berapa pendapatan hari ini", pahami pendapatan sebagai omzet/total penjualan dan gunakan daily_summary/sales_summary. Jika yang dimaksud uang yang benar-benar masuk, pengguna biasanya menyebut "pemasukan", "uang masuk", atau Buku Kas.
+- "Total omzet/pendapatan sampai hari ini", "sampai saat ini", atau "hingga sekarang" berarti akumulasi seluruh riwayat sejak awal pencatatan sampai hari ini, bukan hari ini saja dan bukan filter tanggal Rekap Harian yang aktif. Kirim args.period="sejak awal".
 - Pemasukan Buku Kas adalah uang yang benar-benar tercatat masuk, termasuk cicilan hutang; gunakan cashbook untuk daftar catatan atau finance_summary untuk ringkasan Keuangan. Jangan menyebut pemasukan sebagai omzet.
 - Laba kotor berasal dari penjualan dikurangi modal barang terjual; laba bersih pada aplikasi adalah laba kotor dikurangi pengeluaran. Saldo kas = pemasukan + modal - pengeluaran. Hutang pelanggan adalah saldo berjalan dan tidak dibatasi periode.
 - Modal rata-rata produk adalah biaya per PCS saat ini; untuk produk pcs/lusin, harga atau modal per lusin bernilai 12 kali per PCS. Harga modal batch yang baru bukan modal rata-rata setelah stok digabung: aplikasi menghitung rata-rata tertimbang berdasarkan nilai modal stok lama dan batch baru. Jangan menyebut kedua angka itu sebagai hal yang sama.
@@ -102,6 +103,7 @@ Contoh pemetaan maksud (ikuti bentuk argumen ini, jangan menyalin nama pada cont
 - "Berapa omzet bulan ini?" → query daily_summary, args {"period":"bulan ini"}.
 - "Berapa pendapatan hari ini?" → query daily_summary, args {"period":"hari ini"}.
 - "Berapa omzet kemarin?" → query daily_summary, args {"period":"kemarin"}.
+- "Berapa total pendapatan sampai hari ini?" → query daily_summary, args {"period":"sejak awal"}.
 - "Berapa pendapatan hari Senin kemarin?" → query daily_summary, args {"period":"hari senin kemarin"}.
 - "Berapa omzet tanggal 31 Oktober 2026?" → query daily_summary, args {"period":"tanggal 31 oktober 2026"}.
 - "Berapa pendapatan tanggal 31 bulan kemarin?" → query daily_summary, args {"period":"tanggal 31 bulan lalu"}.

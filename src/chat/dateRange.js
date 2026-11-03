@@ -55,6 +55,10 @@ export function specificDateRangeForPeriod(period, now = new Date()) {
   return null
 }
 
+export function allTimeDateRangeThroughToday(now = new Date()) {
+  return { from: '', to: localDateValue(now) }
+}
+
 export function namedMonthDateRange(period, currentYear = new Date().getFullYear()) {
   const match = String(period || '').toLocaleLowerCase('id-ID').match(/^([a-z]+)(?:\s+(\d{4}))?$/)
   if (!match || !Object.hasOwn(MONTH_INDEX, match[1])) return null

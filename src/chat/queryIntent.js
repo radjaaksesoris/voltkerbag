@@ -69,6 +69,9 @@ function queryPeriod(normalized) {
     String.raw`\b(?:bulan\s+)?(${PERIOD_MONTHS.join('|')})(?:\s+(\d{4}))?\b`
   ))
   if (monthMatch) return [monthMatch[1], monthMatch[2]].filter(Boolean).join(' ')
+  if (/\b(?:sampai|hingga)\s+(?:hari ini|saat ini|sekarang)\b/.test(normalized)) {
+    return 'sejak awal'
+  }
   if (/\b(kemarin|kemaren)\b/.test(normalized)) return 'kemarin'
   if (/\b(minggu ini|minggu)\b/.test(normalized)) return 'minggu ini'
   if (/\b(bulan lalu|bulan kemarin)\b/.test(normalized)) return 'bulan lalu'
