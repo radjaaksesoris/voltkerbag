@@ -428,7 +428,14 @@ export function resolveFastQuery(message) {
 }
 
 export function resolveFallbackQuery(message, assistantPlan, hasAttachment = false) {
-  if (hasAttachment || assistantPlan?.kind !== 'reply') return null
+  if (hasAttachment || !['reply', 'error'].includes(assistantPlan?.kind)) return null
+  const { words } = normalizeMessage(message)
+  const nonDataQuestionTerms = new Set([
+    'bagaimana', 'cara', 'kenapa', 'mengapa', 'fungsi', 'sebaiknya',
+    'rekomendasi', 'prediksi', 'bandingkan', 'perlu', 'harus', 'butuh',
+    'strategi', 'analisis'
+  ])
+  if (words.some((word) => nonDataQuestionTerms.has(word))) return null
   return resolveFastQuery(message)
 }
 

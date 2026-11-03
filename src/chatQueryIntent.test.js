@@ -377,6 +377,20 @@ test('uses app query only after AI replies instead of producing a query plan', (
   }), null)
   assert.equal(resolveFallbackQuery('berapa stok Bimo Oval', { kind: 'reply' }, true), null)
   assert.equal(resolveFallbackQuery('apa kabar?', { kind: 'reply' }), null)
+  assert.equal(resolveFallbackQuery('bagaimana cara cek stok Bimo Oval?', { kind: 'reply' }), null)
+})
+
+test('uses app query when AI request fails but the message matches a supported data query', () => {
+  assert.deepEqual(resolveFallbackQuery('berapa stok Bimo Oval', {
+    kind: 'error'
+  }), {
+    kind: 'query',
+    query: 'stock',
+    args: { product: 'bimo oval' }
+  })
+  assert.equal(resolveFallbackQuery('apa kabar?', { kind: 'error' }), null)
+  assert.equal(resolveFallbackQuery('bagaimana cara cek stok Bimo Oval?', { kind: 'error' }), null)
+  assert.equal(resolveFallbackQuery('berapa stok Bimo Oval', { kind: 'error' }, true), null)
 })
 
 test('uses direct queries only for clear data questions', () => {
