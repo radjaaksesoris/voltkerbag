@@ -428,7 +428,17 @@ export function resolveFastQuery(message) {
 }
 
 export function resolveFallbackQuery(message, assistantPlan, hasAttachment = false) {
-  if (hasAttachment || !['reply', 'error'].includes(assistantPlan?.kind)) return null
+  if (hasAttachment || assistantPlan?.kind === 'action') return null
+  const verifiedQuery = resolveDirectQuery(message)
+  if (verifiedQuery) {
+    if (assistantPlan?.kind === 'query'
+      && assistantPlan.query === verifiedQuery.query
+      && JSON.stringify(sortQueryArgs(assistantPlan.args || {})) === JSON.stringify(sortQueryArgs(verifiedQuery.args))) {
+      return null
+    }
+    return verifiedQuery
+  }
+  if (!['reply', 'error'].includes(assistantPlan?.kind)) return null
   const { words } = normalizeMessage(message)
   const nonDataQuestionTerms = new Set([
     'bagaimana', 'cara', 'kenapa', 'mengapa', 'fungsi', 'sebaiknya',
@@ -437,6 +447,15 @@ export function resolveFallbackQuery(message, assistantPlan, hasAttachment = fal
   ])
   if (words.some((word) => nonDataQuestionTerms.has(word))) return null
   return resolveFastQuery(message)
+}
+
+function sortQueryArgs(value) {
+  if (Array.isArray(value)) return value.map(sortQueryArgs)
+  if (!value || typeof value !== 'object') return value
+  return Object.keys(value).sort().reduce((sorted, key) => {
+    sorted[key] = sortQueryArgs(value[key])
+    return sorted
+  }, {})
 }
 
 export function resolveDirectQuery(message, hasAttachment = false) {

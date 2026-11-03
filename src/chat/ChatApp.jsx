@@ -619,7 +619,7 @@ export default function ChatApp() {
         fallbackQuery = resolveFallbackQuery(text, plan, Boolean(file))
         if (fallbackQuery) {
           plan = fallbackQuery
-          setProcessingStage('AI belum memahami pertanyaan; mencari data langsung...')
+          setProcessingStage('Memverifikasi maksud pertanyaan; mengambil data yang sesuai...')
         }
       }
 

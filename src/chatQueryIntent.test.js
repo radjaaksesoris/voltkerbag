@@ -360,7 +360,7 @@ test('routes common questions for purchases, inventory, and settings catalogs', 
   })
 })
 
-test('uses app query only after AI replies instead of producing a query plan', () => {
+test('uses app query when AI replies generally or returns a mismatched intent', () => {
   assert.deepEqual(resolveFallbackQuery('berapa stok Bimo Oval', {
     kind: 'reply',
     message: 'Saya tidak memahami pertanyaan.'
@@ -374,6 +374,37 @@ test('uses app query only after AI replies instead of producing a query plan', (
     kind: 'query',
     query: 'stock',
     args: { product: 'bimo oval' }
+  }), null)
+
+  assert.deepEqual(resolveFallbackQuery('berapa hutang Andri', {
+    kind: 'query',
+    query: 'customers',
+    args: { search: 'andri' }
+  }), {
+    kind: 'query',
+    query: 'debts',
+    args: { customer: 'andri' }
+  })
+
+  assert.deepEqual(resolveFallbackQuery('berapa hutang Andri', {
+    kind: 'query',
+    query: 'debts',
+    args: { customer: 'budi' }
+  }), {
+    kind: 'query',
+    query: 'debts',
+    args: { customer: 'andri' }
+  })
+
+  assert.equal(resolveFallbackQuery('berapa hutang Andri', {
+    kind: 'query',
+    query: 'debts',
+    args: { customer: 'andri' }
+  }), null)
+  assert.equal(resolveFallbackQuery('berapa stok Bimo Oval', {
+    kind: 'action',
+    action: 'add_stock',
+    args: { product: 'Bimo Oval' }
   }), null)
   assert.equal(resolveFallbackQuery('berapa stok Bimo Oval', { kind: 'reply' }, true), null)
   assert.equal(resolveFallbackQuery('apa kabar?', { kind: 'reply' }), null)
