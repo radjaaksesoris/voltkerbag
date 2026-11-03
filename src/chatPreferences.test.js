@@ -3,10 +3,13 @@ import assert from 'node:assert/strict'
 import {
   applyChatPreferencesToPlan,
   buildAssistantHistory,
+  createChatCorrection,
   DEFAULT_CHAT_PREFERENCES,
+  getApprovedChatCorrections,
   loadChatPreferences,
   normalizeChatPreferences,
-  saveChatPreferences
+  saveChatPreferences,
+  updateChatCorrection
 } from './chat/chatPreferences.js'
 
 function createStorage() {
@@ -29,7 +32,8 @@ test('stores preferences separately for each signed-in user', () => {
   assert.deepEqual(saved, {
     defaultPeriod: 'bulan ini',
     responseStyle: 'detailed',
-    watchedProducts: ['Tas A', 'Tas B']
+    watchedProducts: ['Tas A', 'Tas B'],
+    corrections: []
   })
   assert.deepEqual(loadChatPreferences(storage, 'user-123'), saved)
   assert.deepEqual(loadChatPreferences(storage, 'user-456'), DEFAULT_CHAT_PREFERENCES)
@@ -43,8 +47,53 @@ test('bounds watchlist length and rejects unsupported preference values', () => 
   }), {
     defaultPeriod: 'dashboard',
     responseStyle: 'friendly',
-    watchedProducts: ['A', 'B', 'C', 'D', 'E']
+    watchedProducts: ['A', 'B', 'C', 'D', 'E'],
+    corrections: []
   })
+})
+
+test('only approved, bounded corrections are included in assistant guidance', () => {
+  const pending = createChatCorrection('Jawab dalam bahasa Indonesia.', 'correction-1', '2026-03-10')
+  const corrections = updateChatCorrection([pending], pending.id, 'approved')
+  assert.deepEqual(getApprovedChatCorrections({ corrections }), ['Jawab dalam bahasa Indonesia.'])
+  assert.deepEqual(getApprovedChatCorrections({
+    corrections: [pending]
+  }), [])
+  assert.throws(() => createChatCorrection('Gunakan email admin@example.com', 'correction-2'), /email/)
+  assert.deepEqual(getApprovedChatCorrections({
+    corrections: updateChatCorrection(corrections, pending.id, 'rejected')
+  }), [])
+})
+
+test('persists correction review state per account and rejects phone-number content', () => {
+  const storage = createStorage()
+  const pending = createChatCorrection('Jangan menyamakan omzet dengan pemasukan.', 'correction-3', '2026-03-10')
+  const saved = saveChatPreferences(storage, 'user-123', {
+    ...DEFAULT_CHAT_PREFERENCES,
+    corrections: [pending]
+  })
+  assert.deepEqual(loadChatPreferences(storage, 'user-123').corrections, [pending])
+  assert.deepEqual(loadChatPreferences(storage, 'user-456').corrections, [])
+  assert.deepEqual(getApprovedChatCorrections(saved), [])
+  assert.deepEqual(getApprovedChatCorrections({
+    ...saved,
+    corrections: updateChatCorrection(saved.corrections, pending.id, 'approved')
+  }), ['Jangan menyamakan omzet dengan pemasukan.'])
+  assert.throws(() => createChatCorrection('Pelanggan 081234567890', 'correction-4'), /data pribadi/)
+})
+
+test('limits active correction guidance and allows an approved correction to be disabled', () => {
+  const pending = Array.from({ length: 7 }, (_, index) =>
+    createChatCorrection('Panduan umum ' + index, 'correction-' + index)
+  )
+  let corrections = pending.slice(0, 6).reduce(
+    (current, entry) => updateChatCorrection(current, entry.id, 'approved'),
+    pending
+  )
+  assert.throws(() => updateChatCorrection(corrections, 'correction-6', 'approved'), /Maksimal 6/)
+  corrections = updateChatCorrection(corrections, 'correction-0', 'rejected')
+  corrections = updateChatCorrection(corrections, 'correction-6', 'approved')
+  assert.equal(getApprovedChatCorrections({ corrections }).length, 6)
 })
 
 test('applies a preferred default period without overriding explicit filters', () => {

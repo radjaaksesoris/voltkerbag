@@ -28,6 +28,10 @@ test('creates a read-only briefing with sales, inventory, and actionable warning
   assert.equal(insights.inventory_asset, 800000)
   assert.deepEqual(insights.low_stock_products, [{ name: 'Tas A', stock: '3 pcs' }])
   assert.equal(insights.low_stock_count, 1)
+  assert.deepEqual(insights.alerts, [
+    { type: 'low_stock', count: 1, message: '1 produk memiliki stok rendah.' },
+    { type: 'pending_expedition', count: 1, message: '1 biaya ekspedisi menunggu nominal aktual.' }
+  ])
   assert.equal(insights.recommendations.length, 3)
   assert.match(insights.recommendations[0], /Tas A/)
   assert.match(insights.recommendations[1], /biaya ekspedisi/)
@@ -44,6 +48,7 @@ test('reports when no priority warnings or transactions exist', () => {
   assert.deepEqual(insights.recommendations, [
     'Belum ada transaksi pada periode ini; pastikan transaksi toko sudah tercatat.'
   ])
+  assert.deepEqual(insights.alerts, [])
 })
 
 test('limits listed low-stock products while retaining their total count', () => {

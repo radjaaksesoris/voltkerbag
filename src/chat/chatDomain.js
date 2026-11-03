@@ -1,10 +1,19 @@
-import { getAll, getDashboardData, getFinanceData, getPurchaseEntries, getTransactionPayments, getTransactionSummary } from '../db'
+import {
+  getAll,
+  getDashboardData,
+  getFinanceData,
+  getPurchaseEntries,
+  getTransactionPayments,
+  getTransactionsByDateRange,
+  getTransactionSummary
+} from '../db'
 import { formatPurchaseNote, parsePurchaseNote } from '../purchaseNote'
 import { dateRangeTimestamps, localDateValue } from '../dateFilter'
 import { isSafeRupiahAmount } from '../money'
 import { filterCustomerDebts } from './customerDebt'
 import { namedMonthDateRange } from './dateRange.js'
 import { createOperationalInsights } from './operationalInsights.js'
+import { compareSalesPeriods, getPreviousDateRange, rankLowStockSellers, recommendRestock } from './smartInsights.js'
 import {
   purchaseCostPerPiece,
   saleMarkupPrice,
@@ -235,18 +244,72 @@ export async function queryStore(intent, args = {}) {
   }
 
   if (intent === 'operational_insights') {
-    const [products, summary] = await Promise.all([
+    const restockStart = new Date()
+    restockStart.setDate(restockStart.getDate() - 29)
+    const restockRange = args.includeRestock === true
+      ? { from: localDateValue(restockStart), to: localDateValue(new Date()) }
+      : null
+    const [products, summary, transactions] = await Promise.all([
       getAll('products'),
-      loadSalesSummary(args)
+      loadSalesSummary(args),
+      restockRange
+        ? getTransactionsByDateRange(dateRangeTimestamps(restockRange))
+        : Promise.resolve(null)
     ])
+    const insights = createOperationalInsights({
+      dateRange: summary.date_range,
+      summary,
+      products,
+      watchedProducts: Array.isArray(args.watchedProducts) ? args.watchedProducts : []
+    })
+    if (transactions) {
+      insights.restock = recommendRestock(products, transactions, restockRange)
+    }
     return {
       title: 'Briefing operasional VOLTKER',
-      data: createOperationalInsights({
-        dateRange: summary.date_range,
-        summary,
-        products,
-        watchedProducts: Array.isArray(args.watchedProducts) ? args.watchedProducts : []
-      })
+      data: insights
+    }
+  }
+
+  if (intent === 'sales_trend') {
+    const today = localDateValue(new Date())
+    const requestedRange = args.period || args.from || args.to
+      ? dateRangeForQuery(args)
+      : (() => {
+          const start = new Date()
+          start.setDate(start.getDate() - 29)
+          return { from: localDateValue(start), to: today }
+        })()
+    const currentRange = {
+      from: requestedRange.from || requestedRange.to,
+      to: requestedRange.to || requestedRange.from
+    }
+    if (currentRange.to > today) currentRange.to = today
+    const previousRange = getPreviousDateRange(currentRange)
+    if (!previousRange) throw new Error('Rentang tanggal untuk perbandingan penjualan tidak valid.')
+    const [current, previous] = await Promise.all([
+      getTransactionSummary(dateRangeTimestamps(currentRange)),
+      getTransactionSummary(dateRangeTimestamps(previousRange))
+    ])
+    return {
+      title: 'Perbandingan penjualan',
+      data: {
+        current_range: currentRange,
+        previous_range: previousRange,
+        ...compareSalesPeriods(current, previous)
+      }
+    }
+  }
+
+  if (intent === 'product_stock_performance') {
+    const range = dateRangeForQuery(args)
+    const [products, transactions] = await Promise.all([
+      getAll('products'),
+      getTransactionsByDateRange(dateRangeTimestamps(range))
+    ])
+    return {
+      title: 'Produk terlaris dengan stok rendah',
+      data: rankLowStockSellers(products, transactions, range)
     }
   }
 

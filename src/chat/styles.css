@@ -204,6 +204,93 @@ body {
   line-height: 1.5;
 }
 
+.chat-corrections {
+  display: grid;
+  gap: 8px;
+  border-top: 1px solid var(--chat-line);
+  padding-top: 10px;
+  color: #514a44;
+  font-size: 11px;
+}
+
+.chat-correction {
+  display: grid;
+  gap: 5px;
+  border: 1px solid var(--chat-line);
+  border-radius: 8px;
+  background: #fff;
+  padding: 8px;
+}
+
+.chat-correction p,
+.chat-correction small {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.chat-correction small {
+  color: var(--chat-muted);
+}
+
+.chat-correction > div,
+.chat-feedback form > div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.chat-correction button,
+.chat-feedback button {
+  min-height: 30px;
+  border: 1px solid #ded2c8;
+  border-radius: 7px;
+  background: #fff;
+  padding: 0 9px;
+  color: #5b3732;
+  font: inherit;
+  font-size: 10px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.chat-feedback {
+  margin: 6px 3px 0;
+}
+
+.chat-feedback form {
+  display: grid;
+  gap: 7px;
+  border: 1px solid var(--chat-line);
+  border-radius: 9px;
+  background: #fffdfa;
+  padding: 9px;
+}
+
+.chat-feedback label {
+  display: grid;
+  gap: 5px;
+  color: #514a44;
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.chat-feedback textarea {
+  min-height: 58px;
+  resize: vertical;
+  border: 1px solid var(--chat-line);
+  border-radius: 7px;
+  padding: 7px;
+  font: inherit;
+  font-size: 11px;
+}
+
+.chat-feedback form > p,
+.chat-feedback-status {
+  margin: 0;
+  color: var(--chat-muted);
+  font-size: 10px;
+}
+
 .chat-preferences-heading button {
   width: 28px;
   height: 28px;

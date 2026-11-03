@@ -55,6 +55,28 @@ test('routes explicit store-operation analysis to the read-only operational brie
   })
 })
 
+test('routes comparative sales, restock advice, and combined product-stock questions', () => {
+  assert.deepEqual(resolveDirectQuery('Bandingkan omzet bulan ini dengan bulan lalu'), {
+    kind: 'query',
+    query: 'sales_trend',
+    args: { period: 'bulan ini' }
+  })
+  assert.deepEqual(resolveDirectQuery('Rekomendasi restok produk'), {
+    kind: 'query',
+    query: 'operational_insights',
+    args: { includeRestock: true }
+  })
+  assert.deepEqual(resolveDirectQuery('Produk paling laris yang stoknya menipis'), {
+    kind: 'query',
+    query: 'product_stock_performance',
+    args: {}
+  })
+  assert.equal(resolveFallbackQuery(
+    'Bandingkan omzet bulan ini',
+    { kind: 'reply', message: 'Saya akan membandingkan.' }
+  ).query, 'sales_trend')
+})
+
 test('removes remaining-stock wording before searching for the product', () => {
   for (const question of ['berapa sisa stok bimo oval', 'berapa stok yang tersisa Bimo Oval']) {
     assert.deepEqual(resolveFastQuery(question), {

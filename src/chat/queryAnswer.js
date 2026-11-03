@@ -166,6 +166,9 @@ export function formatQueryAnswer(intent, data = {}) {
     return [
       'Briefing operasional VOLTKER',
       ...(periodLabel ? [periodLabel] : []),
+      ...(data.alerts?.length
+        ? ['PERINGATAN:', ...data.alerts.map((alert) => '• ' + alert.message)]
+        : ['Peringatan prioritas: tidak ada.']),
       'Penjualan: ' + rupiah(data.sales_total) + ' · ' + (Number(data.transaction_count) || 0) + ' transaksi',
       'Laba kotor: ' + rupiah(data.gross_profit) + ' · Laba bersih: ' + rupiah(data.net_profit),
       'Saldo kas: ' + rupiah(data.cash_balance),
@@ -189,7 +192,66 @@ export function formatQueryAnswer(intent, data = {}) {
         : []),
       'Saran tindak lanjut:',
       ...(data.recommendations || []).map((recommendation) => '• ' + recommendation),
+      ...(data.restock
+        ? [
+            'Estimasi restok (riwayat 30 hari, target cakupan 14 hari):',
+            ...(data.restock.data_sufficient
+              ? data.restock.products.length
+                ? data.restock.products.map((product) =>
+                    '• ' + product.name + ': stok ' + product.stock +
+                    ', perkiraan cukup ' + product.estimated_stock_days + ' hari' +
+                    ', tambahan sekitar ' + (product.suggested_additional || product.suggested_additional_stock_units + ' satuan stok')
+                  )
+                : ['• Belum ada produk yang diperkirakan habis dalam 14 hari berdasarkan rata-rata penjualan.']
+              : ['• Belum cukup riwayat penjualan pada periode pengamatan untuk membuat estimasi.']),
+            ...(Number(data.restock.insufficient_product_count) > 0
+              ? ['• Estimasi hanya mencakup produk dengan minimal 3 transaksi; ' +
+                    data.restock.insufficient_product_count + ' produk tidak memiliki riwayat yang cukup.']
+              : []),
+            'Estimasi ini advisory, memakai rata-rata sederhana, dan tidak mengubah stok.'
+          ]
+        : []),
       'Analisis ini hanya membaca data toko dan tidak mengubah apa pun.'
+    ].join('\n')
+  }
+
+  if (intent === 'sales_trend') {
+    const currentPeriod = data.current_range
+    const previousPeriod = data.previous_range
+    const change = data.change_percent == null
+      ? 'Persentase perubahan belum dapat dihitung karena penjualan periode pembanding bernilai nol.'
+      : 'Perubahan: ' + (data.change_percent > 0 ? '+' : '') + data.change_percent + '%.'
+    return [
+      'Perbandingan penjualan',
+      'Periode saat ini: ' + [currentPeriod?.from, currentPeriod?.to].filter(Boolean).map(formatDate).join(' sampai '),
+      'Periode sebelumnya: ' + [previousPeriod?.from, previousPeriod?.to].filter(Boolean).map(formatDate).join(' sampai '),
+      'Penjualan: ' + rupiah(data.current_sales) + ' vs ' + rupiah(data.previous_sales),
+      change,
+      'Perbedaan nominal: ' + rupiah(data.change_amount),
+      'Transaksi: ' + (Number(data.current_transaction_count) || 0) + ' vs ' +
+        (Number(data.previous_transaction_count) || 0),
+      ...(data.significant_change
+        ? ['Perubahan tajam terdeteksi (ambang ±50% dan minimal 3 transaksi di tiap periode); ini indikator sederhana, bukan diagnosis penyebab.']
+        : data.sufficient_data
+          ? ['Tidak melewati ambang perubahan tajam ±50%.']
+          : ['Data transaksi belum cukup untuk menandai perubahan tajam (minimal 3 transaksi di tiap periode).'])
+    ].join('\n')
+  }
+
+  if (intent === 'product_stock_performance') {
+    if (!data.products?.length) {
+      return Number(data.low_stock_count) > 0
+        ? 'Ada produk dengan stok rendah, tetapi tidak ditemukan penjualan yang cocok pada periode ini.'
+        : 'Tidak ada produk dengan stok rendah pada saat ini.'
+    }
+    return [
+      'Produk terlaris dengan stok rendah (ambang stok aplikasi: maksimal 5 satuan utama):',
+      ...data.products.map((product, index) =>
+        (index + 1) + '. ' + product.name + ' · stok ' + product.stock +
+        ' · penjualan ' + rupiah(product.sales) +
+        ' · terjual ' + (product.quantity_label || product.quantity_pcs + ' pcs')
+      ),
+      'Stok adalah kondisi saat ini; penjualan mengikuti periode yang diminta.'
     ].join('\n')
   }
 

@@ -22,9 +22,12 @@ import { loadChatHistory, saveChatHistory } from './chatHistory.js'
 import {
   applyChatPreferencesToPlan,
   buildAssistantHistory,
+  createChatCorrection,
   DEFAULT_CHAT_PREFERENCES,
+  getApprovedChatCorrections,
   loadChatPreferences,
-  saveChatPreferences
+  saveChatPreferences,
+  updateChatCorrection
 } from './chatPreferences.js'
 import { clearRequestedAppMode, getRequestedAppMode } from '../appMode.js'
 import { stockEntryUnit } from '../productUnits.js'
@@ -72,6 +75,9 @@ export default function ChatApp() {
   const [preferencesOwner, setPreferencesOwner] = useState(null)
   const [preferencesError, setPreferencesError] = useState('')
   const [preferencesOpen, setPreferencesOpen] = useState(false)
+  const [feedbackMessageId, setFeedbackMessageId] = useState('')
+  const [feedbackText, setFeedbackText] = useState('')
+  const [feedbackError, setFeedbackError] = useState('')
   const [authCheckKey, setAuthCheckKey] = useState(0)
   const [messages, setMessages] = useState([])
   const [input, setInput] = useState('')
@@ -348,9 +354,31 @@ export default function ChatApp() {
     attachmentPreviewUrls.current.delete(url)
   }
 
+  function persistPreferences(nextPreferences, updateDraft = true) {
+    if (!chatUserId || preferencesOwner !== chatUserId) {
+      setPreferencesError('Preferensi asisten belum siap untuk akun ini. Coba kembali.')
+      return null
+    }
+    try {
+      const saved = saveChatPreferences(window.localStorage, chatUserId, nextPreferences)
+      setPreferences(saved)
+      if (updateDraft) {
+        setPreferenceDraft({
+          ...saved,
+          watchedProductsText: saved.watchedProducts.join(', ')
+        })
+      }
+      setPreferencesError('')
+      return saved
+    } catch (error) {
+      console.error('Gagal menyimpan preferensi asisten:', error)
+      setPreferencesError(error.message || 'Preferensi asisten tidak dapat disimpan.')
+      return null
+    }
+  }
+
   function savePreferences(event) {
     event.preventDefault()
-    if (!chatUserId || preferencesOwner !== chatUserId) return
     const watchlist = preferenceDraft.watchedProductsText
       .split(/[,\n]/)
       .map((name) => name.trim())
@@ -359,21 +387,44 @@ export default function ChatApp() {
       setPreferencesError('Daftar produk pantauan maksimal 5 nama.')
       return
     }
-    try {
-      const saved = saveChatPreferences(window.localStorage, chatUserId, {
-        ...preferenceDraft,
-        watchedProducts: watchlist
-      })
-      setPreferences(saved)
-      setPreferenceDraft({
-        ...saved,
-        watchedProductsText: saved.watchedProducts.join(', ')
-      })
-      setPreferencesError('')
+    if (persistPreferences({
+      ...preferenceDraft,
+      watchedProducts: watchlist,
+      corrections: preferences.corrections
+    })) {
       setPreferencesOpen(false)
+    }
+  }
+
+  function submitCorrection(event, message) {
+    event.preventDefault()
+    setFeedbackError('')
+    try {
+      const correction = createChatCorrection(feedbackText, crypto.randomUUID())
+      const saved = persistPreferences({
+        ...preferences,
+        corrections: [...preferences.corrections, correction].slice(-12)
+      }, false)
+      if (!saved) {
+        setFeedbackError('Koreksi tidak dapat disimpan. Periksa pesan pada preferensi asisten.')
+        return
+      }
+      setMessages((current) => current.map((entry) =>
+        entry.id === message.id ? { ...entry, feedbackSubmitted: true } : entry
+      ))
+      setFeedbackMessageId('')
+      setFeedbackText('')
     } catch (error) {
-      console.error('Gagal menyimpan preferensi asisten:', error)
-      setPreferencesError(error.message || 'Preferensi asisten tidak dapat disimpan.')
+      setFeedbackError(error.message || 'Koreksi tidak dapat disimpan.')
+    }
+  }
+
+  function reviewCorrection(id, status) {
+    try {
+      const corrections = updateChatCorrection(preferences.corrections, id, status)
+      persistPreferences({ ...preferences, corrections }, false)
+    } catch (error) {
+      setPreferencesError(error.message || 'Status koreksi tidak dapat diperbarui.')
     }
   }
 
@@ -577,6 +628,7 @@ export default function ChatApp() {
           message: text,
           history,
           responseStyle: preferences.responseStyle,
+          approvedCorrections: getApprovedChatCorrections(preferences),
           attachmentName: file?.name || ''
         })
         setAssistantConnection({ status: 'connected', message: 'AI Groq terhubung.' })
@@ -627,7 +679,8 @@ export default function ChatApp() {
 
       if (plan.kind === 'query' && [
         'daily_summary', 'sales_summary', 'finance_summary', 'cashbook',
-        'transactions', 'purchases', 'product_performance', 'operational_insights'
+        'transactions', 'purchases', 'product_performance', 'operational_insights',
+        'sales_trend', 'product_stock_performance'
       ].includes(plan.query) && !plan.args?.period && !plan.args?.from && !plan.args?.to) {
         const activeDateRange = readDashboardDateRange()
         if (activeDateRange && (activeDateRange.from || activeDateRange.to)) {
@@ -639,7 +692,12 @@ export default function ChatApp() {
       }
 
       if (plan.kind === 'reply') {
-        appendMessage(setMessages, { role: 'assistant', text: plan.message, contextSafe: true })
+        appendMessage(setMessages, {
+          role: 'assistant',
+          text: plan.message,
+          contextSafe: true,
+          feedbackEligible: true
+        })
         return
       }
 
@@ -879,7 +937,36 @@ export default function ChatApp() {
                   watchedProductsText: event.target.value
                 }))} />
             </label>
-            <p className="chat-preferences-note">Daftar pantauan dan hasil data toko hanya diproses lokal. Hanya pilihan gaya balasan yang disertakan saat AI memahami pesan.</p>
+            <section className="chat-corrections" aria-label="Koreksi panduan AI">
+              <strong>Koreksi jawaban AI</strong>
+              <p className="chat-preferences-note">
+                Koreksi baru menunggu tinjauan. Yang disetujui saja dikirim sebagai panduan ke AI; simpanan berlaku untuk akun dan browser ini, tidak tersinkron.
+              </p>
+              {preferences.corrections.length
+                ? preferences.corrections.slice().reverse().map((correction) => (
+                    <article className="chat-correction" key={correction.id}>
+                      <p>{correction.text}</p>
+                      <small>
+                        {correction.status === 'approved'
+                          ? 'Disetujui dan aktif'
+                          : correction.status === 'rejected' ? 'Ditolak' : 'Menunggu tinjauan'}
+                      </small>
+                      {correction.status === 'pending' && (
+                        <div>
+                          <button type="button" onClick={() => reviewCorrection(correction.id, 'approved')}>Setujui & aktifkan</button>
+                          <button type="button" onClick={() => reviewCorrection(correction.id, 'rejected')}>Tolak</button>
+                        </div>
+                      )}
+                      {correction.status === 'approved' && (
+                        <div>
+                          <button type="button" onClick={() => reviewCorrection(correction.id, 'rejected')}>Nonaktifkan</button>
+                        </div>
+                      )}
+                    </article>
+                  ))
+                : <p className="chat-preferences-note">Belum ada koreksi yang diajukan.</p>}
+            </section>
+            <p className="chat-preferences-note">Daftar pantauan dan hasil data toko tidak dikirim ke AI. Hindari memasukkan data pribadi pada koreksi.</p>
             {preferencesError && <p className="chat-preferences-error" role="alert">{preferencesError}</p>}
             <div className="chat-preferences-actions">
               <button type="button" onClick={() => {
@@ -939,6 +1026,43 @@ export default function ChatApp() {
                   )}
                   {message.attachmentName && <span className="chat-attachment-label"><Icon name="image" size={14} />{message.attachmentName}</span>}
                 </div>
+
+                {message.feedbackEligible && !message.feedbackSubmitted && (
+                  <div className="chat-feedback">
+                    {feedbackMessageId === message.id
+                      ? (
+                          <form onSubmit={(event) => submitCorrection(event, message)}>
+                            <label>
+                              Saran koreksi (maks. 240 karakter)
+                              <textarea
+                                value={feedbackText}
+                                maxLength={240}
+                                onChange={(event) => setFeedbackText(event.target.value)}
+                                placeholder="Tuliskan panduan umum yang seharusnya diikuti AI."
+                                required
+                              />
+                            </label>
+                            <p>Jangan sertakan nama pelanggan, nomor telepon, email, atau hasil data toko.</p>
+                            {feedbackError && <p className="chat-preferences-error" role="alert">{feedbackError}</p>}
+                            <div>
+                              <button type="button" onClick={() => {
+                                setFeedbackMessageId('')
+                                setFeedbackError('')
+                              }}>Batal</button>
+                              <button type="submit">Ajukan untuk ditinjau</button>
+                            </div>
+                          </form>
+                        )
+                      : <button type="button" onClick={() => {
+                          setFeedbackMessageId(message.id)
+                          setFeedbackText('')
+                          setFeedbackError('')
+                        }}>Sarankan koreksi</button>}
+                  </div>
+                )}
+                {message.feedbackSubmitted && (
+                  <small className="chat-feedback-status">Koreksi menunggu tinjauan di Preferensi.</small>
+                )}
 
                 {message.draft && (
                   <section className="chat-action-card" aria-label="Pratinjau tindakan">

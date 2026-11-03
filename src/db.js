@@ -94,6 +94,35 @@ export async function getAll(store) {
   }
 }
 
+export async function getTransactionsByDateRange({ from, to }) {
+  const parsedFrom = from ? Date.parse(from) : null
+  const parsedTo = to ? Date.parse(to) : null
+  if ((!from && !to) || (from && !Number.isFinite(parsedFrom)) || (to && !Number.isFinite(parsedTo))
+    || (parsedFrom !== null && parsedTo !== null && parsedFrom >= parsedTo)) {
+    throw new Error('Rentang tanggal transaksi tidak valid.')
+  }
+
+  const client = getClient()
+  const rows = []
+  const pageSize = 1000
+  let lastId = 0
+  for (;;) {
+    let query = client
+      .from(tableFor('transactions'))
+      .select('id,createdAt,items')
+      .gt('id', lastId)
+      .order('id')
+      .limit(pageSize)
+    if (from) query = query.gte('createdAt', from)
+    if (to) query = query.lt('createdAt', to)
+    const { data, error } = await query
+    throwIfError(error, 'Gagal memuat riwayat transaksi pada rentang tanggal')
+    rows.push(...(data || []))
+    if (!data || data.length < pageSize) return rows
+    lastId = data[data.length - 1].id
+  }
+}
+
 export async function createBackupArchive() {
   const client = getClient()
   const { data: { user }, error: userError } = await client.auth.getUser()

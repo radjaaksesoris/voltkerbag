@@ -115,6 +115,16 @@ export function resolveFastQuery(message) {
     }
   }
 
+  const asksRestockForecast = words.some((word) => ['rekomendasi', 'perkiraan', 'estimasi'].includes(word))
+    && words.some((word) => ['restok', 'restock', 'stok'].includes(word))
+  if (asksRestockForecast) {
+    return {
+      kind: 'query',
+      query: 'operational_insights',
+      args: { includeRestock: true }
+    }
+  }
+
   if (words.some((word) => WRITE_TERMS.has(word))) return null
 
   if (words.some((word) => DEBT_TERMS.has(word))) {
@@ -132,6 +142,30 @@ export function resolveFastQuery(message) {
   }
 
   const period = queryPeriod(normalized)
+  const comparisonPeriod = /\b(?:hari ini|minggu ini|bulan ini|tahun ini)\b/.exec(normalized)?.[0]
+    || period
+  const asksSalesComparison = words.some((word) =>
+    ['bandingkan', 'dibanding', 'dibandingkan', 'perbandingan', 'tren', 'trend', 'anomali', 'vs', 'naik', 'turun'].includes(word)
+  ) && words.some((word) => ['penjualan', 'omzet', 'omset', 'pendapatan', 'sales'].includes(word))
+  if (asksSalesComparison) {
+    return {
+      kind: 'query',
+      query: 'sales_trend',
+      args: comparisonPeriod ? { period: comparisonPeriod } : {}
+    }
+  }
+
+  const asksCombinedProductStock = words.some((word) => PERFORMANCE_TERMS.has(word))
+    && words.some((word) => STOCK_TERMS.has(word))
+    && words.some((word) => ['menipis', 'rendah', 'sedikit', 'tipis', 'minim'].includes(word))
+  if (asksCombinedProductStock) {
+    return {
+      kind: 'query',
+      query: 'product_stock_performance',
+      args: period ? { period } : {}
+    }
+  }
+
   const asksInventoryValue = words.includes('nilai')
     && (words.some((word) => [...STOCK_TERMS, 'persediaan', 'inventaris', 'aset'].includes(word))
       || words.includes('modal')
@@ -464,7 +498,9 @@ export function resolveDirectQuery(message, hasAttachment = false) {
   const { words } = normalizeMessage(message)
   const plan = resolveFastQuery(message)
   if (!plan) return null
-  if (plan.query === 'operational_insights') return plan
+  if (plan.query === 'operational_insights'
+    || plan.query === 'sales_trend'
+    || plan.query === 'product_stock_performance') return plan
 
   const ambiguousTerms = new Set([
     'bagaimana', 'kenapa', 'mengapa', 'sebaiknya', 'rekomendasi', 'prediksi',
@@ -481,6 +517,8 @@ export function resolveDirectQuery(message, hasAttachment = false) {
   ) || words.includes('produk') && words.some((word) =>
     ['penjualan', 'omzet', 'omset', 'laba'].includes(word)
   )
+  if (plan.query === 'sales_trend' && hasPerformanceAnchor) return plan
+  if (plan.query === 'product_stock_performance' && hasPerformanceAnchor && hasStockAnchor) return plan
   const hasOtherDataAnchor = words.some((word) =>
     [...DEBT_TERMS, 'transaksi', 'transaksinya', 'nota', 'pembelian', 'belanja'].includes(word)
   )
@@ -488,7 +526,8 @@ export function resolveDirectQuery(message, hasAttachment = false) {
 
   const directIntents = new Set([
     'debts', 'debt_payments', 'cashbook', 'inventory_summary', 'daily_summary', 'finance_summary',
-    'product_performance', 'operational_insights', 'transactions', 'purchases', 'customers',
+    'product_performance', 'operational_insights', 'sales_trend', 'product_stock_performance',
+    'transactions', 'purchases', 'customers',
     'vendors', 'expeditions', 'categories', 'units'
   ])
 

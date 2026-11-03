@@ -39,7 +39,14 @@ async function throwAssistantError(error, fallback) {
   throw assistantError
 }
 
-export async function requestAssistantPlan({ message, history, pendingAction, attachmentName, responseStyle }) {
+export async function requestAssistantPlan({
+  message,
+  history,
+  pendingAction,
+  attachmentName,
+  responseStyle,
+  approvedCorrections
+}) {
   const { data, error } = await getClient().functions.invoke('chat-assistant', {
     body: {
       mode: 'plan',
@@ -47,7 +54,8 @@ export async function requestAssistantPlan({ message, history, pendingAction, at
       history,
       pendingAction: pendingAction || null,
       attachmentName: attachmentName || '',
-      responseStyle
+      responseStyle,
+      approvedCorrections: Array.isArray(approvedCorrections) ? approvedCorrections.slice(-6) : []
     }
   })
   if (error) await throwAssistantError(error, 'Gagal menghubungi asisten chat.')

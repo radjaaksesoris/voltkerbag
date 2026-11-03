@@ -54,6 +54,22 @@ export function createOperationalInsights({ dateRange, summary, products, watche
     product_count: products.length,
     inventory_asset: Number(summary.inventory?.total_asset) || 0,
     low_stock_count: lowStockProducts.length,
+    alerts: [
+      ...(lowStockProducts.length
+        ? [{
+            type: 'low_stock',
+            count: lowStockProducts.length,
+            message: lowStockProducts.length + ' produk memiliki stok rendah.'
+          }]
+        : []),
+      ...(Number(summary.pending_expedition_count) > 0
+        ? [{
+            type: 'pending_expedition',
+            count: Number(summary.pending_expedition_count),
+            message: Number(summary.pending_expedition_count) + ' biaya ekspedisi menunggu nominal aktual.'
+          }]
+        : [])
+    ],
     low_stock_products: lowStockProducts.slice(0, 5).map((product) => ({
       name: product.name,
       stock: stockLabel(product)

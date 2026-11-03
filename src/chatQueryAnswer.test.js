@@ -277,3 +277,43 @@ test('reports current inventory count, low stock count, and recorded cost value'
     total_asset: 1_500_000
   }), 'Jumlah produk: 12\nProduk dengan stok rendah (maksimal 5 satuan utama): 3\nNilai modal seluruh stok: Rp\u00a01.500.000')
 })
+
+test('formats period comparison with an explicit low-sample caveat', () => {
+  const answer = formatQueryAnswer('sales_trend', {
+    current_range: { from: '2026-03-01', to: '2026-03-10' },
+    previous_range: { from: '2026-02-19', to: '2026-02-28' },
+    current_sales: 150_000,
+    previous_sales: 100_000,
+    change_amount: 50_000,
+    change_percent: 50,
+    current_transaction_count: 2,
+    previous_transaction_count: 3,
+    sufficient_data: false,
+    significant_change: false
+  })
+
+  assert.match(answer, /Perubahan: \+50%/)
+  assert.match(answer, /minimal 3 transaksi di tiap periode/)
+})
+
+test('formats restock estimates as advisory and the combined low-stock seller query', () => {
+  const briefing = formatQueryAnswer('operational_insights', {
+    date_range: { from: '2026-03-01', to: '2026-03-10' },
+    restock: {
+      data_sufficient: true,
+      products: [{
+        name: 'Tas A',
+        stock: '3 pcs',
+        estimated_stock_days: 2.5,
+        suggested_additional_stock_units: 14,
+        suggested_additional: '14 pcs'
+      }]
+    },
+    recommendations: []
+  })
+  assert.match(briefing, /tambahan sekitar 14 pcs/)
+  assert.match(briefing, /tidak mengubah stok/)
+  assert.match(formatQueryAnswer('product_stock_performance', {
+    products: [{ name: 'Tas A', stock: '2 pcs', sales: 30_000, quantity_pcs: 3 }]
+  }), /Tas A · stok 2 pcs/)
+})
