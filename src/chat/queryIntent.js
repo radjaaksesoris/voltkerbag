@@ -53,6 +53,18 @@ function normalizeMessage(message) {
 }
 
 function queryPeriod(normalized) {
+  const dateMatch = normalized.match(new RegExp(
+    String.raw`\b(?:tanggal\s+)?(\d{1,2})\s+(${PERIOD_MONTHS.join('|')})(?:\s+(\d{4}))?\b`
+  ))
+  if (dateMatch) {
+    return ['tanggal', dateMatch[1], dateMatch[2], dateMatch[3]].filter(Boolean).join(' ')
+  }
+  const previousMonthDay = normalized.match(/\btanggal\s+(\d{1,2})\s+bulan\s+(?:lalu|kemarin)\b/)
+  if (previousMonthDay) return 'tanggal ' + previousMonthDay[1] + ' bulan lalu'
+  const previousWeekday = normalized.match(
+    /\b(?:hari\s+)?(senin|selasa|rabu|kamis|jumat|sabtu|minggu)\s+kemarin\b/
+  )
+  if (previousWeekday) return 'hari ' + previousWeekday[1] + ' kemarin'
   const monthMatch = normalized.match(new RegExp(
     String.raw`\b(?:bulan\s+)?(${PERIOD_MONTHS.join('|')})(?:\s+(\d{4}))?\b`
   ))
@@ -395,7 +407,7 @@ export function resolveFastQuery(message) {
   }
 
   const asksSalesSummary = words.some((word) =>
-    ['penjualan', 'omzet', 'omset', 'laba', 'ringkasan', 'ringkas', 'rekap', 'summary'].includes(word)
+    ['penjualan', 'omzet', 'omset', 'pendapatan', 'laba', 'ringkasan', 'ringkas', 'rekap', 'summary'].includes(word)
   )
   const asksCashFlow = words.some((word) =>
     ['pemasukan', 'pengeluaran', 'biaya', 'income', 'expense'].includes(word)

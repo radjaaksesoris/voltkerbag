@@ -11,7 +11,7 @@ import { formatPurchaseNote, parsePurchaseNote } from '../purchaseNote'
 import { dateRangeTimestamps, localDateValue } from '../dateFilter'
 import { isSafeRupiahAmount } from '../money'
 import { filterCustomerDebts } from './customerDebt'
-import { namedMonthDateRange } from './dateRange.js'
+import { namedMonthDateRange, specificDateRangeForPeriod } from './dateRange.js'
 import { createOperationalInsights } from './operationalInsights.js'
 import { compareSalesPeriods, getPreviousDateRange, rankLowStockSellers, recommendRestock } from './smartInsights.js'
 import {
@@ -105,27 +105,29 @@ function findByName(rows, name, label) {
   throw new Error(label + ' "' + cleanName + '" tidak ditemukan.')
 }
 
-export function dateRangeForQuery(args = {}) {
-  const today = localDateValue(new Date())
+export function dateRangeForQuery(args = {}, now = new Date()) {
+  const today = localDateValue(now)
   const range = String(args.period || '').toLocaleLowerCase('id-ID')
+  const specificDateRange = specificDateRangeForPeriod(range, now)
+  if (specificDateRange) return specificDateRange
   const namedMonthRange = namedMonthDateRange(range)
   if (namedMonthRange) return namedMonthRange
   if (range.includes('bulan')) {
     if (range.includes('lalu') || range.includes('kemarin')) {
-      const current = new Date()
+      const current = now
       return {
         from: localDateValue(new Date(current.getFullYear(), current.getMonth() - 1, 1)),
         to: localDateValue(new Date(current.getFullYear(), current.getMonth(), 0))
       }
     }
-    const current = new Date()
+    const current = now
     return {
       from: localDateValue(new Date(current.getFullYear(), current.getMonth(), 1)),
       to: localDateValue(new Date(current.getFullYear(), current.getMonth() + 1, 0))
     }
   }
   if (range.includes('tahun')) {
-    const current = new Date()
+    const current = now
     const year = current.getFullYear() - (range.includes('lalu') || range.includes('kemarin') ? 1 : 0)
     return {
       from: localDateValue(new Date(year, 0, 1)),
@@ -133,13 +135,13 @@ export function dateRangeForQuery(args = {}) {
     }
   }
   if (range.includes('minggu')) {
-    const current = new Date()
+    const current = now
     const mondayOffset = (current.getDay() + 6) % 7
     const monday = new Date(current.getFullYear(), current.getMonth(), current.getDate() - mondayOffset)
     return { from: localDateValue(monday), to: today }
   }
   if (range.includes('kemarin')) {
-    const yesterday = new Date()
+    const yesterday = new Date(now)
     yesterday.setDate(yesterday.getDate() - 1)
     const date = localDateValue(yesterday)
     return { from: date, to: date }

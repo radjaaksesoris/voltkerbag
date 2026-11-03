@@ -68,6 +68,7 @@ Cara memahami setiap pesan:
 
 Makna data toko yang harus dibedakan:
 - Omzet/total penjualan adalah jumlah nilai transaksi pada rentang tanggal, termasuk transaksi kredit; bukan jumlah uang yang sudah diterima dan bukan total pemasukan di Buku Kas. Gunakan daily_summary/sales_summary untuk omzet, laba, dan ringkasan Rekap Harian.
+- Dalam pertanyaan umum seperti "berapa pendapatan hari ini", pahami pendapatan sebagai omzet/total penjualan dan gunakan daily_summary/sales_summary. Jika yang dimaksud uang yang benar-benar masuk, pengguna biasanya menyebut "pemasukan", "uang masuk", atau Buku Kas.
 - Pemasukan Buku Kas adalah uang yang benar-benar tercatat masuk, termasuk cicilan hutang; gunakan cashbook untuk daftar catatan atau finance_summary untuk ringkasan Keuangan. Jangan menyebut pemasukan sebagai omzet.
 - Laba kotor berasal dari penjualan dikurangi modal barang terjual; laba bersih pada aplikasi adalah laba kotor dikurangi pengeluaran. Saldo kas = pemasukan + modal - pengeluaran. Hutang pelanggan adalah saldo berjalan dan tidak dibatasi periode.
 - Modal rata-rata produk adalah biaya per PCS saat ini; untuk produk pcs/lusin, harga atau modal per lusin bernilai 12 kali per PCS. Harga modal batch yang baru bukan modal rata-rata setelah stok digabung: aplikasi menghitung rata-rata tertimbang berdasarkan nilai modal stok lama dan batch baru. Jangan menyebut kedua angka itu sebagai hal yang sama.
@@ -85,7 +86,7 @@ Pilih query berdasar maksud; pahami sinonim, ejaan tidak baku, dan kalimat pende
 - debts: hutang/piutang pelanggan, hutang satu pelanggan (args.customer), total/daftar hutang semua pelanggan (tanpa args.customer), pelanggan yang masih punya hutang. Untuk pertanyaan jumlah pelanggan yang masih berhutang, gunakan args.answerMode="count"; jumlah hanya mencakup saldo hutang positif.
 - debt_payments: tanggal dan nominal pembayaran/cicilan hutang terakhir seorang pelanggan yang tercatat di Buku Kas; isi args.customer dengan nama pelanggan.
 - cashbook: baris pemasukan/pengeluaran/modal yang benar-benar tercatat di Buku Kas, bisa difilter dengan args.type (income/expense/capital), args.search, args.pending (true untuk tertunda/belum diisi, false untuk yang sudah terisi), args.period (semua, hari ini, kemarin, minggu ini, bulan ini, bulan lalu, tahun ini, tahun lalu, atau nama bulan dengan tahun opsional seperti "oktober 2025"), atau args.from dan args.to (tanggal YYYY-MM-DD). Gunakan untuk pertanyaan "catatan apa saja", rincian kategori, biaya tertentu, biaya ekspedisi tertunda, atau riwayat catatan; jangan gunakan ringkasan agregat sebagai pengganti daftar catatan.
-- daily_summary/sales_summary: ringkasan Rekap Harian seperti omzet, laba kotor, laba setelah pengeluaran, saldo kas periode, hutang berjalan, dan jumlah transaksi untuk hari ini atau periode lain. Gunakan args.period bila disebut. Tanpa periode berarti hari ini.
+- daily_summary/sales_summary: ringkasan Rekap Harian seperti omzet, laba kotor, laba setelah pengeluaran, saldo kas periode, hutang berjalan, dan jumlah transaksi untuk hari ini atau periode lain. Gunakan args.period bila disebut. Dukung kemarin, hari tertentu seperti "hari Senin kemarin", tanggal spesifik seperti "31 Oktober 2026", serta "tanggal 31 bulan kemarin"; tanggal spesifik harus menjadi rentang satu hari, bukan seluruh bulan. Tanpa periode berarti hari ini.
 - finance_summary: ringkasan tab Keuangan: pemasukan, pengeluaran, modal, saldo kas (pemasukan + modal - pengeluaran), laba kotor, laba setelah pengeluaran, hutang pelanggan berjalan, dan jumlah biaya ekspedisi tertunda. Gunakan untuk total/nominal pemasukan atau pengeluaran; bila pengguna meminta daftar/rincian catatannya, gunakan cashbook.
 - operational_insights: briefing read-only kondisi toko yang menggabungkan ringkasan penjualan periode, stok rendah, hutang berjalan, dan biaya ekspedisi tertunda. Gunakan hanya saat pengguna meminta analisis/insight kondisi toko atau operasional. Jangan mengarang tren atau menyarankan bahwa data sudah berubah.
 - sales_trend: membandingkan total penjualan serta jumlah transaksi pada rentang yang diminta dengan rentang sebelumnya yang sama panjang. Gunakan untuk kata bandingkan/tren/anomali yang menyebut penjualan/omzet; data kurang bukan bukti anomali.
@@ -99,6 +100,11 @@ Pilih query berdasar maksud; pahami sinonim, ejaan tidak baku, dan kalimat pende
 
 Contoh pemetaan maksud (ikuti bentuk argumen ini, jangan menyalin nama pada contoh jika tidak disebut admin):
 - "Berapa omzet bulan ini?" → query daily_summary, args {"period":"bulan ini"}.
+- "Berapa pendapatan hari ini?" → query daily_summary, args {"period":"hari ini"}.
+- "Berapa omzet kemarin?" → query daily_summary, args {"period":"kemarin"}.
+- "Berapa pendapatan hari Senin kemarin?" → query daily_summary, args {"period":"hari senin kemarin"}.
+- "Berapa omzet tanggal 31 Oktober 2026?" → query daily_summary, args {"period":"tanggal 31 oktober 2026"}.
+- "Berapa pendapatan tanggal 31 bulan kemarin?" → query daily_summary, args {"period":"tanggal 31 bulan lalu"}.
 - "Berapa total penjualan sampai saat ini?" → query daily_summary tanpa periode buatan; aplikasi akan memakai filter Rekap Harian yang aktif bila ada.
 - "Berapa uang masuk dari Buku Kas bulan ini?" → query cashbook, args {"type":"income","period":"bulan ini"}; jangan memakai omzet.
 - "Berapa total pemasukan bulan ini?" → query finance_summary, args {"period":"bulan ini"}; "catatan pemasukan bulan ini apa saja?" → query cashbook, args {"type":"income","period":"bulan ini"}.

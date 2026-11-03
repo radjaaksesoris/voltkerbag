@@ -304,15 +304,16 @@ export function formatQueryAnswer(intent, data = {}) {
     return [
       'Ringkasan penjualan',
       ...(periodLabel ? [periodLabel] : []),
-      'Transaksi: ' + (Number(data.transaction_count) || 0),
-      'Total penjualan: ' + rupiah(data.sales_total),
-      'Laba kotor: ' + rupiah(data.gross_profit),
-      'Laba bersih: ' + rupiah(data.net_profit),
-      'Pemasukan: ' + rupiah(data.income) + ' · Pengeluaran: ' + rupiah(data.expense),
-      'Saldo kas: ' + rupiah(data.cash_balance),
-      'Hutang pelanggan: ' + rupiah(data.customer_debt),
+      '• Transaksi: **' + (Number(data.transaction_count) || 0) + '**',
+      '• Omzet (total penjualan): ' + rupiah(data.sales_total),
+      '• Laba kotor: ' + rupiah(data.gross_profit),
+      '• Laba bersih: ' + rupiah(data.net_profit),
+      '• Pemasukan Buku Kas: ' + rupiah(data.income),
+      '• Pengeluaran: ' + rupiah(data.expense),
+      '• Saldo kas: ' + rupiah(data.cash_balance),
+      '• Hutang pelanggan berjalan: ' + rupiah(data.customer_debt),
       ...(Number(data.pending_expedition_count) > 0
-        ? ['Biaya ekspedisi tertunda: ' + data.pending_expedition_count]
+        ? ['• Biaya ekspedisi tertunda: ' + data.pending_expedition_count]
         : [])
     ].join('\n')
   }

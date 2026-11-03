@@ -32,6 +32,29 @@ test('supports exact sales recap and modal-price questions from chat examples', 
     query: 'daily_summary',
     args: { period: 'oktober 2025' }
   })
+  assert.deepEqual(resolveDirectQuery('Berapa pendapatan hari ini'), {
+    kind: 'query',
+    query: 'daily_summary',
+    args: { period: 'hari ini' }
+  })
+  assert.deepEqual(resolveFallbackQuery('Berapa pendapatan hari ini', {
+    kind: 'query',
+    query: 'cashbook',
+    args: { type: 'income', period: 'hari ini' }
+  }), {
+    kind: 'query',
+    query: 'daily_summary',
+    args: { period: 'hari ini' }
+  })
+  for (const question of [
+    'Berapa omzet kemarin',
+    'Berapa pendapatan hari Senin kemarin',
+    'Berapa omzet tanggal 31 Oktober 2026',
+    'Berapa pendapatan tanggal 31 bulan kemarin'
+  ]) {
+    assert.equal(resolveDirectQuery(question)?.query, 'daily_summary', question)
+    assert.match(resolveDirectQuery(question)?.args.period || '', /^(kemarin|hari senin kemarin|tanggal 31 oktober 2026|tanggal 31 bulan lalu)$/)
+  }
 })
 
 test('routes explicit store-operation analysis to the read-only operational briefing', () => {
@@ -484,8 +507,8 @@ test('formats sales and finance summaries in a more natural chat style', () => {
 
   assert.match(answer, /Ringkasan penjualan/)
   assert.match(answer, /Periode 1 Oktober 2026 sampai 31 Oktober 2026/)
-  assert.match(answer, /Total penjualan: Rp/)
-  assert.match(answer, /Laba bersih: Rp/)
+  assert.match(answer, /• Omzet \(total penjualan\): Rp/)
+  assert.match(answer, /• Laba bersih: Rp/)
 })
 
 test('covers common admin report and contact questions', () => {

@@ -248,10 +248,11 @@ test('reports sales and finance metrics from query data', () => {
     customer_debt: 75_000
   })
 
-  assert.match(answer, /Transaksi: 2/)
+  assert.match(answer, /• Transaksi: \*\*2\*\*/)
   assert.match(answer, /Periode 1 Oktober 2026 sampai 31 Oktober 2026/)
-  assert.match(answer, /Total penjualan: Rp\s?500\.000/)
-  assert.match(answer, /Laba kotor: Rp\s?100\.000/)
+  assert.match(answer, /• Omzet \(total penjualan\): Rp\s?500\.000/)
+  assert.match(answer, /• Laba kotor: Rp\s?100\.000/)
+  assert.match(answer, /• Pemasukan Buku Kas: Rp\s?500\.000/)
   assert.match(formatQueryAnswer('finance_summary', {
     income: 500_000,
     expense: 50_000,
