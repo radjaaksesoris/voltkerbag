@@ -12,9 +12,22 @@ test('formats stock matches and sale prices without an AI summary request', () =
     }]
   })
 
-  assert.match(answer, /Tas Aventador: 4 lusin/)
+  assert.match(answer, /\*\*Tas Aventador\*\* — Stok 4 lusin/)
   assert.match(answer, /Rp\s?125\.000\/pcs/)
   assert.match(answer, /Rp\s?1\.200\.000\/lusin/)
+})
+
+test('formats stock rankings as a heading and a clearly separated bold product list', () => {
+  const answer = formatQueryAnswer('stock', {
+    stock_order: 'asc',
+    matches: [
+      { name: 'Weist Bag', stock: '17 lusin', sale_prices: { pcs: 16_250, lusin: 195_000 } },
+      { name: 'AIGNER', stock: '20 lusin', sale_prices: { pcs: 20_000, lusin: 145_000 } }
+    ]
+  })
+
+  assert.match(answer, /^Produk dengan stok paling sedikit.*:\n• \*\*Weist Bag\*\*/)
+  assert.match(answer, /\n• \*\*AIGNER\*\*/)
 })
 
 test('formats operational insights with the analyzed period and read-only recommendations', () => {
@@ -50,21 +63,22 @@ test('labels ranked stock answers and reports stock units', () => {
     matches: [{ name: 'Tas A', stock: '2 lusin', sale_prices: {} }]
   })
 
-  test('reports genuinely low-stock products instead of only ranking all products', () => {
-    const answer = formatQueryAnswer('stock', {
-      low_stock_only: true,
-      matches: [{ name: 'Tas A', stock: '3 pcs', sale_prices: {} }]
-    })
-    assert.match(answer, /Produk dengan stok rendah/)
-    assert.equal(formatQueryAnswer('stock', {
-      low_stock_only: true,
-      matches: []
-    }), 'Tidak ada produk dengan stok rendah (maksimal 5 satuan utama).')
-  })
-
   assert.match(answer, /Produk dengan stok paling sedikit/)
   assert.match(answer, /berdasarkan jumlah PCS/)
-  assert.match(answer, /Tas A: 2 lusin/)
+  assert.match(answer, /\*\*Tas A\*\* — Stok 2 lusin/)
+})
+
+test('reports genuinely low-stock products instead of only ranking all products', () => {
+  const answer = formatQueryAnswer('stock', {
+    low_stock_only: true,
+    matches: [{ name: 'Tas A', stock: '3 pcs', sale_prices: {} }]
+  })
+  assert.match(answer, /Produk dengan stok rendah/)
+  assert.match(answer, /\*\*Tas A\*\* — Stok 3 pcs/)
+  assert.equal(formatQueryAnswer('stock', {
+    low_stock_only: true,
+    matches: []
+  }), 'Tidak ada produk dengan stok rendah (maksimal 5 satuan utama).')
 })
 
 test('includes HPP per sale unit for direct cost questions', () => {

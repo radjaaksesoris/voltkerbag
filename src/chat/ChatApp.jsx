@@ -46,12 +46,81 @@ function formatData(data) {
 }
 
 function renderChatText(text) {
-  const currencyParts = String(text).split(/([−-]?Rp[\s\u00a0]*\d[\d.,]*)/gi)
-  return currencyParts.map((part, index) =>
-    /^[−-]?Rp[\s\u00a0]*\d[\d.,]*$/i.test(part)
-      ? <strong key={index}>{part}</strong>
-      : part
-  )
+  const lines = String(text || '').split(/\r?\n/)
+  const blocks = []
+  let index = 0
+
+  const renderInline = (value, keyPrefix) => value
+    .split(/(\*\*[^*]+\*\*|[−-]?Rp[\s\u00a0]*\d[\d.,]*)/gi)
+    .filter(Boolean)
+    .map((part, partIndex) => {
+      if (/^\*\*[^*]+\*\*$/.test(part)) {
+        return <strong key={keyPrefix + '-strong-' + partIndex}>{part.slice(2, -2)}</strong>
+      }
+      if (/^[−-]?Rp[\s\u00a0]*\d[\d.,]*$/i.test(part)) {
+        return <strong key={keyPrefix + '-currency-' + partIndex}>{part}</strong>
+      }
+      return part
+    })
+
+  while (index < lines.length) {
+    const line = lines[index].trim()
+    if (!line) {
+      index += 1
+      continue
+    }
+
+    const bullet = line.match(/^[•*-]\s+(.+)$/)
+    const numbered = line.match(/^\d+[.)]\s+(.+)$/)
+    if (bullet || numbered) {
+      const isNumbered = Boolean(numbered)
+      const items = []
+      while (index < lines.length) {
+        const current = lines[index].trim()
+        const match = isNumbered
+          ? current.match(/^\d+[.)]\s+(.+)$/)
+          : current.match(/^[•*-]\s+(.+)$/)
+        if (!match) break
+        items.push(match[1])
+        index += 1
+      }
+      const List = isNumbered ? 'ol' : 'ul'
+      blocks.push(
+        <List className="chat-rich-list" key={'list-' + index}>
+          {items.map((item, itemIndex) => (
+            <li key={'item-' + itemIndex}>{renderInline(item, 'list-' + index + '-' + itemIndex)}</li>
+          ))}
+        </List>
+      )
+      continue
+    }
+
+    const explicitHeading = line.match(/^#{1,3}\s+(.+)$/)
+    const colonHeading = line.endsWith(':') && line.length <= 90
+    const firstLineHeading = blocks.length === 0
+      && lines.slice(index + 1).some((nextLine) => nextLine.trim())
+      && line.length <= 52
+      && !/[.!?]$/.test(line)
+    if (explicitHeading || colonHeading || firstLineHeading) {
+      const heading = explicitHeading ? explicitHeading[1] : line.replace(/:$/, '')
+      blocks.push(
+        <h3 className="chat-rich-heading" key={'heading-' + index}>
+          {renderInline(heading, 'heading-' + index)}
+        </h3>
+      )
+      index += 1
+      continue
+    }
+
+    blocks.push(
+      <p className="chat-rich-paragraph" key={'paragraph-' + index}>
+        {renderInline(line, 'paragraph-' + index)}
+      </p>
+    )
+    index += 1
+  }
+
+  return <div className="chat-rich-text">{blocks}</div>
 }
 
 export default function ChatApp() {
@@ -1016,7 +1085,7 @@ export default function ChatApp() {
                   <span className="chat-bubble-kicker" aria-hidden="true">
                     {message.role === 'user' ? 'PESAN ADMIN' : 'VOLTKER · ASISTEN TOKO'}
                   </span>
-                  <p>{renderChatText(message.text)}</p>
+                  {renderChatText(message.text)}
                   {message.attachmentPreviewUrl && (
                     <img
                       className="chat-message-image"

@@ -615,6 +615,55 @@ body {
   color: #e8c5b1;
 }
 
+.chat-bubble .chat-rich-text {
+  max-width: 68ch;
+  font-size: 13px;
+  line-height: 1.65;
+  text-wrap: pretty;
+}
+
+.chat-bubble .chat-rich-heading {
+  margin: 0 0 9px;
+  color: #42332d;
+  font-size: 13px;
+  font-weight: 800;
+  line-height: 1.45;
+}
+
+.chat-bubble .chat-rich-paragraph {
+  margin: 0 0 7px;
+}
+
+.chat-bubble .chat-rich-paragraph:last-child {
+  margin-bottom: 0;
+}
+
+.chat-bubble .chat-rich-list {
+  display: grid;
+  gap: 7px;
+  margin: 2px 0 10px;
+  padding-left: 19px;
+}
+
+.chat-bubble .chat-rich-list li {
+  padding-left: 2px;
+}
+
+.chat-bubble .chat-rich-list li::marker {
+  color: #8a4a43;
+  font-weight: 700;
+}
+
+.chat-bubble .chat-rich-text strong {
+  color: #312722;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+.chat-message-user .chat-rich-text strong {
+  color: inherit;
+}
+
 .chat-bubble p {
   margin: 0;
   white-space: pre-wrap;
