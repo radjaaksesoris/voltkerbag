@@ -407,7 +407,7 @@ export default function App() {
       </aside>
 
       <main className="main">
-        <header className="topbar">
+        <header className={'topbar' + (page === 'pos' ? ' topbar-pos-page' : '')}>
           <div className="topbar-start">
             <button
               className="nav-toggle"

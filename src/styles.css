@@ -534,6 +534,9 @@ button:focus-visible, input:focus-visible, select:focus-visible {
 .topbar-title span { color: rgba(255, 250, 243, .9); font-size: 13px; }
 .topbar-start { display: flex; align-items: center; gap: 15px; min-width: 0; }
 .topbar-start, .session-control { z-index: 1; }
+@media (min-width: 641px) {
+  .topbar-pos-page { display: none; }
+}
 .nav-toggle {
   display: inline-flex;
   flex: 0 0 auto;
