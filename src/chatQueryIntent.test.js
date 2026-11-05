@@ -253,6 +253,13 @@ test('routes customer debt questions to the debt query with an optional customer
     query: 'debts',
     args: {}
   })
+  for (const question of ['Rekap hutang pelanggan', 'Ringkasan hutang pelanggan']) {
+    assert.deepEqual(resolveDirectQuery(question), {
+      kind: 'query',
+      query: 'debts',
+      args: {}
+    })
+  }
   for (const question of ['total hutang semua pelanggan', 'berapa total hutang seluruh pelanggan']) {
     assert.deepEqual(resolveFastQuery(question), {
       kind: 'query',
@@ -276,6 +283,18 @@ test('routes customer debt questions to the debt query with an optional customer
     })
   }
   assert.equal(resolveFastQuery('bayar hutang Andri'), null)
+})
+
+test('routes customer debt item detail requests to credit transaction history', () => {
+  assert.deepEqual(resolveDirectQuery('Tampilkan detail item Pelanggan Jajang saat berhutang'), {
+    kind: 'query',
+    query: 'transactions',
+    args: {
+      customer: 'jajang',
+      paymentType: 'credit',
+      includeDetails: true
+    }
+  })
 })
 
 test('does not interpret wording around outstanding debt as part of a customer name', () => {

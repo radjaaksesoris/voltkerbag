@@ -23,7 +23,7 @@ const DEBT_QUESTION_TERMS = new Set([
   'cari', 'tampilkan', 'daftar', 'apakah', 'tolong', 'dong', 'ada', 'siapa', 'mana', 'pelanggan',
   'customer', 'yang', 'masih', 'punya', 'mempunyai', 'memiliki', 'milik', 'atas', 'nama', 'saja', 'dari',
   'belum', 'lunas', 'berjalan', 'aktif',
-  'semua', 'seluruh', 'seluruhnya', 'keseluruhan'
+  'semua', 'seluruh', 'seluruhnya', 'keseluruhan', 'rekap', 'ringkasan', 'ringkas', 'summary'
 ])
 const DEBT_PAYMENT_HISTORY_TERMS = new Set([
   ...DEBT_TERMS, 'pembayaran', 'bayar', 'bayarkan', 'membayar', 'dibayar',
@@ -177,6 +177,26 @@ export function resolveFastQuery(message) {
       kind: 'query',
       query: 'debt_payments',
       args: customer ? { customer } : {}
+    }
+  }
+
+  const asksDebtItemDetails = words.some((word) => DEBT_TERMS.has(word))
+    && words.some((word) => ['item', 'barang', 'produk'].includes(word))
+    && words.some((word) => ['detail', 'rincian', 'tampilkan', 'lihat'].includes(word))
+  if (asksDebtItemDetails) {
+    const customer = removeTerms(words, new Set([
+      ...DEBT_TERMS, ...DEBT_QUESTION_TERMS,
+      'detail', 'rincian', 'item', 'barang', 'produk',
+      'saat', 'ketika', 'waktu', 'transaksi', 'transaksinya', 'dibeli', 'beli'
+    ]))
+    return {
+      kind: 'query',
+      query: 'transactions',
+      args: {
+        ...(customer ? { customer } : {}),
+        paymentType: 'credit',
+        includeDetails: true
+      }
     }
   }
 
