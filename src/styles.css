@@ -2112,14 +2112,14 @@ label { display: block; margin-bottom: 6px; color: var(--muted); font-size: 11px
 }
 .content .stat-card.highlight.dashboard-revenue-card,
 .content .finance-summary-grid .stat-card.highlight {
-  border-color: #9cbea7;
-  background: #dcebe1;
-  box-shadow: 0 4px 12px rgba(29, 72, 48, .16);
+  border-color: #b87918;
+  background: #f5d477;
+  box-shadow: 0 4px 14px rgba(83, 55, 11, .26);
 }
 .content .stat-card.highlight.dashboard-revenue-card span,
+.content .finance-summary-grid .stat-card.highlight span { color: #3e2b08; }
 .content .stat-card.highlight.dashboard-revenue-card strong,
-.content .finance-summary-grid .stat-card.highlight span,
-.content .finance-summary-grid .stat-card.highlight strong { color: #234b36; }
+.content .finance-summary-grid .stat-card.highlight strong { color: #681b20; }
 .content .product-card {
   border-color: rgba(255, 255, 255, .62);
   background: rgba(255, 253, 248, .88);
