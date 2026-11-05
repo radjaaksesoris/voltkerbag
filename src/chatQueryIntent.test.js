@@ -263,15 +263,40 @@ test('routes customer debt questions to the debt query with an optional customer
   for (const question of [
     'berapa banyak pelanggan yang berhutang',
     'jumlah pelanggan yang berutang',
-    'berapa jumlah customer yang punya hutang'
+    'berapa jumlah customer yang punya hutang',
+    'Siapa saja pelanggan yang masih mempunyai hutang?'
+  ]) {
+    const expectedArgs = question.startsWith('Siapa')
+      ? {}
+      : { answerMode: 'count' }
+    assert.deepEqual(resolveDirectQuery(question), {
+      kind: 'query',
+      query: 'debts',
+      args: expectedArgs
+    })
+  }
+  assert.equal(resolveFastQuery('bayar hutang Andri'), null)
+})
+
+test('does not interpret wording around outstanding debt as part of a customer name', () => {
+  for (const question of [
+    'Siapa saja pelanggan yang masih mempunyai hutang?',
+    'Pelanggan mana yang masih memiliki utang?',
+    'Siapa pelanggan yang hutangnya belum lunas?',
+    'Daftar pelanggan yang punya hutang berjalan',
+    'Tampilkan semua pelanggan yang masih berutang'
   ]) {
     assert.deepEqual(resolveDirectQuery(question), {
       kind: 'query',
       query: 'debts',
-      args: { answerMode: 'count' }
-    })
+      args: {}
+    }, question)
   }
-  assert.equal(resolveFastQuery('bayar hutang Andri'), null)
+  assert.deepEqual(resolveDirectQuery('Berapa hutang Andri yang belum lunas?'), {
+    kind: 'query',
+    query: 'debts',
+    args: { customer: 'andri' }
+  })
 })
 
 test('formats a count of customers with a positive outstanding debt balance', () => {

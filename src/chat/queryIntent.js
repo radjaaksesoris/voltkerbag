@@ -20,8 +20,9 @@ const DEBT_TERMS = new Set([
 ])
 const DEBT_QUESTION_TERMS = new Set([
   'berapa', 'banyak', 'sisa', 'sisanya', 'tersisa', 'total', 'jumlah', 'cek', 'lihat',
-  'cari', 'tampilkan', 'apakah', 'tolong', 'dong', 'ada', 'siapa', 'pelanggan',
-  'customer', 'yang', 'masih', 'punya', 'milik', 'atas', 'nama', 'saja', 'dari',
+  'cari', 'tampilkan', 'daftar', 'apakah', 'tolong', 'dong', 'ada', 'siapa', 'mana', 'pelanggan',
+  'customer', 'yang', 'masih', 'punya', 'mempunyai', 'memiliki', 'milik', 'atas', 'nama', 'saja', 'dari',
+  'belum', 'lunas', 'berjalan', 'aktif',
   'semua', 'seluruh', 'seluruhnya', 'keseluruhan'
 ])
 const DEBT_PAYMENT_HISTORY_TERMS = new Set([
