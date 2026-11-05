@@ -319,18 +319,18 @@ export function formatQueryAnswer(intent, data = {}) {
           && !entry.category.toLocaleLowerCase('id-ID').includes(entry.note.toLocaleLowerCase('id-ID'))
           ? ' (' + entry.note + ')'
           : ''
-        return '• ' + label + note + ': ' + rupiah(entry.amount)
+        return '• ' + label + note + ' — ' + rupiah(entry.amount)
       })
       return [
-        'Selisih laba kotor dan laba bersih: ' + rupiah(difference) + '.',
-        'Laba kotor ' + rupiah(data.gross_profit) + ' dikurangi laba bersih ' +
-          rupiah(data.net_profit) + ' = pengeluaran ' + rupiah(difference) + '.',
+        'Selisih laba: ' + rupiah(difference),
+        'Laba kotor: ' + rupiah(data.gross_profit),
         ...(periodLabel ? [periodLabel] : []),
         ...(expenseDetails.length
-          ? ['Rincian pengeluaran:', ...expenseDetails]
+          ? ['Pengeluaran yang mengurangi laba:', ...expenseDetails]
           : difference > 0
-            ? ['Rincian pengeluaran tidak ditemukan pada periode ini.']
-            : ['Tidak ada pengeluaran yang mengurangi laba pada periode ini.'])
+            ? ['Pengeluaran periode ini tidak ditemukan di Buku Kas.']
+            : ['Tidak ada pengeluaran yang mengurangi laba pada periode ini.']),
+        'Laba bersih: ' + rupiah(data.net_profit)
       ].join('\n')
     }
     return [

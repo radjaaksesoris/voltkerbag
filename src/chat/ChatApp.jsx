@@ -872,7 +872,8 @@ export default function ChatApp() {
         })
         appendMessage(setMessages, {
           role: 'assistant',
-          text: formatQueryAnswer(plan.query, result.data)
+          text: formatQueryAnswer(plan.query, result.data),
+          formatCurrencyAsTable: plan.args?.explainProfitDifference !== true
         })
         return
       }
@@ -1177,7 +1178,10 @@ export default function ChatApp() {
                   <span className="chat-bubble-kicker" aria-hidden="true">
                     {message.role === 'user' ? 'PESAN ADMIN' : 'VOLTKER · ASISTEN TOKO'}
                   </span>
-                  {renderChatText(message.text, message.role === 'assistant')}
+                  {renderChatText(
+                    message.text,
+                    message.role === 'assistant' && message.formatCurrencyAsTable !== false
+                  )}
                   {message.attachmentPreviewUrl && (
                     <img
                       className="chat-message-image"

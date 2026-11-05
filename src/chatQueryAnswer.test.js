@@ -283,9 +283,11 @@ test('explains the gross-to-net profit difference with the recorded expense deta
     }]
   })
 
-  assert.match(answer, /Selisih laba kotor dan laba bersih: Rp\s?50\.000/)
-  assert.match(answer, /Rincian pengeluaran:/)
-  assert.match(answer, /Biaya Ekspedisi JNT \(Jajang\): Rp\s?50\.000/)
+  assert.match(answer, /Selisih laba: Rp\s?50\.000/)
+  assert.match(answer, /Laba kotor: Rp\s?850\.000/)
+  assert.match(answer, /Pengeluaran yang mengurangi laba:/)
+  assert.match(answer, /Biaya Ekspedisi JNT \(Jajang\) — Rp\s?50\.000/)
+  assert.match(answer, /Laba bersih: Rp\s?800\.000/)
 })
 
 test('labels all-time sales summaries as history through today', () => {
