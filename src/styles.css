@@ -1251,7 +1251,7 @@ label { display: block; margin-bottom: 6px; color: var(--muted); font-size: 11px
   top: 16px;
   display: flex;
   flex-direction: column;
-  height: min(620px, calc(100dvh - 190px));
+  height: min(720px, calc(100dvh - 110px));
   min-height: 440px;
   overflow: hidden;
 }
