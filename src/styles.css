@@ -1769,7 +1769,7 @@ label { display: block; margin-bottom: 6px; color: var(--muted); font-size: 11px
   .content:has(> .page-slot-pos:not([hidden])) { padding-top: 14px; }
   .content:has(> .page-slot-purchases:not([hidden])) { padding-top: 14px; }
   .content:has(> .page-slot-stok:not([hidden])) { padding-top: 14px; }
-  .page-slot-finance,
+  .content:has(> .page-slot-finance:not([hidden])) { padding-top: 14px; }
   .page-slot-settings { padding-top: 12px; }
   .nav-hidden .content { padding-bottom: calc(27px + env(safe-area-inset-bottom)); }
   h2 { font-size: 29px; }
@@ -1789,6 +1789,20 @@ label { display: block; margin-bottom: 6px; color: var(--muted); font-size: 11px
   .card { padding: 16px; border-radius: 13px; }
   .finance-grid { gap: 14px; }
   .pos-grid { gap: 15px; }
+  .finance-overview-sticky {
+    position: sticky;
+    z-index: 18;
+    top: 8px;
+    margin: -5px -5px 14px;
+    padding: 5px;
+    border: 1px solid rgba(255, 255, 255, .24);
+    border-radius: 14px;
+    background: rgba(91, 28, 27, .78);
+    box-shadow: 0 5px 14px rgba(49, 20, 17, .2);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+  }
+  .finance-overview-sticky .finance-date-filter { margin-bottom: 5px; }
   .products-toolbar {
     position: sticky;
     z-index: 15;
