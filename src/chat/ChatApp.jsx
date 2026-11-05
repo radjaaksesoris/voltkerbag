@@ -16,7 +16,7 @@ import {
   startStockAdditionRequest,
   stockAdditionPrompt
 } from './productCreation.js'
-import { resolveFallbackQuery, resolveProductPriceCapabilityReply } from './queryIntent.js'
+import { resolveDirectQuery, resolveFallbackQuery, resolveProductPriceCapabilityReply } from './queryIntent.js'
 import { getChatDayKey } from './chatDay.js'
 import { loadChatHistory, saveChatHistory } from './chatHistory.js'
 import {
@@ -593,7 +593,6 @@ export default function ChatApp() {
 
     try {
       setProcessingStage('VOLTKER sedang berpikir...')
-      await new Promise((resolve) => window.setTimeout(resolve, 450))
 
       if (productCreation) {
         if (productCreation.kind === 'stock_addition') {
@@ -777,49 +776,55 @@ export default function ChatApp() {
       let plan
       let fallbackQuery = null
       let usedErrorFallback = false
-      setProcessingStage('Memahami permintaan dengan AI...')
-      const history = buildAssistantHistory(messages)
-      try {
-        plan = await requestAssistantPlan({
-          message: text,
-          history,
-          responseStyle: preferences.responseStyle,
-          approvedCorrections: getApprovedChatCorrections(preferences),
-          attachmentName: file?.name || ''
-        })
-        setAssistantConnection({ status: 'connected', message: 'AI Groq terhubung.' })
-      } catch (error) {
-        fallbackQuery = resolveFallbackQuery(text, { kind: 'error' }, Boolean(file))
-        if (fallbackQuery) {
-          plan = fallbackQuery
-          usedErrorFallback = true
-          setProcessingStage('AI belum dapat menjawab; aplikasi mencari data...')
-          if (error.status === 429) {
-            setAssistantConnection({
-              status: 'connected',
-              message: 'AI Groq terhubung; permintaan menunggu batas penggunaan.'
-            })
-            setRateLimitWait(error.retryAfterSeconds || 0)
+      const directQuery = resolveDirectQuery(text, Boolean(file))
+      if (directQuery) {
+        plan = directQuery
+        setProcessingStage('Mengambil data toko...')
+      } else {
+        setProcessingStage('Memahami permintaan dengan AI...')
+        const history = buildAssistantHistory(messages)
+        try {
+          plan = await requestAssistantPlan({
+            message: text,
+            history,
+            responseStyle: preferences.responseStyle,
+            approvedCorrections: getApprovedChatCorrections(preferences),
+            attachmentName: file?.name || ''
+          })
+          setAssistantConnection({ status: 'connected', message: 'AI Groq terhubung.' })
+        } catch (error) {
+          fallbackQuery = resolveFallbackQuery(text, { kind: 'error' }, Boolean(file))
+          if (fallbackQuery) {
+            plan = fallbackQuery
+            usedErrorFallback = true
+            setProcessingStage('AI belum dapat menjawab; aplikasi mencari data...')
+            if (error.status === 429) {
+              setAssistantConnection({
+                status: 'connected',
+                message: 'AI Groq terhubung; permintaan menunggu batas penggunaan.'
+              })
+              setRateLimitWait(error.retryAfterSeconds || 0)
+            } else {
+              setAssistantConnection({
+                status: 'disconnected',
+                message: error.message || 'AI Groq tidak dapat memproses permintaan.'
+              })
+            }
           } else {
-            setAssistantConnection({
-              status: 'disconnected',
-              message: error.message || 'AI Groq tidak dapat memproses permintaan.'
-            })
+            if (error.status === 429) {
+              setAssistantConnection({
+                status: 'connected',
+                message: 'AI Groq terhubung; permintaan menunggu batas penggunaan.'
+              })
+              setRateLimitWait(error.retryAfterSeconds || 0)
+            } else {
+              setAssistantConnection({
+                status: 'disconnected',
+                message: error.message || 'AI Groq tidak dapat memproses permintaan.'
+              })
+            }
+            throw error
           }
-        } else {
-          if (error.status === 429) {
-            setAssistantConnection({
-              status: 'connected',
-              message: 'AI Groq terhubung; permintaan menunggu batas penggunaan.'
-            })
-            setRateLimitWait(error.retryAfterSeconds || 0)
-          } else {
-            setAssistantConnection({
-              status: 'disconnected',
-              message: error.message || 'AI Groq tidak dapat memproses permintaan.'
-            })
-          }
-          throw error
         }
       }
 
