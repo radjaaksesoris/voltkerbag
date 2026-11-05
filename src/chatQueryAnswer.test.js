@@ -17,6 +17,13 @@ test('formats stock matches and sale prices without an AI summary request', () =
   assert.match(answer, /Rp\s?1\.200\.000\/lusin/)
 })
 
+test('asks politely for a clearer product name when a stock search has no match', () => {
+  assert.match(formatQueryAnswer('stock', {
+    total_products: 4,
+    matches: []
+  }), /Maaf, saya belum menemukan produk yang cocok.*nama produk persis/s)
+})
+
 test('formats stock rankings as a heading and a clearly separated bold product list', () => {
   const answer = formatQueryAnswer('stock', {
     stock_order: 'asc',
@@ -120,7 +127,7 @@ test('reports when a requested customer has no matching outstanding debt', () =>
   assert.equal(formatQueryAnswer('debts', {
     searched_customer: 'rudi',
     customers: []
-  }), 'Hutang pelanggan "rudi" tidak ditemukan atau tidak memiliki hutang berjalan.')
+  }), 'Maaf, saya belum menemukan hutang berjalan untuk pelanggan "rudi". Bisa pastikan ejaan namanya atau apakah pelanggan tersebut masih memiliki saldo hutang?')
 })
 
 test('formats the last debt installment from cashbook data', () => {

@@ -179,6 +179,21 @@ test('does not treat HPP change requests as product lookup queries', () => {
   }
 })
 
+test('keeps HPP capability questions on the AI reply path instead of searching for a product', () => {
+  for (const question of [
+    'Apakah kamu bisa merubah HPP',
+    'AI bisa mengubah harga modal produk?',
+    'Bisakah HPP produk dikoreksi'
+  ]) {
+    assert.equal(resolveFastQuery(question), null, question)
+    assert.equal(resolveDirectQuery(question), null, question)
+    assert.equal(resolveFallbackQuery(question, {
+      kind: 'reply',
+      message: 'Ya, saya bisa membantu mengubah HPP.'
+    }), null, question)
+  }
+})
+
 test('keeps product name words while removing generic stock wording', () => {
   assert.deepEqual(resolveFastQuery('cek stok tas ransel sekarang'), {
     kind: 'query',

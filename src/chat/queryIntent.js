@@ -43,6 +43,19 @@ const PERIOD_MONTHS = [
   'januari', 'februari', 'maret', 'april', 'mei', 'juni',
   'juli', 'agustus', 'september', 'oktober', 'november', 'desember'
 ]
+const PRODUCT_COST_CHANGE_TERMS = new Set([
+  'ubah', 'rubah', 'merubah', 'mengubah', 'diubah', 'dirubah', 'edit', 'koreksi',
+  'dikoreksi', 'revisi', 'direvisi', 'sesuaikan', 'disesuaikan', 'ganti', 'perbarui', 'update'
+])
+
+function asksProductCostCapability(words, normalized) {
+  const asksCanDo = words.some((word) => ['bisa', 'bisakah', 'dapat', 'mampu'].includes(word))
+  const asksAboutChange = words.some((word) => PRODUCT_COST_CHANGE_TERMS.has(word))
+  const mentionsPrice = words.some((word) =>
+    ['hpp', 'modal', 'harga', 'pokok', 'biaya'].includes(word)
+  )
+  return asksCanDo && asksAboutChange && mentionsPrice && !/\d/.test(normalized)
+}
 
 function normalizeMessage(message) {
   const normalized = String(message || '')
@@ -102,6 +115,8 @@ const PRODUCT_COST_QUESTION_TERMS = new Set([
 
 export function resolveFastQuery(message) {
   const { normalized, words } = normalizeMessage(message)
+  if (asksProductCostCapability(words, normalized)) return null
+
   const asksOperationalInsights = words.some((word) =>
     ['analisis', 'analisa', 'insight', 'evaluasi'].includes(word)
   ) && words.some((word) => ['toko', 'operasional', 'bisnis'].includes(word))

@@ -34,7 +34,9 @@ function summarizeStock(data) {
     if (data.low_stock_only && !data.searched_product) {
       return 'Tidak ada produk dengan stok rendah (maksimal 5 satuan utama).'
     }
-    return data.total_products ? 'Produk yang cocok tidak ditemukan.' : 'Belum ada produk di toko.'
+    return data.total_products
+      ? 'Maaf, saya belum menemukan produk yang cocok. Bisa sebutkan nama produk persis seperti yang tercatat di Stok Barang?'
+      : 'Saya belum melihat produk di daftar stok. Apakah produk ini sudah ditambahkan ke Stok Barang?'
   }
   const lines = matches.slice(0, 10).map((product) => {
     const prices = Object.entries(product.sale_prices || {})
@@ -64,7 +66,10 @@ function summarizeDebts(data) {
     return 'Jumlah pelanggan yang masih berhutang: ' + customers.length + '.'
   }
   if (data.searched_customer) {
-    if (!customers.length) return 'Hutang pelanggan "' + data.searched_customer + '" tidak ditemukan atau tidak memiliki hutang berjalan.'
+    if (!customers.length) {
+      return 'Maaf, saya belum menemukan hutang berjalan untuk pelanggan "' + data.searched_customer +
+        '". Bisa pastikan ejaan namanya atau apakah pelanggan tersebut masih memiliki saldo hutang?'
+    }
     return customers.map((customer) =>
       'Hutang ' + customer.customer_name + ': ' + rupiah(customer.balance_due)
     ).join('\n')
