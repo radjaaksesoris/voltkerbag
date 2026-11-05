@@ -630,6 +630,8 @@ button:focus-visible, input:focus-visible, select:focus-visible {
   .session-control .btn { padding: 7px 9px; }
   .topbar .pwa-install-button { gap: 3px; padding: 7px 8px; font-size: 10px; }
   .topbar .chat-launch-button { gap: 4px; padding: 7px 9px; font-size: 10px; }
+  .topbar .session-refresh-button { width: 34px; height: 34px; justify-content: center; padding: 0; }
+  .topbar .session-refresh-button span { display: none; }
   .connection-banner { align-items: flex-start; flex-direction: column; gap: 8px; font-size: 11px; }
   .pwa-update-banner { align-items: flex-start; flex-direction: column; gap: 8px; font-size: 11px; }
 }
@@ -674,7 +676,6 @@ button:focus-visible, input:focus-visible, select:focus-visible {
 }
 .dashboard-transactions-heading { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 12px; }
 .dashboard-transactions-heading h3 { margin: 0; }
-.dashboard-transactions-heading .btn { display: inline-flex; align-items: center; gap: 5px; }
 .date-filter-caption { display: flex; flex-direction: column; gap: 3px; }
 .date-filter-caption strong { color: var(--ink); font-size: 13px; }
 .date-filter-caption span { font-size: 11px; }
@@ -2001,8 +2002,6 @@ label { display: block; margin-bottom: 6px; color: var(--muted); font-size: 11px
   .dashboard-transactions { padding: 12px 8px; overflow-x: hidden; }
   .dashboard-transactions-heading { margin-bottom: 2px; }
   .dashboard-transactions h3 { margin-bottom: 5px; }
-  .dashboard-transactions-heading .btn { width: 34px; height: 34px; min-height: 34px; justify-content: center; padding: 0; }
-  .dashboard-refresh-label { display: none; }
   .dashboard-transaction-table { width: 100%; min-width: 0; table-layout: fixed; font-size: 13px; }
   .dashboard-transaction-table th,
   .dashboard-transaction-table td { padding: 9px 2px; font-size: 13px; letter-spacing: 0; overflow-wrap: anywhere; }

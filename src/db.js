@@ -4,6 +4,7 @@ import {
   isValidBackupChunkManifestEntry,
   isValidBackupChunkRows
 } from './backupFormat'
+export { requestPageRefresh } from './refreshEvents.js'
 
 const TABLES = {
   products: 'products',
@@ -821,10 +822,6 @@ export async function remove(store, id) {
 export function notifyRefresh() {
   invalidateMasterDataCache()
   window.dispatchEvent(new CustomEvent('voltker:refresh'))
-}
-
-export function requestPageRefresh(pageId) {
-  window.dispatchEvent(new CustomEvent('voltker:refresh', { detail: { pageId } }))
 }
 
 export function onRefresh(fn, pageId) {

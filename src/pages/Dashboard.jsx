@@ -11,7 +11,6 @@ import {
 } from '../dateFilter'
 import TransactionDetails from '../components/TransactionDetails'
 import { getInvoiceNumber } from '../invoice'
-import Icon from '../components/Icon.jsx'
 import CustomerIdentity from '../components/CustomerIdentity.jsx'
 
 const TRANSACTIONS_PER_PAGE = 15
@@ -39,7 +38,6 @@ export default function Dashboard() {
   const [customerLoadError, setCustomerLoadError] = useState('')
   const [loadError, setLoadError] = useState('')
   const [loaded, setLoaded] = useState(false)
-  const [refreshing, setRefreshing] = useState(false)
   const requestId = useRef(0)
 
   useEffect(() => {
@@ -67,7 +65,6 @@ export default function Dashboard() {
 
     async function load() {
       const currentRequest = ++requestId.current
-      setRefreshing(true)
       try {
         const hasFilter = hasDateRange(dateRange)
         const listRange = hasFilter
@@ -102,7 +99,6 @@ export default function Dashboard() {
       } finally {
         if (active && currentRequest === requestId.current) {
           setLoaded(true)
-          setRefreshing(false)
         }
       }
     }
@@ -183,15 +179,6 @@ export default function Dashboard() {
         {customerLoadError && <p className="form-error" role="alert">{customerLoadError}</p>}
         <div className="dashboard-transactions-heading">
           <h3>Transaksi Terakhir</h3>
-          <button
-            className="btn btn-sm"
-            type="button"
-            disabled={refreshing}
-            aria-label={refreshing ? 'Memuat data dashboard' : 'Refresh data dashboard'}
-            onClick={() => requestPageRefresh('dashboard')}>
-            <Icon name="sync" size={14} />
-            <span className="dashboard-refresh-label">{refreshing ? 'Memuat...' : 'Refresh'}</span>
-          </button>
         </div>
         <table className="dashboard-transaction-table">
           <thead>

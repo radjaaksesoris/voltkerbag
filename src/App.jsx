@@ -433,10 +433,14 @@ export default function App() {
             <Icon name="chat" size={16} />
             <span>Chat</span>
           </a>
-          <SessionControl email={session.user.email} onSignedOut={() => {
-            clearRequestedAppMode()
-            setSession(null)
-          }} />
+          <SessionControl
+            email={session.user.email}
+            refreshPageId={page}
+            refreshPageLabel={currentPage.label}
+            onSignedOut={() => {
+              clearRequestedAppMode()
+              setSession(null)
+            }} />
         </header>
 
         {connectionError && (
