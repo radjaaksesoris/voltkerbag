@@ -417,6 +417,13 @@ test('understands transaction existence, counts, latest records, and common ques
     query: 'transactions',
     args: { customer: 'andri', period: 'hari ini' }
   })
+  for (const question of ['rekap transaksi hari ini', 'ringkasan transaksi hari ini']) {
+    assert.deepEqual(resolveDirectQuery(question), {
+      kind: 'query',
+      query: 'transactions',
+      args: { period: 'hari ini' }
+    })
+  }
   assert.deepEqual(resolveDirectQuery('nota terakhir Andri'), {
     kind: 'query',
     query: 'transactions',
