@@ -723,9 +723,9 @@ h2 {
   .dashboard-filter-row .date-filter-caption { display: none; }
   .dashboard-filter-row .date-filter-field { min-width: 0; gap: 3px; }
   .dashboard-filter-row .date-filter-field > span { font-size: 8px; }
-  .dashboard-filter-row .date-filter-field .input { min-width: 0; padding: 6px 3px; font-size: 10px; }
+  .dashboard-filter-row .date-filter-field .input { min-width: 0; height: 34px; min-height: 34px; box-sizing: border-box; padding: 6px 3px; font-size: 10px; }
   .dashboard-filter-row .date-filter-actions { display: contents; }
-  .dashboard-filter-row .date-filter-reset { position: static; grid-row: 1; grid-column: 3; min-width: 0; min-height: 34px; align-self: end; justify-self: stretch; padding: 6px 3px; font-size: 10px; white-space: nowrap; }
+  .dashboard-filter-row .date-filter-reset { position: static; grid-row: 1; grid-column: 3; min-width: 0; width: 100%; height: 34px; min-height: 34px; box-sizing: border-box; align-self: end; justify-self: stretch; padding: 6px 3px; font-size: 10px; white-space: nowrap; }
   .finance-date-filter { align-items: stretch; }
   .finance-date-filter { padding: 10px; }
   .finance-date-filter .date-filter { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 5px; width: 100%; }
