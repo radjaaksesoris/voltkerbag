@@ -60,6 +60,13 @@ test('accepts only explicitly supported write actions', () => {
     args: { product: 'Tas', quantity: 2, unit: 'lusin', unit_cost: 100000 }
   }).action, 'add_stock')
 
+  assert.equal(validateAssistantPlan({
+    kind: 'action',
+    action: 'edit_product',
+    message: 'Saya siapkan koreksi HPP.',
+    args: { product: 'Aventador', unit_cost: 13_000, cost_unit: 'pcs' }
+  }).action, 'edit_product')
+
   assert.throws(() => validateAssistantPlan({
     kind: 'action',
     action: 'run_sql',

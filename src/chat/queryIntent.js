@@ -9,8 +9,9 @@ const STOCK_QUESTION_TERMS = new Set([
   'terbesar', 'low', 'lowest', 'high', 'highest', 'saja', 'semua', 'seluruh'
 ])
 const STOCK_ACTION_TERMS = new Set([
-  'tambah', 'tambahkan', 'menambah', 'masukkan', 'catat', 'kurangi', 'ubah',
-  'setel', 'hapus', 'edit', 'perbarui', 'restok'
+  'tambah', 'tambahkan', 'menambah', 'masukkan', 'catat', 'kurangi', 'ubah', 'rubah',
+  'setel', 'atur', 'hapus', 'edit', 'perbarui', 'restok', 'koreksi', 'revisi',
+  'sesuaikan', 'update', 'naikkan', 'naikan', 'menaikkan', 'turunkan', 'menurunkan'
 ])
 const PERFORMANCE_TERMS = new Set(['laku', 'laris', 'terjual', 'performa'])
 const DEBT_TERMS = new Set([
@@ -85,6 +86,19 @@ function queryPeriod(normalized) {
 function removeTerms(words, terms) {
   return words.filter((word) => !terms.has(word)).join(' ')
 }
+
+function asksProductCost(words) {
+  return words.some((word) => ['hpp', 'modal', 'cost'].includes(word))
+    || words.includes('harga') && words.some((word) => ['modal', 'pokok', 'beli', 'kulakan', 'perolehan'].includes(word))
+    || words.includes('biaya') && words.some((word) => ['modal', 'pokok', 'produksi', 'perolehan'].includes(word))
+    || words.includes('pokok') && words.includes('produksi')
+}
+
+const PRODUCT_COST_QUESTION_TERMS = new Set([
+  ...STOCK_TERMS, ...STOCK_QUESTION_TERMS,
+  'harga', 'harganya', 'hpp', 'modal', 'pokok', 'produk', 'barang', 'item',
+  'biaya', 'perolehan', 'produksi', 'cost', 'beli', 'kulakan'
+])
 
 export function resolveFastQuery(message) {
   const { normalized, words } = normalizeMessage(message)
@@ -187,6 +201,19 @@ export function resolveFastQuery(message) {
         && !words.some((word) => ['keuangan', 'kas', 'pemasukan', 'pengeluaran', 'untung', 'rugi'].includes(word)))
   if (asksInventoryValue) {
     return { kind: 'query', query: 'inventory_summary', args: {} }
+  }
+
+  const asksCost = asksProductCost(words)
+  if (asksCost) {
+    const product = removeTerms(words, PRODUCT_COST_QUESTION_TERMS)
+    return {
+      kind: 'query',
+      query: 'stock',
+      args: {
+        ...(product ? { product } : {}),
+        includeCost: true
+      }
+    }
   }
 
   const financeTerms = new Set([
@@ -390,25 +417,6 @@ export function resolveFastQuery(message) {
     }
   }
 
-  const asksProductCost = words.includes('hpp')
-    || words.includes('modal')
-    || (words.includes('pokok') && words.includes('harga'))
-    || (words.includes('harga') && words.includes('modal'))
-  if (asksProductCost) {
-    const product = removeTerms(words, new Set([
-      ...STOCK_TERMS, ...STOCK_QUESTION_TERMS,
-      'harga', 'harganya', 'hpp', 'modal', 'pokok', 'produk', 'barang', 'item'
-    ]))
-    return {
-      kind: 'query',
-      query: 'stock',
-      args: {
-        ...(product ? { product } : {}),
-        includeCost: true
-      }
-    }
-  }
-
   const asksSalesSummary = words.some((word) =>
     ['penjualan', 'omzet', 'omset', 'pendapatan', 'laba', 'ringkasan', 'ringkas', 'rekap', 'summary'].includes(word)
   )
@@ -446,10 +454,6 @@ export function resolveFastQuery(message) {
   }
 
   const asksStock = words.some((word) => STOCK_TERMS.has(word))
-  const asksCost = words.includes('hpp')
-    || words.includes('modal')
-    || (words.includes('pokok') && words.includes('harga'))
-    || (words.includes('harga') && words.includes('modal'))
   const asksPrice = words.includes('harga') || words.includes('harganya')
   if (!asksStock && !asksCost && !asksPrice) return null
 

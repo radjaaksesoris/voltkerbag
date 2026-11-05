@@ -149,12 +149,33 @@ test('routes low and high stock ranking questions without treating wording as pr
 })
 
 test('routes HPP and modal questions directly to the stock query with costs enabled', () => {
-  for (const question of ['berapa harga HPP Aventador', 'modal aventador', 'harga pokok aventador']) {
+  for (const question of [
+    'berapa harga HPP Aventador',
+    'modal aventador',
+    'harga pokok aventador',
+    'berapa biaya perolehan Aventador',
+    'berapa harga beli Aventador',
+    'berapa biaya pokok produksi Aventador'
+  ]) {
     assert.deepEqual(resolveFastQuery(question), {
       kind: 'query',
       query: 'stock',
       args: { product: 'aventador', includeCost: true }
     })
+  }
+})
+
+test('does not treat HPP change requests as product lookup queries', () => {
+  for (const request of [
+    'Rubah HPP Aventador menjadi 13.000/pcs',
+    'Koreksi harga modal Aventador menjadi 13.000/pcs',
+    'Sesuaikan HPP Aventador jadi 13.000/pcs',
+    'Revisi modal Aventador jadi 13.000/pcs',
+    'Naikkan harga jual Aventador menjadi 25.000/pcs'
+  ]) {
+    assert.equal(resolveFastQuery(request), null, request)
+    assert.equal(resolveDirectQuery(request), null, request)
+    assert.equal(resolveFallbackQuery(request, { kind: 'error' }), null, request)
   }
 })
 

@@ -11,6 +11,7 @@ import { formatPurchaseNote, parsePurchaseNote } from '../purchaseNote'
 import { dateRangeTimestamps, localDateValue } from '../dateFilter'
 import { isSafeRupiahAmount } from '../money'
 import { filterCustomerDebts } from './customerDebt'
+import { createProductCostUpdate } from './productCostEdit.js'
 import {
   allTimeDateRangeThroughToday,
   namedMonthDateRange,
@@ -1104,6 +1105,7 @@ export async function prepareAction(action, args = {}, attachment = null) {
   if (action === 'edit_product') {
     const product = findByName(await getAll('products'), args.product || args.name, 'produk')
     const update = {}
+    let costSummary = null
     if (args.new_name) update.name = text(args.new_name, 'Nama produk baru')
     if (args.category !== undefined) {
       const category = String(args.category).trim()
@@ -1115,6 +1117,11 @@ export async function prepareAction(action, args = {}, attachment = null) {
       }
       update.category = category
     }
+    if (args.unit_cost !== undefined) {
+      costSummary = createProductCostUpdate(product, args.unit_cost, args.cost_unit)
+      Object.assign(update, costSummary.update)
+    }
+    const effectiveCost = costSummary?.costPerPiece ?? Number(product.cost)
     if (args.sale_price !== undefined) {
       const price = amount(args.sale_price, 'Harga jual')
       const unit = String(args.price_unit || product.unit || 'pcs').toLocaleLowerCase('id-ID')
@@ -1133,7 +1140,7 @@ export async function prepareAction(action, args = {}, attachment = null) {
       const markup = Number(args.sale_markup_pcs_pct)
       if (!Number.isFinite(markup)) throw new Error('Markup PCS tidak valid.')
       update.sale_markup_pcs_pct = markup
-      update.price_pcs = saleMarkupPrice(Number(product.cost), 'pcs', markup)
+      update.price_pcs = saleMarkupPrice(effectiveCost, 'pcs', markup)
       if (!isSafeRupiahAmount(update.price_pcs)) throw new Error('Markup PCS menghasilkan harga jual yang tidak aman.')
       if (String(product.unit || 'pcs').toLocaleLowerCase('id-ID') === 'pcs') update.price = update.price_pcs
     }
@@ -1141,9 +1148,18 @@ export async function prepareAction(action, args = {}, attachment = null) {
       const markup = Number(args.sale_markup_lusin_pct)
       if (!Number.isFinite(markup)) throw new Error('Markup LUSIN tidak valid.')
       update.sale_markup_lusin_pct = markup
-      update.price_lusin = saleMarkupPrice(Number(product.cost), 'lusin', markup)
+      update.price_lusin = saleMarkupPrice(effectiveCost, 'lusin', markup)
       if (!isSafeRupiahAmount(update.price_lusin)) throw new Error('Markup LUSIN menghasilkan harga jual yang tidak aman.')
       if (String(product.unit || 'pcs').toLocaleLowerCase('id-ID') === 'lusin') update.price = update.price_lusin
+    }
+    if (args.sale_price !== undefined) {
+      const priceUnit = String(args.price_unit || product.unit || 'pcs').toLocaleLowerCase('id-ID')
+      const markupKey = 'sale_markup_' + priceUnit + '_pct'
+      if (['pcs', 'lusin'].includes(priceUnit)
+        && product[markupKey] != null
+        && args[markupKey] === undefined) {
+        update[markupKey] = saleMarkupPercentage(Number(args.sale_price), effectiveCost, priceUnit)
+      }
     }
     if (args.stock_quantity !== undefined) {
       const quantity = Number(args.stock_quantity)
@@ -1158,8 +1174,26 @@ export async function prepareAction(action, args = {}, attachment = null) {
       action, title: 'Ubah produk ' + product.name,
       details: [
         'Produk: ' + product.name,
-        ...Object.entries(update).map(([key, value]) => key + ': ' + value),
-        'Perubahan stok memakai modal rata-rata saat ini; modal batch baru harus memakai perintah tambah stok.'
+        ...(costSummary
+          ? [
+              'HPP baru: Rp' + costSummary.enteredCost.toLocaleString('id-ID') + '/' + costSummary.costUnit,
+              'HPP internal per PCS: Rp' + costSummary.costPerPiece.toLocaleString('id-ID'),
+              'Nilai modal persediaan baru: Rp' + update.stock_cost_value.toLocaleString('id-ID'),
+              ...Object.entries(costSummary.salePrices)
+                .filter(([unit, price]) => Number(product['price_' + unit]) !== price)
+                .map(([unit, price]) => 'Harga jual ' + unit.toUpperCase() + ' baru (sesuai markup): Rp' + price.toLocaleString('id-ID')),
+              'Jumlah stok tidak berubah.'
+            ]
+          : []),
+        ...Object.entries(update)
+          .filter(([key]) => ![
+            'cost', 'stock_cost_value', 'sale_markup_pcs_pct', 'sale_markup_lusin_pct',
+            ...(costSummary ? ['price', 'price_pcs', 'price_lusin'] : [])
+          ].includes(key))
+          .map(([key, value]) => key + ': ' + value),
+        ...(args.stock_quantity !== undefined
+          ? ['Perubahan stok memakai HPP saat ini; gunakan tambah stok untuk mencatat modal batch baru.']
+          : [])
       ],
       payload: { product, update, attachment }
     }
