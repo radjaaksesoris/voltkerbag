@@ -1716,7 +1716,13 @@ label { display: block; margin-bottom: 6px; color: var(--muted); font-size: 11px
   .product-form-overlay { align-items: center; justify-content: center; padding: 12px; }
   .product-modal { height: auto; max-height: 90dvh; border-radius: 17px; }
   .purchase-stock-notice { display: none; }
-  .purchase-page { padding-top: 0; }
+  .purchase-page { padding-top: 8px; }
+  .purchase-form-card {
+    position: sticky;
+    z-index: 16;
+    top: 8px;
+    align-self: start;
+  }
   .purchase-heading { display: none; }
   .app {
     -webkit-touch-callout: none;
