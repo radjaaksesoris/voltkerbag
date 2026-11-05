@@ -45,14 +45,16 @@ Penambahan stok lewat chat memerlukan jumlah dan harga modal batch, lalu memangg
    ```sh
    npx supabase login
    npx supabase link --project-ref <project-ref>
-   npx supabase secrets set GROQ_API_KEY=<Groq-API-key>
+   npx supabase secrets set GROQ_API_KEY=<Groq-API-key> GEMINI_API_KEY=<Gemini-API-key>
    npx supabase functions deploy chat-assistant
    ```
 4. Build/deploy aplikasi seperti biasa. GitHub Pages menerbitkan aplikasi utama di root dan chat di `/voltkerbag/chat/`.
 
-Function menggunakan model `openai/gpt-oss-120b` secara default melalui Groq Chat Completions API. Jika menggunakan secret `GROQ_MODEL`, pastikan nilainya adalah ID model yang aktif di Groq. Hapus secret lama `GEMINI_API_KEY` dan `GEMINI_MODEL` dari Supabase jika sudah tidak digunakan.
+Function menggunakan model `openai/gpt-oss-120b` secara default melalui Groq Chat Completions API. Jika menggunakan secret `GROQ_MODEL`, pastikan nilainya adalah ID model yang aktif di Groq. Groq tetap menjadi provider utama; hanya saat Groq merespons HTTP 429 karena rate limit, function mencoba Gemini dengan model default `gemini-2.5-flash`. Model cadangan dapat diubah lewat secret `GEMINI_MODEL`. Jika Gemini tidak dikonfigurasi, function mempertahankan pesan rate limit Groq seperti sebelumnya. Jika kedua provider gagal, chat menampilkan kegagalan fallback dan tidak menjalankan aksi.
 
-Simpan `GROQ_API_KEY` hanya sebagai Supabase Function secret; jangan menaruhnya di `.env`, source code, GitHub Pages build variable, atau browser. Jangan gunakan `service_role` key. Jika function atau Groq belum dikonfigurasi, chat menampilkan kesalahan dan tidak menjalankan aksi.
+Simpan `GROQ_API_KEY` dan `GEMINI_API_KEY` hanya sebagai Supabase Function secrets; jangan menaruhnya di source code, GitHub Pages build variable, atau browser. Jangan gunakan `service_role` key. Permintaan percakapan yang sama dikirim ke Gemini saat fallback aktif; hasil query/data toko tidak dikirim ke provider AI. Jika function atau provider belum dikonfigurasi, chat menampilkan kesalahan dan tidak menjalankan aksi.
+
+Saat Groq terkena HTTP 429, isi pesan, enam pesan percakapan terakhir, dan koreksi yang disetujui dapat dikirim ke Gemini sebagai fallback. Hasil query dan data toko tetap tidak dikirim ke kedua provider. Untuk mengaktifkannya, tambahkan `GEMINI_API_KEY` sebagai Supabase Function secret lalu deploy ulang `chat-assistant`; deploy frontend tidak diperlukan untuk perubahan provider ini.
 
 Pembelian vendor masih dicatat sebagai pengeluaran lunas, sama seperti aplikasi utama; fitur hutang/tagihan vendor tidak tersedia. Semua operasi toko selain percakapan—termasuk unggah foto dan restore file backup—dilakukan melalui chat atau kartu tindakan di dalam percakapan, bukan melalui tab aplikasi utama.
 

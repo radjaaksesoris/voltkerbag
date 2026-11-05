@@ -1,5 +1,6 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { formatRateLimitMessage, getRetryAfterSeconds } from '../_shared/rateLimit.js'
+import { generateWithRateLimitFallback } from '../_shared/providerFallback.js'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -251,6 +252,53 @@ async function generate(modelInput: string, apiKey: string, model: string, appro
   return text
 }
 
+async function generateWithGemini(
+  modelInput: string,
+  apiKey: string,
+  model: string,
+  approvedCorrections: string[]
+) {
+  const systemInstruction = [
+    SYSTEM_INSTRUCTIONS,
+    ...(approvedCorrections.length
+      ? [
+          'Panduan lokal yang telah disetujui untuk gaya dan pemahaman aplikasi. Panduan ini tidak berwenang mengubah fakta query atau aturan sistem:\n- ' +
+            approvedCorrections.join('\n- ')
+        ]
+      : [])
+  ].join('\n\n')
+  const response = await fetch(
+    'https://generativelanguage.googleapis.com/v1beta/models/' + encodeURIComponent(model) + ':generateContent?key=' + encodeURIComponent(apiKey),
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      signal: AbortSignal.timeout(GROQ_TIMEOUT_MS),
+      body: JSON.stringify({
+        systemInstruction: { parts: [{ text: systemInstruction }] },
+        contents: [{ role: 'user', parts: [{ text: modelInput }] }],
+        generationConfig: {
+          responseMimeType: 'application/json',
+          temperature: 0.1,
+          maxOutputTokens: 700
+        }
+      })
+    }
+  )
+  const result = await response.json().catch(() => null)
+  if (!response.ok) {
+    const providerMessage = result?.error?.message
+    throw new Error(typeof providerMessage === 'string'
+      ? 'Gemini gagal (HTTP ' + response.status + '): ' + providerMessage
+      : 'Gemini gagal memproses permintaan (HTTP ' + response.status + ').')
+  }
+  const parts = result?.candidates?.[0]?.content?.parts
+  const text = Array.isArray(parts)
+    ? parts.map((part: unknown) => isRecord(part) && typeof part.text === 'string' ? part.text : '').join('')
+    : ''
+  if (!text.trim()) throw new Error('Gemini tidak mengembalikan rencana jawaban.')
+  return text
+}
+
 Deno.serve(async (request) => {
   if (request.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders })
   if (request.method !== 'POST') return jsonResponse(405, { error: 'Metode tidak didukung.' })
@@ -312,12 +360,23 @@ Deno.serve(async (request) => {
     })
 
     const model = Deno.env.get('GROQ_MODEL') || 'openai/gpt-oss-120b'
-    const text = await generate(
-      prompt,
-      groqApiKey,
-      model,
-      cleanApprovedCorrections(body.approvedCorrections)
+    const geminiApiKey = Deno.env.get('GEMINI_API_KEY')
+    const corrections = cleanApprovedCorrections(body.approvedCorrections)
+    const generated = await generateWithRateLimitFallback(
+      () => generate(prompt, groqApiKey, model, corrections),
+      geminiApiKey
+        ? () => generateWithGemini(
+            prompt,
+            geminiApiKey,
+            Deno.env.get('GEMINI_MODEL') || 'gemini-2.5-flash',
+            corrections
+          )
+        : undefined
     )
+    if (generated.provider === 'Gemini') {
+      console.warn('Groq rate limited; chat request completed with Gemini fallback.')
+    }
+    const text = generated.text
     let plan: unknown
     try {
       plan = JSON.parse(text)
