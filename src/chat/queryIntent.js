@@ -48,13 +48,33 @@ const PRODUCT_COST_CHANGE_TERMS = new Set([
   'dikoreksi', 'revisi', 'direvisi', 'sesuaikan', 'disesuaikan', 'ganti', 'perbarui', 'update'
 ])
 
-function asksProductCostCapability(words, normalized) {
+function isProductPriceCapabilityQuestion(words, normalized) {
   const asksCanDo = words.some((word) => ['bisa', 'bisakah', 'dapat', 'mampu'].includes(word))
   const asksAboutChange = words.some((word) => PRODUCT_COST_CHANGE_TERMS.has(word))
   const mentionsPrice = words.some((word) =>
-    ['hpp', 'modal', 'harga', 'pokok', 'biaya'].includes(word)
+    ['hpp', 'modal', 'harga', 'pokok', 'biaya', 'jual', 'eceran'].includes(word)
   )
   return asksCanDo && asksAboutChange && mentionsPrice && !/\d/.test(normalized)
+}
+
+export function resolveProductPriceCapabilityReply(message, hasAttachment = false) {
+  if (hasAttachment) return null
+  const { normalized, words } = normalizeMessage(message)
+  if (!isProductPriceCapabilityQuestion(words, normalized)) return null
+
+  const asksCost = words.some((word) => ['hpp', 'modal', 'pokok', 'biaya'].includes(word))
+  const asksSalePrice = words.includes('eceran')
+    || words.includes('jual') && (words.includes('harga') || words.includes('harga jual'))
+  if (asksCost && asksSalePrice) {
+    return 'Bisa, saya dapat membantu mengubah HPP maupun harga jual. Mau mengubah HPP atau harga jual?'
+  }
+  if (asksCost) {
+    return 'Bisa, saya dapat membantu mengubah HPP. Sebutkan nama produk, HPP baru, dan satuannya (PCS, lusin, atau satuan produk).'
+  }
+  if (asksSalePrice) {
+    return 'Bisa, saya dapat membantu mengubah harga jual. Sebutkan nama produk, harga jual baru, dan satuannya (PCS, lusin, atau satuan produk).'
+  }
+  return 'Bisa, saya dapat membantu mengubah harga produk. Yang ingin diubah harga jual atau HPP?'
 }
 
 function normalizeMessage(message) {
@@ -115,7 +135,7 @@ const PRODUCT_COST_QUESTION_TERMS = new Set([
 
 export function resolveFastQuery(message) {
   const { normalized, words } = normalizeMessage(message)
-  if (asksProductCostCapability(words, normalized)) return null
+  if (isProductPriceCapabilityQuestion(words, normalized)) return null
 
   const asksOperationalInsights = words.some((word) =>
     ['analisis', 'analisa', 'insight', 'evaluasi'].includes(word)

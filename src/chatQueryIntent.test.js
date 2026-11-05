@@ -1,6 +1,11 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { resolveDirectQuery, resolveFallbackQuery, resolveFastQuery } from './chat/queryIntent.js'
+import {
+  resolveDirectQuery,
+  resolveFallbackQuery,
+  resolveFastQuery,
+  resolveProductPriceCapabilityReply
+} from './chat/queryIntent.js'
 import { formatQueryAnswer } from './chat/queryAnswer.js'
 
 test('routes simple stock questions directly to the stock query', () => {
@@ -179,11 +184,12 @@ test('does not treat HPP change requests as product lookup queries', () => {
   }
 })
 
-test('keeps HPP capability questions on the AI reply path instead of searching for a product', () => {
+test('answers product price capability questions locally instead of relying on AI availability', () => {
   for (const question of [
     'Apakah kamu bisa merubah HPP',
     'AI bisa mengubah harga modal produk?',
-    'Bisakah HPP produk dikoreksi'
+    'Bisakah HPP produk dikoreksi',
+    'Apakah kamu bisa merubah harga jual?'
   ]) {
     assert.equal(resolveFastQuery(question), null, question)
     assert.equal(resolveDirectQuery(question), null, question)
@@ -192,6 +198,10 @@ test('keeps HPP capability questions on the AI reply path instead of searching f
       message: 'Ya, saya bisa membantu mengubah HPP.'
     }), null, question)
   }
+  assert.match(resolveProductPriceCapabilityReply('Apakah kamu bisa merubah HPP'), /Bisa.*HPP.*nama produk.*satuan/)
+  assert.match(resolveProductPriceCapabilityReply('Apakah kamu bisa merubah harga jual?'), /Bisa.*harga jual.*nama produk.*satuan/)
+  assert.match(resolveProductPriceCapabilityReply('Apakah bisa merubah harga produk?'), /harga jual atau HPP/)
+  assert.equal(resolveProductPriceCapabilityReply('Apakah kamu bisa merubah HPP', true), null)
 })
 
 test('keeps product name words while removing generic stock wording', () => {

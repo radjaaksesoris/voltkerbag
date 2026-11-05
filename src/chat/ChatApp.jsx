@@ -16,7 +16,7 @@ import {
   startStockAdditionRequest,
   stockAdditionPrompt
 } from './productCreation.js'
-import { resolveFallbackQuery } from './queryIntent.js'
+import { resolveFallbackQuery, resolveProductPriceCapabilityReply } from './queryIntent.js'
 import { getChatDayKey } from './chatDay.js'
 import { loadChatHistory, saveChatHistory } from './chatHistory.js'
 import {
@@ -760,6 +760,16 @@ export default function ChatApp() {
         appendMessage(setMessages, {
           role: 'assistant',
           text: productResolution + stockAdditionPrompt(newStockAddition)
+        })
+        return
+      }
+
+      const productPriceCapabilityReply = resolveProductPriceCapabilityReply(text, Boolean(file))
+      if (productPriceCapabilityReply) {
+        appendMessage(setMessages, {
+          role: 'assistant',
+          text: productPriceCapabilityReply,
+          contextSafe: true
         })
         return
       }
