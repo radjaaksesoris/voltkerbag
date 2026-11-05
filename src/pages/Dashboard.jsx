@@ -190,7 +190,7 @@ export default function Dashboard() {
             aria-label={refreshing ? 'Memuat data dashboard' : 'Refresh data dashboard'}
             onClick={() => requestPageRefresh('dashboard')}>
             <Icon name="sync" size={14} />
-            {refreshing ? 'Memuat...' : 'Refresh'}
+            <span className="dashboard-refresh-label">{refreshing ? 'Memuat...' : 'Refresh'}</span>
           </button>
         </div>
         <table className="dashboard-transaction-table">
