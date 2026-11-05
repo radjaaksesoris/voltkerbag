@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
-import { getAll, getProductImageUrl, getProductThumbnailUrl, getTransactionSummary, completeSale, recordTransactionPayment, onRefresh, requestPageRefresh } from '../db'
+import { getAll, getProductImageUrl, getProductThumbnailUrl, completeSale, recordTransactionPayment, onRefresh, requestPageRefresh } from '../db'
 import { rupiah } from '../format'
 import ReceiptPreview from '../components/ReceiptPreview'
 import Icon from '../components/Icon.jsx'
@@ -11,7 +11,6 @@ import CustomerSelect from '../components/CustomerSelect.jsx'
 import SelectInput from '../components/SelectInput.jsx'
 import CustomerIdentity from '../components/CustomerIdentity.jsx'
 import { saleUnitPrice, saleUnits, stockInPcs, stockLabel, unitCost, unitFactor } from '../productUnits'
-import { dateRangeTimestamps, localDateValue } from '../dateFilter'
 import { downloadInvoiceJpeg } from '../invoiceJpeg'
 import { isSafeRupiahAmount } from '../money'
 
@@ -22,7 +21,6 @@ export default function Transactions() {
   const [products, setProducts] = useState([])
   const [customers, setCustomers] = useState([])
   const [expeditions, setExpeditions] = useState([])
-  const [todaySummary, setTodaySummary] = useState({ transaction_count: 0, total: 0 })
   const [cart, setCart] = useState([])
   const [cartNotification, setCartNotification] = useState(null)
   const [mobileCartOpen, setMobileCartOpen] = useState(false)
@@ -68,18 +66,14 @@ export default function Transactions() {
 
   async function load() {
     try {
-      const today = localDateValue(new Date())
-      const range = dateRangeTimestamps({ from: today, to: today })
-      const [productRows, summary, customerRows, expeditionRows] = await Promise.all([
+      const [productRows, customerRows, expeditionRows] = await Promise.all([
         getAll('products'),
-        getTransactionSummary(range),
         getAll('customers'),
         getAll('expeditions')
       ])
       setProducts(productRows)
       setCustomers(customerRows)
       setExpeditions(expeditionRows)
-      setTodaySummary(summary)
       setLoadError('')
     } catch (error) {
       setLoadError(error.message || 'Gagal memuat data kasir dari server.')
@@ -377,7 +371,6 @@ export default function Transactions() {
   return (
     <div className="page transactions-page" ref={transactionsPageRef}>
       <div className="page-toolbar">
-        <p className="muted">Hari ini <strong>{todaySummary.transaction_count} transaksi</strong> · {rupiah(todaySummary.total)}</p>
         <button
           className="btn btn-primary mobile-cart-toggle"
           type="button"
