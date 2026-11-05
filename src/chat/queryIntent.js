@@ -457,6 +457,10 @@ export function resolveFastQuery(message) {
   const asksSalesSummary = words.some((word) =>
     ['penjualan', 'omzet', 'omset', 'pendapatan', 'laba', 'ringkasan', 'ringkas', 'rekap', 'summary'].includes(word)
   )
+  const asksProfitDifference = words.includes('selisih')
+    && words.includes('laba')
+    && words.includes('kotor')
+    && words.includes('bersih')
   const asksCashFlow = words.some((word) =>
     ['pemasukan', 'pengeluaran', 'biaya', 'income', 'expense'].includes(word)
   )
@@ -476,7 +480,10 @@ export function resolveFastQuery(message) {
     return {
       kind: 'query',
       query: asksFinanceOnly ? 'finance_summary' : 'daily_summary',
-      args: period ? { period } : {}
+      args: {
+        ...(period ? { period } : {}),
+        ...(asksProfitDifference ? { explainProfitDifference: true } : {})
+      }
     }
   }
 

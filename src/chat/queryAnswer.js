@@ -310,6 +310,29 @@ export function formatQueryAnswer(intent, data = {}) {
         ? 'Periode ' + [dateRange.from, dateRange.to].filter(Boolean).map(formatDate).join(' sampai ')
         : 'Sejak awal pencatatan sampai ' + formatDate(dateRange.to)
       : ''
+    if (data.explain_profit_difference) {
+      const difference = Number(data.gross_profit) - Number(data.net_profit)
+      const expenseEntries = data.expense_entries || []
+      const expenseDetails = expenseEntries.map((entry) => {
+        const label = entry.category || entry.note || 'Pengeluaran'
+        const note = entry.note && entry.category && entry.note !== entry.category
+          && !entry.category.toLocaleLowerCase('id-ID').includes(entry.note.toLocaleLowerCase('id-ID'))
+          ? ' (' + entry.note + ')'
+          : ''
+        return '• ' + label + note + ': ' + rupiah(entry.amount)
+      })
+      return [
+        'Selisih laba kotor dan laba bersih: ' + rupiah(difference) + '.',
+        'Laba kotor ' + rupiah(data.gross_profit) + ' dikurangi laba bersih ' +
+          rupiah(data.net_profit) + ' = pengeluaran ' + rupiah(difference) + '.',
+        ...(periodLabel ? [periodLabel] : []),
+        ...(expenseDetails.length
+          ? ['Rincian pengeluaran:', ...expenseDetails]
+          : difference > 0
+            ? ['Rincian pengeluaran tidak ditemukan pada periode ini.']
+            : ['Tidak ada pengeluaran yang mengurangi laba pada periode ini.'])
+      ].join('\n')
+    }
     return [
       'Ringkasan penjualan',
       ...(periodLabel ? [periodLabel] : []),

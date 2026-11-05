@@ -574,6 +574,11 @@ test('uses direct queries only for clear data questions', () => {
     query: 'daily_summary',
     args: { period: 'hari ini' }
   })
+  assert.deepEqual(resolveDirectQuery('Selisih laba kotor dan laba bersih apa?'), {
+    kind: 'query',
+    query: 'daily_summary',
+    args: { explainProfitDifference: true }
+  })
 
   assert.equal(resolveDirectQuery('bagaimana strategi agar stok Bimo Oval lebih laris'), null)
   assert.equal(resolveDirectQuery('berapa harga tas Aventador'), null)

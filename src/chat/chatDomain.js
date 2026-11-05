@@ -214,6 +214,21 @@ async function loadSalesSummary(args) {
     }),
     getFinanceData({ ...timestamps, page: 1, pageSize: PAGE_SIZE })
   ])
+  let expenseEntries = []
+  if (args.explainProfitDifference) {
+    const financePages = [finance]
+    const pageCount = Math.ceil((Number(finance.total_count) || 0) / PAGE_SIZE)
+    for (let page = 2; page <= pageCount; page += 1) {
+      financePages.push(await getFinanceData({ ...timestamps, page, pageSize: PAGE_SIZE }))
+    }
+    expenseEntries = financePages.flatMap((page) => page.entries || [])
+      .filter((entry) => entry.type === 'expense' && !entry.pending && Number(entry.amount) > 0)
+      .map((entry) => ({
+        category: entry.category || '',
+        note: entry.note || '',
+        amount: Number(entry.amount) || 0
+      }))
+  }
   return {
     date_range: range,
     transaction_count: summary.transaction_count,
@@ -225,6 +240,8 @@ async function loadSalesSummary(args) {
     cash_balance: Number(finance.income) + Number(finance.capital) - Number(finance.expense),
     customer_debt: finance.total_credit,
     net_profit: Number(dashboard.gross_profit) - Number(finance.expense),
+    explain_profit_difference: args.explainProfitDifference === true,
+    expense_entries: expenseEntries,
     pending_expedition_count: finance.pending_expedition_count,
     inventory: dashboard.inventory,
     transactions: dashboard.transactions.slice(0, 20).map((transaction) => ({

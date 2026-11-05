@@ -270,6 +270,24 @@ test('reports sales and finance metrics from query data', () => {
   }), /Saldo kas: Rp\s?450\.000/)
 })
 
+test('explains the gross-to-net profit difference with the recorded expense details', () => {
+  const answer = formatQueryAnswer('daily_summary', {
+    explain_profit_difference: true,
+    gross_profit: 850_000,
+    net_profit: 800_000,
+    date_range: { from: '2026-11-05', to: '2026-11-05' },
+    expense_entries: [{
+      category: 'Biaya Ekspedisi JNT (Jajang)',
+      note: 'Biaya Ekspedisi',
+      amount: 50_000
+    }]
+  })
+
+  assert.match(answer, /Selisih laba kotor dan laba bersih: Rp\s?50\.000/)
+  assert.match(answer, /Rincian pengeluaran:/)
+  assert.match(answer, /Biaya Ekspedisi JNT \(Jajang\): Rp\s?50\.000/)
+})
+
 test('labels all-time sales summaries as history through today', () => {
   const answer = formatQueryAnswer('daily_summary', {
     date_range: { from: '', to: '2026-11-03' },
