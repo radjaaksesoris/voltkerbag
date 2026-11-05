@@ -1794,6 +1794,21 @@ label { display: block; margin-bottom: 6px; color: var(--muted); font-size: 11px
   .card { padding: 16px; border-radius: 13px; }
   .finance-grid { gap: 14px; }
   .pos-grid { gap: 15px; }
+  .dashboard-overview-sticky {
+    position: sticky;
+    z-index: 18;
+    top: 8px;
+    margin: -5px -5px 14px;
+    padding: 5px;
+    border: 1px solid rgba(255, 255, 255, .24);
+    border-radius: 14px;
+    background: rgba(91, 28, 27, .88);
+    box-shadow: 0 5px 14px rgba(49, 20, 17, .2);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+  }
+  .dashboard-overview-sticky .dashboard-filter-row { margin-bottom: 8px; }
+  .dashboard-overview-sticky .dashboard-stats-grid { margin-bottom: 0; }
   .finance-overview-sticky {
     position: sticky;
     z-index: 18;

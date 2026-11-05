@@ -144,35 +144,37 @@ export default function Dashboard() {
 
   return (
     <div className="page">
-      <div className="dashboard-filter-row">
-        <div className="date-filter-caption">
-          <strong>{isTodayRange ? 'Ringkasan hari ini' : 'Ringkasan periode'}</strong>
-          {!isTodayRange && <span className="muted">Sesuaikan rentang untuk melihat performa.</span>}
-        </div>
-        <DateRangeFilter value={dateRange} onChange={(range) => {
-          setDateRange(range)
-          saveDashboardDateRange(range)
-          setTransactionPage(1)
-        }} resetValue={{ from: today, to: today }} resetLabel="Hari ini" />
-      </div>
-      <div className="stats-grid dashboard-stats-grid">
-        <div className="stat-card highlight dashboard-revenue-card">
-          <span>{isTodayRange ? 'Omzet Hari Ini' : 'Omzet Periode'}</span>
-          <strong>{rupiah(report.revenue)}</strong>
-        </div>
-        <div className="stat-card"><span>{isTodayRange ? 'Laba Kotor Hari Ini' : 'Laba Kotor Periode'}</span><strong className="ok">{rupiah(report.gross_profit)}</strong></div>
-        <div className="stat-card dashboard-stock-summary">
-          <span>Nilai Stok (Modal)</span>
-          <strong>{rupiah(totalAsset)}</strong>
-        </div>
-        <div className="stat-card dashboard-stock-counts">
-          <div className="dashboard-stock-metric">
-            <span>Stok Menipis</span>
-            <strong className={lowStockCount ? 'danger' : ''}>{lowStockCount}</strong>
+      <div className="dashboard-overview-sticky">
+        <div className="dashboard-filter-row">
+          <div className="date-filter-caption">
+            <strong>{isTodayRange ? 'Ringkasan hari ini' : 'Ringkasan periode'}</strong>
+            {!isTodayRange && <span className="muted">Sesuaikan rentang untuk melihat performa.</span>}
           </div>
-          <div className="dashboard-stock-metric">
-            <span>Total Produk</span>
-            <strong>{productCount}</strong>
+          <DateRangeFilter value={dateRange} onChange={(range) => {
+            setDateRange(range)
+            saveDashboardDateRange(range)
+            setTransactionPage(1)
+          }} resetValue={{ from: today, to: today }} resetLabel="Hari ini" />
+        </div>
+        <div className="stats-grid dashboard-stats-grid">
+          <div className="stat-card highlight dashboard-revenue-card">
+            <span>{isTodayRange ? 'Omzet Hari Ini' : 'Omzet Periode'}</span>
+            <strong>{rupiah(report.revenue)}</strong>
+          </div>
+          <div className="stat-card"><span>{isTodayRange ? 'Laba Kotor Hari Ini' : 'Laba Kotor Periode'}</span><strong className="ok">{rupiah(report.gross_profit)}</strong></div>
+          <div className="stat-card dashboard-stock-summary">
+            <span>Nilai Stok (Modal)</span>
+            <strong>{rupiah(totalAsset)}</strong>
+          </div>
+          <div className="stat-card dashboard-stock-counts">
+            <div className="dashboard-stock-metric">
+              <span>Stok Menipis</span>
+              <strong className={lowStockCount ? 'danger' : ''}>{lowStockCount}</strong>
+            </div>
+            <div className="dashboard-stock-metric">
+              <span>Total Produk</span>
+              <strong>{productCount}</strong>
+            </div>
           </div>
         </div>
       </div>
