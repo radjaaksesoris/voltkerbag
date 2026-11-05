@@ -1832,7 +1832,7 @@ label { display: block; margin-bottom: 6px; color: var(--muted); font-size: 11px
     top: 8px;
     grid-template-columns: minmax(0, 1fr) auto;
     gap: 0 8px;
-    margin: 0 -5px 12px;
+    margin: 0 -5px 24px;
     padding: 5px;
     border: 1px solid rgba(255, 255, 255, .24);
     border-radius: 12px;
