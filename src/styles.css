@@ -1799,7 +1799,7 @@ label { display: block; margin-bottom: 6px; color: var(--muted); font-size: 11px
     z-index: 18;
     top: 8px;
     margin: -5px -5px 26px;
-    padding: 5px;
+    padding: 9px;
     border: 1px solid rgba(255, 255, 255, .24);
     border-radius: 14px;
     background: rgba(91, 28, 27, .88);
