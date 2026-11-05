@@ -125,6 +125,13 @@ export default function CustomNumpad() {
     }
   }, [activeInput])
 
+  useLayoutEffect(() => {
+    if (!activeInput?.isConnected || !window.matchMedia('(max-width: 640px)').matches) return undefined
+
+    document.body.classList.add('custom-numpad-open')
+    return () => document.body.classList.remove('custom-numpad-open')
+  }, [activeInput])
+
   if (!activeInput?.isConnected) return null
 
   function applyKey(key) {

@@ -1715,6 +1715,7 @@ label { display: block; margin-bottom: 6px; color: var(--muted); font-size: 11px
     border-top: 1px solid rgba(255, 255, 255, .22);
   }
   .sidebar[hidden] { display: none; }
+  .custom-numpad-open .sidebar { display: none; }
   .logo, .sidebar-foot { display: none; }
   .sidebar nav { flex-direction: row; justify-content: space-around; gap: 3px; }
   .nav-item { flex: 1; flex-direction: column; gap: 2px; padding: 6px 2px; border-radius: 8px; font-size: 9px; text-align: center; }
