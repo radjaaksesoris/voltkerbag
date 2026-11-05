@@ -45,10 +45,71 @@ function formatData(data) {
   return JSON.stringify(data, null, 2)
 }
 
-function renderChatText(text) {
+function renderChatText(text, formatCurrencyAsTable = true) {
   const lines = String(text || '').split(/\r?\n/)
   const blocks = []
   let index = 0
+  const currencyPattern = /[−-]?Rp[\s\u00a0]*\d(?:[\d.,]*\d)?(?:\s*\/\s*[\p{L}]+)?/giu
+  const hasCurrency = (value) => {
+    currencyPattern.lastIndex = 0
+    const found = currencyPattern.test(value)
+    currencyPattern.lastIndex = 0
+    return found
+  }
+
+  const renderMoneyTable = (tableLines, key) => {
+    const rows = tableLines.flatMap((sourceLine, lineIndex) => {
+      const cleanLine = sourceLine.replace(/^(?:[•*-]\s+|\d+[.)]\s+)/, '').trim()
+      const segments = cleanLine.split(/\s+[·|]\s+/)
+      const context = []
+      const lineRows = []
+
+      segments.forEach((segment) => {
+        currencyPattern.lastIndex = 0
+        const matches = [...segment.matchAll(currencyPattern)]
+        currencyPattern.lastIndex = 0
+        if (!matches.length) {
+          if (lineRows.length === 0) context.push(segment.trim())
+          else if (segment.trim()) lineRows[lineRows.length - 1].detail += ' ' + segment.trim()
+          return
+        }
+
+        const firstMatch = matches[0]
+        const lastMatch = matches[matches.length - 1]
+        const prefix = segment.slice(0, firstMatch.index).replace(/^[\s:—-]+|[\s:—-]+$/g, '')
+        const suffix = segment.slice(lastMatch.index + lastMatch[0].length).trim()
+        const label = [...context, prefix].filter(Boolean).join(' · ')
+        lineRows.push({
+          label: label || 'Rincian ' + (lineIndex + 1),
+          amount: segment.slice(firstMatch.index, lastMatch.index + lastMatch[0].length).trim(),
+          detail: suffix
+        })
+      })
+
+      return lineRows.map((row) => ({
+        ...row,
+        label: row.detail ? row.label + ' — ' + row.detail : row.label
+      }))
+    })
+
+    return (
+      <div className="chat-rich-table-wrap" key={key} role="region" aria-label="Rincian nominal Rupiah" tabIndex={0}>
+        <table className="chat-rich-table">
+          <thead>
+            <tr><th scope="col">Rincian</th><th scope="col">Nominal</th></tr>
+          </thead>
+          <tbody>
+            {rows.map((row, rowIndex) => (
+              <tr key={'money-row-' + rowIndex}>
+                <td>{renderInline(row.label, key + '-label-' + rowIndex)}</td>
+                <td>{renderInline(row.amount, key + '-amount-' + rowIndex)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    )
+  }
 
   const renderInline = (value, keyPrefix) => value
     .split(/(\*\*[^*]+\*\*|[−-]?Rp[\s\u00a0]*\d[\d.,]*)/gi)
@@ -85,13 +146,29 @@ function renderChatText(text) {
         index += 1
       }
       const List = isNumbered ? 'ol' : 'ul'
-      blocks.push(
-        <List className="chat-rich-list" key={'list-' + index}>
-          {items.map((item, itemIndex) => (
-            <li key={'item-' + itemIndex}>{renderInline(item, 'list-' + index + '-' + itemIndex)}</li>
-          ))}
-        </List>
-      )
+      if (formatCurrencyAsTable && items.some(hasCurrency)) {
+        blocks.push(renderMoneyTable(items, 'money-list-' + index))
+      } else {
+        blocks.push(
+          <List className="chat-rich-list" key={'list-' + index}>
+            {items.map((item, itemIndex) => (
+              <li key={'item-' + itemIndex}>{renderInline(item, 'list-' + index + '-' + itemIndex)}</li>
+            ))}
+          </List>
+        )
+      }
+      continue
+    }
+
+    if (formatCurrencyAsTable && hasCurrency(line)) {
+      const moneyLines = []
+      while (index < lines.length) {
+        const current = lines[index].trim()
+        if (!current || !hasCurrency(current)) break
+        moneyLines.push(current)
+        index += 1
+      }
+      blocks.push(renderMoneyTable(moneyLines, 'money-paragraph-' + index))
       continue
     }
 
@@ -1085,7 +1162,7 @@ export default function ChatApp() {
                   <span className="chat-bubble-kicker" aria-hidden="true">
                     {message.role === 'user' ? 'PESAN ADMIN' : 'VOLTKER · ASISTEN TOKO'}
                   </span>
-                  {renderChatText(message.text)}
+                  {renderChatText(message.text, message.role === 'assistant')}
                   {message.attachmentPreviewUrl && (
                     <img
                       className="chat-message-image"
