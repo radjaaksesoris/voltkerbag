@@ -738,7 +738,7 @@ h2 {
   .finance-date-filter .date-filter-quick { grid-row: 1; min-width: 0; min-height: 34px; align-self: end; justify-self: stretch; padding: 6px 3px; font-size: 10px; white-space: nowrap; }
   .finance-date-filter .date-filter-reset { grid-column: 3; }
   .finance-date-filter .date-filter-quick { grid-column: 4; }
-  .purchase-page { gap: 14px; }
+  .purchase-page { row-gap: 26px; }
   .purchase-form-card, .purchase-history-card { padding: 15px 12px; }
   .purchase-form-grid { gap: 0 8px; }
   .purchase-submit { width: 100%; }
@@ -1832,7 +1832,7 @@ label { display: block; margin-bottom: 6px; color: var(--muted); font-size: 11px
     top: 8px;
     grid-template-columns: minmax(0, 1fr) auto;
     gap: 0 8px;
-    margin: 0 -5px 24px;
+    margin: 0 -5px 26px;
     padding: 5px;
     border: 1px solid rgba(255, 255, 255, .24);
     border-radius: 12px;
@@ -1851,6 +1851,7 @@ label { display: block; margin-bottom: 6px; color: var(--muted); font-size: 11px
     display: flex;
     align-items: stretch;
     gap: 8px;
+    margin-bottom: 26px;
     padding: 5px;
     border: 1px solid rgba(255, 255, 255, .24);
     border-radius: 12px;
