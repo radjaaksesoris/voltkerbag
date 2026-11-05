@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { getAll, getProductImageUrl, getProductThumbnailUrl, getTransactionSummary, completeSale, recordTransactionPayment, onRefresh, requestPageRefresh } from '../db'
 import { rupiah } from '../format'
 import ReceiptPreview from '../components/ReceiptPreview'
@@ -657,70 +658,73 @@ export default function Transactions() {
       )}
 
       {previewProduct && (
-        <div className="overlay product-quick-view-overlay" onClick={() => setPreviewProduct(null)}>
-          <section
-            className="modal product-quick-view-modal"
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="product-quick-view-title"
-            onClick={(event) => event.stopPropagation()}>
-            {previewProduct.image_path ? (
-              <img
-                className="product-quick-view-image"
-                src={getProductImageUrl(previewProduct.image_path)}
-                alt={previewProduct.name}
-              />
-            ) : (
-              <div className="product-quick-view-placeholder"><Icon name="bag" size={42} /></div>
-            )}
-            <div className="product-quick-view-info">
-              <h3 id="product-quick-view-title">{previewProduct.name}</h3>
-              <p className="muted small">{previewProduct.category || 'Umum'} · stok {stockLabel(previewProduct)}</p>
-            </div>
-            <div className="product-quick-view-units">
-              <strong>Pilih satuan</strong>
-              {saleUnits(previewProduct.unit || 'pcs').map((unit) => {
-                const quantityInCart = cart.find((item) => item.productId === previewProduct.id && item.unit === unit)?.qty || 0
-                return (
-                  <div
-                    key={unit}
-                    className={'product-quick-view-unit' + (quantityInCart > 0 ? ' is-in-cart' : '')}
-                  >
-                    <span className="product-quick-view-unit-copy">
-                      <strong>{unit}</strong>
-                      <small>Di keranjang: {quantityInCart} {unit}</small>
-                    </span>
-                    <strong className="product-quick-view-unit-price">{rupiah(saleUnitPrice(previewProduct, unit))}</strong>
-                    <div className="qty-ctrl product-quick-view-qty">
-                      <button
-                        type="button"
-                        aria-label={'Kurangi jumlah ' + previewProduct.name + ' ' + unit}
-                        disabled={quantityInCart === 0}
-                        onClick={() => setQty(previewProduct.id, unit, quantityInCart - 1)}>
-                        <Icon name="minus" size={15} />
-                      </button>
-                      <span>{quantityInCart}</span>
-                      <button
-                        type="button"
-                        aria-label={'Tambah jumlah ' + previewProduct.name + ' ' + unit}
-                        disabled={!canAddOne(previewProduct.id, unit)}
-                        onClick={() => addToCart(previewProduct, unit)}>
-                        <Icon name="plus" size={15} />
-                      </button>
+        createPortal(
+          <div className="overlay product-quick-view-overlay" onClick={() => setPreviewProduct(null)}>
+            <section
+              className="modal product-quick-view-modal"
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="product-quick-view-title"
+              onClick={(event) => event.stopPropagation()}>
+              {previewProduct.image_path ? (
+                <img
+                  className="product-quick-view-image"
+                  src={getProductImageUrl(previewProduct.image_path)}
+                  alt={previewProduct.name}
+                />
+              ) : (
+                <div className="product-quick-view-placeholder"><Icon name="bag" size={42} /></div>
+              )}
+              <div className="product-quick-view-info">
+                <h3 id="product-quick-view-title">{previewProduct.name}</h3>
+                <p className="muted small">{previewProduct.category || 'Umum'} · stok {stockLabel(previewProduct)}</p>
+              </div>
+              <div className="product-quick-view-units">
+                <strong>Pilih satuan</strong>
+                {saleUnits(previewProduct.unit || 'pcs').map((unit) => {
+                  const quantityInCart = cart.find((item) => item.productId === previewProduct.id && item.unit === unit)?.qty || 0
+                  return (
+                    <div
+                      key={unit}
+                      className={'product-quick-view-unit' + (quantityInCart > 0 ? ' is-in-cart' : '')}
+                    >
+                      <span className="product-quick-view-unit-copy">
+                        <strong>{unit}</strong>
+                        <small>Di keranjang: {quantityInCart} {unit}</small>
+                      </span>
+                      <strong className="product-quick-view-unit-price">{rupiah(saleUnitPrice(previewProduct, unit))}</strong>
+                      <div className="qty-ctrl product-quick-view-qty">
+                        <button
+                          type="button"
+                          aria-label={'Kurangi jumlah ' + previewProduct.name + ' ' + unit}
+                          disabled={quantityInCart === 0}
+                          onClick={() => setQty(previewProduct.id, unit, quantityInCart - 1)}>
+                          <Icon name="minus" size={15} />
+                        </button>
+                        <span>{quantityInCart}</span>
+                        <button
+                          type="button"
+                          aria-label={'Tambah jumlah ' + previewProduct.name + ' ' + unit}
+                          disabled={!canAddOne(previewProduct.id, unit)}
+                          onClick={() => addToCart(previewProduct, unit)}>
+                          <Icon name="plus" size={15} />
+                        </button>
+                      </div>
                     </div>
-                  </div>
-                )
-              })}
-            </div>
-            <button
-              className="btn btn-primary product-quick-view-close"
-              type="button"
-              autoFocus
-              onClick={() => setPreviewProduct(null)}>
-              Tutup
-            </button>
-          </section>
-        </div>
+                  )
+                })}
+              </div>
+              <button
+                className="btn btn-primary product-quick-view-close"
+                type="button"
+                autoFocus
+                onClick={() => setPreviewProduct(null)}>
+                Tutup
+              </button>
+            </section>
+          </div>,
+          document.body
+        )
       )}
 
       {done && (
