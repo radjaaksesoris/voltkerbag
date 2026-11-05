@@ -576,16 +576,15 @@ export default function Products() {
   return (
     <div className="page">
       {actionError && <p className="form-error" role="alert">{actionError}</p>}
-      <div className="page-toolbar">
-        <p className="muted"><strong>{items.length} produk</strong> · {lowStock.length} stok menipis (≤5)</p>
+      <div className="products-toolbar">
+        <p className="muted products-summary"><strong>{items.length} produk</strong> · {lowStock.length} stok menipis (≤5)</p>
+        <input className="input search products-search" placeholder="Cari produk atau kategori..."
+          value={q} onChange={(e) => {
+            setQ(e.target.value)
+            setVisibleProductCount(PRODUCT_PAGE_SIZE)
+          }} />
         <button className="btn btn-primary" onClick={openAdd}>+ Tambah Produk</button>
       </div>
-
-      <input className="input search products-search" placeholder="Cari produk atau kategori..."
-        value={q} onChange={(e) => {
-          setQ(e.target.value)
-          setVisibleProductCount(PRODUCT_PAGE_SIZE)
-        }} />
 
       <div className="card table-card products-table-card">
         <table className="products-table">

@@ -1077,6 +1077,16 @@ tbody tr:hover { background: #fbf5ed; }
 .search-field { position: relative; width: 100%; max-width: 440px; }
 .search-field .search { max-width: none; padding-right: 42px; }
 .pos-products-toolbar { display: contents; }
+.products-toolbar {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 13px;
+}
+.products-summary { margin: 0; }
+.products-search { grid-column: 1 / -1; grid-row: 2; }
+.products-toolbar > .btn { grid-column: 2; grid-row: 1; }
 .search-clear {
   position: absolute;
   top: 0;
@@ -1771,6 +1781,24 @@ label { display: block; margin-bottom: 6px; color: var(--muted); font-size: 11px
   .card { padding: 16px; border-radius: 13px; }
   .finance-grid { gap: 14px; }
   .pos-grid { gap: 15px; }
+  .products-toolbar {
+    position: sticky;
+    z-index: 15;
+    top: 8px;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 0 8px;
+    margin: -5px -5px 12px;
+    padding: 5px;
+    border: 1px solid rgba(255, 255, 255, .24);
+    border-radius: 12px;
+    background: rgba(91, 28, 27, .78);
+    box-shadow: 0 5px 14px rgba(49, 20, 17, .2);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+  }
+  .products-summary { display: none; }
+  .products-search { grid-column: 1; grid-row: 1; min-width: 0; height: 44px; min-height: 44px; margin: 0; padding-block: 0; }
+  .products-toolbar > .btn { grid-column: 2; grid-row: 1; height: 44px; min-height: 44px; margin: 0; padding: 7px 10px; white-space: nowrap; }
   .pos-products-toolbar {
     position: sticky;
     z-index: 15;
