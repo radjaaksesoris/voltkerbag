@@ -370,47 +370,46 @@ export default function Transactions() {
 
   return (
     <div className="page transactions-page" ref={transactionsPageRef}>
-      <div className="page-toolbar">
-        <button
-          className="btn btn-primary mobile-cart-toggle"
-          type="button"
-          aria-label={mobileCartOpen ? 'Kembali ke daftar produk' : 'Buka keranjang, ' + cart.length + ' item'}
-          aria-expanded={mobileCartOpen}
-          onClick={() => switchMobileView(!mobileCartOpen)}>
-          <Icon name={mobileCartOpen ? 'bag' : 'cart'} size={17} />
-          <span>{mobileCartOpen ? 'Produk' : 'Keranjang'}</span>
-          {!mobileCartOpen && <span className="mobile-cart-count">{cart.length}</span>}
-        </button>
-      </div>
-
       <div className={'pos-grid' + (mobileCartOpen ? ' mobile-cart-open' : '')}>
         <div className="pos-products">
-          <div className="search-field">
-            <input
-              ref={productSearchRef}
-              className="input search"
-              placeholder="Cari Item Barang..."
-              aria-label="Cari produk"
-              value={q}
-              onChange={(e) => {
-                setQ(e.target.value)
-                setVisibleProductCount(PRODUCT_BATCH_SIZE)
-              }}
-            />
-            {q && (
-              <button
-                className="search-clear"
-                type="button"
-                aria-label="Hapus pencarian"
-                title="Hapus pencarian"
-                onClick={() => {
-                  setQ('')
+          <div className="pos-products-toolbar">
+            <div className="search-field">
+              <input
+                ref={productSearchRef}
+                className="input search"
+                placeholder="Cari Item Barang..."
+                aria-label="Cari produk"
+                value={q}
+                onChange={(e) => {
+                  setQ(e.target.value)
                   setVisibleProductCount(PRODUCT_BATCH_SIZE)
-                  productSearchRef.current?.focus()
-                }}>
-                <Icon name="close" size={16} />
-              </button>
-            )}
+                }}
+              />
+              {q && (
+                <button
+                  className="search-clear"
+                  type="button"
+                  aria-label="Hapus pencarian"
+                  title="Hapus pencarian"
+                  onClick={() => {
+                    setQ('')
+                    setVisibleProductCount(PRODUCT_BATCH_SIZE)
+                    productSearchRef.current?.focus()
+                  }}>
+                  <Icon name="close" size={16} />
+                </button>
+              )}
+            </div>
+            <button
+              className="btn btn-primary mobile-cart-toggle"
+              type="button"
+              aria-label={mobileCartOpen ? 'Kembali ke daftar produk' : 'Buka keranjang, ' + cart.length + ' item'}
+              aria-expanded={mobileCartOpen}
+              onClick={() => switchMobileView(!mobileCartOpen)}>
+              <Icon name={mobileCartOpen ? 'bag' : 'cart'} size={17} />
+              <span>{mobileCartOpen ? 'Produk' : 'Keranjang'}</span>
+              {!mobileCartOpen && <span className="mobile-cart-count">{cart.length}</span>}
+            </button>
           </div>
           <div className="product-grid">
             {filtered.length === 0 && (
