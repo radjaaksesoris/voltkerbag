@@ -49,9 +49,13 @@ const NAV = [
   { id: 'settings', label: 'Setting', description: 'Kelola nama pelanggan dan gambar produk.', icon: 'settings' }
 ]
 
+function getInitialPage() {
+  return window.matchMedia('(max-width: 640px)').matches ? 'pos' : 'dashboard'
+}
+
 export default function App() {
-  const [page, setPage] = useState('dashboard')
-  const [visitedPages, setVisitedPages] = useState(() => new Set(['dashboard']))
+  const [page, setPage] = useState(getInitialPage)
+  const [visitedPages, setVisitedPages] = useState(() => new Set([getInitialPage()]))
   const [navHidden, setNavHidden] = useState(false)
   const [session, setSession] = useState(null)
   const [checkingSession, setCheckingSession] = useState(true)
