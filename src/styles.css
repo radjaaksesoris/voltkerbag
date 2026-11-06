@@ -1856,7 +1856,7 @@ label { display: block; margin-bottom: 6px; color: var(--muted); font-size: 11px
   .finance-overview-sticky,
   .products-toolbar,
   .pos-products-toolbar {
-    background: rgba(52, 52, 52, .65);
+    background: rgba(52, 52, 52, .88);
   }
   .transactions-page .search-field { flex: 1 1 auto; min-width: 0; max-width: none; }
   .transactions-page .pos-products-toolbar .search { height: 44px; min-height: 44px; margin: 0; padding-block: 0; }
