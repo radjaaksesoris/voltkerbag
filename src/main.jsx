@@ -9,15 +9,14 @@ if ('serviceWorker' in navigator) {
       scope: import.meta.env.BASE_URL,
       updateViaCache: 'none'
     }).then((registration) => {
-      function checkForUpdates() {
+      function checkForUpdatesOnResume() {
         if (document.visibilityState !== 'visible') return
         registration.update().catch((error) => {
-          console.error('Gagal memeriksa pembaruan service worker:', error)
+          console.warn('Pemeriksaan pembaruan service worker gagal; aplikasi tetap dapat digunakan:', error)
         })
       }
 
-      checkForUpdates()
-      document.addEventListener('visibilitychange', checkForUpdates)
+      document.addEventListener('visibilitychange', checkForUpdatesOnResume)
     }).catch((error) => {
       console.error('Gagal mendaftarkan service worker:', error)
     })
