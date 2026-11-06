@@ -1807,8 +1807,6 @@ label { display: block; margin-bottom: 6px; color: var(--muted); font-size: 11px
     border-radius: 14px;
     background: rgba(91, 28, 27, .88);
     box-shadow: 0 5px 14px rgba(49, 20, 17, .2);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
   }
   .dashboard-overview-sticky .dashboard-filter-row { margin-bottom: 8px; }
   .dashboard-overview-sticky .dashboard-stats-grid { margin-bottom: 0; }
@@ -1822,8 +1820,6 @@ label { display: block; margin-bottom: 6px; color: var(--muted); font-size: 11px
     border-radius: 14px;
     background: rgba(91, 28, 27, .78);
     box-shadow: 0 5px 14px rgba(49, 20, 17, .2);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
   }
   .finance-overview-sticky .finance-date-filter { margin-bottom: 5px; }
   .products-toolbar {
@@ -1838,8 +1834,6 @@ label { display: block; margin-bottom: 6px; color: var(--muted); font-size: 11px
     border-radius: 12px;
     background: rgba(91, 28, 27, .78);
     box-shadow: 0 5px 14px rgba(49, 20, 17, .2);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
   }
   .products-summary { display: none; }
   .products-search { grid-column: 1; grid-row: 1; min-width: 0; height: 44px; min-height: 44px; margin: 0; padding-block: 0; }
@@ -1857,19 +1851,20 @@ label { display: block; margin-bottom: 6px; color: var(--muted); font-size: 11px
     border-radius: 12px;
     background: rgba(91, 28, 27, .78);
     box-shadow: 0 5px 14px rgba(49, 20, 17, .2);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
   }
   .dashboard-overview-sticky,
   .finance-overview-sticky,
   .products-toolbar,
-  .pos-products-toolbar {
+  .pos-products-toolbar,
+  .purchase-form-card {
     background-image:
       linear-gradient(rgba(91, 28, 27, .52), rgba(91, 28, 27, .52)),
       url('/voltker-app-background.jpg');
     background-position: center;
     background-size: cover;
-    background-attachment: fixed;
+    background-attachment: scroll;
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
   }
   .transactions-page .search-field { flex: 1 1 auto; min-width: 0; max-width: none; }
   .transactions-page .pos-products-toolbar .search { height: 44px; min-height: 44px; margin: 0; padding-block: 0; }
