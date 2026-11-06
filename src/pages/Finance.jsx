@@ -337,7 +337,6 @@ export default function Finance() {
       <div className="finance-overview-sticky">
         <div className="finance-date-filter">
           <div className="date-filter-caption">
-            <strong>Filter periode keuangan</strong>
             <span className="muted">Pemasukan, pengeluaran, saldo, dan laba mengikuti tanggal yang dipilih.</span>
           </div>
           <DateRangeFilter value={dateRange} onChange={(range) => {
