@@ -1855,16 +1855,8 @@ label { display: block; margin-bottom: 6px; color: var(--muted); font-size: 11px
   .dashboard-overview-sticky,
   .finance-overview-sticky,
   .products-toolbar,
-  .pos-products-toolbar,
-  .purchase-form-card {
-    background-image:
-      linear-gradient(rgba(91, 28, 27, .52), rgba(91, 28, 27, .52)),
-      url('/voltker-app-background.jpg');
-    background-position: center;
-    background-size: cover;
-    background-attachment: scroll;
-    -webkit-backdrop-filter: none;
-    backdrop-filter: none;
+  .pos-products-toolbar {
+    background: transparent;
   }
   .transactions-page .search-field { flex: 1 1 auto; min-width: 0; max-width: none; }
   .transactions-page .pos-products-toolbar .search { height: 44px; min-height: 44px; margin: 0; padding-block: 0; }
