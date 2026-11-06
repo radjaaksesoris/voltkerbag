@@ -335,6 +335,17 @@ export default function Finance() {
     <div className="page">
       {actionError && !showEntryForm && <p className="form-error" role="alert">{actionError}</p>}
       <div className="finance-overview-sticky">
+        <div className="finance-date-filter">
+          <div className="date-filter-caption">
+            <strong>Filter periode keuangan</strong>
+            <span className="muted">Pemasukan, pengeluaran, saldo, dan laba mengikuti tanggal yang dipilih.</span>
+          </div>
+          <DateRangeFilter value={dateRange} onChange={(range) => {
+            setDateRange(range)
+            setPage(1)
+          }} resetValue={todayDateRange} resetLabel="Hari ini"
+            quickValue={currentMonthDateRange} quickLabel="Bulan ini" />
+        </div>
         <div className="stats-grid dashboard-stats-grid finance-summary-grid">
           <div className="stat-card"><span>Pemasukan Penjualan</span><strong className="ok">+{rupiah(income)}</strong></div>
           <button
@@ -350,17 +361,6 @@ export default function Finance() {
           </button>
           <div className="stat-card highlight"><span>Saldo Kas</span><strong>{rupiah(balance)}</strong></div>
           <div className="stat-card"><span>Laba</span><strong className={netProfit >= 0 ? 'ok' : 'danger'}>{rupiah(netProfit)}</strong></div>
-        </div>
-        <div className="finance-date-filter">
-          <div className="date-filter-caption">
-            <strong>Filter periode keuangan</strong>
-            <span className="muted">Pemasukan, pengeluaran, saldo, dan laba mengikuti tanggal yang dipilih.</span>
-          </div>
-          <DateRangeFilter value={dateRange} onChange={(range) => {
-            setDateRange(range)
-            setPage(1)
-          }} resetValue={todayDateRange} resetLabel="Hari ini"
-            quickValue={currentMonthDateRange} quickLabel="Bulan ini" />
         </div>
       </div>
 

@@ -289,7 +289,7 @@ body {
     border: 1px solid rgba(246, 190, 185, .3);
     border-top: 1px solid rgba(255, 219, 213, .14);
     border-radius: 0 0 20px 20px;
-    background: rgba(91, 24, 33, .58);
+    background: rgba(52, 52, 52, .58);
     color: #fff8f4;
     box-shadow: 0 14px 38px rgba(37, 5, 11, .25), inset 0 1px 0 rgba(255, 255, 255, .06);
   }
@@ -696,11 +696,11 @@ button:focus-visible, input:focus-visible, select:focus-visible {
 .finance-date-filter .date-filter-field span { color: rgba(255, 248, 237, .82); }
 .finance-date-filter .date-filter { gap: 8px; }
 .finance-date-filter .date-filter-field { min-width: 132px; gap: 3px; }
-.finance-date-filter .date-filter-field .input { min-width: 132px; padding: 7px 9px; }
-.finance-date-filter .date-filter-reset { min-height: 34px; padding: 7px 10px; border-color: rgba(255, 255, 255, .65); background: #fff8ed; color: var(--accent-dark); }
+.finance-date-filter .date-filter-field .input { height: 34px; min-width: 132px; padding: 7px 9px; box-sizing: border-box; }
+.finance-date-filter .date-filter-reset { height: 34px; min-height: 34px; padding: 7px 10px; box-sizing: border-box; border-color: rgba(255, 255, 255, .65); background: #fff8ed; color: var(--accent-dark); }
 .finance-date-filter .date-filter-reset:hover { border-color: #fff; background: #fff; }
 .finance-date-filter .date-filter-reset:disabled { opacity: .82; }
-.finance-date-filter .date-filter-quick { min-height: 34px; padding: 7px 10px; border-color: rgba(255, 255, 255, .65); background: #fff8ed; color: var(--accent-dark); }
+.finance-date-filter .date-filter-quick { height: 34px; min-height: 34px; padding: 7px 10px; box-sizing: border-box; border-color: rgba(255, 255, 255, .65); background: #fff8ed; color: var(--accent-dark); }
 .finance-date-filter .date-filter-quick:hover { border-color: #fff; background: #fff; }
 .finance-date-filter .date-filter-quick:disabled { opacity: .82; }
 .finance-date-filter .date-filter-error { color: #fff8ed; }
@@ -1821,7 +1821,8 @@ label { display: block; margin-bottom: 6px; color: var(--muted); font-size: 11px
     background: rgba(91, 28, 27, .78);
     box-shadow: 0 5px 14px rgba(49, 20, 17, .2);
   }
-  .finance-overview-sticky .finance-date-filter { margin-bottom: 5px; }
+  .finance-overview-sticky .finance-date-filter { margin-bottom: 8px; }
+  .finance-overview-sticky .finance-summary-grid { margin-bottom: 0; }
   .products-toolbar {
     position: sticky;
     z-index: 15;
