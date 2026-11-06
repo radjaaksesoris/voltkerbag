@@ -365,11 +365,17 @@ test('routes cashbook details and pending expedition costs to ledger queries', (
     query: 'cashbook',
     args: { period: 'bulan lalu' }
   })
-  assert.deepEqual(resolveDirectQuery('berapa pengeluaran hari ini'), {
-    kind: 'query',
-    query: 'finance_summary',
-    args: { period: 'hari ini' }
-  })
+  for (const question of [
+    'berapa pengeluaran hari ini',
+    'rincian pengeluaran hari ini',
+    'detail pengeluaran hari ini'
+  ]) {
+    assert.deepEqual(resolveDirectQuery(question), {
+      kind: 'query',
+      query: 'cashbook',
+      args: { type: 'expense', period: 'hari ini' }
+    })
+  }
   assert.deepEqual(resolveDirectQuery('catatan pengeluaran apa saja hari ini'), {
     kind: 'query',
     query: 'cashbook',

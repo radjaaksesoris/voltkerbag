@@ -487,6 +487,21 @@ export function resolveFastQuery(message) {
   const asksFinance = words.some((word) =>
     ['keuangan', 'kas', 'saldo', 'modal', 'untung', 'rugi'].includes(word)
   ) || asksCashFlow
+  const asksExpenseDetails = words.some((word) =>
+    ['pengeluaran', 'biaya', 'expense'].includes(word)
+  )
+  if (asksExpenseDetails && !words.some((word) =>
+    ['penjualan', 'omzet', 'omset', 'laba'].includes(word)
+  )) {
+    return {
+      kind: 'query',
+      query: 'cashbook',
+      args: {
+        type: 'expense',
+        period: period || 'semua'
+      }
+    }
+  }
   if (asksCashFlow && !words.some((word) => ['penjualan', 'omzet', 'omset', 'laba'].includes(word))) {
     return {
       kind: 'query',
