@@ -2476,8 +2476,7 @@ label { display: block; margin-bottom: 6px; color: var(--muted); font-size: 11px
 .content .finance-summary-grid .debt-stat-card > span:first-child { color: #3e2b08; }
 .content .finance-summary-grid .debt-stat-card strong.danger { color: #681b20; }
 .content .finance-summary-grid .debt-stat-card .debt-stat-hint { color: #493508; }
-.content .stat-card.highlight,
-.content .finance-date-filter {
+.content .stat-card.highlight {
   border-color: rgba(255, 245, 239, .48);
   background-color: rgba(145, 32, 39, .82);
   box-shadow: 0 5px 14px rgba(74, 16, 23, .16);
