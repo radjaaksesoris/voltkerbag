@@ -432,20 +432,19 @@ body {
 .chat-workspace {
   position: relative;
   display: flex;
-  width: min(100% - 32px, 900px);
+  width: 100%;
   min-height: 0;
   flex: 1 1 0;
   flex-direction: column;
-  align-self: center;
 }
 
 .chat-workspace::before {
   position: absolute;
   z-index: 0;
   inset: 0;
-  background: url('./chat-wallpaper.jpg') center 18% / 420px auto repeat;
+  background: url('./chat-wallpaper.jpg') center 18% / 460px auto repeat;
   content: "";
-  opacity: .075;
+  opacity: .09;
   pointer-events: none;
 }
 
@@ -462,7 +461,7 @@ body {
   overscroll-behavior-y: contain;
   -webkit-overflow-scrolling: touch;
   touch-action: pan-y;
-  padding: 32px 10px 20px;
+  padding: 32px max(24px, calc((100% - 900px) / 2 + 10px)) 20px;
 }
 
 .chat-starter {
@@ -1191,6 +1190,7 @@ body {
 
   .chat-workspace {
     width: min(100% - 12px, 900px);
+    align-self: center;
   }
 
   .chat-feed {
