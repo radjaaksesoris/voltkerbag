@@ -578,14 +578,22 @@ export default function Transactions() {
               </div>
               <div>
                 <label>Metode pembayaran</label>
-                <SelectInput
-                  ariaLabel="Metode pembayaran"
-                  value={paymentType}
-                  onChange={setPaymentType}
-                  options={[
-                    { value: 'cash', label: 'Tunai' },
-                    { value: 'credit', label: 'Kredit' }
-                  ]} />
+                <div className="payment-method-options" role="group" aria-label="Metode pembayaran">
+                  <button
+                    className="payment-method-option"
+                    type="button"
+                    aria-pressed={paymentType === 'cash'}
+                    onClick={() => setPaymentType('cash')}>
+                    Tunai
+                  </button>
+                  <button
+                    className="payment-method-option"
+                    type="button"
+                    aria-pressed={paymentType === 'credit'}
+                    onClick={() => setPaymentType('credit')}>
+                    Kredit
+                  </button>
+                </div>
               </div>
             </div>
             {customerName && (
