@@ -110,7 +110,7 @@ export async function getTransactionsByDateRange({ from, to }) {
   for (;;) {
     let query = client
       .from(tableFor('transactions'))
-      .select('id,createdAt,items')
+      .select('id,createdAt,items,total,gross_profit,customerName,invoiceNo')
       .gt('id', lastId)
       .order('id')
       .limit(pageSize)

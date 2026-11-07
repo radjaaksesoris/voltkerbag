@@ -350,6 +350,98 @@ export function formatQueryAnswer(intent, data = {}) {
     ].join('\n')
   }
 
+  if (intent === 'summary_metric') {
+    const metricLabels = {
+      transaction_count: 'Jumlah transaksi',
+      sales_total: 'Omzet',
+      gross_profit: 'Laba kotor',
+      net_profit: 'Laba bersih',
+      income: 'Pemasukan Buku Kas',
+      expense: 'Pengeluaran',
+      cash_balance: 'Saldo kas',
+      customer_debt: 'Hutang pelanggan berjalan'
+    }
+    const metricLabel = metricLabels[data.metric] || 'Rincian rekap'
+    const dateRange = data.date_range
+    const periodLabel = dateRange?.from || dateRange?.to
+      ? dateRange.from
+        ? 'Periode ' + [dateRange.from, dateRange.to].filter(Boolean).map(formatDate).join(' sampai ')
+        : 'Sejak awal pencatatan sampai ' + formatDate(dateRange.to)
+      : ''
+    const detailRows = (entries) => entries.slice(0, 30).map((entry) => {
+      const entryDate = entry.date
+        ? /^\d{4}-\d{2}-\d{2}$/.test(String(entry.date))
+          ? formatDate(String(entry.date))
+          : dateTime(entry.date)
+        : ''
+      const label = [entryDate, entry.label || 'Catatan'].filter(Boolean).join(' · ')
+      return '• ' + label + ': ' + rupiah(entry.amount)
+    })
+    const lines = [
+      'Rincian ' + metricLabel,
+      ...(periodLabel ? [periodLabel] : [])
+    ]
+
+    if (data.metric === 'net_profit') {
+      lines.push(
+        'Laba kotor: ' + rupiah(data.gross_profit),
+        'Pengeluaran: ' + rupiah(data.expense_total),
+        'Laba bersih: ' + rupiah(data.total),
+        '',
+        'Rincian laba kotor:'
+      )
+      lines.push(...(data.transactions?.length
+        ? detailRows(data.transactions)
+        : ['Tidak ada transaksi pada periode ini.']))
+      lines.push('', 'Rincian pengeluaran:')
+      lines.push(...(data.expenses?.length
+        ? detailRows(data.expenses)
+        : ['Tidak ada pengeluaran pada periode ini.']))
+    } else if (data.metric === 'cash_balance') {
+      lines.push(
+        'Pemasukan: ' + rupiah(data.income),
+        'Modal: ' + rupiah(data.capital),
+        'Pengeluaran: ' + rupiah(data.expense),
+        'Saldo kas: ' + rupiah(data.total),
+        '',
+        'Catatan Buku Kas:'
+      )
+      lines.push(...(data.entries?.length
+        ? detailRows(data.entries.map((entry) => ({
+            ...entry,
+            amount: entry.type === 'expense' ? -Math.abs(entry.amount) : entry.amount
+          })))
+        : ['Tidak ada catatan pada periode ini.']))
+    } else if (data.metric === 'customer_debt') {
+      lines.push(
+        'Total saldo berjalan: ' + rupiah(data.total),
+        'Saldo hutang ini adalah posisi saat ini dan tidak dibatasi periode transaksi.',
+        '',
+        'Saldo per pelanggan:'
+      )
+      lines.push(...(data.entries?.length
+        ? detailRows(data.entries)
+        : ['Tidak ada hutang pelanggan berjalan.']))
+    } else {
+      lines.push(
+        (data.metric === 'transaction_count' ? 'Jumlah transaksi: ' : metricLabel + ': ') +
+          (data.metric === 'transaction_count'
+            ? Number(data.total || 0).toLocaleString('id-ID')
+            : rupiah(data.total)),
+        '',
+        data.metric === 'transaction_count' ? 'Daftar transaksi:' : 'Rincian:'
+      )
+      lines.push(...(data.entries?.length
+        ? detailRows(data.entries)
+        : ['Tidak ada catatan pada periode ini.']))
+    }
+
+    if (data.truncated) {
+      lines.push('', 'Rincian dibatasi 30 baris. Persempit periode untuk melihat daftar yang lebih singkat.')
+    }
+    return lines.join('\n')
+  }
+
   if (intent === 'finance_summary') {
     return [
       'Ringkasan keuangan',

@@ -270,6 +270,38 @@ test('reports sales and finance metrics from query data', () => {
   }), /Saldo kas: Rp\s?450\.000/)
 })
 
+test('formats clickable summary metric details within the original period', () => {
+  const answer = formatQueryAnswer('summary_metric', {
+    metric: 'sales_total',
+    date_range: { from: '2026-10-01', to: '2026-10-31' },
+    total: 500_000,
+    entries: [{
+      date: '2026-10-12T10:00:00+07:00',
+      label: 'INV-12 · Andri',
+      amount: 500_000
+    }]
+  })
+
+  assert.match(answer, /Rincian Omzet/)
+  assert.match(answer, /Periode 1 Oktober 2026 sampai 31 Oktober 2026/)
+  assert.match(answer, /Omzet: Rp\s?500\.000/)
+  assert.match(answer, /12 Okt 2026.*INV-12 · Andri: Rp\s?500\.000/)
+})
+
+test('explains that customer debt detail is a current balance, not a historical period total', () => {
+  const answer = formatQueryAnswer('summary_metric', {
+    metric: 'customer_debt',
+    date_range: { from: '2026-10-01', to: '2026-10-31' },
+    total: 75_000,
+    current_balance: true,
+    entries: [{ label: 'Andri', amount: 75_000 }]
+  })
+
+  assert.match(answer, /Periode 1 Oktober 2026 sampai 31 Oktober 2026/)
+  assert.match(answer, /posisi saat ini dan tidak dibatasi periode transaksi/)
+  assert.match(answer, /Andri: Rp\s?75\.000/)
+})
+
 test('explains the gross-to-net profit difference with the recorded expense details', () => {
   const answer = formatQueryAnswer('daily_summary', {
     explain_profit_difference: true,

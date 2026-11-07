@@ -255,6 +255,156 @@ async function loadSalesSummary(args) {
   }
 }
 
+async function loadFinanceEntriesForRange(timestamps, { type, includeEntries = true } = {}) {
+  let summary = null
+  const entries = []
+  for (let page = 1; ; page += 1) {
+    const result = await getFinanceData({ ...timestamps, page, pageSize: PAGE_SIZE })
+    if (!summary) summary = result
+    if (!includeEntries) break
+    if (includeEntries) {
+      entries.push(...(result.entries || []).filter((entry) =>
+        !entry.pending && (!type || entry.type === type)
+      ))
+      if (entries.length > 30) break
+    }
+    if ((result.entries || []).length < PAGE_SIZE
+      || page * PAGE_SIZE >= (Number(result.total_count) || 0)) break
+  }
+  return { summary, entries }
+}
+
+async function loadSummaryMetric(args) {
+  const metric = String(args.metric || '')
+  const supportedMetrics = new Set([
+    'transaction_count', 'sales_total', 'gross_profit', 'net_profit',
+    'income', 'expense', 'cash_balance', 'customer_debt'
+  ])
+  if (!supportedMetrics.has(metric)) throw new Error('Rincian metrik rekap tidak didukung.')
+
+  const dateRange = dateRangeForQuery(args)
+  const timestamps = dateRangeTimestamps(dateRange)
+  const includeTransactions = [
+    'transaction_count', 'sales_total', 'gross_profit', 'net_profit'
+  ].includes(metric)
+  const includeFinance = [
+    'net_profit', 'income', 'expense', 'cash_balance', 'customer_debt'
+  ].includes(metric)
+  const financeType = metric === 'net_profit' || metric === 'expense'
+    ? 'expense'
+    : metric === 'income' ? 'income' : null
+  const [transactions, finance] = await Promise.all([
+    includeTransactions
+      ? getDashboardData({
+          ...timestamps,
+          summaryFrom: timestamps.from,
+          summaryTo: timestamps.to,
+          page: 1,
+          pageSize: PAGE_SIZE,
+          creditFirst: false,
+          nameSort: 'date'
+        })
+      : Promise.resolve(null),
+    includeFinance
+      ? loadFinanceEntriesForRange(timestamps, {
+          type: financeType,
+          includeEntries: metric !== 'customer_debt'
+        })
+      : Promise.resolve(null)
+  ])
+  const transactionsList = transactions?.transactions || []
+  const financeEntries = finance?.entries || []
+  const transactionProfit = Number(transactions?.gross_profit) || 0
+  const expenseTotal = Number(finance?.summary.expense) || 0
+  const incomeTotal = Number(finance?.summary.income) || 0
+  const capitalTotal = Number(finance?.summary.capital) || 0
+
+  const transactionDetails = transactionsList.map((transaction) => ({
+    date: transaction.createdAt || null,
+    label: [transaction.invoiceNo || 'Transaksi', transaction.customerName || 'Pelanggan'].join(' · '),
+    amount: metric === 'gross_profit' || metric === 'net_profit'
+      ? Number(transaction.gross_profit) || 0
+      : Number(transaction.total) || 0
+  }))
+  const financeDetails = financeEntries.map((entry) => ({
+    date: entry.date || entry.createdAt || null,
+    label: [entry.type === 'capital' ? 'Modal' : entry.type === 'income' ? 'Pemasukan' : 'Pengeluaran',
+      entry.category || entry.note || 'Catatan Buku Kas',
+      entry.note && entry.category && entry.note !== entry.category ? entry.note : '']
+      .filter(Boolean).join(' · '),
+    amount: Number(entry.amount) || 0,
+    type: entry.type
+  }))
+  const expenseDetails = financeDetails.filter((entry) => entry.type === 'expense')
+  const incomeDetails = financeDetails.filter((entry) => entry.type === 'income')
+  const allFinanceDetails = financeDetails
+
+  const debtDetails = (finance?.summary.credit_balances || []).map((entry) => ({
+    label: entry.customer_name || 'Pelanggan',
+    amount: Number(entry.balance_due) || 0
+  }))
+
+  const details = {
+    transaction_count: {
+      total: Number(transactions?.summary_count) || 0,
+      entries: transactionDetails,
+      item_count: Number(transactions?.summary_count) || 0
+    },
+    sales_total: {
+      total: Number(transactions?.revenue) || 0,
+      entries: transactionDetails,
+      item_count: Number(transactions?.summary_count) || 0
+    },
+    gross_profit: {
+      total: transactionProfit,
+      entries: transactionDetails,
+      item_count: Number(transactions?.summary_count) || 0
+    },
+    net_profit: {
+      total: transactionProfit - expenseTotal,
+      gross_profit: transactionProfit,
+      expense_total: expenseTotal,
+      transactions: transactionDetails,
+      expenses: expenseDetails,
+      item_count: transactionDetails.length + expenseDetails.length
+    },
+    income: {
+      total: incomeTotal,
+      entries: incomeDetails,
+      item_count: financeDetails.length
+    },
+    expense: {
+      total: expenseTotal,
+      entries: expenseDetails,
+      item_count: financeDetails.length
+    },
+    cash_balance: {
+      total: incomeTotal + capitalTotal - expenseTotal,
+      income: incomeTotal,
+      capital: capitalTotal,
+      expense: expenseTotal,
+      entries: allFinanceDetails,
+      item_count: finance?.summary.total_count || allFinanceDetails.length
+    },
+    customer_debt: {
+      total: Number(finance?.summary.total_credit) || 0,
+      entries: debtDetails,
+      item_count: debtDetails.length,
+      current_balance: true
+    }
+  }[metric]
+
+  const detailLists = metric === 'net_profit'
+    ? [details.transactions, details.expenses]
+    : [details.entries]
+  return {
+    metric,
+    date_range: dateRange,
+    ...details,
+    truncated: detailLists.some((items) => items.length > 30)
+  }
+}
+
 export async function queryStore(intent, args = {}) {
   if (intent === 'inventory_summary') {
     const products = await getAll('products')
@@ -505,6 +655,13 @@ export async function queryStore(intent, args = {}) {
         ? 'Ringkasan penjualan ' + summary.date_range.from
         : 'Ringkasan penjualan',
       data: summary
+    }
+  }
+
+  if (intent === 'summary_metric') {
+    return {
+      title: 'Rincian metrik rekap',
+      data: await loadSummaryMetric(args)
     }
   }
 

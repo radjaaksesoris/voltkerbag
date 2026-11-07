@@ -45,7 +45,31 @@ function formatData(data) {
   return JSON.stringify(data, null, 2)
 }
 
-function renderChatText(text, formatCurrencyAsTable = true) {
+const SUMMARY_METRIC_LABELS = {
+  transaction_count: 'transaksi',
+  sales_total: 'omzet',
+  gross_profit: 'laba kotor',
+  net_profit: 'laba bersih',
+  income: 'pemasukan buku kas',
+  expense: 'pengeluaran',
+  cash_balance: 'saldo kas',
+  customer_debt: 'hutang pelanggan berjalan'
+}
+
+function summaryMetricForLabel(label) {
+  const cleanLabel = String(label || '').trim().toLocaleLowerCase('id-ID')
+  if (/^transaksi\b/.test(cleanLabel)) return 'transaction_count'
+  if (/^omzet\b/.test(cleanLabel)) return 'sales_total'
+  if (/^laba kotor\b/.test(cleanLabel)) return 'gross_profit'
+  if (/^laba bersih\b/.test(cleanLabel)) return 'net_profit'
+  if (/^pemasukan buku kas\b/.test(cleanLabel)) return 'income'
+  if (/^pengeluaran\b/.test(cleanLabel)) return 'expense'
+  if (/^saldo kas\b/.test(cleanLabel)) return 'cash_balance'
+  if (/^hutang pelanggan berjalan\b/.test(cleanLabel)) return 'customer_debt'
+  return ''
+}
+
+function renderChatText(text, formatCurrencyAsTable = true, onSummaryMetricClick = null, expandedSummaryMetric = '') {
   const lines = String(text || '').split(/\r?\n/)
   const blocks = []
   let index = 0
@@ -55,6 +79,21 @@ function renderChatText(text, formatCurrencyAsTable = true) {
     const found = currencyPattern.test(value)
     currencyPattern.lastIndex = 0
     return found
+  }
+  const renderMetricLabel = (label, key) => {
+    const metric = onSummaryMetricClick ? summaryMetricForLabel(label) : ''
+    return metric
+      ? (
+          <button
+            type="button"
+            className="chat-summary-metric-link"
+            aria-expanded={expandedSummaryMetric === metric}
+            aria-label={'Buka rincian ' + SUMMARY_METRIC_LABELS[metric]}
+            onClick={() => onSummaryMetricClick(metric)}>
+            {renderInline(label, key)}
+          </button>
+        )
+      : renderInline(label, key)
   }
 
   const renderMoneyTable = (tableLines, key) => {
@@ -86,6 +125,17 @@ function renderChatText(text, formatCurrencyAsTable = true) {
         })
       })
 
+      if (lineRows.length === 0 && summaryMetricForLabel(cleanLine)) {
+        const separatorIndex = cleanLine.indexOf(':')
+        if (separatorIndex !== -1) {
+          lineRows.push({
+            label: cleanLine.slice(0, separatorIndex).trim(),
+            amount: cleanLine.slice(separatorIndex + 1).trim(),
+            detail: ''
+          })
+        }
+      }
+
       return lineRows.map((row) => ({
         ...row,
         label: row.detail ? row.label + ' — ' + row.detail : row.label
@@ -101,7 +151,7 @@ function renderChatText(text, formatCurrencyAsTable = true) {
           <tbody>
             {rows.map((row, rowIndex) => (
               <tr key={'money-row-' + rowIndex}>
-                <td>{renderInline(row.label, key + '-label-' + rowIndex)}</td>
+                <td>{renderMetricLabel(row.label, key + '-label-' + rowIndex)}</td>
                 <td>{renderInline(row.amount, key + '-amount-' + rowIndex)}</td>
               </tr>
             ))}
@@ -152,7 +202,9 @@ function renderChatText(text, formatCurrencyAsTable = true) {
         blocks.push(
           <List className="chat-rich-list" key={'list-' + index}>
             {items.map((item, itemIndex) => (
-              <li key={'item-' + itemIndex}>{renderInline(item, 'list-' + index + '-' + itemIndex)}</li>
+              <li key={'item-' + itemIndex}>
+                {renderMetricLabel(item, 'list-' + index + '-' + itemIndex)}
+              </li>
             ))}
           </List>
         )
@@ -226,6 +278,7 @@ export default function ChatApp() {
   const [feedbackError, setFeedbackError] = useState('')
   const [authCheckKey, setAuthCheckKey] = useState(0)
   const [messages, setMessages] = useState([])
+  const [summaryMetricDetails, setSummaryMetricDetails] = useState({})
   const [input, setInput] = useState('')
   const [busy, setBusy] = useState(false)
   const [processingStage, setProcessingStage] = useState('')
@@ -240,6 +293,7 @@ export default function ChatApp() {
   const endOfMessagesRef = useRef(null)
   const inputRef = useRef(null)
   const operationLock = useRef(false)
+  const summaryMetricRequestIds = useRef(new Map())
   const attachmentPreviewUrls = useRef(new Set())
   const chatDayRef = useRef(getChatDayKey())
   const chatBusyRef = useRef(false)
@@ -248,6 +302,54 @@ export default function ChatApp() {
   const hasPendingAction = messages.some((message) => message.draft)
   const requestedAppMode = getRequestedAppMode()
   const needsSharedStyles = !session || requestedAppMode !== 'chat'
+
+  async function openSummaryMetric(message, metric) {
+    const existing = summaryMetricDetails[message.id]
+    if (existing?.metric === metric) {
+      summaryMetricRequestIds.current.delete(message.id)
+      setSummaryMetricDetails((current) => {
+        const next = { ...current }
+        delete next[message.id]
+        return next
+      })
+      return
+    }
+
+    const requestId = crypto.randomUUID()
+    summaryMetricRequestIds.current.set(message.id, requestId)
+    setSummaryMetricDetails((current) => ({
+      ...current,
+      [message.id]: { metric, loading: true, text: '', error: '' }
+    }))
+    try {
+      const { data } = await queryStore('summary_metric', {
+        metric,
+        from: message.summaryRange.from,
+        to: message.summaryRange.to
+      })
+      if (summaryMetricRequestIds.current.get(message.id) !== requestId) return
+      setSummaryMetricDetails((current) => ({
+        ...current,
+        [message.id]: {
+          metric,
+          loading: false,
+          text: formatQueryAnswer('summary_metric', data),
+          error: ''
+        }
+      }))
+    } catch (error) {
+      if (summaryMetricRequestIds.current.get(message.id) !== requestId) return
+      setSummaryMetricDetails((current) => ({
+        ...current,
+        [message.id]: {
+          metric,
+          loading: false,
+          text: '',
+          error: error.message || 'Rincian tidak dapat dimuat. Coba lagi.'
+        }
+      }))
+    }
+  }
 
   useEffect(() => {
     if (!rateLimitWait) return undefined
@@ -873,7 +975,11 @@ export default function ChatApp() {
         appendMessage(setMessages, {
           role: 'assistant',
           text: formatQueryAnswer(plan.query, result.data),
-          formatCurrencyAsTable: plan.args?.explainProfitDifference !== true
+          formatCurrencyAsTable: plan.args?.explainProfitDifference !== true,
+          summaryRange: ['daily_summary', 'sales_summary'].includes(plan.query)
+            && plan.args?.explainProfitDifference !== true
+            ? result.data.date_range
+            : null
         })
         return
       }
@@ -1180,7 +1286,11 @@ export default function ChatApp() {
                   </span>
                   {renderChatText(
                     message.text,
-                    message.role === 'assistant' && message.formatCurrencyAsTable !== false
+                    message.role === 'assistant' && message.formatCurrencyAsTable !== false,
+                    message.summaryRange
+                      ? (metric) => openSummaryMetric(message, metric)
+                      : null,
+                    summaryMetricDetails[message.id]?.metric
                   )}
                   {message.attachmentPreviewUrl && (
                     <img
@@ -1191,6 +1301,28 @@ export default function ChatApp() {
                   )}
                   {message.attachmentName && <span className="chat-attachment-label"><Icon name="image" size={14} />{message.attachmentName}</span>}
                 </div>
+                {message.summaryRange && summaryMetricDetails[message.id] && (
+                  <section className="chat-summary-detail" aria-live="polite">
+                    <div className="chat-summary-detail-heading">
+                      <strong>Rincian {SUMMARY_METRIC_LABELS[summaryMetricDetails[message.id].metric]}</strong>
+                      <button
+                        type="button"
+                        aria-label="Tutup rincian metrik"
+                        onClick={() => openSummaryMetric(message, summaryMetricDetails[message.id].metric)}>
+                        Tutup
+                      </button>
+                    </div>
+                    {summaryMetricDetails[message.id].loading && (
+                      <p role="status">Memuat rincian sesuai periode laporan...</p>
+                    )}
+                    {summaryMetricDetails[message.id].error && (
+                      <p className="chat-summary-detail-error" role="alert">
+                        {summaryMetricDetails[message.id].error}
+                      </p>
+                    )}
+                    {summaryMetricDetails[message.id].text && renderChatText(summaryMetricDetails[message.id].text)}
+                  </section>
+                )}
 
                 {message.feedbackEligible && !message.feedbackSubmitted && (
                   <div className="chat-feedback">
