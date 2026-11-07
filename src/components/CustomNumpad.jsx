@@ -19,40 +19,12 @@ export default function CustomNumpad() {
   const scrollHostRef = useRef(null)
 
   useEffect(() => {
-    function syncInputReadOnly() {
-      const isMobile = window.matchMedia('(max-width: 640px)').matches
-      document.querySelectorAll(INPUT_SELECTOR).forEach((input) => {
-        if (isMobile && !input.disabled) {
-          if (input.dataset.customNumpadManagedReadonly !== 'true') {
-            if (input.readOnly) return
-            input.dataset.customNumpadOriginalReadonly = String(input.readOnly)
-            input.dataset.customNumpadManagedReadonly = 'true'
-          }
-          input.readOnly = true
-        } else if (input.dataset.customNumpadManagedReadonly === 'true') {
-          input.readOnly = input.dataset.customNumpadOriginalReadonly === 'true'
-          delete input.dataset.customNumpadOriginalReadonly
-          delete input.dataset.customNumpadManagedReadonly
-        }
-      })
-    }
-
-    syncInputReadOnly()
-    const observer = new MutationObserver(syncInputReadOnly)
-    observer.observe(document.body, {
-      attributes: true,
-      attributeFilter: ['data-custom-numpad', 'disabled'],
-      childList: true,
-      subtree: true
-    })
-
     function handleFocusIn(event) {
       const input = event.target
-      if (input instanceof HTMLInputElement && input.matches(INPUT_SELECTOR)) syncInputReadOnly()
       const shouldShow = input instanceof HTMLInputElement &&
         input.matches(INPUT_SELECTOR) &&
-        input.dataset.customNumpadManagedReadonly === 'true' &&
         !input.disabled &&
+        !input.readOnly &&
         window.matchMedia('(max-width: 640px)').matches
       activeInputRef.current = shouldShow ? input : null
       setActiveInput(shouldShow ? input : null)
@@ -80,7 +52,6 @@ export default function CustomNumpad() {
         activeInputRef.current = null
         setActiveInput(null)
       }
-      syncInputReadOnly()
     }
 
     document.addEventListener('focusin', handleFocusIn)
@@ -92,7 +63,6 @@ export default function CustomNumpad() {
       document.removeEventListener('pointerdown', handlePointerDown)
       document.removeEventListener('keydown', handleKeyDown)
       window.removeEventListener('resize', handleResize)
-      observer.disconnect()
     }
   }, [])
 
@@ -136,7 +106,7 @@ export default function CustomNumpad() {
 
   function applyKey(key) {
     const input = activeInput
-    if (!input?.isConnected || input.disabled || (input.readOnly && input.dataset.customNumpadManagedReadonly !== 'true')) {
+    if (!input?.isConnected || input.disabled || input.readOnly) {
       setActiveInput(null)
       return
     }
