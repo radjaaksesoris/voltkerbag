@@ -3,7 +3,6 @@ import { useEffect, useState } from 'react'
 export default function LoginScreen({ configured, connectionError, updateBanner, onSignedIn, onRetry }) {
   const defaultEmail = import.meta.env.VITE_LOGIN_EMAIL?.trim() || ''
   const [isMobile, setIsMobile] = useState(() => window.matchMedia('(max-width: 1024px)').matches)
-  const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
@@ -16,10 +15,10 @@ export default function LoginScreen({ configured, connectionError, updateBanner,
   }, [])
 
   async function loginWithPassword(value) {
-    const loginEmail = isMobile ? defaultEmail : email.trim()
+    const loginEmail = defaultEmail
     const loginPassword = isMobile ? value.replace(/\D/g, '') : value
     if (!loginEmail) {
-      setError('Email login mobile belum dikonfigurasi. Atur VITE_LOGIN_EMAIL lalu build ulang aplikasi.')
+      setError('Email login belum dikonfigurasi. Atur VITE_LOGIN_EMAIL lalu build ulang aplikasi.')
       return
     }
     if (!loginPassword) {
@@ -92,6 +91,10 @@ export default function LoginScreen({ configured, connectionError, updateBanner,
           <div className="login-message error" role="alert">
             Supabase belum dikonfigurasi untuk build ini. Atur secret VITE_SUPABASE_ANON_KEY di GitHub Actions, lalu jalankan deploy ulang.
           </div>
+        ) : !defaultEmail ? (
+          <div className="login-message error" role="alert">
+            Email login belum dikonfigurasi. Atur variable VITE_LOGIN_EMAIL di GitHub Actions, lalu jalankan deploy ulang.
+          </div>
         ) : connectionError ? (
           <div className="login-message error" role="alert">
             <span>{connectionError}</span>
@@ -101,8 +104,7 @@ export default function LoginScreen({ configured, connectionError, updateBanner,
           <form onSubmit={submit}>
             <div className="login-email-field">
               <label htmlFor="login-email">Email</label>
-              <input id="login-email" className="input" type="email" autoComplete="username" required={!isMobile}
-                value={email} onChange={(event) => setEmail(event.target.value)} />
+              <input id="login-email" className="input" type="email" autoComplete="username" value={defaultEmail} readOnly />
             </div>
             <label htmlFor="login-password">Kata sandi</label>
             <input id="login-password" className="input" type="password" autoComplete="current-password"
