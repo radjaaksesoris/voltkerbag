@@ -30,6 +30,7 @@ function dateTime(value) {
 
 function summarizeStock(data) {
   const matches = data.matches || []
+  const stockRanking = Boolean(data.stock_order && !data.low_stock_only)
   if (matches.length === 0) {
     if (data.low_stock_only && !data.searched_product) {
       return 'Tidak ada produk dengan stok rendah (maksimal 5 satuan utama).'
@@ -38,7 +39,7 @@ function summarizeStock(data) {
       ? 'Maaf, saya belum menemukan produk yang cocok. Bisa sebutkan nama produk persis seperti yang tercatat di Stok Barang?'
       : 'Saya belum melihat produk di daftar stok. Apakah produk ini sudah ditambahkan ke Stok Barang?'
   }
-  const lines = matches.slice(0, 10).map((product) => {
+  const lines = matches.slice(0, stockRanking ? 1 : 10).map((product) => {
     const prices = Object.entries(product.sale_prices || {})
       .filter(([, price]) => Number(price) > 0)
       .map(([unit, price]) => rupiah(price) + '/' + unit)
@@ -49,13 +50,15 @@ function summarizeStock(data) {
       (data.include_cost && costs.length ? ' · HPP ' + costs.join(', ') : '') +
       (prices.length ? ' · Harga jual ' + prices.join(', ') : '')
   })
-  if (data.truncated || matches.length > 10) lines.push('Masih ada produk lainnya; buka rincian data untuk daftar lengkap.')
+  if (!stockRanking && (data.truncated || matches.length > 10)) {
+    lines.push('Masih ada produk lainnya; buka rincian data untuk daftar lengkap.')
+  }
   const orderLabel = data.low_stock_only
     ? 'Produk dengan stok rendah (maksimal 5 satuan utama):'
     : data.stock_order === 'asc'
-    ? 'Produk dengan stok paling sedikit (diurutkan berdasarkan jumlah PCS):'
+    ? 'Produk dengan stok paling sedikit (berdasarkan jumlah PCS):'
     : data.stock_order === 'desc'
-      ? 'Produk dengan stok paling banyak (diurutkan berdasarkan jumlah PCS):'
+      ? 'Produk dengan stok paling banyak (berdasarkan jumlah PCS):'
       : ''
   return [orderLabel, ...lines].filter(Boolean).join('\n')
 }

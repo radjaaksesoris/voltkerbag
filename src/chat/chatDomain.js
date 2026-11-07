@@ -506,8 +506,8 @@ export async function queryStore(intent, args = {}) {
       data: {
         total_products: products.length,
         searched_product: String(args.product || args.search || '').trim(),
-        matches: matches.slice(0, 40).map(formatStockQuery),
-        truncated: matches.length > 40,
+        matches: matches.slice(0, stockOrder && !args.lowStockOnly ? 1 : 40).map(formatStockQuery),
+        truncated: !stockOrder && matches.length > 40,
         include_cost: args.includeCost === true,
         stock_order: stockOrder,
         low_stock_only: args.lowStockOnly === true

@@ -24,7 +24,7 @@ test('asks politely for a clearer product name when a stock search has no match'
   }), /Maaf, saya belum menemukan produk yang cocok.*nama produk persis/s)
 })
 
-test('formats stock rankings as a heading and a clearly separated bold product list', () => {
+test('formats stock rankings with only the single product asked for', () => {
   const answer = formatQueryAnswer('stock', {
     stock_order: 'asc',
     matches: [
@@ -34,7 +34,22 @@ test('formats stock rankings as a heading and a clearly separated bold product l
   })
 
   assert.match(answer, /^Produk dengan stok paling sedikit.*:\n• \*\*Weist Bag\*\*/)
-  assert.match(answer, /\n• \*\*AIGNER\*\*/)
+  assert.doesNotMatch(answer, /AIGNER/)
+  assert.doesNotMatch(answer, /produk lainnya/i)
+})
+
+test('shows only the highest-stock product for a highest-stock question', () => {
+  const answer = formatQueryAnswer('stock', {
+    stock_order: 'desc',
+    matches: [
+      { name: 'Aventador', stock: '45 lusin', sale_prices: {} },
+      { name: 'Bimo Oval', stock: '26 lusin', sale_prices: {} }
+    ]
+  })
+
+  assert.match(answer, /Produk dengan stok paling banyak/)
+  assert.match(answer, /\*\*Aventador\*\*/)
+  assert.doesNotMatch(answer, /Bimo Oval/)
 })
 
 test('formats operational insights with the analyzed period and read-only recommendations', () => {
