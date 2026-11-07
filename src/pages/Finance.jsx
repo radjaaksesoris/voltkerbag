@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { getAll, getFinanceData, put, remove, onRefresh, requestPageRefresh, recordCustomerCreditPayment, addManualCustomerCredit, recordExpeditionCost } from '../db'
 import { rupiah, dateOnly } from '../format'
-import DateRangeFilter from '../components/DateRangeFilter.jsx'
 import { dateRangeTimestamps, hasDateRange, localDateValue } from '../dateFilter'
 import MoneyInput from '../components/MoneyInput.jsx'
 import CustomerIdentity from '../components/CustomerIdentity.jsx'
@@ -336,14 +335,58 @@ export default function Finance() {
       {actionError && !showEntryForm && <p className="form-error" role="alert">{actionError}</p>}
       <div className="finance-overview-sticky">
         <div className="finance-date-filter">
-          <div className="date-filter-caption">
-            <span className="muted">Pemasukan, pengeluaran, saldo, dan laba mengikuti tanggal yang dipilih.</span>
+          <div className="finance-date-range">
+            <label className="dashboard-date-field">
+              <Icon name="calendar" size={23} />
+              <span>Dari tanggal</span>
+              <input
+                type="date"
+                value={dateRange.from}
+                max={dateRange.to || undefined}
+                onChange={(event) => {
+                  setDateRange((range) => ({ ...range, from: event.target.value }))
+                  setPage(1)
+                }}
+                aria-label="Dari tanggal"
+              />
+            </label>
+            <label className="dashboard-date-field">
+              <Icon name="calendar" size={23} />
+              <span>Sampai tanggal</span>
+              <input
+                type="date"
+                value={dateRange.to}
+                min={dateRange.from || undefined}
+                onChange={(event) => {
+                  setDateRange((range) => ({ ...range, to: event.target.value }))
+                  setPage(1)
+                }}
+                aria-label="Sampai tanggal"
+              />
+            </label>
+            <div className="finance-date-quick-actions">
+              <button
+                className="finance-date-quick"
+                type="button"
+                aria-pressed={dateRange.from === todayDateRange.from && dateRange.to === todayDateRange.to}
+                onClick={() => {
+                  setDateRange(todayDateRange)
+                  setPage(1)
+                }}>
+                Hari ini
+              </button>
+              <button
+                className="finance-date-quick"
+                type="button"
+                aria-pressed={dateRange.from === currentMonthDateRange.from && dateRange.to === currentMonthDateRange.to}
+                onClick={() => {
+                  setDateRange(currentMonthDateRange)
+                  setPage(1)
+                }}>
+                Bulan ini
+              </button>
+            </div>
           </div>
-          <DateRangeFilter value={dateRange} onChange={(range) => {
-            setDateRange(range)
-            setPage(1)
-          }} resetValue={todayDateRange} resetLabel="Hari ini"
-            quickValue={currentMonthDateRange} quickLabel="Bulan ini" />
         </div>
         <div className="stats-grid dashboard-stats-grid finance-summary-grid">
           <div className="stat-card dashboard-stat-card finance-income-card">
