@@ -71,6 +71,11 @@ export default function CustomNumpad() {
 
     function handleKeyDown(event) {
       if (event.key === 'Escape') {
+        if (activeInputRef.current?.isConnected) {
+          event.preventDefault()
+          event.stopImmediatePropagation()
+          return
+        }
         activeInputRef.current?.blur()
         activeInputRef.current = null
         setActiveInput(null)
