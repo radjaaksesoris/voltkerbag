@@ -1205,6 +1205,45 @@ h3 { margin-bottom: 16px; color: var(--ink); font-size: 15px; font-weight: 700; 
 .dashboard-stock-counts .dashboard-stock-metric + .dashboard-stock-metric { border-left-color: rgba(130, 91, 40, .22); }
 .dashboard-stock-counts .dashboard-stock-metric strong.danger { color: #b5282e; }
 .dashboard-stock-icon { width: 42px; height: 42px; margin-left: auto; color: #d78a28; }
+.finance-summary-grid .stat-card.finance-income-card { background-color: #cdebdc; }
+.finance-income-card::before {
+  background: repeating-linear-gradient(90deg, transparent 0 8px, rgba(15, 157, 107, .36) 8px 17px);
+  clip-path: polygon(0 100%, 0 78%, 20% 78%, 20% 58%, 40% 58%, 40% 38%, 60% 38%, 60% 18%, 80% 18%, 80% 0, 100% 0, 100% 100%);
+}
+.finance-income-card .dashboard-stat-icon { background: linear-gradient(145deg, #28bd83, #078458); }
+.finance-income-card .dashboard-stat-content > strong { color: #126d4e; }
+.finance-summary-grid .stat-card.finance-debt-card { background-color: #f8d4d9; }
+.finance-debt-card::before {
+  background:
+    linear-gradient(155deg, transparent 48%, rgba(233, 62, 78, .62) 49% 51%, transparent 52%) 0 0 / 100% 100%,
+    linear-gradient(155deg, transparent 60%, rgba(233, 62, 78, .3) 61%) 0 0 / 100% 100%,
+    linear-gradient(180deg, transparent, rgba(233, 62, 78, .32));
+  clip-path: polygon(0 100%, 0 86%, 19% 73%, 35% 78%, 54% 51%, 70% 57%, 85% 30%, 100% 19%, 100% 100%);
+}
+.finance-debt-card .dashboard-stat-icon { background: linear-gradient(145deg, #ed3543, #be1427); }
+.finance-debt-card .dashboard-stat-content > strong { color: #a51d2a; }
+.finance-summary-grid .stat-card.finance-cash-card { background-color: #f9e4c2; }
+.finance-cash-card::before {
+  background: repeating-linear-gradient(90deg, transparent 0 8px, rgba(215, 138, 40, .34) 8px 17px);
+  clip-path: polygon(0 100%, 0 76%, 20% 76%, 20% 55%, 40% 55%, 40% 36%, 60% 36%, 60% 18%, 80% 18%, 80% 0, 100% 0, 100% 100%);
+}
+.finance-cash-card .dashboard-stat-icon { background: linear-gradient(145deg, #e9a43c, #bc701a); }
+.finance-cash-card .dashboard-stat-content > strong { color: #875014; }
+.finance-summary-grid .stat-card.finance-profit-card { background-color: #d3e6fb; }
+.finance-profit-card::before {
+  background:
+    linear-gradient(155deg, transparent 48%, rgba(44, 131, 224, .62) 49% 51%, transparent 52%) 0 0 / 100% 100%,
+    linear-gradient(155deg, transparent 60%, rgba(44, 131, 224, .3) 61%) 0 0 / 100% 100%,
+    linear-gradient(180deg, transparent, rgba(44, 131, 224, .32));
+  clip-path: polygon(0 100%, 0 86%, 19% 73%, 35% 78%, 54% 51%, 70% 57%, 85% 30%, 100% 19%, 100% 100%);
+}
+.finance-profit-card .dashboard-stat-icon { background: linear-gradient(145deg, #3296f2, #1766c1); }
+.finance-profit-card .dashboard-stat-content > strong.ok { color: #1b62ad; }
+.finance-profit-card .dashboard-stat-content > strong.danger { color: #a51d2a; }
+.finance-summary-grid .debt-stat-card { text-align: left; }
+.finance-summary-grid .debt-stat-card .dashboard-stat-content { gap: 5px; }
+.finance-summary-grid .debt-stat-card .dashboard-stat-content > span:first-child { color: #4b4d52; font-size: 12px; font-weight: 500; letter-spacing: 0; text-transform: none; }
+.finance-summary-grid .debt-stat-card .dashboard-stat-content > .debt-stat-hint { color: #656b76; font-size: 10px; font-weight: 600; }
 
 /* Tables and surfaces */
 .card {

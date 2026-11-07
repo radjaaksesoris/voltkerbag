@@ -346,20 +346,41 @@ export default function Finance() {
             quickValue={currentMonthDateRange} quickLabel="Bulan ini" />
         </div>
         <div className="stats-grid dashboard-stats-grid finance-summary-grid">
-          <div className="stat-card"><span>Pemasukan Penjualan</span><strong className="ok">+{rupiah(income)}</strong></div>
+          <div className="stat-card dashboard-stat-card finance-income-card">
+            <span className="dashboard-stat-icon"><Icon name="trend" size={27} /></span>
+            <div className="dashboard-stat-content">
+              <span>Pemasukan Penjualan</span>
+              <strong>+{rupiah(income)}</strong>
+            </div>
+          </div>
           <button
-            className="stat-card debt-stat-card"
+            className="stat-card dashboard-stat-card debt-stat-card finance-debt-card"
             type="button"
             ref={creditBalancesTriggerRef}
             aria-haspopup="dialog"
             aria-expanded={showCreditBalances}
             onClick={() => setShowCreditBalances(true)}>
-            <span>Total Hutang</span>
-            <strong className="danger">{rupiah(totalCredit)}</strong>
-            <span className="debt-stat-hint">Lihat pelanggan dengan hutang</span>
+            <span className="dashboard-stat-icon"><Icon name="tag" size={27} /></span>
+            <span className="dashboard-stat-content">
+              <span>Total Hutang</span>
+              <strong>{rupiah(totalCredit)}</strong>
+              <span className="debt-stat-hint">Lihat pelanggan dengan hutang</span>
+            </span>
           </button>
-          <div className="stat-card highlight"><span>Saldo Kas</span><strong>{rupiah(balance)}</strong></div>
-          <div className="stat-card"><span>Laba</span><strong className={netProfit >= 0 ? 'ok' : 'danger'}>{rupiah(netProfit)}</strong></div>
+          <div className="stat-card dashboard-stat-card finance-cash-card">
+            <span className="dashboard-stat-icon"><Icon name="wallet" size={27} /></span>
+            <div className="dashboard-stat-content">
+              <span>Saldo Kas</span>
+              <strong>{rupiah(balance)}</strong>
+            </div>
+          </div>
+          <div className="stat-card dashboard-stat-card finance-profit-card">
+            <span className="dashboard-stat-icon"><Icon name="trend" size={27} /></span>
+            <div className="dashboard-stat-content">
+              <span>Laba</span>
+              <strong className={netProfit >= 0 ? 'ok' : 'danger'}>{rupiah(netProfit)}</strong>
+            </div>
+          </div>
         </div>
       </div>
 
