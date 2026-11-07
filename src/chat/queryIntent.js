@@ -104,6 +104,9 @@ function queryPeriod(normalized) {
     String.raw`\b(?:bulan\s+)?(${PERIOD_MONTHS.join('|')})(?:\s+(\d{4}))?\b`
   ))
   if (monthMatch) return [monthMatch[1], monthMatch[2]].filter(Boolean).join(' ')
+  if (/\b(?:keseluruhan|seluruh(?:nya)?|semua(?:\s+(?:transaksi|riwayat|waktu|periode))?|sejak\s+awal|dari\s+awal(?:\s+transaksi)?|awal\s+transaksi|sepanjang\s+masa|all\s+time)\b/.test(normalized)) {
+    return 'sejak awal'
+  }
   if (/\b(?:sampai|hingga)\s+(?:hari ini|saat ini|sekarang)\b/.test(normalized)) {
     return 'sejak awal'
   }

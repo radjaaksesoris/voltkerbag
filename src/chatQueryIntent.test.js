@@ -45,7 +45,8 @@ test('supports exact sales recap and modal-price questions from chat examples', 
   for (const question of [
     'Berapa total pendapatan sampai hari ini',
     'Berapa omzet sampai saat ini',
-    'Berapa pendapatan hingga sekarang'
+    'Berapa pendapatan hingga sekarang',
+    'Rekap penjualan keseluruhan'
   ]) {
     assert.deepEqual(resolveDirectQuery(question), {
       kind: 'query',
@@ -53,6 +54,11 @@ test('supports exact sales recap and modal-price questions from chat examples', 
       args: { period: 'sejak awal' }
     })
   }
+  assert.deepEqual(resolveDirectQuery('Rekap semua transaksi'), {
+    kind: 'query',
+    query: 'transactions',
+    args: { period: 'sejak awal' }
+  })
   assert.deepEqual(resolveFallbackQuery('Berapa pendapatan hari ini', {
     kind: 'query',
     query: 'cashbook',
