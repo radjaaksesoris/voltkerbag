@@ -1134,10 +1134,10 @@ h3 { margin-bottom: 16px; color: var(--ink); font-size: 15px; font-weight: 700; 
   z-index: -1;
   right: 0;
   bottom: 0;
-  width: 38%;
-  height: 78%;
+  width: 48%;
+  height: 92%;
   content: '';
-  opacity: .44;
+  opacity: .9;
   pointer-events: none;
 }
 .dashboard-stats-grid .stat-card.dashboard-stat-card::after { display: none; }
@@ -1172,9 +1172,9 @@ h3 { margin-bottom: 16px; color: var(--ink); font-size: 15px; font-weight: 700; 
 .dashboard-stats-grid .stat-card.dashboard-revenue-card { background-color: #f8d4d9; }
 .dashboard-revenue-card::before {
   background:
-    linear-gradient(155deg, transparent 49%, rgba(233, 62, 78, .35) 50% 52%, transparent 53%) 0 0 / 100% 100%,
-    linear-gradient(155deg, transparent 61%, rgba(233, 62, 78, .14) 62%) 0 0 / 100% 100%,
-    linear-gradient(180deg, transparent, rgba(233, 62, 78, .18));
+    linear-gradient(155deg, transparent 48%, rgba(233, 62, 78, .62) 49% 51%, transparent 52%) 0 0 / 100% 100%,
+    linear-gradient(155deg, transparent 60%, rgba(233, 62, 78, .3) 61%) 0 0 / 100% 100%,
+    linear-gradient(180deg, transparent, rgba(233, 62, 78, .32));
   clip-path: polygon(0 100%, 0 86%, 19% 73%, 35% 78%, 54% 51%, 70% 57%, 85% 30%, 100% 19%, 100% 100%);
 }
 .dashboard-revenue-card .dashboard-stat-icon { background: linear-gradient(145deg, #ed3543, #be1427); }
@@ -1182,9 +1182,9 @@ h3 { margin-bottom: 16px; color: var(--ink); font-size: 15px; font-weight: 700; 
 .dashboard-stats-grid .stat-card.dashboard-profit-card { background-color: #d3e6fb; }
 .dashboard-profit-card::before {
   background:
-    linear-gradient(155deg, transparent 49%, rgba(44, 131, 224, .35) 50% 52%, transparent 53%) 0 0 / 100% 100%,
-    linear-gradient(155deg, transparent 61%, rgba(44, 131, 224, .14) 62%) 0 0 / 100% 100%,
-    linear-gradient(180deg, transparent, rgba(44, 131, 224, .18));
+    linear-gradient(155deg, transparent 48%, rgba(44, 131, 224, .62) 49% 51%, transparent 52%) 0 0 / 100% 100%,
+    linear-gradient(155deg, transparent 60%, rgba(44, 131, 224, .3) 61%) 0 0 / 100% 100%,
+    linear-gradient(180deg, transparent, rgba(44, 131, 224, .32));
   clip-path: polygon(0 100%, 0 86%, 19% 73%, 35% 78%, 54% 51%, 70% 57%, 85% 30%, 100% 19%, 100% 100%);
 }
 .dashboard-profit-card .dashboard-stat-icon { background: linear-gradient(145deg, #3296f2, #1766c1); }
@@ -1192,11 +1192,11 @@ h3 { margin-bottom: 16px; color: var(--ink); font-size: 15px; font-weight: 700; 
 .dashboard-stats-grid .stat-card.dashboard-stock-summary { background-color: #cdebdc; }
 .dashboard-stock-summary::before {
   right: 0;
-  width: 26%;
-  height: 56%;
-  background: repeating-linear-gradient(90deg, transparent 0 8px, rgba(15, 157, 107, .24) 8px 17px);
+  width: 34%;
+  height: 76%;
+  background: repeating-linear-gradient(90deg, transparent 0 8px, rgba(15, 157, 107, .36) 8px 17px);
   clip-path: polygon(0 100%, 0 78%, 20% 78%, 20% 58%, 40% 58%, 40% 38%, 60% 38%, 60% 18%, 80% 18%, 80% 0, 100% 0, 100% 100%);
-  opacity: .72;
+  opacity: .95;
 }
 .dashboard-stock-summary .dashboard-stat-icon { background: linear-gradient(145deg, #28bd83, #078458); }
 .dashboard-stock-summary .dashboard-stat-content > strong { color: #126d4e; }
