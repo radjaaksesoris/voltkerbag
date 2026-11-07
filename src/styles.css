@@ -1850,9 +1850,9 @@ label { display: block; margin-bottom: 6px; color: var(--muted); font-size: 11px
     position: fixed;
     z-index: 80;
     right: 8px;
-    bottom: calc(68px + env(safe-area-inset-bottom));
+    bottom: 0;
     left: 8px;
-    padding: 9px;
+    padding: 9px 9px calc(77px + env(safe-area-inset-bottom));
     border: 1px solid var(--border);
     border-radius: 14px;
     background: var(--card);
