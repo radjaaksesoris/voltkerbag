@@ -104,9 +104,6 @@ function queryPeriod(normalized) {
     String.raw`\b(?:bulan\s+)?(${PERIOD_MONTHS.join('|')})(?:\s+(\d{4}))?\b`
   ))
   if (monthMatch) return [monthMatch[1], monthMatch[2]].filter(Boolean).join(' ')
-  if (/\b(?:keseluruhan|seluruh(?:nya)?|semua(?:\s+(?:transaksi|riwayat|waktu|periode))?|sejak\s+awal|dari\s+awal(?:\s+transaksi)?|awal\s+transaksi|sepanjang\s+masa|all\s+time)\b/.test(normalized)) {
-    return 'sejak awal'
-  }
   if (/\b(?:sampai|hingga)\s+(?:hari ini|saat ini|sekarang)\b/.test(normalized)) {
     return 'sejak awal'
   }
@@ -117,6 +114,9 @@ function queryPeriod(normalized) {
   if (/\b(tahun lalu|tahun kemarin)\b/.test(normalized)) return 'tahun lalu'
   if (/\b(tahun ini)\b/.test(normalized)) return 'tahun ini'
   if (/\b(hari ini|hari|sekarang|today)\b/.test(normalized)) return 'hari ini'
+  if (/\b(?:keseluruhan|seluruh(?:nya)?|semua(?:\s+(?:transaksi|riwayat|waktu|periode))?|sejak\s+awal(?:\s+(?:transaksi|pencatatan))?|dari\s+awal(?:\s+(?:transaksi|pencatatan))?|awal\s+(?:transaksi|pencatatan)|(?:sejak|dari)\s+(?:transaksi|pencatatan)\s+pertama|sejak\s+pertama\s+kali|sepanjang\s+masa|all\s+time)\b/.test(normalized)) {
+    return 'sejak awal'
+  }
   return ''
 }
 
@@ -230,6 +230,19 @@ export function resolveFastQuery(message) {
   }
 
   const period = queryPeriod(normalized)
+  const asksAllTimeRecap = period === 'sejak awal'
+    && words.some((word) => [
+      'rekap', 'ringkasan', 'ringkas', 'summary',
+      'penjualan', 'omzet', 'omset', 'pendapatan', 'laba'
+    ].includes(word))
+    && !words.some((word) => ['detail', 'rincian', 'daftar', 'riwayat'].includes(word))
+  if (asksAllTimeRecap) {
+    return {
+      kind: 'query',
+      query: 'daily_summary',
+      args: { period: 'sejak awal' }
+    }
+  }
   const comparisonPeriod = /\b(?:hari ini|minggu ini|bulan ini|tahun ini)\b/.exec(normalized)?.[0]
     || period
   const asksSalesComparison = words.some((word) =>
