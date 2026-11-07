@@ -281,15 +281,6 @@ export default function CustomNumpad() {
     activeInput.blur()
   }
 
-  function handleDonePointerDown(event) {
-    event.preventDefault()
-    closeNumpad()
-  }
-
-  function handleDoneClick(event) {
-    if (event.detail === 0) closeNumpad()
-  }
-
   return createPortal(
     <div className="custom-numpad" ref={keypadRef} role="group" aria-label="Keypad angka">
       <div className="custom-numpad-heading">
@@ -316,8 +307,7 @@ export default function CustomNumpad() {
         <button
           type="button"
           className="custom-numpad-done"
-          onPointerDown={handleDonePointerDown}
-          onClick={handleDoneClick}>
+          onClick={closeNumpad}>
           Selesai
         </button>
         <button type="button" onPointerDown={handlePointerKey('0')} onClick={handleKeyboardClick('0')}>0</button>
