@@ -939,7 +939,7 @@ h3 { margin-bottom: 16px; color: var(--ink); font-size: 15px; font-weight: 700; 
   .dashboard-transaction-table .transaction-customer { min-width: 0; text-align: left; }
   .dashboard-transaction-table .transaction-invoice {
     margin: 0;
-    align-self: start;
+    align-self: center;
     font-size: 10px;
     white-space: nowrap;
   }

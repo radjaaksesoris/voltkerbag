@@ -250,7 +250,7 @@ export default function Dashboard() {
                     </div>
                   </td>
                   <td>
-                    <span className="dashboard-date-desktop">{dateTime(t.createdAt)}</span>
+                    <span className="dashboard-date-desktop">{dateOnly(t.createdAt)}</span>
                     <span className="dashboard-date-mobile">{dateOnly(t.createdAt)}</span>
                   </td>
                   <td><span className={'badge ' + (isPartiallyPaid ? 'badge-partial' : isCredit && !isPaid ? 'badge-danger' : 'badge-ok')}>
