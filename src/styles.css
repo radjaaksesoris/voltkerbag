@@ -1160,6 +1160,11 @@ tbody tr:hover { background: #fbf5ed; }
 .products-summary { margin: 0; }
 .products-search { grid-column: 1 / -1; grid-row: 2; }
 .products-toolbar > .btn { grid-column: 2; grid-row: 1; }
+@media (min-width: 1025px) {
+  .products-summary { display: none; }
+  .products-search { grid-column: 1; grid-row: 1; min-width: 0; }
+  .products-toolbar > .btn { grid-column: 2; grid-row: 1; white-space: nowrap; }
+}
 .search-clear {
   position: absolute;
   top: 0;
