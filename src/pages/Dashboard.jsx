@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { getAll, getDashboardData, onRefresh, requestPageRefresh } from '../db'
 import { rupiah, dateOnly, dateTime } from '../format'
-import DateRangeFilter from '../components/DateRangeFilter'
 import {
   dateRangeTimestamps,
   hasDateRange,
@@ -31,6 +30,7 @@ export default function Dashboard() {
     const today = localDateValue(new Date())
     return { from: today, to: today }
   })
+  const [draftDateRange, setDraftDateRange] = useState(dateRange)
   const [creditFirst, setCreditFirst] = useState(false)
   const [nameSort, setNameSort] = useState('date')
   const [transactionPage, setTransactionPage] = useState(1)
@@ -143,15 +143,41 @@ export default function Dashboard() {
     <div className="page">
       <div className="dashboard-overview-sticky">
         <div className="dashboard-filter-row">
-          <div className="date-filter-caption">
-            <strong>{isTodayRange ? 'Ringkasan hari ini' : 'Ringkasan periode'}</strong>
-            {!isTodayRange && <span className="muted">Sesuaikan rentang untuk melihat performa.</span>}
+          <div className="dashboard-date-range">
+            <label className="dashboard-date-field">
+              <Icon name="calendar" size={23} />
+              <span>Dari Tanggal</span>
+              <input
+                type="date"
+                value={draftDateRange.from}
+                max={draftDateRange.to || undefined}
+                onChange={(event) => setDraftDateRange((range) => ({ ...range, from: event.target.value }))}
+                aria-label="Dari tanggal"
+              />
+            </label>
+            <label className="dashboard-date-field">
+              <Icon name="calendar" size={23} />
+              <span>Sampai Tanggal</span>
+              <input
+                type="date"
+                value={draftDateRange.to}
+                min={draftDateRange.from || undefined}
+                onChange={(event) => setDraftDateRange((range) => ({ ...range, to: event.target.value }))}
+                aria-label="Sampai tanggal"
+              />
+            </label>
+            <button
+              className="dashboard-date-search"
+              type="button"
+              onClick={() => {
+                setDateRange(draftDateRange)
+                saveDashboardDateRange(draftDateRange)
+                setTransactionPage(1)
+              }}>
+              <Icon name="search" size={22} />
+              <span>Cari</span>
+            </button>
           </div>
-          <DateRangeFilter value={dateRange} onChange={(range) => {
-            setDateRange(range)
-            saveDashboardDateRange(range)
-            setTransactionPage(1)
-          }} resetValue={{ from: today, to: today }} resetLabel="Hari ini" />
         </div>
         <div className="stats-grid dashboard-stats-grid">
           <div className="stat-card dashboard-stat-card dashboard-revenue-card">
