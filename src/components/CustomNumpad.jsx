@@ -113,6 +113,51 @@ export default function CustomNumpad() {
   }, [activeInput])
 
   useLayoutEffect(() => {
+    if (!activeInput?.isConnected || !window.matchMedia('(max-width: 640px)').matches) {
+      return undefined
+    }
+
+    const guardedUrl = window.location.href
+    const previousState = window.history.state
+    const previousEntryExists = window.history.length > 1
+    const guardId = `custom-numpad-${Date.now()}-${Math.random()}`
+    const guardState = {
+      ...(previousState && typeof previousState === 'object' ? previousState : {}),
+      customNumpadBackGuard: guardId
+    }
+    let removingGuard = false
+
+    function handlePopState(event) {
+      if (removingGuard) {
+        window.removeEventListener('popstate', handlePopState, true)
+        return
+      }
+
+      if (!activeInputRef.current?.isConnected) return
+      event.stopImmediatePropagation()
+      window.history.pushState(guardState, '', guardedUrl)
+    }
+
+    window.history.pushState(guardState, '', guardedUrl)
+    window.addEventListener('popstate', handlePopState, true)
+
+    return () => {
+      if (window.history.state?.customNumpadBackGuard !== guardId) {
+        window.removeEventListener('popstate', handlePopState, true)
+        return
+      }
+
+      if (previousEntryExists) {
+        removingGuard = true
+        window.history.back()
+      } else {
+        window.history.replaceState(previousState, '', guardedUrl)
+        window.removeEventListener('popstate', handlePopState, true)
+      }
+    }
+  }, [Boolean(activeInput?.isConnected)])
+
+  useLayoutEffect(() => {
     if (!activeInput?.isConnected || !keypadRef.current) return undefined
 
     const scrollHost = activeInput.closest('.product-modal, .modal, .content')
