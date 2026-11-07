@@ -436,7 +436,7 @@ export default function Finance() {
             </div>
           )}
           <table className="finance-ledger-table">
-            <thead><tr><th>No.</th><th>Tanggal</th><th>Jenis</th><th>Kategori</th><th>Catatan</th><th>Nominal</th><th></th></tr></thead>
+            <thead><tr><th>No.</th><th>Jenis</th><th>Tanggal</th><th>Kategori</th><th>Catatan</th><th>Nominal</th><th></th></tr></thead>
             <tbody>
               {report.entries.length === 0 && <tr><td colSpan="7" className="muted center">
                 {hasFilter ? 'Tidak ada catatan pada rentang tanggal ini.' : 'Belum ada catatan.'}
@@ -444,7 +444,6 @@ export default function Finance() {
               {report.entries.map((e, index) => (
                 <tr key={e.id}>
                   <td className="finance-row-number">{pageStart + index + 1}</td>
-                  <td>{dateOnly(e.date || e.createdAt)}</td>
                   <td>
                     <span className={'badge finance-entry-type-label ' + TYPES[e.type].cls}>{TYPES[e.type].label}</span>
                     {(e.type === 'income' || e.type === 'expense') && (
@@ -453,6 +452,7 @@ export default function Finance() {
                       </span>
                     )}
                   </td>
+                  <td>{dateOnly(e.date || e.createdAt)}</td>
                   <td>
                     {e.category || '-'}
                     {getFinanceEntryCustomerName(e) && (

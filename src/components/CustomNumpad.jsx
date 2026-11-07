@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { useLayoutEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 
 const INPUT_SELECTOR = 'input[data-custom-numpad]'
@@ -17,17 +17,47 @@ export default function CustomNumpad() {
   const activeInputRef = useRef(null)
   const keypadRef = useRef(null)
   const scrollHostRef = useRef(null)
+  const [pasteError, setPasteError] = useState('')
 
-  useEffect(() => {
+  useLayoutEffect(() => {
+    function syncInputReadOnly() {
+      const isMobile = window.matchMedia('(max-width: 640px)').matches
+      document.querySelectorAll(INPUT_SELECTOR).forEach((input) => {
+        if (isMobile && !input.disabled) {
+          if (input.dataset.customNumpadManagedReadonly !== 'true') {
+            if (input.readOnly) return
+            input.dataset.customNumpadOriginalReadonly = String(input.readOnly)
+            input.dataset.customNumpadManagedReadonly = 'true'
+          }
+          input.readOnly = true
+        } else if (input.dataset.customNumpadManagedReadonly === 'true') {
+          input.readOnly = input.dataset.customNumpadOriginalReadonly === 'true'
+          delete input.dataset.customNumpadOriginalReadonly
+          delete input.dataset.customNumpadManagedReadonly
+        }
+      })
+    }
+
+    syncInputReadOnly()
+    const observer = new MutationObserver(syncInputReadOnly)
+    observer.observe(document.body, {
+      attributes: true,
+      attributeFilter: ['data-custom-numpad', 'disabled'],
+      childList: true,
+      subtree: true
+    })
+
     function handleFocusIn(event) {
       const input = event.target
+      if (input instanceof HTMLInputElement && input.matches(INPUT_SELECTOR)) syncInputReadOnly()
       const shouldShow = input instanceof HTMLInputElement &&
         input.matches(INPUT_SELECTOR) &&
+        input.dataset.customNumpadManagedReadonly === 'true' &&
         !input.disabled &&
-        !input.readOnly &&
         window.matchMedia('(max-width: 640px)').matches
       activeInputRef.current = shouldShow ? input : null
       setActiveInput(shouldShow ? input : null)
+      setPasteError('')
     }
 
     function handlePointerDown(event) {
@@ -52,6 +82,7 @@ export default function CustomNumpad() {
         activeInputRef.current = null
         setActiveInput(null)
       }
+      syncInputReadOnly()
     }
 
     document.addEventListener('focusin', handleFocusIn)
@@ -63,6 +94,7 @@ export default function CustomNumpad() {
       document.removeEventListener('pointerdown', handlePointerDown)
       document.removeEventListener('keydown', handleKeyDown)
       window.removeEventListener('resize', handleResize)
+      observer.disconnect()
     }
   }, [])
 
@@ -104,9 +136,48 @@ export default function CustomNumpad() {
 
   if (!activeInput?.isConnected) return null
 
+  async function pasteFromClipboard() {
+    setPasteError('')
+    if (!navigator.clipboard?.readText) {
+      setPasteError('Akses clipboard tidak tersedia di browser ini.')
+      return
+    }
+
+    try {
+      const text = await navigator.clipboard.readText()
+      if (!text) {
+        setPasteError('Clipboard kosong.')
+        return
+      }
+
+      const input = activeInput
+      if (!input?.isConnected || input.disabled) return
+      if (input.type === 'number') {
+        updateInputValue(input, text)
+      } else {
+        const currentValue = input.value
+        const start = input.selectionStart ?? currentValue.length
+        const end = input.selectionEnd ?? start
+        const maxLength = Number(input.maxLength)
+        const pastedText = maxLength > 0
+          ? text.slice(0, Math.max(0, maxLength - (currentValue.length - (end - start))))
+          : text
+        updateInputValue(
+          input,
+          currentValue.slice(0, start) + pastedText + currentValue.slice(end),
+          start + pastedText.length
+        )
+      }
+      input.focus()
+    } catch (error) {
+      setPasteError(error.message || 'Clipboard tidak dapat dibaca. Izinkan akses clipboard lalu coba lagi.')
+    }
+  }
+
   function applyKey(key) {
     const input = activeInput
-    if (!input?.isConnected || input.disabled || input.readOnly) {
+    if (!input?.isConnected || input.disabled ||
+        (input.readOnly && input.dataset.customNumpadManagedReadonly !== 'true')) {
       setActiveInput(null)
       return
     }
@@ -181,10 +252,22 @@ export default function CustomNumpad() {
     }
   }
 
+  function handlePastePointerDown(event) {
+    event.preventDefault()
+    pasteFromClipboard()
+  }
+
+  function handlePasteClick(event) {
+    if (event.detail === 0) pasteFromClipboard()
+  }
+
   return createPortal(
     <div className="custom-numpad" ref={keypadRef} role="group" aria-label="Keypad angka">
       <div className="custom-numpad-heading">
         <strong>Masukkan angka</strong>
+        <button type="button" onPointerDown={handlePastePointerDown} onClick={handlePasteClick}>
+          Tempel
+        </button>
         <button type="button" onPointerDown={handlePointerKey('clear')} onClick={handleKeyboardClick('clear')}>
           Hapus
         </button>
@@ -206,6 +289,7 @@ export default function CustomNumpad() {
           Selesai
         </button>
       </div>
+      {pasteError && <p className="custom-numpad-error" role="status">{pasteError}</p>}
       <div className="custom-numpad-keys">
         {['1', '2', '3', '4', '5', '6', '7', '8', '9'].map((digit) => (
           <button key={digit} type="button" onPointerDown={handlePointerKey(digit)} onClick={handleKeyboardClick(digit)}>
