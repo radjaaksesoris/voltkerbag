@@ -1150,6 +1150,7 @@ tbody tr:hover { background: #fbf5ed; }
 .search-field { position: relative; width: 100%; max-width: 440px; }
 .search-field .search { max-width: none; padding-right: 42px; }
 .pos-products-toolbar { display: contents; }
+.transactions-page .pos-products-toolbar .search-field { width: 100%; max-width: none; }
 .products-toolbar {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
