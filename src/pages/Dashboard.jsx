@@ -12,6 +12,7 @@ import {
 import TransactionDetails from '../components/TransactionDetails'
 import { getInvoiceNumber } from '../invoice'
 import CustomerIdentity from '../components/CustomerIdentity.jsx'
+import Icon from '../components/Icon'
 
 const TRANSACTIONS_PER_PAGE = 15
 
@@ -153,16 +154,28 @@ export default function Dashboard() {
           }} resetValue={{ from: today, to: today }} resetLabel="Hari ini" />
         </div>
         <div className="stats-grid dashboard-stats-grid">
-          <div className="stat-card highlight dashboard-revenue-card">
-            <span>{isTodayRange ? 'Omzet Hari Ini' : 'Omzet Periode'}</span>
-            <strong>{rupiah(report.revenue)}</strong>
+          <div className="stat-card dashboard-stat-card dashboard-revenue-card">
+            <span className="dashboard-stat-icon"><Icon name="trend" size={27} /></span>
+            <div className="dashboard-stat-content">
+              <span>{isTodayRange ? 'Omzet Hari Ini' : 'Omzet Periode'}</span>
+              <strong>{rupiah(report.revenue)}</strong>
+            </div>
           </div>
-          <div className="stat-card"><span>{isTodayRange ? 'Laba Kotor Hari Ini' : 'Laba Kotor Periode'}</span><strong className="ok">{rupiah(report.gross_profit)}</strong></div>
-          <div className="stat-card dashboard-stock-summary">
-            <span>Nilai Stok (Modal)</span>
-            <strong>{rupiah(totalAsset)}</strong>
+          <div className="stat-card dashboard-stat-card dashboard-profit-card">
+            <span className="dashboard-stat-icon"><Icon name="tag" size={27} /></span>
+            <div className="dashboard-stat-content">
+              <span>{isTodayRange ? 'Laba Kotor Hari Ini' : 'Laba Kotor Periode'}</span>
+              <strong>{rupiah(report.gross_profit)}</strong>
+            </div>
           </div>
-          <div className="stat-card dashboard-stock-counts">
+          <div className="stat-card dashboard-stat-card dashboard-stock-summary">
+            <span className="dashboard-stat-icon"><Icon name="box" size={27} /></span>
+            <div className="dashboard-stat-content">
+              <span>Nilai Stok (Modal)</span>
+              <strong>{rupiah(totalAsset)}</strong>
+            </div>
+          </div>
+          <div className="stat-card dashboard-stat-card dashboard-stock-counts">
             <div className="dashboard-stock-metric">
               <span>Stok Menipis</span>
               <strong className={lowStockCount ? 'danger' : ''}>{lowStockCount}</strong>
@@ -171,6 +184,7 @@ export default function Dashboard() {
               <span>Total Produk</span>
               <strong>{productCount}</strong>
             </div>
+            <span className="dashboard-stock-icon"><Icon name="boxes" size={40} /></span>
           </div>
         </div>
       </div>
