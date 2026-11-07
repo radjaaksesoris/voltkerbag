@@ -735,6 +735,7 @@ body {
   border-radius: 12px;
   background: rgba(255, 252, 247, .84);
   box-shadow: 0 8px 24px rgba(72, 48, 36, .06);
+  scroll-margin-block: 14px;
 }
 
 .chat-summary-detail-heading {

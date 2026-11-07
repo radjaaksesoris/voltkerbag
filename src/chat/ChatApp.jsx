@@ -294,6 +294,8 @@ export default function ChatApp() {
   const inputRef = useRef(null)
   const operationLock = useRef(false)
   const summaryMetricRequestIds = useRef(new Map())
+  const summaryDetailRefs = useRef(new Map())
+  const lastSummaryDetailMessageId = useRef('')
   const attachmentPreviewUrls = useRef(new Set())
   const chatDayRef = useRef(getChatDayKey())
   const chatBusyRef = useRef(false)
@@ -306,6 +308,7 @@ export default function ChatApp() {
   async function openSummaryMetric(message, metric) {
     const existing = summaryMetricDetails[message.id]
     if (existing?.metric === metric) {
+      lastSummaryDetailMessageId.current = ''
       summaryMetricRequestIds.current.delete(message.id)
       setSummaryMetricDetails((current) => {
         const next = { ...current }
@@ -315,6 +318,7 @@ export default function ChatApp() {
       return
     }
 
+    lastSummaryDetailMessageId.current = message.id
     const requestId = crypto.randomUUID()
     summaryMetricRequestIds.current.set(message.id, requestId)
     setSummaryMetricDetails((current) => ({
@@ -595,6 +599,17 @@ export default function ChatApp() {
   useEffect(() => {
     endOfMessagesRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' })
   }, [messages, busy, actionBusy])
+
+  useEffect(() => {
+    const messageId = lastSummaryDetailMessageId.current
+    const detail = summaryMetricDetails[messageId]
+    if (!detail) return
+
+    summaryDetailRefs.current.get(messageId)?.scrollIntoView({
+      behavior: 'smooth',
+      block: 'start'
+    })
+  }, [summaryMetricDetails])
 
   function revokeAttachmentPreview(url) {
     if (!url) return
@@ -1302,7 +1317,13 @@ export default function ChatApp() {
                   {message.attachmentName && <span className="chat-attachment-label"><Icon name="image" size={14} />{message.attachmentName}</span>}
                 </div>
                 {message.summaryRange && summaryMetricDetails[message.id] && (
-                  <section className="chat-summary-detail" aria-live="polite">
+                  <section
+                    ref={(element) => {
+                      if (element) summaryDetailRefs.current.set(message.id, element)
+                      else summaryDetailRefs.current.delete(message.id)
+                    }}
+                    className="chat-summary-detail"
+                    aria-live="polite">
                     <div className="chat-summary-detail-heading">
                       <strong>Rincian {SUMMARY_METRIC_LABELS[summaryMetricDetails[message.id].metric]}</strong>
                       <button
