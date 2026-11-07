@@ -275,32 +275,35 @@ export default function CustomNumpad() {
     if (event.detail === 0) pasteFromClipboard()
   }
 
+  function closeNumpad() {
+    activeInputRef.current = null
+    setActiveInput(null)
+    activeInput.blur()
+  }
+
+  function handleDonePointerDown(event) {
+    event.preventDefault()
+    closeNumpad()
+  }
+
+  function handleDoneClick(event) {
+    if (event.detail === 0) closeNumpad()
+  }
+
   return createPortal(
     <div className="custom-numpad" ref={keypadRef} role="group" aria-label="Keypad angka">
       <div className="custom-numpad-heading">
         <strong>Masukkan angka</strong>
+        {activeInput.dataset.customNumpad === 'decimal' && (
+          <button type="button" onPointerDown={handlePointerKey('decimal')} onClick={handleKeyboardClick('decimal')}>
+            .
+          </button>
+        )}
         <button type="button" onPointerDown={handlePastePointerDown} onClick={handlePasteClick}>
           Tempel
         </button>
         <button type="button" onPointerDown={handlePointerKey('clear')} onClick={handleKeyboardClick('clear')}>
           Hapus
-        </button>
-        <button
-          type="button"
-          className="custom-numpad-done"
-          onPointerDown={(event) => {
-            event.preventDefault()
-            activeInputRef.current = null
-            setActiveInput(null)
-            activeInput.blur()
-          }}
-          onClick={(event) => {
-            if (event.detail !== 0) return
-            activeInputRef.current = null
-            setActiveInput(null)
-            activeInput.blur()
-          }}>
-          Selesai
         </button>
       </div>
       {pasteError && <p className="custom-numpad-error" role="status">{pasteError}</p>}
@@ -310,9 +313,13 @@ export default function CustomNumpad() {
             {digit}
           </button>
         ))}
-        {activeInput.dataset.customNumpad === 'decimal' ? (
-          <button type="button" onPointerDown={handlePointerKey('decimal')} onClick={handleKeyboardClick('decimal')}>.</button>
-        ) : <span aria-hidden="true" />}
+        <button
+          type="button"
+          className="custom-numpad-done"
+          onPointerDown={handleDonePointerDown}
+          onClick={handleDoneClick}>
+          Selesai
+        </button>
         <button type="button" onPointerDown={handlePointerKey('0')} onClick={handleKeyboardClick('0')}>0</button>
         <button
           type="button"
