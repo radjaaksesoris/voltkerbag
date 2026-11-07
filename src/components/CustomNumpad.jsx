@@ -119,41 +119,43 @@ export default function CustomNumpad() {
 
     const guardedUrl = window.location.href
     const previousState = window.history.state
-    const previousEntryExists = window.history.length > 1
     const guardId = `custom-numpad-${Date.now()}-${Math.random()}`
-    const guardState = {
-      ...(previousState && typeof previousState === 'object' ? previousState : {}),
-      customNumpadBackGuard: guardId
-    }
+    let guardCount = 0
     let removingGuard = false
+
+    function pushGuards(count) {
+      for (let index = 0; index < count; index += 1) {
+        window.history.pushState({ customNumpadBackGuard: guardId }, '', guardedUrl)
+        guardCount += 1
+      }
+    }
 
     function handlePopState(event) {
       if (removingGuard) {
+        window.history.replaceState(previousState, '', guardedUrl)
         window.removeEventListener('popstate', handlePopState, true)
         return
       }
 
       if (!activeInputRef.current?.isConnected) return
       event.stopImmediatePropagation()
-      window.history.pushState(guardState, '', guardedUrl)
+      guardCount = event.state?.customNumpadBackGuard === guardId
+        ? Math.max(0, guardCount - 1)
+        : 0
+      pushGuards(2)
     }
 
-    window.history.pushState(guardState, '', guardedUrl)
+    pushGuards(12)
     window.addEventListener('popstate', handlePopState, true)
 
     return () => {
-      if (window.history.state?.customNumpadBackGuard !== guardId) {
+      if (guardCount === 0) {
         window.removeEventListener('popstate', handlePopState, true)
         return
       }
 
-      if (previousEntryExists) {
-        removingGuard = true
-        window.history.back()
-      } else {
-        window.history.replaceState(previousState, '', guardedUrl)
-        window.removeEventListener('popstate', handlePopState, true)
-      }
+      removingGuard = true
+      window.history.go(-guardCount)
     }
   }, [Boolean(activeInput?.isConnected)])
 
