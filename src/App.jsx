@@ -397,6 +397,7 @@ export default function App() {
           {NAV.map((n) => (
             <button key={n.id}
               className={'nav-item ' + (page === n.id ? 'active' : '')}
+              aria-current={page === n.id ? 'page' : undefined}
               onClick={() => navigateToPage(n.id)}>
               <span className="nav-icon"><Icon name={n.icon} size={19} /></span> {n.label}
             </button>

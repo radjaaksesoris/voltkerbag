@@ -794,6 +794,11 @@ button:focus-visible, input:focus-visible, select:focus-visible {
 }
 .dashboard-date-field > input:focus,
 .dashboard-date-field > input:focus-visible { outline: none; box-shadow: none; }
+.dashboard-date-field:focus-within {
+  outline: 2px solid rgba(181, 40, 46, .42);
+  outline-offset: 2px;
+  border-radius: 9px;
+}
 .dashboard-date-search {
   display: flex;
   min-height: 54px;
@@ -1430,6 +1435,7 @@ tbody tr:hover { background: #fbf5ed; }
 .products-table .badge { display: inline-block; white-space: normal; }
 .products-table .row-actions { display: table-cell; text-align: right; }
 .products-table .product-action-trigger { display: inline-flex; align-items: center; justify-content: center; min-width: 34px; min-height: 34px; margin: 0; padding: 6px; }
+
 .product-action-menu { position: fixed; z-index: 1200; display: grid; width: 148px; gap: 3px; padding: 5px; transform: translateY(-50%); border: 1px solid var(--border); border-radius: 10px; background: var(--card); box-shadow: 0 8px 24px rgba(34, 20, 15, .2); }
 .product-action-menu button { display: flex; min-height: 36px; align-items: center; gap: 9px; padding: 7px 9px; border: 0; border-radius: 7px; background: transparent; color: var(--text); font-size: 12px; font-weight: 650; text-align: left; }
 .product-action-menu button:hover,
@@ -2825,5 +2831,17 @@ label { display: block; margin-bottom: 6px; color: var(--muted); font-size: 11px
     padding-top: 2mm;
     border-top: 3px double #000;
     text-align: center;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html,
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .01ms !important;
   }
 }
