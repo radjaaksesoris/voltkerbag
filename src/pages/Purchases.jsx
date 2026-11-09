@@ -236,7 +236,6 @@ export default function Purchases() {
         <div className="purchase-history-heading">
           <div>
             <h3>Riwayat pembelian</h3>
-            <p className="muted small">Daftar pembelian bahan yang sudah dicatat.</p>
           </div>
           <span className="settings-count">{totalCount} catatan</span>
         </div>
