@@ -1303,6 +1303,34 @@ h3 { margin-bottom: 16px; color: var(--ink); font-size: 15px; font-weight: 700; 
   .dashboard-transaction-table th { font-size: 11px; }
   .dashboard-transaction-table .transaction-invoice { margin-top: 2px; font-size: 10px; }
   .dashboard-transaction-table .btn-sm { min-height: 28px; padding: 5px 9px; font-size: 11px; }
+  .finance-overview-sticky .finance-date-filter { margin-bottom: 8px; }
+  .finance-overview-sticky .finance-date-range { gap: 4px; padding: 4px; border-radius: 14px; }
+  .finance-overview-sticky .finance-date-range .dashboard-date-field { grid-template-columns: 24px minmax(0, 1fr); column-gap: 8px; padding-block: 0; }
+  .finance-overview-sticky .finance-date-range .dashboard-date-field > .icon { width: 20px; height: 20px; }
+  .finance-overview-sticky .finance-date-range .dashboard-date-field > span { font-size: 11px; }
+  .finance-overview-sticky .finance-date-range .dashboard-date-field > input { font-size: 16px; }
+  .finance-overview-sticky .finance-date-quick { min-height: 38px; padding-block: 5px; border-radius: 9px; font-size: 11px; }
+  .finance-overview-sticky .dashboard-stat-card { min-height: 78px; padding: 9px 12px; gap: 9px; }
+  .finance-overview-sticky .dashboard-stat-icon { width: 42px; height: 42px; }
+  .finance-overview-sticky .dashboard-stat-icon .icon { width: 24px; height: 24px; }
+  .finance-overview-sticky .dashboard-stat-content { gap: 4px; }
+  .finance-overview-sticky .dashboard-stat-content > span { font-size: 10px; }
+  .finance-overview-sticky .dashboard-stat-content > strong { font-size: clamp(17px, 1.6vw, 22px); }
+  .finance-summary-grid .debt-stat-card .dashboard-stat-content > span:first-child { font-size: 10px; }
+  .finance-summary-grid .debt-stat-card .dashboard-stat-content > .debt-stat-hint { font-size: 9px; }
+  .finance-ledger { padding: 16px; }
+  .finance-ledger-heading { margin-bottom: 10px; }
+  .finance-ledger-heading .btn { min-height: 34px; padding: 7px 10px; font-size: 11px; }
+  .finance-pending-alert { gap: 2px; margin-bottom: 9px; padding: 8px 10px; font-size: 11px; }
+  .finance-ledger-table { font-size: 12px; }
+  .finance-ledger-table th,
+  .finance-ledger-table td { padding: 7px 8px; }
+  .finance-ledger-table th { font-size: 10px; }
+  .finance-ledger-table .badge { padding: 3px 7px; font-size: 10px; }
+  .finance-ledger-actions .btn-sm,
+  .finance-pending-cell .btn-sm { min-height: 26px; padding: 4px 7px; font-size: 10px; }
+  .finance-pending-cell { gap: 3px; }
+  .finance-ledger-table .finance-entry-customer { margin-top: 2px; font-size: 10px; }
 }
 .finance-summary-grid .stat-card.finance-income-card { background-color: #cdebdc; }
 .finance-income-card::before {
