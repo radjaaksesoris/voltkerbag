@@ -1993,6 +1993,40 @@ label { display: block; margin-bottom: 6px; color: var(--muted); font-size: 11px
 .product-image-field > .muted { margin: 0 0 8px; }
 .product-image-preview { display: flex; align-items: center; gap: 12px; }
 .product-image-preview img { width: 92px; height: 76px; border: 1px solid var(--border); border-radius: 9px; background: var(--bg-soft); object-fit: cover; }
+@media (min-width: 851px) {
+  .product-modal { padding: 20px; }
+  .product-modal-heading { gap: 10px; margin-bottom: 14px; }
+  .product-modal-mark { width: 40px; height: 40px; border-radius: 11px; }
+  .product-modal-heading h3 { font-size: 17px; }
+  .product-modal > label,
+  .product-modal .product-option-fields label,
+  .product-modal .product-modal-cost-field label,
+  .product-modal .product-markup-row label,
+  .product-modal .product-stock-fields label { margin-bottom: 4px; font-size: 10px; }
+  .product-modal > .input,
+  .product-modal .category-select-trigger,
+  .product-modal .money-input-wrap .input,
+  .product-modal .product-percent-input .input,
+  .product-modal .product-stock-fields .input {
+    min-height: 36px;
+    margin-bottom: 7px;
+    padding-top: 7px;
+    padding-bottom: 7px;
+    font-size: 12px;
+  }
+  .product-modal .category-select { margin-bottom: 7px; }
+  .product-modal .product-option-fields { gap: 9px; }
+  .product-modal .product-option-fields .category-select-trigger { padding-inline: 9px; }
+  .product-modal .product-image-field { margin: 2px 0 7px; }
+  .product-modal .product-image-field > .input { min-height: 34px; margin-bottom: 2px; padding: 6px 8px; }
+  .product-modal .product-modal-cost-field { margin-top: 4px; }
+  .product-modal .product-markup-fields { gap: 6px; margin-top: 6px; }
+  .product-modal .product-markup-row { gap: 8px; }
+  .product-modal .product-markup-row > div > label { min-height: 0; }
+  .product-modal .product-stock-fields { gap: 8px; margin-top: 6px; }
+  .product-modal .product-stock-fields .muted { font-size: 10px; }
+  .product-modal .modal-actions { margin-top: 12px; padding-top: 10px; }
+}
 .settings-page { display: grid; max-width: 900px; gap: 16px; }
 .settings-section { min-width: 0; }
 .settings-section-heading { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin: 0; list-style: none; cursor: pointer; }
