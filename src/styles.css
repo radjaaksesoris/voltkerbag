@@ -446,9 +446,8 @@ button:focus-visible, input:focus-visible, select:focus-visible {
   overflow: hidden;
   z-index: 1;
   background:
-    radial-gradient(ellipse at 110% 10%, rgba(235, 190, 143, .16), transparent 34%),
-    radial-gradient(ellipse at 0% 100%, rgba(126, 35, 44, .48), transparent 48%),
-    linear-gradient(160deg, #351218 0%, #50151e 54%, #691b25 100%);
+    radial-gradient(ellipse at 78% 125%, rgba(242, 180, 137, .22), transparent 38%),
+    linear-gradient(112deg, #791c24 0%, var(--accent-dark) 46%, #aa2932 100%);
   color: #fff7ec;
   display: flex;
   flex-direction: column;
@@ -2320,8 +2319,8 @@ label { display: block; margin-bottom: 6px; color: var(--muted); font-size: 11px
     border-top: 1px solid rgba(255, 242, 221, .2);
     border-right: 0;
     background:
-      radial-gradient(ellipse at 50% 0%, rgba(206, 145, 105, .2), transparent 58%),
-      linear-gradient(160deg, #351218 0%, #50151e 54%, #691b25 100%);
+      radial-gradient(ellipse at 78% 125%, rgba(242, 180, 137, .22), transparent 38%),
+      linear-gradient(112deg, #791c24 0%, var(--accent-dark) 46%, #aa2932 100%);
     box-shadow: 0 -9px 28px rgba(37, 10, 14, .28);
     -webkit-backdrop-filter: blur(16px);
     backdrop-filter: blur(16px);
