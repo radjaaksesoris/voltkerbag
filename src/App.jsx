@@ -393,7 +393,7 @@ export default function App() {
             alt="VOLTKER Toko Tas"
           />
         </div>
-        <nav>
+        <nav aria-label="Menu utama">
           {NAV.map((n) => (
             <button key={n.id}
               className={'nav-item ' + (page === n.id ? 'active' : '')}
