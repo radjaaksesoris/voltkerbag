@@ -725,11 +725,7 @@ export default function Products() {
                 disabled={saving || compressingImage}
                 onChange={selectProductImage}
               />
-              <p className="muted small" role="status">
-                {compressingImage
-                  ? 'Mengoptimalkan gambar...'
-                  : 'Gambar otomatis dikompres ke WebP, maksimal 1200 px.'}
-              </p>
+              {compressingImage && <p className="muted small" role="status">Mengoptimalkan gambar...</p>}
               {(imagePreview || form.image_path) && (
                 <div className="product-image-preview">
                   <img src={imagePreview || getProductImageUrl(form.image_path)} width="92" height="76" alt="Pratinjau gambar produk" />
