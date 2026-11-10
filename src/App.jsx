@@ -30,10 +30,12 @@ const Purchases = memo(lazyPage(() => import('./pages/Purchases.jsx')))
 const Products = memo(lazyPage(() => import('./pages/Products.jsx')))
 const Finance = memo(lazyPage(() => import('./pages/Finance.jsx')))
 const Settings = memo(lazyPage(() => import('./pages/Settings.jsx')))
+const Menu = memo(lazyPage(() => import('./pages/Menu.jsx')))
 
 const PAGES = {
   dashboard: Dashboard,
   pos: Transactions,
+  menu: Menu,
   purchases: Purchases,
   stok: Products,
   finance: Finance,
@@ -43,6 +45,7 @@ const PAGES = {
 const NAV = [
   { id: 'dashboard', label: 'Rekap Harian', description: 'Ringkasan performa tokomu hari ini.', icon: 'dashboard' },
   { id: 'pos', label: 'Transaksi', description: 'Pilih produk, atur pembayaran, dan simpan transaksi.', icon: 'cart' },
+  { id: 'menu', label: 'Menu', description: 'Pilih fitur yang ingin dibuka.', icon: 'more' },
   { id: 'purchases', label: 'Pembelian', description: 'Catat pembelian bahan untuk kebutuhan produksi.', icon: 'purchase' },
   { id: 'stok', label: 'Stok Barang', description: 'Kelola katalog produk, harga, dan ketersediaan stok.', icon: 'bag' },
   { id: 'finance', label: 'Keuangan', description: 'Pantau pemasukan, pengeluaran, dan saldo kas toko.', icon: 'wallet' },
@@ -396,7 +399,7 @@ export default function App() {
         <nav aria-label="Menu utama">
           {NAV.map((n) => (
             <button key={n.id}
-              className={'nav-item ' + (page === n.id ? 'active' : '')}
+              className={'nav-item' + (['dashboard', 'pos', 'menu'].includes(n.id) ? '' : ' mobile-nav-hidden') + (page === n.id ? ' active' : '')}
               aria-current={page === n.id ? 'page' : undefined}
               onClick={() => navigateToPage(n.id)}>
               <span className="nav-icon"><Icon name={n.icon} size={19} /></span> {n.label}
@@ -469,7 +472,9 @@ export default function App() {
               <div key={id} className={'page-slot page-slot-' + id} hidden={page !== id}>
                 <PageErrorBoundary>
                   <Suspense fallback={<p className="login-loading">Memuat halaman...</p>}>
-                    <Page />
+                    {id === 'menu'
+                      ? <Page items={NAV.filter((item) => item.id !== 'menu')} onNavigate={navigateToPage} />
+                      : <Page />}
                   </Suspense>
                 </PageErrorBoundary>
               </div>
