@@ -53,7 +53,7 @@ const NAV = [
 ]
 
 function getInitialPage() {
-  return window.matchMedia('(max-width: 640px)').matches ? 'pos' : 'dashboard'
+  return 'menu'
 }
 
 export default function App() {
@@ -383,7 +383,7 @@ export default function App() {
   }
 
   return (
-    <div className={'app ' + (navHidden ? 'nav-hidden' : '')}>
+    <div className={'app ' + (navHidden ? 'nav-hidden ' : '') + (page === 'menu' ? 'menu-landing' : '')}>
       <div className="app-background" aria-hidden="true">
         <img src={import.meta.env.BASE_URL + 'voltker-app-background.jpg'} alt="" decoding="async" />
       </div>
