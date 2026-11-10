@@ -2,6 +2,8 @@ import React from 'react'
 import { createRoot } from 'react-dom/client'
 import './styles.css'
 import ChatApp from './ChatApp.jsx'
+import AppDisabledNotice from '../components/AppDisabledNotice.jsx'
+import { APP_TEMPORARILY_DISABLED } from '../appAvailability.js'
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
@@ -16,6 +18,6 @@ if ('serviceWorker' in navigator) {
 
 createRoot(document.getElementById('root')).render(
   <React.StrictMode>
-    <ChatApp />
+    {APP_TEMPORARILY_DISABLED ? <AppDisabledNotice /> : <ChatApp />}
   </React.StrictMode>
 )

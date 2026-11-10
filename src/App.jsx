@@ -4,7 +4,9 @@ import SessionControl from './components/SessionControl.jsx'
 import PageErrorBoundary from './components/PageErrorBoundary.jsx'
 import CustomNumpad from './components/CustomNumpad.jsx'
 import AppModePicker from './components/AppModePicker.jsx'
+import AppDisabledNotice from './components/AppDisabledNotice.jsx'
 import Icon from './components/Icon.jsx'
+import { APP_TEMPORARILY_DISABLED } from './appAvailability.js'
 import { clearRequestedAppMode, getRequestedAppMode } from './appMode.js'
 
 const CHUNK_RELOAD_KEY = 'voltker:chunk-reload-attempted'
@@ -56,7 +58,7 @@ function getInitialPage() {
   return 'menu'
 }
 
-export default function App() {
+function ActiveApp() {
   const [page, setPage] = useState(getInitialPage)
   const [visitedPages, setVisitedPages] = useState(() => new Set([getInitialPage()]))
   const [navHidden, setNavHidden] = useState(false)
@@ -502,4 +504,8 @@ export default function App() {
       <CustomNumpad />
     </div>
   )
+}
+
+export default function App() {
+  return APP_TEMPORARILY_DISABLED ? <AppDisabledNotice /> : <ActiveApp />
 }
