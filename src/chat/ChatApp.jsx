@@ -1088,12 +1088,12 @@ export default function ChatApp() {
         updateBanner={null}
         defaultAppMode="chat"
         onSignedIn={(nextSession, targetApp) => {
+          if (targetApp === 'table') {
+            window.location.assign(import.meta.env.BASE_URL + '?mode=table')
+            return
+          }
           setSession(nextSession)
           setConnectionError('')
-          const targetUrl = targetApp === 'chat'
-            ? import.meta.env.BASE_URL + 'chat/?mode=chat'
-            : import.meta.env.BASE_URL + '?mode=table'
-          window.location.assign(targetUrl)
         }}
         onRetry={() => {
           setCheckingSession(true)

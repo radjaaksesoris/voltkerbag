@@ -10,28 +10,40 @@ import { clearRequestedAppMode } from './appMode.js'
 
 const CHUNK_RELOAD_KEY = 'voltker:chunk-reload-attempted'
 
-function lazyPage(importPage) {
-  return lazy(() => importPage()
-    .then((module) => {
-      sessionStorage.removeItem(CHUNK_RELOAD_KEY)
-      return module
+function lazyPage(importPage, preload = false) {
+  let pagePromise
+  const loadPage = () => {
+    if (!pagePromise) {
+      pagePromise = importPage()
+        .then((module) => {
+          sessionStorage.removeItem(CHUNK_RELOAD_KEY)
+          return module
+        })
+        .catch((error) => {
+          if (!sessionStorage.getItem(CHUNK_RELOAD_KEY)) {
+            sessionStorage.setItem(CHUNK_RELOAD_KEY, '1')
+            window.location.reload()
+          }
+          throw error
+        })
+    }
+    return pagePromise
+  }
+  if (preload) {
+    loadPage().catch((error) => {
+      console.error('Gagal memuat halaman menu:', error)
     })
-    .catch((error) => {
-      if (!sessionStorage.getItem(CHUNK_RELOAD_KEY)) {
-        sessionStorage.setItem(CHUNK_RELOAD_KEY, '1')
-        window.location.reload()
-      }
-      throw error
-    }))
+  }
+  return lazy(loadPage)
 }
 
+const Menu = memo(lazyPage(() => import('./pages/Menu.jsx'), true))
 const Dashboard = memo(lazyPage(() => import('./pages/Dashboard.jsx')))
 const Transactions = memo(lazyPage(() => import('./pages/Transactions.jsx')))
 const Purchases = memo(lazyPage(() => import('./pages/Purchases.jsx')))
 const Products = memo(lazyPage(() => import('./pages/Products.jsx')))
 const Finance = memo(lazyPage(() => import('./pages/Finance.jsx')))
 const Settings = memo(lazyPage(() => import('./pages/Settings.jsx')))
-const Menu = memo(lazyPage(() => import('./pages/Menu.jsx')))
 
 const PAGES = {
   dashboard: Dashboard,
@@ -351,12 +363,12 @@ function ActiveApp() {
         connectionError={connectionError}
         updateBanner={pwaUpdateBanner}
         onSignedIn={(nextSession, targetApp) => {
+          if (targetApp === 'chat') {
+            window.location.assign(import.meta.env.BASE_URL + 'chat/?mode=chat')
+            return
+          }
           setSession(nextSession)
           setConnectionError('')
-          const targetUrl = targetApp === 'chat'
-            ? import.meta.env.BASE_URL + 'chat/?mode=chat'
-            : import.meta.env.BASE_URL + '?mode=table'
-          window.location.assign(targetUrl)
         }}
         onRetry={() => {
           setCheckingSession(true)
