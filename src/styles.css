@@ -3662,6 +3662,9 @@ label { display: block; margin-bottom: 6px; color: var(--muted); font-size: 11px
     min-height: 112px;
     padding: 17px;
     border-radius: 6px 22px 6px 22px;
+    background:
+      radial-gradient(ellipse at 86% 12%, rgba(245, 198, 161, .2), transparent 34%),
+      linear-gradient(125deg, #7d1e26, #a52b32 62%, #b9343b);
   }
   .app:not(.menu-landing) .dashboard-overview-sticky .dashboard-revenue-card::before {
     right: -9px;
