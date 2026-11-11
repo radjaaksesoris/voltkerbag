@@ -7,17 +7,15 @@ function Svg({ children }) {
       strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">{children}</svg>
   )
 }
-const UserIcon = () => <Svg><circle cx="12" cy="8" r="4" /><path d="M4 21c0-4 3.6-7 8-7s8 3 8 7" /></Svg>
 const MailIcon = () => <Svg><rect x="3" y="5" width="18" height="14" rx="2" /><path d="m3 7 9 6 9-6" /></Svg>
 const LockIcon = () => <Svg><rect x="4" y="11" width="16" height="10" rx="2" /><path d="M8 11V7a4 4 0 0 1 8 0v4" /></Svg>
 
-export default function LoginScreen({ configured, connectionError, updateBanner, onSignedIn, onRetry }) {
+export default function LoginScreen({ configured, connectionError, updateBanner, onSignedIn, onRetry, defaultAppMode = 'table' }) {
   const defaultEmail = import.meta.env.VITE_LOGIN_EMAIL?.trim() || ''
   const [isMobile, setIsMobile] = useState(() => window.matchMedia('(max-width: 1024px)').matches)
-  const [mode, setMode] = useState('login') // 'login' | 'register'
+  const [mode, setMode] = useState(defaultAppMode)
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
-  const [notice, setNotice] = useState('')
   const [busy, setBusy] = useState(false)
 
   useEffect(() => {
@@ -27,7 +25,7 @@ export default function LoginScreen({ configured, connectionError, updateBanner,
     return () => mobileQuery.removeEventListener('change', updateMobile)
   }, [])
 
-  async function loginWithPassword(value) {
+  async function loginWithPassword(value, targetApp) {
     const loginEmail = defaultEmail
     const loginPassword = isMobile ? value.replace(/\D/g, '') : value
     if (!loginEmail) {
@@ -44,7 +42,7 @@ export default function LoginScreen({ configured, connectionError, updateBanner,
       const { signIn } = await import('../supabaseSync')
       const session = await signIn(loginEmail, loginPassword)
       setPassword('')
-      onSignedIn(session)
+      onSignedIn(session, targetApp)
     } catch (err) {
       setError(err.message || String(err))
     } finally {
@@ -52,138 +50,134 @@ export default function LoginScreen({ configured, connectionError, updateBanner,
     }
   }
 
-  function submit(event) {
+  function submit(event, targetApp) {
     event.preventDefault()
-    loginWithPassword(password)
+    loginWithPassword(password, targetApp)
   }
 
-  function submitRegister(event) {
-    event.preventDefault()
-    setNotice('Pendaftaran akun baru belum dibuka. Hubungi administrator toko untuk dibuatkan akun.')
-  }
-
-  function enterDigit(digit) {
+  function enterDigit(digit, targetApp) {
     const nextPassword = password + digit
     if (nextPassword.length > 6) return
     setPassword(nextPassword)
     setError('')
-    if (nextPassword.length === 6) loginWithPassword(nextPassword)
+    if (nextPassword.length === 6) loginWithPassword(nextPassword, targetApp)
   }
 
   function switchMode(next) {
     setMode(next)
     setError('')
-    setNotice('')
   }
 
-  const isRegister = mode === 'register'
+  const isChat = mode === 'chat'
+
+  function renderLoginForm(targetApp) {
+    return (
+      <form onSubmit={(event) => submit(event, targetApp)}>
+        <h1>{targetApp === 'chat' ? 'Login Aplikasi Chat' : 'Login Aplikasi Tabel'}</h1>
+        <p className="auth-hint">
+          {isMobile
+            ? 'Masukkan 6 digit password yang sama untuk Tabel dan Chat.'
+            : 'Gunakan password yang sama untuk masuk ke VOLTKER.'}
+        </p>
+        {!isMobile && (
+          <div className="auth-input">
+            <input id={`login-email-${targetApp}`} type="email" autoComplete="username" value={defaultEmail}
+              readOnly aria-label="Email" />
+            <MailIcon />
+          </div>
+        )}
+        <div className="auth-input">
+          <input id={`login-password-${targetApp}`} type="password" autoComplete="current-password"
+            aria-label="Kata sandi" placeholder={isMobile ? '○  ○  ○  ○  ○  ○' : 'Password'}
+            inputMode={isMobile ? 'none' : undefined} readOnly={isMobile} required
+            maxLength={isMobile ? 6 : undefined} value={password}
+            onChange={(event) => setPassword(
+              isMobile ? event.target.value.replace(/\D/g, '') : event.target.value
+            )} />
+          <LockIcon />
+        </div>
+        {isMobile && (
+          <div className="auth-keypad" role="group" aria-label="Keypad kata sandi">
+            {['1', '2', '3', '4', '5', '6', '7', '8', '9'].map((digit) => (
+              <button key={digit} className="auth-key" type="button"
+                onClick={() => enterDigit(digit, targetApp)} disabled={busy}>{digit}</button>
+            ))}
+            <button className="auth-key auth-key-action" type="button"
+              onClick={() => { setPassword(''); setError('') }} disabled={busy}
+              aria-label="Hapus semua angka">Hapus</button>
+            <button className="auth-key" type="button"
+              onClick={() => enterDigit('0', targetApp)} disabled={busy}>0</button>
+            <button className="auth-key auth-key-action" type="button"
+              onClick={() => { setPassword((current) => current.slice(0, -1)); setError('') }}
+              disabled={busy} aria-label="Hapus angka terakhir">⌫</button>
+          </div>
+        )}
+        {error && <p className="auth-error" role="alert">{error}</p>}
+        {busy && isMobile && <p className="auth-hint">Memverifikasi akun...</p>}
+        {!isMobile && (
+          <button type="submit" className="auth-btn" disabled={busy}>
+            {busy ? 'Memverifikasi akun...' : 'Login'}
+          </button>
+        )}
+      </form>
+    )
+  }
+
+  function renderLoginContent(targetApp) {
+    if (!configured) {
+      return (
+        <div className="auth-message" role="alert">
+          Supabase belum dikonfigurasi untuk build ini. Atur secret VITE_SUPABASE_ANON_KEY di GitHub Actions, lalu jalankan deploy ulang.
+        </div>
+      )
+    }
+    if (!defaultEmail) {
+      return (
+        <div className="auth-message" role="alert">
+          Email login belum dikonfigurasi. Atur variable VITE_LOGIN_EMAIL di GitHub Actions, lalu jalankan deploy ulang.
+        </div>
+      )
+    }
+    if (connectionError) {
+      return (
+        <div className="auth-message" role="alert">
+          <span>{connectionError}</span>
+          <button className="auth-btn" type="button" onClick={onRetry}>Coba sambungkan lagi</button>
+        </div>
+      )
+    }
+    return renderLoginForm(targetApp)
+  }
 
   return (
     <main className="auth-page">
       {updateBanner}
-      <div className={`auth-container${isRegister ? ' active' : ''}`}>
+      <div className={`auth-container${isChat ? ' active' : ''}`}>
 
-        {/* Form Registrasi */}
-        <div className="auth-form register" aria-hidden={!isRegister}>
-          <form onSubmit={submitRegister}>
-            <h1>Registration</h1>
-            <div className="auth-input">
-              <input type="text" placeholder="Username" autoComplete="username" required />
-              <UserIcon />
-            </div>
-            <div className="auth-input">
-              <input type="email" placeholder="Email" autoComplete="email" required />
-              <MailIcon />
-            </div>
-            <div className="auth-input">
-              <input type="password" placeholder="Password" autoComplete="new-password" required />
-              <LockIcon />
-            </div>
-            {notice && <p className="auth-notice" role="status">{notice}</p>}
-            <button type="submit" className="auth-btn">Register</button>
-          </form>
+        <div className="auth-form chat" aria-hidden={!isChat}>
+          {renderLoginContent('chat')}
         </div>
 
-        {/* Form Login */}
-        <div className="auth-form login" aria-hidden={isRegister}>
-          {!configured ? (
-            <div className="auth-message" role="alert">
-              Supabase belum dikonfigurasi untuk build ini. Atur secret VITE_SUPABASE_ANON_KEY di GitHub Actions, lalu jalankan deploy ulang.
-            </div>
-          ) : !defaultEmail ? (
-            <div className="auth-message" role="alert">
-              Email login belum dikonfigurasi. Atur variable VITE_LOGIN_EMAIL di GitHub Actions, lalu jalankan deploy ulang.
-            </div>
-          ) : connectionError ? (
-            <div className="auth-message" role="alert">
-              <span>{connectionError}</span>
-              <button className="auth-btn" type="button" onClick={onRetry}>Coba sambungkan lagi</button>
-            </div>
-          ) : (
-            <form onSubmit={submit}>
-              <h1>Login</h1>
-              <p className="auth-hint">{isMobile ? 'Masukkan 6 digit password' : 'Masuk untuk melanjutkan pengelolaan toko.'}</p>
-              {!isMobile && (
-                <div className="auth-input">
-                  <input id="login-email" type="email" autoComplete="username" value={defaultEmail}
-                    readOnly aria-label="Email" />
-                  <MailIcon />
-                </div>
-              )}
-              <div className="auth-input">
-                <input id="login-password" type="password" autoComplete="current-password"
-                  aria-label="Kata sandi" placeholder={isMobile ? '○  ○  ○  ○  ○  ○' : 'Password'}
-                  inputMode={isMobile ? 'none' : undefined} readOnly={isMobile} required
-                  maxLength={isMobile ? 6 : undefined} value={password}
-                  onChange={(event) => setPassword(
-                    isMobile ? event.target.value.replace(/\D/g, '') : event.target.value
-                  )} />
-                <LockIcon />
-              </div>
-              {isMobile && (
-                <div className="auth-keypad" role="group" aria-label="Keypad kata sandi">
-                  {['1', '2', '3', '4', '5', '6', '7', '8', '9'].map((digit) => (
-                    <button key={digit} className="auth-key" type="button"
-                      onClick={() => enterDigit(digit)} disabled={busy}>{digit}</button>
-                  ))}
-                  <button className="auth-key auth-key-action" type="button"
-                    onClick={() => { setPassword(''); setError('') }} disabled={busy}
-                    aria-label="Hapus semua angka">Hapus</button>
-                  <button className="auth-key" type="button"
-                    onClick={() => enterDigit('0')} disabled={busy}>0</button>
-                  <button className="auth-key auth-key-action" type="button"
-                    onClick={() => { setPassword((current) => current.slice(0, -1)); setError('') }}
-                    disabled={busy} aria-label="Hapus angka terakhir">⌫</button>
-                </div>
-              )}
-              {error && <p className="auth-error" role="alert">{error}</p>}
-              {busy && isMobile && <p className="auth-hint">Memverifikasi akun...</p>}
-              {!isMobile && (
-                <button type="submit" className="auth-btn" disabled={busy}>
-                  {busy ? 'Memverifikasi akun...' : 'Login'}
-                </button>
-              )}
-            </form>
-          )}
+        <div className="auth-form table" aria-hidden={isChat}>
+          {renderLoginContent('table')}
         </div>
 
-        {/* Panel biru yang bergeser */}
         <div className="auth-toggle-box">
           <div className="auth-toggle-panel toggle-right">
             <img className="auth-logo" src={import.meta.env.BASE_URL + 'voltker-logo-320.png'}
-              width="160" height="40" alt="VOLTKER Toko Tas" />
-            <h1>Hello, Welcome!</h1>
-            <p>Belum punya akun?</p>
-            <button className="auth-btn ghost" type="button" tabIndex={isRegister ? -1 : 0}
-              onClick={() => switchMode('register')}>Register</button>
+            width="160" height="40" alt="VOLTKER Toko Tas" />
+            <h1>Login Tabel</h1>
+            <p>Kelola data toko melalui aplikasi Tabel.</p>
+            <button className="auth-btn ghost" type="button" tabIndex={isChat ? -1 : 0}
+            onClick={() => switchMode('chat')}>Login ke Chat</button>
           </div>
           <div className="auth-toggle-panel toggle-left">
             <img className="auth-logo" src={import.meta.env.BASE_URL + 'voltker-logo-320.png'}
-              width="160" height="40" alt="" />
-            <h1>Welcome Back!</h1>
-            <p>Sudah punya akun?</p>
-            <button className="auth-btn ghost" type="button" tabIndex={isRegister ? 0 : -1}
-              onClick={() => switchMode('login')}>Login</button>
+            width="160" height="40" alt="" />
+            <h1>Login Chat</h1>
+            <p>Kelola toko melalui percakapan.</p>
+            <button className="auth-btn ghost" type="button" tabIndex={isChat ? 0 : -1}
+            onClick={() => switchMode('table')}>Login ke Tabel</button>
           </div>
         </div>
       </div>

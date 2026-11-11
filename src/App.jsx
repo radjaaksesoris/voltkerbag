@@ -3,11 +3,10 @@ import LoginScreen from './components/LoginScreen.jsx'
 import SessionControl from './components/SessionControl.jsx'
 import PageErrorBoundary from './components/PageErrorBoundary.jsx'
 import CustomNumpad from './components/CustomNumpad.jsx'
-import AppModePicker from './components/AppModePicker.jsx'
 import AppDisabledNotice from './components/AppDisabledNotice.jsx'
 import Icon from './components/Icon.jsx'
 import { APP_TEMPORARILY_DISABLED } from './appAvailability.js'
-import { clearRequestedAppMode, getRequestedAppMode } from './appMode.js'
+import { clearRequestedAppMode } from './appMode.js'
 
 const CHUNK_RELOAD_KEY = 'voltker:chunk-reload-attempted'
 
@@ -75,7 +74,6 @@ function ActiveApp() {
   const [updateReady, setUpdateReady] = useState(false)
   const [applyingUpdate, setApplyingUpdate] = useState(false)
   const currentPage = NAV.find((n) => n.id === page)
-  const requestedAppMode = getRequestedAppMode()
   const contentRef = useRef(null)
   const serviceWorkerRegistration = useRef(null)
 
@@ -359,26 +357,18 @@ function ActiveApp() {
         configured={Boolean(import.meta.env.VITE_SUPABASE_ANON_KEY)}
         connectionError={connectionError}
         updateBanner={pwaUpdateBanner}
-        onSignedIn={(nextSession) => {
+        onSignedIn={(nextSession, targetApp) => {
           setSession(nextSession)
           setConnectionError('')
+          const targetUrl = targetApp === 'chat'
+            ? import.meta.env.BASE_URL + 'chat/?mode=chat'
+            : import.meta.env.BASE_URL + '?mode=table'
+          window.location.assign(targetUrl)
         }}
         onRetry={() => {
           setCheckingSession(true)
           setConnectionError('')
           setAuthCheckKey((key) => key + 1)
-        }}
-      />
-    )
-  }
-
-  if (requestedAppMode !== 'table') {
-    return (
-      <AppModePicker
-        session={session}
-        onSignedOut={() => {
-          clearRequestedAppMode()
-          setSession(null)
         }}
       />
     )

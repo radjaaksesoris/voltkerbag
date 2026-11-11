@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
 import LoginScreen from '../components/LoginScreen.jsx'
-import AppModePicker from '../components/AppModePicker.jsx'
 import Icon from '../components/Icon.jsx'
 import ReceiptPreview from '../components/ReceiptPreview.jsx'
 import { downloadInvoiceJpeg } from '../invoiceJpeg'
@@ -29,7 +28,7 @@ import {
   saveChatPreferences,
   updateChatCorrection
 } from './chatPreferences.js'
-import { clearRequestedAppMode, getRequestedAppMode } from '../appMode.js'
+import { clearRequestedAppMode } from '../appMode.js'
 import { stockEntryUnit } from '../productUnits.js'
 import { readDashboardDateRange } from '../dateFilter.js'
 
@@ -302,8 +301,7 @@ export default function ChatApp() {
   const chatUserId = session?.user?.id
   const chatDayKey = getChatDayKey()
   const hasPendingAction = messages.some((message) => message.draft)
-  const requestedAppMode = getRequestedAppMode()
-  const needsSharedStyles = !session || requestedAppMode !== 'chat'
+  const needsSharedStyles = !session
 
   async function openSummaryMetric(message, metric) {
     const existing = summaryMetricDetails[message.id]
@@ -388,7 +386,7 @@ export default function ChatApp() {
   }, [busy, actionBusy])
 
   async function refreshAssistantConnection() {
-    if (!chatUserId || requestedAppMode !== 'chat') return
+    if (!chatUserId) return
     setCheckingAssistant(true)
     setAssistantConnection({ status: 'checking', message: '' })
     try {
@@ -406,7 +404,7 @@ export default function ChatApp() {
   }
 
   useEffect(() => {
-    if (!chatUserId || requestedAppMode !== 'chat') {
+    if (!chatUserId) {
       setAssistantConnection({ status: 'checking', message: '' })
       return
     }
@@ -444,7 +442,7 @@ export default function ChatApp() {
       window.removeEventListener('online', onOnline)
       window.removeEventListener('offline', onOffline)
     }
-  }, [chatUserId, requestedAppMode])
+  }, [chatUserId])
 
   useEffect(() => {
     setHistoryOwner(null)
@@ -1106,28 +1104,19 @@ export default function ChatApp() {
         configured={Boolean(import.meta.env.VITE_SUPABASE_ANON_KEY)}
         connectionError={connectionError}
         updateBanner={null}
-        onSignedIn={(nextSession) => {
+        defaultAppMode="chat"
+        onSignedIn={(nextSession, targetApp) => {
           setSession(nextSession)
           setConnectionError('')
+          const targetUrl = targetApp === 'chat'
+            ? import.meta.env.BASE_URL + 'chat/?mode=chat'
+            : import.meta.env.BASE_URL + '?mode=table'
+          window.location.assign(targetUrl)
         }}
         onRetry={() => {
           setCheckingSession(true)
           setConnectionError('')
           setAuthCheckKey((key) => key + 1)
-        }}
-      />
-    )
-  }
-
-  if (requestedAppMode !== 'chat') {
-    return (
-      <AppModePicker
-        session={session}
-        onSignedOut={() => {
-          clearRequestedAppMode()
-          setSession(null)
-          setMessages([])
-          setProductCreation(null)
         }}
       />
     )
