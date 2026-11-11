@@ -108,9 +108,9 @@ body {
 .login-loading { color: var(--muted); font-size: 13px; }
 @media (min-width: 1025px) {
   .login-page {
-    width: min(100%, 1360px);
-    grid-template-columns: minmax(0, 1.08fr) minmax(0, .92fr);
-    padding: clamp(32px, 6vw, 84px);
+    width: min(100%, 1180px);
+    grid-template-columns: minmax(0, 1.05fr) minmax(0, .95fr);
+    padding: clamp(24px, 4vw, 52px);
     background: transparent;
   }
   .login-background {
@@ -131,16 +131,17 @@ body {
   }
   .login-brand {
     z-index: 2;
-    min-height: 540px;
-    margin: 18px -38px 18px 0;
-    padding: clamp(42px, 5vw, 68px);
+    min-height: 520px;
+    margin: 0;
+    padding: clamp(40px, 5vw, 64px);
     border-color: rgba(255, 239, 218, .24);
-    border-radius: 24px;
+    border-right: 0;
+    border-radius: 24px 0 0 24px;
     background:
       radial-gradient(ellipse at 92% 9%, rgba(247, 204, 156, .2), transparent 35%),
       radial-gradient(ellipse at 7% 95%, rgba(54, 7, 17, .24), transparent 42%),
       linear-gradient(148deg, #681921 0%, #861e29 48%, #a72c34 100%);
-    box-shadow: 0 30px 76px rgba(32, 8, 11, .38), inset 0 1px 0 rgba(255, 255, 255, .12);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, .12);
   }
   .login-brand::before { right: -230px; bottom: -300px; width: 670px; border-color: rgba(255, 239, 218, .16); box-shadow: 0 0 0 20px rgba(255, 239, 218, .04), 0 0 0 48px rgba(255, 239, 218, .028), 0 0 0 82px rgba(255, 239, 218, .018); }
   .login-brand::after { top: -250px; left: -250px; width: 500px; border-color: rgba(255, 239, 218, .12); box-shadow: 0 0 0 20px rgba(255, 239, 218, .035), 0 0 0 48px rgba(255, 239, 218, .022); }
@@ -152,9 +153,10 @@ body {
   .login-brand-foot { margin-top: clamp(34px, 6vh, 66px); }
   .login-panel {
     min-height: 520px;
-    padding: clamp(48px, 5vw, 72px) clamp(40px, 4vw, 58px) clamp(48px, 5vw, 72px) clamp(78px, 7vw, 94px);
+    padding: clamp(40px, 5vw, 64px);
     border-color: rgba(255, 255, 255, .7);
-    border-radius: 22px;
+    border-left: 0;
+    border-radius: 0 24px 24px 0;
     background: rgba(250, 247, 240, .97);
     box-shadow: 0 28px 80px rgba(26, 19, 16, .3), inset 0 1px 0 #fff;
   }
