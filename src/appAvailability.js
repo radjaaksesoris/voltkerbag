@@ -1,1 +1,1 @@
-export const APP_TEMPORARILY_DISABLED = true
+export const APP_TEMPORARILY_DISABLED = false
