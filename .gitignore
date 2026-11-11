@@ -3,3 +3,5 @@ dist/
 .env.local
 .DS_Store
 npm-cache/
+src/.DS_Store
+src/.DS_Store
