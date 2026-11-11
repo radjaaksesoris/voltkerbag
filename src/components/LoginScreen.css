@@ -203,12 +203,12 @@
 
 @media (prefers-reduced-motion: reduce) {
   .auth-form {
-    transition-duration: .35s, 0s !important;
+    transition-duration: 1.8s, 0s !important;
     transition-delay: 0s, 0s !important;
   }
   .auth-container::before,
   .auth-toggle-panel {
-    transition-duration: .35s !important;
+    transition-duration: 1.8s !important;
     transition-delay: 0s !important;
   }
 }
