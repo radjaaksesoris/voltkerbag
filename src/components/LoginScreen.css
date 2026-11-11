@@ -191,8 +191,8 @@
   .auth-container { height: calc(100dvh - 40px); min-height: 560px; margin: 20px auto; }
 
   .auth-form { left: 0; top: 0; width: 100%; height: 66%; padding: 20px; }
-  .auth-container.active .auth-form { left: 0; top: 34%; }
-  .auth-form h1 { font-size: 26px; }
+  .auth-container.active .auth-form { left: 0; top: 34%; height: 66%; }
+  .auth-form h1 { width: 100%; margin-inline: auto; font-size: 26px; text-align: center; }
   .auth-pin-label { margin-top: 14px; font-size: 14px; }
   .auth-pin-input input { height: 48px; font-size: 23px; }
   .auth-pin-input input::placeholder { font-size: 22px; }
@@ -201,7 +201,7 @@
   .auth-key-action { font-size: 15px; }
 
   .auth-container::before { left: 0; top: 66%; width: 100%; height: 300%; border-radius: 20vw; }
-  .auth-container.active::before { left: 0; top: -274%; }
+  .auth-container.active::before { left: 0; top: -266%; }
 
   .auth-toggle-panel { width: 100%; height: 34%; }
   .auth-toggle-panel.toggle-left,
