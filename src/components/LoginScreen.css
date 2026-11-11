@@ -48,6 +48,14 @@
 .auth-container.active .auth-form.chat { visibility: visible; }
 .auth-container.active .auth-form.table { visibility: hidden; }
 
+.auth-mark {
+  display: block;
+  width: 56px;
+  height: 56px;
+  margin: 0 auto 14px;
+  border-radius: 50%;
+  object-fit: cover;
+}
 .auth-form h1 { margin-bottom: 6px; font-size: 32px; font-weight: 600; line-height: 1.2; }
 .auth-hint { margin-bottom: 6px; color: #777; font-size: 13.5px; }
 
@@ -201,6 +209,7 @@
   .auth-form { left: 0; top: 0; width: 100%; height: 66%; padding: 20px; }
   .auth-container.active .auth-form { left: 0; top: 34%; height: 66%; }
   .auth-form h1 { width: 100%; margin-inline: auto; font-size: 26px; text-align: center; }
+  .auth-mark { width: 48px; height: 48px; margin-bottom: 10px; }
   .auth-pin-label { margin-top: 14px; font-size: 14px; }
   .auth-pin-input input { height: 48px; font-size: 23px; }
   .auth-pin-input input::placeholder { font-size: 22px; }

@@ -80,6 +80,8 @@ export default function LoginScreen({
   function renderLoginForm(targetApp) {
     return (
       <form onSubmit={(event) => submit(event, targetApp)} aria-busy={checkingSession || busy}>
+        <img className="auth-mark" src={import.meta.env.BASE_URL + 'voltker-icon-192.png'}
+          width="56" height="56" alt="Logo VOLTKER" />
         <h1>{targetApp === 'chat' ? 'Login Aplikasi Chat' : 'Login Aplikasi Tabel'}</h1>
         {!isMobile && (
           <div className="auth-input">
