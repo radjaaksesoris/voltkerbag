@@ -127,8 +127,8 @@ export default function LoginScreen({
           </p>
         )}
         {!isMobile && (
-          <button type="submit" className="auth-btn" disabled={checkingSession || busy}>
-            {busy ? 'Memverifikasi akun...' : 'Login'}
+          <button type="submit" className="auth-btn auth-submit" disabled={checkingSession || busy}>
+            <span>{busy ? 'Memverifikasi akun...' : 'Login'}</span>
           </button>
         )}
       </form>
