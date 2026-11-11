@@ -981,6 +981,10 @@ h2 {
   box-shadow: 0 10px 24px rgba(80, 14, 23, .24), inset 0 1px 0 rgba(255, 255, 255, .22);
 }
 .menu-brand-mark { background: linear-gradient(145deg, #e85643, #bd2634); }
+.menu-brand-mark { padding: 0; cursor: pointer; }
+.menu-brand-mark:disabled { cursor: wait; opacity: .7; }
+.menu-brand-mark:focus-visible { outline: 3px solid #fffaf3; outline-offset: 3px; }
+.menu-logout-error { margin: -4px 0 0; color: #a7192a; font-size: 13px; font-weight: 600; }
 .menu-search {
   display: flex;
   min-width: 0;

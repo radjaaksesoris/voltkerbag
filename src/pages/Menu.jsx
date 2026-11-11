@@ -18,7 +18,7 @@ function formatPeriodDate(value) {
     .format(new Date(year, month - 1, day))
 }
 
-export default function Menu({ items, onNavigate }) {
+export default function Menu({ items, onNavigate, onLogout, logoutBusy, logoutError }) {
   const [query, setQuery] = useState('')
   const [summary, setSummary] = useState(null)
   const [loadError, setLoadError] = useState('')
@@ -115,7 +115,15 @@ export default function Menu({ items, onNavigate }) {
   return (
     <div className="page menu-page">
       <div className="menu-top-actions">
-        <span className="menu-brand-mark" aria-hidden="true"><Icon name="bolt" size={27} /></span>
+        <button
+          className="menu-brand-mark"
+          type="button"
+          aria-label={logoutBusy ? 'Keluar...' : 'Keluar'}
+          title={logoutBusy ? 'Keluar...' : 'Keluar'}
+          onClick={onLogout}
+          disabled={logoutBusy}>
+          <Icon name="bolt" size={27} />
+        </button>
         <label className="menu-search">
           <Icon name="search" size={22} />
           <input
@@ -138,6 +146,7 @@ export default function Menu({ items, onNavigate }) {
           <Icon name="chat" size={23} />
         </a>
       </div>
+      {logoutError && <p className="menu-logout-error" role="alert">{logoutError}</p>}
 
       <section className="menu-summary-card" aria-label="Ringkasan periode">
         <div className="menu-summary-copy">

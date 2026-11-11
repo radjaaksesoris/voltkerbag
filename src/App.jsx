@@ -64,6 +64,8 @@ function ActiveApp() {
   const [session, setSession] = useState(null)
   const [checkingSession, setCheckingSession] = useState(true)
   const [connectionError, setConnectionError] = useState('')
+  const [logoutBusy, setLogoutBusy] = useState(false)
+  const [logoutError, setLogoutError] = useState('')
   const [authCheckKey, setAuthCheckKey] = useState(0)
   const [installPrompt, setInstallPrompt] = useState(null)
   const [isInstalled, setIsInstalled] = useState(() =>
@@ -83,6 +85,21 @@ function ActiveApp() {
       return new Set([...visited, nextPage])
     })
     setPage(nextPage)
+  }
+
+  async function logoutFromMenu() {
+    setLogoutBusy(true)
+    setLogoutError('')
+    try {
+      const { signOut } = await import('./supabaseSync')
+      await signOut()
+      clearRequestedAppMode()
+      setSession(null)
+    } catch (error) {
+      setLogoutError(error.message || String(error))
+    } finally {
+      setLogoutBusy(false)
+    }
   }
 
   useEffect(() => {
@@ -441,7 +458,12 @@ function ActiveApp() {
                 <PageErrorBoundary>
                   <Suspense fallback={<p className="login-loading">Memuat halaman...</p>}>
                     {id === 'menu'
-                      ? <Page items={NAV.filter((item) => item.id !== 'menu')} onNavigate={navigateToPage} />
+                      ? <Page
+                          items={NAV.filter((item) => item.id !== 'menu')}
+                          onNavigate={navigateToPage}
+                          onLogout={logoutFromMenu}
+                          logoutBusy={logoutBusy}
+                          logoutError={logoutError} />
                       : <Page />}
                   </Suspense>
                 </PageErrorBoundary>
