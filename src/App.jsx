@@ -483,6 +483,12 @@ function ActiveApp() {
             )
           })}
         </div>
+        {page !== 'menu' && (
+          <button className="mobile-menu-back" type="button" onClick={() => navigateToPage('menu')}>
+            <Icon name="arrowLeft" size={19} />
+            <span>Kembali ke Menu Utama</span>
+          </button>
+        )}
       </main>
       {showInstallInstructions && !isInstalled && (
         <div className="overlay" onClick={() => setShowInstallInstructions(false)}>
