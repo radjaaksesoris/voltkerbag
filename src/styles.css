@@ -3442,3 +3442,75 @@ label { display: block; margin-bottom: 6px; color: var(--muted); font-size: 11px
     animation-timing-function: ease-in-out !important;
   }
 }
+
+@media (max-width: 640px) {
+  .app:not(.menu-landing) .dashboard-overview-sticky .dashboard-date-range {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 5px 8px;
+  }
+  .app:not(.menu-landing) .dashboard-overview-sticky .dashboard-date-field {
+    min-height: 56px;
+    padding: 6px 5px;
+  }
+  .app:not(.menu-landing) .dashboard-overview-sticky .dashboard-date-field > .icon {
+    width: 20px;
+    height: 20px;
+  }
+  .app:not(.menu-landing) .dashboard-overview-sticky .dashboard-date-field > span {
+    font-size: 10px;
+  }
+  .app:not(.menu-landing) .dashboard-overview-sticky .dashboard-date-field > input {
+    font-size: 15px;
+  }
+  .app:not(.menu-landing) .dashboard-overview-sticky .dashboard-date-reset,
+  .app:not(.menu-landing) .dashboard-overview-sticky .dashboard-date-search {
+    min-height: 42px;
+    padding: 7px 10px;
+    font-size: 13px;
+  }
+  .app:not(.menu-landing) .dashboard-overview-sticky .dashboard-stats-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .app:not(.menu-landing) .dashboard-overview-sticky .dashboard-stats-grid .dashboard-stat-card {
+    min-width: 0;
+    min-height: 88px;
+    gap: 8px;
+    padding: 11px 8px;
+  }
+  .app:not(.menu-landing) .dashboard-overview-sticky .dashboard-stats-grid .dashboard-stat-card:not(:nth-child(4)) {
+    border-right: 0;
+  }
+  .app:not(.menu-landing) .dashboard-overview-sticky .dashboard-stats-grid .dashboard-stat-card:nth-child(odd) {
+    border-right: 1px solid #eaded8;
+  }
+  .app:not(.menu-landing) .dashboard-overview-sticky .dashboard-stat-icon {
+    width: 36px;
+    height: 36px;
+  }
+  .app:not(.menu-landing) .dashboard-overview-sticky .dashboard-stat-icon .icon {
+    width: 20px;
+    height: 20px;
+  }
+  .app:not(.menu-landing) .dashboard-overview-sticky .dashboard-stat-content > span,
+  .app:not(.menu-landing) .dashboard-overview-sticky .dashboard-stock-metric > span {
+    font-size: 10px;
+  }
+  .app:not(.menu-landing) .dashboard-overview-sticky .dashboard-stat-content > strong,
+  .app:not(.menu-landing) .dashboard-overview-sticky .dashboard-stock-metric > strong {
+    font-size: clamp(14px, 4vw, 18px);
+  }
+  .app:not(.menu-landing) .dashboard-overview-sticky .dashboard-stock-counts {
+    justify-content: space-between;
+    gap: 5px;
+    padding-inline: 8px;
+  }
+  .app:not(.menu-landing) .dashboard-overview-sticky .dashboard-stock-counts .dashboard-stock-metric {
+    min-width: 0;
+  }
+  .app:not(.menu-landing) .dashboard-overview-sticky .dashboard-stock-counts .dashboard-stock-metric + .dashboard-stock-metric {
+    padding-left: 6px;
+  }
+  .app:not(.menu-landing) .dashboard-overview-sticky .dashboard-stock-icon {
+    display: none;
+  }
+}
