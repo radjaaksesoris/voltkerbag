@@ -129,11 +129,15 @@
 .auth-submit::after {
   content: '';
   position: absolute;
-  inset: 0;
+  top: -50%;
+  bottom: -50%;
+  left: -45%;
+  width: 34%;
   z-index: 0;
   pointer-events: none;
-  background: linear-gradient(100deg, transparent 25%, rgba(255, 255, 255, .72) 48%, rgba(255, 255, 255, .72) 52%, transparent 75%);
-  background-size: 260% 100%;
+  background: linear-gradient(100deg, transparent, rgba(255, 255, 255, .12) 18%, rgba(255, 255, 255, .88) 50%, rgba(255, 255, 255, .12) 82%, transparent);
+  filter: blur(1px);
+  transform: skewX(-18deg);
   animation: authButtonShine 2.8s ease-in-out infinite;
 }
 .auth-submit > span { position: relative; z-index: 1; }
@@ -143,10 +147,10 @@
 .auth-submit:focus-visible { outline: 3px solid rgba(181, 40, 46, .45); outline-offset: 3px; }
 .auth-submit:disabled::after { animation-play-state: paused; }
 @keyframes authButtonShine {
-  0% { background-position: 160% 0; opacity: 0; }
-  10% { opacity: 1; }
-  50% { background-position: -60% 0; opacity: 1; }
-  62%, 100% { background-position: -60% 0; opacity: 0; }
+  0%, 12% { left: -45%; opacity: 0; }
+  20% { opacity: 1; }
+  58% { left: 112%; opacity: 1; }
+  68%, 100% { left: 112%; opacity: 0; }
 }
 
 .auth-error { margin: 10px 0; color: #c0392b; font-size: 13.5px; line-height: 1.5; }
@@ -286,7 +290,7 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .auth-submit::after { animation: none; opacity: .28; background-position: center; }
+  .auth-submit::after { animation: authButtonShine 2.8s ease-in-out infinite !important; }
   .auth-form {
     transition-duration: 1.4s, 0s !important;
     transition-delay: 0s, 0s !important;
