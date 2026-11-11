@@ -8,7 +8,6 @@ function Svg({ children }) {
   )
 }
 const MailIcon = () => <Svg><rect x="3" y="5" width="18" height="14" rx="2" /><path d="m3 7 9 6 9-6" /></Svg>
-const LockIcon = () => <Svg><rect x="4" y="11" width="16" height="10" rx="2" /><path d="M8 11V7a4 4 0 0 1 8 0v4" /></Svg>
 
 export default function LoginScreen({ configured, connectionError, updateBanner, onSignedIn, onRetry, defaultAppMode = 'table' }) {
   const defaultEmail = import.meta.env.VITE_LOGIN_EMAIL?.trim() || ''
@@ -74,11 +73,6 @@ export default function LoginScreen({ configured, connectionError, updateBanner,
     return (
       <form onSubmit={(event) => submit(event, targetApp)}>
         <h1>{targetApp === 'chat' ? 'Login Aplikasi Chat' : 'Login Aplikasi Tabel'}</h1>
-        <p className="auth-hint">
-          {isMobile
-            ? 'Masukkan 6 digit password yang sama untuk Tabel dan Chat.'
-            : 'Gunakan password yang sama untuk masuk ke VOLTKER.'}
-        </p>
         {!isMobile && (
           <div className="auth-input">
             <input id={`login-email-${targetApp}`} type="email" autoComplete="username" value={defaultEmail}
@@ -86,15 +80,15 @@ export default function LoginScreen({ configured, connectionError, updateBanner,
             <MailIcon />
           </div>
         )}
-        <div className="auth-input">
+        <p className="auth-pin-label">Masukkan password</p>
+        <div className="auth-input auth-pin-input">
           <input id={`login-password-${targetApp}`} type="password" autoComplete="current-password"
-            aria-label="Kata sandi" placeholder={isMobile ? '○  ○  ○  ○  ○  ○' : 'Password'}
+            aria-label="Kata sandi" placeholder="○ ○ ○ ○ ○ ○"
             inputMode={isMobile ? 'none' : undefined} readOnly={isMobile} required
             maxLength={isMobile ? 6 : undefined} value={password}
             onChange={(event) => setPassword(
               isMobile ? event.target.value.replace(/\D/g, '') : event.target.value
             )} />
-          <LockIcon />
         </div>
         {isMobile && (
           <div className="auth-keypad" role="group" aria-label="Keypad kata sandi">
