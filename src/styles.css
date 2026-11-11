@@ -3111,6 +3111,150 @@ label { display: block; margin-bottom: 6px; color: var(--muted); font-size: 11px
   background: var(--accent-soft);
   color: var(--accent-dark);
 }
+.app:not(.menu-landing) .dashboard-overview-sticky {
+  position: static;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 12px;
+  margin: 0 0 24px;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+.app:not(.menu-landing) .dashboard-overview-sticky .dashboard-filter-row,
+.app:not(.menu-landing) .dashboard-overview-sticky .dashboard-stats-grid {
+  display: block;
+}
+.app:not(.menu-landing) .dashboard-overview-sticky .dashboard-filter-row {
+  margin: 0;
+}
+.app:not(.menu-landing) .dashboard-overview-sticky .dashboard-date-range {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) auto minmax(120px, .7fr);
+  align-items: end;
+  gap: 8px 14px;
+  height: auto;
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+.app:not(.menu-landing) .dashboard-overview-sticky .dashboard-date-field {
+  min-height: 60px;
+  padding: 7px 10px;
+  border-bottom: 1px solid #e7d4ce;
+  color: var(--text);
+}
+.app:not(.menu-landing) .dashboard-overview-sticky .dashboard-date-field + .dashboard-date-field {
+  border-left: 0;
+}
+.app:not(.menu-landing) .dashboard-overview-sticky .dashboard-date-field > .icon {
+  color: var(--accent-dark);
+}
+.app:not(.menu-landing) .dashboard-overview-sticky .dashboard-date-field > span {
+  color: var(--muted);
+  font-size: 11px;
+}
+.app:not(.menu-landing) .dashboard-overview-sticky .dashboard-date-field > input {
+  color: var(--text);
+  font-size: 16px;
+}
+.app:not(.menu-landing) .dashboard-overview-sticky .dashboard-date-field:focus-within {
+  outline: 2px solid rgba(181, 40, 46, .32);
+  outline-offset: 2px;
+}
+.app:not(.menu-landing) .dashboard-overview-sticky .dashboard-date-reset,
+.app:not(.menu-landing) .dashboard-overview-sticky .dashboard-date-search {
+  min-height: 44px;
+  border-radius: 12px;
+  font-size: 13px;
+}
+.app:not(.menu-landing) .dashboard-overview-sticky .dashboard-date-reset {
+  border-color: #e7d4ce;
+  background: #fffdfa;
+  color: var(--accent-dark);
+}
+.app:not(.menu-landing) .dashboard-overview-sticky .dashboard-date-reset:focus-visible {
+  outline-color: rgba(181, 40, 46, .4);
+}
+.app:not(.menu-landing) .dashboard-overview-sticky .dashboard-date-search {
+  background: linear-gradient(145deg, #c13a40, #912027);
+  box-shadow: 0 6px 15px rgba(145, 32, 39, .18);
+}
+.app:not(.menu-landing) .dashboard-overview-sticky .dashboard-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0;
+  margin: 0;
+}
+.app:not(.menu-landing) .dashboard-overview-sticky .dashboard-stats-grid .dashboard-stat-card {
+  position: relative;
+  min-height: 100px;
+  gap: 12px;
+  padding: 14px 16px;
+  overflow: visible;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+.app:not(.menu-landing) .dashboard-overview-sticky .dashboard-stats-grid .dashboard-stat-card::before,
+.app:not(.menu-landing) .dashboard-overview-sticky .dashboard-stats-grid .dashboard-stat-card::after {
+  display: none;
+}
+.app:not(.menu-landing) .dashboard-overview-sticky .dashboard-stats-grid .dashboard-stat-card:not(:nth-child(4)) {
+  border-right: 1px solid #eaded8;
+}
+.app:not(.menu-landing) .dashboard-overview-sticky .dashboard-stat-icon {
+  width: 44px;
+  height: 44px;
+  background: linear-gradient(145deg, #c13a40, #912027);
+  color: #fffaf3;
+}
+.app:not(.menu-landing) .dashboard-overview-sticky .dashboard-stat-content {
+  gap: 5px;
+}
+.app:not(.menu-landing) .dashboard-overview-sticky .dashboard-stat-content > span,
+.app:not(.menu-landing) .dashboard-overview-sticky .dashboard-stock-metric > span {
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0;
+  line-height: 1.35;
+  text-transform: none;
+}
+.app:not(.menu-landing) .dashboard-overview-sticky .dashboard-stat-content > strong,
+.app:not(.menu-landing) .dashboard-overview-sticky .dashboard-stock-metric > strong {
+  color: var(--accent-dark);
+  font-size: clamp(18px, 1.8vw, 24px);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -.5px;
+}
+.app:not(.menu-landing) .dashboard-overview-sticky .dashboard-stock-counts {
+  gap: 8px;
+  padding-inline: 16px;
+}
+.app:not(.menu-landing) .dashboard-overview-sticky .dashboard-stock-counts .dashboard-stock-metric + .dashboard-stock-metric {
+  padding-left: 10px;
+  border-left-color: #eaded8;
+}
+.app:not(.menu-landing) .dashboard-overview-sticky .dashboard-stock-counts .dashboard-stock-metric > strong.danger {
+  color: var(--danger);
+}
+.app:not(.menu-landing) .dashboard-overview-sticky .dashboard-stock-icon {
+  width: 28px;
+  height: 28px;
+  color: rgba(145, 32, 39, .58);
+}
+.app:not(.menu-landing) .dashboard-overview-sticky .dashboard-stock-icon .icon {
+  width: 28px;
+  height: 28px;
+}
 
 @media (max-width: 1024px) {
   .login-brand::before,
