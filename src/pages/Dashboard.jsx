@@ -149,7 +149,7 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="page">
+    <div className="page dashboard-page">
       <div className="dashboard-overview-sticky">
         <div className="dashboard-filter-row">
           <div className="dashboard-date-range">
@@ -196,6 +196,15 @@ export default function Dashboard() {
               <span>Cari</span>
             </button>
           </div>
+        </div>
+        <div className="dashboard-insights-heading">
+          <div>
+            <span className="dashboard-insights-kicker">PERFORMA TOKO</span>
+            <h3>Ringkasan penjualan</h3>
+          </div>
+          <span className="dashboard-insights-period">
+            {isTodayRange ? 'Hari ini' : 'Periode pilihan'}
+          </span>
         </div>
         <div className="stats-grid dashboard-stats-grid">
           <div className="stat-card dashboard-stat-card dashboard-revenue-card">
@@ -287,7 +296,11 @@ export default function Dashboard() {
           </thead>
           <tbody>
             {report.total_count === 0 && <tr><td colSpan="6" className="muted center">
-              {hasFilter ? 'Tidak ada transaksi pada rentang tanggal ini.' : 'Belum ada transaksi.'}
+              <div className="dashboard-empty-state">
+                <span className="dashboard-empty-mark" aria-hidden="true">—</span>
+                <strong>{hasFilter ? 'Belum ada transaksi di periode ini' : 'Belum ada transaksi'}</strong>
+                <span>{hasFilter ? 'Coba pilih rentang tanggal yang lain.' : 'Transaksi yang masuk akan muncul di sini.'}</span>
+              </div>
             </td></tr>}
             {pageTransactions.map((t, index) => {
               const balanceDue = getTransactionBalanceDue(t)
