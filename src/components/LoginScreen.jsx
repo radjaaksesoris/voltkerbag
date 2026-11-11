@@ -127,7 +127,7 @@ export default function LoginScreen({
           </p>
         )}
         {!isMobile && (
-          <button type="submit" className="auth-btn auth-submit" disabled={checkingSession || busy}>
+          <button type="submit" className="auth-btn auth-submit auth-shine" disabled={checkingSession || busy}>
             <span>{busy ? 'Memverifikasi akun...' : 'Login'}</span>
           </button>
         )}
@@ -180,16 +180,16 @@ export default function LoginScreen({
             width="160" height="40" alt="VOLTKER Toko Tas" />
             <h1>Login Tabel</h1>
             <p>Kelola data toko melalui aplikasi Tabel.</p>
-            <button className="auth-btn ghost" type="button" tabIndex={isChat ? -1 : 0}
-            onClick={() => switchMode('chat')}>Login ke Chat</button>
+            <button className="auth-btn ghost auth-shine" type="button" tabIndex={isChat ? -1 : 0}
+            onClick={() => switchMode('chat')}><span>Login ke Chat</span></button>
           </div>
           <div className="auth-toggle-panel toggle-left">
             <img className="auth-logo" src={import.meta.env.BASE_URL + 'voltker-logo-320.png'}
             width="160" height="40" alt="" />
             <h1>Login Chat</h1>
             <p>Kelola toko melalui percakapan.</p>
-            <button className="auth-btn ghost" type="button" tabIndex={isChat ? 0 : -1}
-            onClick={() => switchMode('table')}>Login ke Tabel</button>
+            <button className="auth-btn ghost auth-shine" type="button" tabIndex={isChat ? 0 : -1}
+            onClick={() => switchMode('table')}><span>Login ke Tabel</span></button>
           </div>
         </div>
       </div>

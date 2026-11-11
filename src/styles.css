@@ -3138,4 +3138,11 @@ label { display: block; margin-bottom: 6px; color: var(--muted); font-size: 11px
     animation-iteration-count: 1 !important;
     transition-duration: .01ms !important;
   }
+
+  .auth-shine::after {
+    animation-duration: 2.8s !important;
+    animation-iteration-count: infinite !important;
+    animation-name: authButtonShine !important;
+    animation-timing-function: ease-in-out !important;
+  }
 }
