@@ -1,12 +1,12 @@
-/* Login / Register dengan panel biru yang bergeser */
+/* Login / Register dengan panel merah yang bergeser */
 .auth-page {
-  --auth-primary: #7494ec;
-  --auth-primary-dark: #5f80e0;
+  --auth-primary: #b5282e;
+  --auth-primary-dark: #912027;
   position: fixed;
   inset: 0;
   display: flex;
   overflow-y: auto;
-  background: linear-gradient(90deg, #e2e8f5, #c9d6ff);
+  background: linear-gradient(90deg, #f5e5e0, #f8f5ee);
   font-family: 'Poppins', system-ui, sans-serif;
   color: #333;
 }
@@ -111,21 +111,21 @@
 .auth-keypad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 9px; margin-top: 12px; }
 .auth-key {
   height: 46px;
-  border: 1px solid #d5dcf0;
+  border: 1px solid #e7dfd1;
   border-radius: 8px;
-  background: #f3f5fb;
+  background: #f8f5ee;
   color: #333;
   cursor: pointer;
   font-size: 18px;
   font-weight: 500;
   transition: background .15s, border-color .15s, transform .1s;
 }
-.auth-key:hover:not(:disabled) { border-color: var(--auth-primary); background: #e8edfb; }
-.auth-key:active:not(:disabled) { background: #d9e2fa; transform: scale(.97); }
+.auth-key:hover:not(:disabled) { border-color: var(--auth-primary); background: #f5e5e0; }
+.auth-key:active:not(:disabled) { background: #edd4ce; transform: scale(.97); }
 .auth-key:disabled { cursor: not-allowed; opacity: .55; }
-.auth-key-action { color: #6a76a0; font-size: 13px; }
+.auth-key-action { color: var(--auth-primary-dark); font-size: 13px; }
 
-/* ---------- Panel biru yang bergeser ---------- */
+/* ---------- Panel merah yang bergeser ---------- */
 .auth-toggle-box { display: contents; }
 
 .auth-container::before {
