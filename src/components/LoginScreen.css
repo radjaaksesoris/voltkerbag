@@ -208,7 +208,14 @@
   .auth-key { height: 54px; font-size: 22px; }
   .auth-key-action { font-size: 15px; }
 
-  .auth-container::before { left: 0; top: 66%; width: 100%; height: 300%; border-radius: 20vw; }
+  .auth-container::before {
+    left: 0;
+    top: 66%;
+    width: 100%;
+    height: 300%;
+    border-radius: 20vw;
+    background: #7b1e24;
+  }
   .auth-container.active::before { left: 0; top: -266%; }
 
   .auth-toggle-panel { width: 100%; height: 34%; }
