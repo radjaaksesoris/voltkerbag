@@ -133,7 +133,7 @@
   width: 34%;
   z-index: 0;
   pointer-events: none;
-  background: linear-gradient(100deg, transparent, rgba(255, 255, 255, .12) 18%, rgba(255, 255, 255, .96) 50%, rgba(255, 255, 255, .12) 82%, transparent);
+  background: linear-gradient(100deg, transparent, rgba(255, 255, 255, .08) 18%, rgba(255, 255, 255, .58) 50%, rgba(255, 255, 255, .08) 82%, transparent);
   filter: blur(1px);
   transform: skewX(-18deg);
   animation: authButtonShine 2.8s ease-in-out infinite;
