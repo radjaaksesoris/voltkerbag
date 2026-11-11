@@ -2956,6 +2956,168 @@ label { display: block; margin-bottom: 6px; color: var(--muted); font-size: 11px
   background-color: rgba(255, 253, 248, .72);
 }
 
+.app:not(.menu-landing) {
+  background: var(--bg);
+  font-family: 'Poppins', 'Avenir Next', system-ui, sans-serif;
+}
+.app:not(.menu-landing) .app-background {
+  background: linear-gradient(110deg, #f5e5e0, #f8f5ee);
+}
+.app:not(.menu-landing) .app-background img {
+  opacity: .1;
+  filter: saturate(.72);
+}
+.app:not(.menu-landing) .topbar-title strong,
+.app:not(.menu-landing) .page h2,
+.app:not(.menu-landing) .page h3 {
+  font-family: 'Poppins', 'Avenir Next', system-ui, sans-serif;
+}
+.app:not(.menu-landing) .content .page > .muted,
+.app:not(.menu-landing) .content .page-toolbar > .muted,
+.app:not(.menu-landing) .content .page-toolbar > .muted strong,
+.app:not(.menu-landing) .content .dashboard-filter-row .date-filter-caption strong,
+.app:not(.menu-landing) .content .dashboard-filter-row .date-filter-caption > span,
+.app:not(.menu-landing) .content .dashboard-filter-row .date-filter-field > span {
+  color: var(--muted);
+}
+.app:not(.menu-landing) .content .page > .form-error,
+.app:not(.menu-landing) .content .dashboard-filter-row .date-filter-error {
+  color: var(--danger);
+}
+.app:not(.menu-landing) .content .card,
+.app:not(.menu-landing) .content .cart,
+.app:not(.menu-landing) .content .product-card {
+  border-color: #e9ddd6;
+  background-color: #fffdfa;
+  box-shadow: 0 7px 20px rgba(99, 34, 30, .07);
+}
+.app:not(.menu-landing) .content .product-card:hover {
+  background-color: #fff8f4;
+}
+.app:not(.menu-landing) .content .stat-card:not(.highlight) {
+  border-color: #eaded8;
+  background: radial-gradient(circle at 100% 100%, rgba(181, 40, 46, .06), transparent 58%), #fffdfa;
+  box-shadow: 0 6px 18px rgba(99, 34, 30, .06);
+}
+.app:not(.menu-landing) .content .stat-card.highlight,
+.app:not(.menu-landing) .content .stat-card.highlight.dashboard-revenue-card,
+.app:not(.menu-landing) .content .finance-summary-grid .stat-card.highlight {
+  border-color: var(--accent-dark);
+  background: linear-gradient(120deg, #b5282e, #912027);
+  box-shadow: 0 8px 20px rgba(145, 32, 39, .16);
+}
+.app:not(.menu-landing) .content .stat-card.highlight span,
+.app:not(.menu-landing) .content .stat-card.highlight strong {
+  color: #fffaf3;
+}
+.app:not(.menu-landing) .content .finance-summary-grid .debt-stat-card,
+.app:not(.menu-landing) .content .finance-summary-grid .debt-stat-card:hover {
+  border-color: #eaded8;
+  background: #fffdfa;
+  box-shadow: 0 6px 18px rgba(99, 34, 30, .06);
+}
+.app:not(.menu-landing) .content .finance-summary-grid .debt-stat-card > span:first-child,
+.app:not(.menu-landing) .content .finance-summary-grid .debt-stat-card .debt-stat-hint {
+  color: var(--muted);
+}
+.app:not(.menu-landing) .content .finance-summary-grid .debt-stat-card strong.danger {
+  color: var(--accent-dark);
+}
+.app:not(.menu-landing) .dashboard-stats-grid .dashboard-stat-card,
+.app:not(.menu-landing) .finance-summary-grid .stat-card.finance-income-card,
+.app:not(.menu-landing) .finance-summary-grid .stat-card.finance-debt-card,
+.app:not(.menu-landing) .finance-summary-grid .stat-card.finance-cash-card,
+.app:not(.menu-landing) .finance-summary-grid .stat-card.finance-profit-card {
+  border-color: #eaded8;
+  background-color: #fffdfa;
+}
+.app:not(.menu-landing) .dashboard-stat-icon,
+.app:not(.menu-landing) .finance-income-card .dashboard-stat-icon,
+.app:not(.menu-landing) .finance-debt-card .dashboard-stat-icon,
+.app:not(.menu-landing) .finance-cash-card .dashboard-stat-icon,
+.app:not(.menu-landing) .finance-profit-card .dashboard-stat-icon {
+  background: linear-gradient(145deg, #c83a40, #912027);
+  color: #fffaf3;
+}
+.app:not(.menu-landing) .dashboard-stat-content > strong,
+.app:not(.menu-landing) .dashboard-revenue-card .dashboard-stat-content > strong,
+.app:not(.menu-landing) .dashboard-profit-card .dashboard-stat-content > strong,
+.app:not(.menu-landing) .dashboard-stock-summary .dashboard-stat-content > strong,
+.app:not(.menu-landing) .dashboard-stock-counts .dashboard-stat-content > strong,
+.app:not(.menu-landing) .finance-income-card .dashboard-stat-content > strong,
+.app:not(.menu-landing) .finance-debt-card .dashboard-stat-content > strong,
+.app:not(.menu-landing) .finance-cash-card .dashboard-stat-content > strong,
+.app:not(.menu-landing) .finance-profit-card .dashboard-stat-content > strong {
+  color: var(--accent-dark);
+}
+.app:not(.menu-landing) .dashboard-stats-grid .dashboard-stat-card::before,
+.app:not(.menu-landing) .finance-summary-grid .dashboard-stat-card::before {
+  opacity: .12;
+}
+.app:not(.menu-landing) .content .table-card thead th {
+  border-bottom-color: var(--accent-dark);
+  background: var(--accent);
+  color: #fffaf3;
+}
+.app:not(.menu-landing) .content .product-quick-view-unit,
+.app:not(.menu-landing) .content .transaction-details-meta > div,
+.app:not(.menu-landing) .content .transaction-details-payments li,
+.app:not(.menu-landing) .content .customer-list li {
+  border-color: #eaded8;
+  background-color: #fffdfa;
+}
+.app:not(.menu-landing) .btn-primary {
+  border-color: var(--accent-dark);
+  background: linear-gradient(145deg, #c13a40, #912027);
+  color: #fffaf3;
+}
+.app:not(.menu-landing) .btn-primary:hover:not(:disabled) {
+  border-color: #781b22;
+  background: linear-gradient(145deg, #b5282e, #781b22);
+}
+.app:not(.menu-landing) .dashboard-date-range,
+.app:not(.menu-landing) .finance-date-range {
+  border-color: #eaded8;
+  background: #fffdfa;
+  box-shadow: 0 7px 18px rgba(99, 34, 30, .07);
+}
+.app:not(.menu-landing) .dashboard-date-field { color: var(--text); }
+.app:not(.menu-landing) .dashboard-date-field + .dashboard-date-field {
+  border-left-color: #eaded8;
+}
+.app:not(.menu-landing) .dashboard-date-field > .icon { color: var(--accent-dark); }
+.app:not(.menu-landing) .dashboard-date-field > span { color: var(--muted); }
+.app:not(.menu-landing) .dashboard-date-field > input { color: var(--text); }
+.app:not(.menu-landing) .dashboard-date-field:focus-within {
+  outline-color: rgba(181, 40, 46, .5);
+}
+.app:not(.menu-landing) .dashboard-date-search {
+  background: linear-gradient(145deg, #c13a40, #912027);
+  box-shadow: 0 6px 15px rgba(145, 32, 39, .2);
+}
+.app:not(.menu-landing) .dashboard-date-search:focus-visible {
+  outline-color: rgba(181, 40, 46, .45);
+}
+.app:not(.menu-landing) .dashboard-date-reset {
+  border-color: #eaded8;
+  background: #fff;
+  color: var(--accent-dark);
+}
+.app:not(.menu-landing) .dashboard-date-reset:hover {
+  border-color: #d7aaa5;
+  background: #fff5f1;
+}
+.app:not(.menu-landing) .finance-date-quick {
+  border-color: #ead8d5;
+  background: #fff8f4;
+  color: var(--accent-dark);
+}
+.app:not(.menu-landing) .finance-date-quick[aria-pressed="true"] {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  color: var(--accent-dark);
+}
+
 @media (max-width: 1024px) {
   .login-brand::before,
   .login-brand::after,
