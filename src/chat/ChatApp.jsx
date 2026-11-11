@@ -254,7 +254,6 @@ function renderChatText(text, formatCurrencyAsTable = true, onSummaryMetricClick
 export default function ChatApp() {
   const [session, setSession] = useState(null)
   const [checkingSession, setCheckingSession] = useState(true)
-  const [sharedStylesReady, setSharedStylesReady] = useState(false)
   const [connectionError, setConnectionError] = useState('')
   const [assistantConnection, setAssistantConnection] = useState({
     status: 'checking',
@@ -363,20 +362,10 @@ export default function ChatApp() {
 
   useEffect(() => {
     let active = true
-    if (!needsSharedStyles) {
-      setSharedStylesReady(true)
-      return () => { active = false }
-    }
-
-    setSharedStylesReady(false)
-    import('../styles.css').then(() => {
-      if (active) setSharedStylesReady(true)
-    }).catch((error) => {
+    if (!needsSharedStyles) return () => { active = false }
+    import('../styles.css').catch((error) => {
       console.error('Gagal memuat gaya aplikasi VOLTKER:', error)
-      if (active) {
-        setConnectionError('Sebagian tampilan aplikasi gagal dimuat. Muat ulang halaman untuk mencoba kembali.')
-        setSharedStylesReady(true)
-      }
+      if (active) setConnectionError('Sebagian tampilan aplikasi gagal dimuat. Muat ulang halaman untuk mencoba kembali.')
     })
     return () => { active = false }
   }, [needsSharedStyles])
@@ -1090,18 +1079,11 @@ export default function ChatApp() {
     }
   }
 
-  if (checkingSession && !session && !connectionError) {
-    return <main className="chat-loading" role="status">Memeriksa koneksi dan sesi VOLTKER...</main>
-  }
-
-  if (needsSharedStyles && !sharedStylesReady) {
-    return <main className="chat-loading" role="status">Memuat tampilan VOLTKER...</main>
-  }
-
   if (!session) {
     return (
       <LoginScreen
         configured={Boolean(import.meta.env.VITE_SUPABASE_ANON_KEY)}
+        checkingSession={checkingSession}
         connectionError={connectionError}
         updateBanner={null}
         defaultAppMode="chat"

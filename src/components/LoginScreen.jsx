@@ -9,7 +9,15 @@ function Svg({ children }) {
 }
 const MailIcon = () => <Svg><rect x="3" y="5" width="18" height="14" rx="2" /><path d="m3 7 9 6 9-6" /></Svg>
 
-export default function LoginScreen({ configured, connectionError, updateBanner, onSignedIn, onRetry, defaultAppMode = 'table' }) {
+export default function LoginScreen({
+  configured,
+  checkingSession = false,
+  connectionError,
+  updateBanner,
+  onSignedIn,
+  onRetry,
+  defaultAppMode = 'table'
+}) {
   const defaultEmail = import.meta.env.VITE_LOGIN_EMAIL?.trim() || ''
   const [isMobile, setIsMobile] = useState(() => window.matchMedia('(max-width: 1024px)').matches)
   const [mode, setMode] = useState(defaultAppMode)
@@ -71,7 +79,7 @@ export default function LoginScreen({ configured, connectionError, updateBanner,
 
   function renderLoginForm(targetApp) {
     return (
-      <form onSubmit={(event) => submit(event, targetApp)}>
+      <form onSubmit={(event) => submit(event, targetApp)} aria-busy={checkingSession || busy}>
         <h1>{targetApp === 'chat' ? 'Login Aplikasi Chat' : 'Login Aplikasi Tabel'}</h1>
         {!isMobile && (
           <div className="auth-input">
@@ -84,7 +92,8 @@ export default function LoginScreen({ configured, connectionError, updateBanner,
         <div className="auth-input auth-pin-input">
           <input id={`login-password-${targetApp}`} type="password" autoComplete="current-password"
             aria-label="Kata sandi" placeholder="○ ○ ○ ○ ○ ○"
-            inputMode={isMobile ? 'none' : undefined} readOnly={isMobile} required
+            inputMode={isMobile ? 'none' : undefined} readOnly={isMobile}
+            disabled={checkingSession || busy} required
             maxLength={isMobile ? 6 : undefined} value={password}
             onChange={(event) => setPassword(
               isMobile ? event.target.value.replace(/\D/g, '') : event.target.value
@@ -94,22 +103,26 @@ export default function LoginScreen({ configured, connectionError, updateBanner,
           <div className="auth-keypad" role="group" aria-label="Keypad kata sandi">
             {['1', '2', '3', '4', '5', '6', '7', '8', '9'].map((digit) => (
               <button key={digit} className="auth-key" type="button"
-                onClick={() => enterDigit(digit, targetApp)} disabled={busy}>{digit}</button>
+                onClick={() => enterDigit(digit, targetApp)} disabled={checkingSession || busy}>{digit}</button>
             ))}
             <button className="auth-key auth-key-action" type="button"
-              onClick={() => { setPassword(''); setError('') }} disabled={busy}
+              onClick={() => { setPassword(''); setError('') }} disabled={checkingSession || busy}
               aria-label="Hapus semua angka">Hapus</button>
             <button className="auth-key" type="button"
-              onClick={() => enterDigit('0', targetApp)} disabled={busy}>0</button>
+              onClick={() => enterDigit('0', targetApp)} disabled={checkingSession || busy}>0</button>
             <button className="auth-key auth-key-action" type="button"
               onClick={() => { setPassword((current) => current.slice(0, -1)); setError('') }}
-              disabled={busy} aria-label="Hapus angka terakhir">⌫</button>
+              disabled={checkingSession || busy} aria-label="Hapus angka terakhir">⌫</button>
           </div>
         )}
         {error && <p className="auth-error" role="alert">{error}</p>}
-        {busy && isMobile && <p className="auth-hint">Memverifikasi akun...</p>}
+        {(checkingSession || busy && isMobile) && (
+          <p className="auth-hint" role="status">
+            {checkingSession ? 'Memeriksa sesi...' : 'Memverifikasi akun...'}
+          </p>
+        )}
         {!isMobile && (
-          <button type="submit" className="auth-btn" disabled={busy}>
+          <button type="submit" className="auth-btn" disabled={checkingSession || busy}>
             {busy ? 'Memverifikasi akun...' : 'Login'}
           </button>
         )}
