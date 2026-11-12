@@ -1141,9 +1141,6 @@ h2 {
   .menu-finance-copy > strong { font-size: clamp(12px, 3.5vw, 16px); letter-spacing: -.25px; }
   .menu-finance-copy > strong .loading-number { font-size: .88em; }
   .loading-number-reel { min-width: .54em; text-align: center; }
-}
-@media (prefers-reduced-motion: reduce) {
-  .loading-number-track { animation: none; }
   .menu-list-section { gap: 7px; }
   .menu-list-heading h2 { font-size: 24px; }
   .menu-shortcuts { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px 8px; }
@@ -1151,6 +1148,9 @@ h2 {
   .menu-shortcut-icon { width: clamp(88px, 24vw, 108px); height: clamp(88px, 24vw, 108px); border-radius: 23px; }
   .menu-shortcut-icon .icon { width: 36px; height: 36px; }
   .menu-shortcut-label { margin-top: 10px; font-size: clamp(12px, 3.5vw, 15px); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .loading-number-track { animation: none; }
   .page-toolbar .date-filter { width: 100%; }
   .date-filter { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: stretch; gap: 8px; }
   .date-filter-field { min-width: 0; }
