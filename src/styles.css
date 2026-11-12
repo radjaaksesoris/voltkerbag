@@ -4091,8 +4091,8 @@ label { display: block; margin-bottom: 6px; color: var(--muted); font-size: 11px
   .app:not(.menu-landing) .purchase-table tbody { display: grid; gap: 9px; width: 100%; }
   .app:not(.menu-landing) .purchase-table tbody tr:not(:has(td[colspan])) {
     display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 0 10px;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0 8px;
     padding: 8px 10px;
     border: 1px solid #eaded8;
     border-radius: 16px 6px 16px 6px;
@@ -4133,7 +4133,6 @@ label { display: block; margin-bottom: 6px; color: var(--muted); font-size: 11px
   }
   .app:not(.menu-landing) .purchase-table tbody td:nth-child(4) { text-align: left; }
   .app:not(.menu-landing) .purchase-table tbody td:nth-child(3) { white-space: nowrap; }
-  .app:not(.menu-landing) .purchase-table tbody td:nth-child(5) { grid-column: 1 / -1; }
   .app:not(.menu-landing) .purchase-table tbody td[colspan] {
     display: block;
     padding: 14px 10px;
