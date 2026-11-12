@@ -3819,6 +3819,22 @@ label { display: block; margin-bottom: 6px; color: var(--muted); font-size: 11px
   border-radius: 5px 15px 5px 15px;
   background: #fffdfa;
 }
+.app:not(.menu-landing) .transactions-page .product-card-info > strong {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  font-size: 11px;
+  line-height: 1.2;
+  overflow-wrap: anywhere;
+}
+.app:not(.menu-landing) .transactions-page .product-card-info > .product-stock-label {
+  overflow: hidden;
+  font-size: 9px;
+  line-height: 1.2;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
 .app:not(.menu-landing) .transactions-page .mobile-cart-toggle {
   border-radius: 15px 5px 15px 5px;
 }
@@ -3915,6 +3931,12 @@ label { display: block; margin-bottom: 6px; color: var(--muted); font-size: 11px
   }
   .app:not(.menu-landing) .transactions-page .product-card {
     padding: 5px;
+  }
+  .app:not(.menu-landing) .transactions-page .product-card-info > strong {
+    font-size: 10px;
+  }
+  .app:not(.menu-landing) .transactions-page .product-card-info > .product-stock-label {
+    font-size: 8px;
   }
   .app:not(.menu-landing) .transactions-page .cart {
     padding: 14px 11px;

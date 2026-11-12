@@ -459,7 +459,7 @@ export default function Transactions() {
                   </button>
                   <div className="product-card-info">
                     <strong>{p.name}</strong>
-                    <span className="muted small">{p.category || 'Umum'} · stok {stockLabel(p)}</span>
+                    <span className="muted small product-stock-label">Stok {compactStockLabel(p)}</span>
                   </div>
                 </div>
                 <button
@@ -796,6 +796,15 @@ export default function Transactions() {
       )}
     </div>
   )
+}
+
+function compactStockLabel(product) {
+  const quantity = stockInPcs(product)
+  const factor = unitFactor(product.unit || 'pcs')
+  if (factor === 1 || String(product.unit || '').trim().toLocaleLowerCase('id-ID') === 'kodi') {
+    return String(quantity)
+  }
+  return `${Math.floor(quantity / factor)}/${quantity % factor}`
 }
 
 function getPaidAmount(transaction) {
