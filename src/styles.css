@@ -3840,7 +3840,7 @@ label { display: block; margin-bottom: 6px; color: var(--muted); font-size: 11px
 }
 .app:not(.menu-landing) .transactions-page .product-card {
   border-color: #eaded8;
-  border-radius: 6px 20px 6px 20px;
+  border-radius: 20px 6px 20px 6px;
   background: rgba(255, 253, 248, .96);
   box-shadow: 0 6px 16px rgba(99, 34, 30, .065);
   transition: transform .18s ease, border-color .18s ease, box-shadow .18s ease;
@@ -3854,7 +3854,7 @@ label { display: block; margin-bottom: 6px; color: var(--muted); font-size: 11px
 .app:not(.menu-landing) .transactions-page .product-image-trigger,
 .app:not(.menu-landing) .transactions-page .product-card-image,
 .app:not(.menu-landing) .transactions-page .product-card .product-illustration {
-  border-radius: 5px 15px 5px 15px;
+  border-radius: 15px 5px 15px 5px;
 }
 .app:not(.menu-landing) .transactions-page .product-units-toggle {
   border-color: #eaded8;
