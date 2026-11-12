@@ -179,12 +179,16 @@
   cursor: pointer;
   font-size: 20px;
   font-weight: 600;
+  -webkit-appearance: none;
+  appearance: none;
+  -webkit-tap-highlight-color: transparent;
   touch-action: manipulation;
   transition: background .15s, border-color .15s, transform .1s, box-shadow .15s;
 }
 .auth-key:hover:not(:disabled) { border-color: rgba(181, 40, 46, .4); background: #f7e9e3; }
 .auth-key:active:not(:disabled) { background: #f1ddd5; transform: scale(.96); }
 .auth-key:focus-visible { outline: 2px solid var(--auth-primary); outline-offset: 2px; }
+.auth-key:focus:not(:focus-visible) { outline: none; box-shadow: none; }
 .auth-key:disabled { cursor: not-allowed; opacity: .55; }
 .auth-key-action { color: var(--auth-primary-dark); font-size: 15px; }
 

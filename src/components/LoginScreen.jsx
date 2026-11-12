@@ -121,10 +121,8 @@ export default function LoginScreen({
           </div>
         )}
         {error && <p className="auth-error" role="alert">{error}</p>}
-        {(checkingSession || busy && isMobile) && (
-          <p className="auth-hint" role="status">
-            {checkingSession ? 'Memeriksa sesi...' : 'Memverifikasi akun...'}
-          </p>
+        {checkingSession && (
+          <p className="auth-hint" role="status">Memeriksa sesi...</p>
         )}
         {!isMobile && (
           <button type="submit" className="auth-btn auth-submit auth-shine" disabled={checkingSession || busy}>
