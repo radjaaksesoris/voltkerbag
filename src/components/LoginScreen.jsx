@@ -74,6 +74,16 @@ export default function LoginScreen({
     if (nextPassword.length === 6) loginWithPassword(nextPassword, targetApp)
   }
 
+  function handleKeyPointerDown(event, activate) {
+    if (!event.isPrimary || event.button !== 0) return
+    event.preventDefault()
+    activate()
+  }
+
+  function handleKeyClick(event, activate) {
+    if (event.detail === 0) activate()
+  }
+
   function switchMode(next) {
     setMode(next)
     setError('')
@@ -121,15 +131,22 @@ export default function LoginScreen({
           <div className="auth-keypad" role="group" aria-label="Keypad kata sandi">
             {['1', '2', '3', '4', '5', '6', '7', '8', '9'].map((digit) => (
               <button key={digit} className="auth-key" type="button"
-                onClick={() => enterDigit(digit, targetApp)} disabled={checkingSession || busy}>{digit}</button>
+                onPointerDown={(event) => handleKeyPointerDown(event, () => enterDigit(digit, targetApp))}
+                onClick={(event) => handleKeyClick(event, () => enterDigit(digit, targetApp))}
+                disabled={checkingSession || busy}>{digit}</button>
             ))}
             <button className="auth-key auth-key-action" type="button"
-              onClick={() => { setPassword(''); setError('') }} disabled={checkingSession || busy}
+              onPointerDown={(event) => handleKeyPointerDown(event, () => { setPassword(''); setError('') })}
+              onClick={(event) => handleKeyClick(event, () => { setPassword(''); setError('') })}
+              disabled={checkingSession || busy}
               aria-label="Hapus semua angka">Clear</button>
             <button className="auth-key" type="button"
-              onClick={() => enterDigit('0', targetApp)} disabled={checkingSession || busy}>0</button>
+              onPointerDown={(event) => handleKeyPointerDown(event, () => enterDigit('0', targetApp))}
+              onClick={(event) => handleKeyClick(event, () => enterDigit('0', targetApp))}
+              disabled={checkingSession || busy}>0</button>
             <button className="auth-key auth-key-action" type="button"
-              onClick={() => { setPassword((current) => current.slice(0, -1)); setError('') }}
+              onPointerDown={(event) => handleKeyPointerDown(event, () => { setPassword((current) => current.slice(0, -1)); setError('') })}
+              onClick={(event) => handleKeyClick(event, () => { setPassword((current) => current.slice(0, -1)); setError('') })}
               disabled={checkingSession || busy} aria-label="Hapus angka terakhir">Hapus</button>
           </div>
         )}

@@ -204,7 +204,7 @@
   appearance: none;
   -webkit-tap-highlight-color: transparent;
   touch-action: manipulation;
-  transition: background-color .08s ease, border-color .08s ease, color .08s ease, transform .08s ease, box-shadow .08s ease;
+  transition: none;
 }
 .auth-key:hover:not(:disabled) { border-color: rgba(181, 40, 46, .4); background: #f7e9e3; }
 .auth-key:active:not(:disabled) {
@@ -311,7 +311,7 @@
     border: 1px solid #c8b9af;
     border-radius: 50%;
     background: transparent;
-    transition: background-color .08s ease, border-color .08s ease, transform .08s ease;
+    transition: none;
   }
   .auth-pin-dots > span.is-filled {
     transform: scale(1.12);
