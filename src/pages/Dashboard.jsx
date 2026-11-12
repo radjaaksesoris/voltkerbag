@@ -159,7 +159,13 @@ export default function Dashboard() {
                 type="date"
                 value={draftDateRange.from}
                 max={draftDateRange.to || undefined}
-                onChange={(event) => setDraftDateRange((range) => ({ ...range, from: event.target.value }))}
+                onChange={(event) => {
+                  const nextRange = { ...draftDateRange, from: event.target.value }
+                  setDraftDateRange(nextRange)
+                  setDateRange(nextRange)
+                  saveDashboardDateRange(nextRange)
+                  setTransactionPage(1)
+                }}
                 aria-label="Dari tanggal"
               />
             </label>
