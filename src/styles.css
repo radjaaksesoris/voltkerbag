@@ -967,7 +967,7 @@ h2 {
   height: 58px;
   place-items: center;
   border: 1px solid rgba(255, 255, 255, .18);
-  border-radius: 17px;
+  border-radius: 6px 22px 6px 22px;
   background: linear-gradient(145deg, #d33440, #a7192a);
   color: #fffaf3;
   box-shadow: 0 10px 24px rgba(80, 14, 23, .24), inset 0 1px 0 rgba(255, 255, 255, .22);
@@ -1020,7 +1020,7 @@ h2 {
   overflow: hidden;
   padding: 34px 40px 48px;
   border: 1px solid rgba(255, 255, 255, .18);
-  border-radius: 28px;
+  border-radius: 6px 22px 6px 22px;
   background:
     radial-gradient(ellipse at 2% 5%, rgba(255, 195, 175, .22), transparent 42%),
     linear-gradient(112deg, #b5282e 0%, #a1242b 56%, #912027 100%);
@@ -1168,12 +1168,12 @@ h2 {
   .menu-page { gap: 16px; padding: 12px; border-radius: 20px; }
   .menu-top-actions { grid-template-columns: 48px minmax(0, 1fr) 48px; gap: 9px; }
   .menu-brand-mark,
-  .menu-chat-action { width: 48px; height: 48px; border-radius: 15px; }
+  .menu-chat-action { width: 48px; height: 48px; border-radius: 5px 18px 5px 18px; }
   .menu-brand-mark .icon { width: 24px; height: 24px; }
   .menu-chat-action .icon { width: 21px; height: 21px; }
   .menu-search { height: 48px; gap: 8px; padding-inline: 12px; border-radius: 16px; }
   .menu-search input { font-size: 13px; }
-  .menu-summary-card { min-height: 236px; padding: 24px 20px 48px; border-radius: 25px; }
+  .menu-summary-card { min-height: 236px; padding: 24px 20px 48px; border-radius: 5px 22px 5px 22px; }
   .menu-summary-copy { width: min(82%, 440px); gap: 7px; }
   .menu-summary-kicker { padding: 6px 10px; font-size: 11px; }
   .menu-summary-label { margin-top: 5px; font-size: 14px; }
