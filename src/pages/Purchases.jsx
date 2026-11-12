@@ -1,9 +1,11 @@
 import { useEffect, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { getAll, getPurchaseEntries, onRefresh, requestPageRefresh, put } from '../db'
 import { dateOnly, rupiah } from '../format'
 import { dateRangeTimestamps, localDateValue } from '../dateFilter'
 import MoneyInput from '../components/MoneyInput.jsx'
 import VendorSelect from '../components/VendorSelect.jsx'
+import Icon from '../components/Icon.jsx'
 import { formatPurchaseNote, parsePurchaseNote } from '../purchaseNote.js'
 
 const PURCHASE_CATEGORY = 'Pembelian bahan produksi'
@@ -27,6 +29,12 @@ export default function Purchases() {
   const requestId = useRef(0)
   const vendorRequestId = useRef(0)
   const savingLock = useRef(false)
+
+  useEffect(() => {
+    if (!status) return undefined
+    const timeout = window.setTimeout(() => setStatus(''), 3000)
+    return () => window.clearTimeout(timeout)
+  }, [status])
 
   useEffect(() => {
     let active = true
@@ -133,7 +141,7 @@ export default function Purchases() {
       setAmount('')
       setPurchaseDate(localDateValue(new Date()))
       setPage(1)
-      setStatus('Pembelian bahan berhasil dicatat sebagai pengeluaran.')
+      setStatus('Berhasil disimpan')
     } catch (error) {
       setActionError(error.message || 'Gagal mencatat pembelian bahan.')
     } finally {
@@ -167,9 +175,6 @@ export default function Purchases() {
             <p className="muted">Catat pembelian bahan produksi sebagai pengeluaran keuangan.</p>
           </div>
         </div>
-        <p className="purchase-stock-notice">
-          Catatan pembelian ini tidak menambah stok produk. Perubahan stok barang jadi dicatat di tab Stok Barang.
-        </p>
         <form className="purchase-form" onSubmit={savePurchase}>
           <div className="purchase-form-grid">
             <div className="purchase-field">
@@ -226,12 +231,18 @@ export default function Purchases() {
             </div>
           </div>
           {actionError && <p className="form-error" role="alert">{actionError}</p>}
-          {status && <p className="backup-success" role="status">{status}</p>}
           <button className="btn btn-primary purchase-submit" type="submit" disabled={saving}>
             {saving ? 'Menyimpan...' : 'Simpan pembelian'}
           </button>
         </form>
       </section>
+      {status && createPortal(
+        <div className="purchase-toast" role="status" aria-live="polite">
+          <Icon name="check" size={17} />
+          <span>{status}</span>
+        </div>,
+        document.body
+      )}
 
       <section className="card table-card purchase-history-card">
         <div className="purchase-history-heading">
