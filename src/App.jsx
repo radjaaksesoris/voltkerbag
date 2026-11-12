@@ -571,10 +571,6 @@ function ActiveApp() {
               <span>Install</span>
             </button>
           )}
-          <a className="btn btn-sm chat-launch-button" href={import.meta.env.BASE_URL + 'chat/?mode=chat'} aria-label="Buka VOLTKER Chat">
-            <Icon name="chat" size={16} />
-            <span>Chat</span>
-          </a>
           <SessionControl
             email={session.user.email}
             showLogout={false}
@@ -582,6 +578,10 @@ function ActiveApp() {
               clearRequestedAppMode()
               setSession(null)
             }} />
+          <a className="btn btn-sm chat-launch-button" href={import.meta.env.BASE_URL + 'chat/?mode=chat'} aria-label="Buka VOLTKER Chat">
+            <Icon name="chat" size={16} />
+            <span>Chat</span>
+          </a>
         </header>
 
         {connectionError && (
