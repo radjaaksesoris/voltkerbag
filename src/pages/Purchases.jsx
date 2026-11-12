@@ -162,6 +162,7 @@ export default function Purchases() {
       <section className="card purchase-form-card">
         <div className="purchase-heading">
           <div>
+            <span className="purchase-eyebrow">PENCATATAN PENGELUARAN</span>
             <h2>Pembelian</h2>
             <p className="muted">Catat pembelian bahan produksi sebagai pengeluaran keuangan.</p>
           </div>
@@ -250,11 +251,11 @@ export default function Purchases() {
               const purchase = parsePurchaseNote(entry.note)
               return (
                 <tr key={entry.id}>
-                  <td className="purchase-row-number">{pageStart + index + 1}</td>
-                  <td className="purchase-details">{purchase.purchase}</td>
-                  <td>{dateOnly(entry.date || entry.createdAt)}</td>
-                  <td className="danger">{rupiah(entry.amount)}</td>
-                  <td className="purchase-details">{purchase.vendor}</td>
+                  <td className="purchase-row-number" data-label="No.">{pageStart + index + 1}</td>
+                  <td className="purchase-details" data-label="Pembelian">{purchase.purchase}</td>
+                  <td data-label="Tanggal">{dateOnly(entry.date || entry.createdAt)}</td>
+                  <td className="danger" data-label="Nominal">{rupiah(entry.amount)}</td>
+                  <td className="purchase-details" data-label="Vendor">{purchase.vendor}</td>
                 </tr>
               )
             })}
