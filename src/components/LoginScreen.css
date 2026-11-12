@@ -322,7 +322,9 @@
   .auth-input { margin: 14px 0; }
   .auth-key { height: 54px; font-size: 22px; }
   .auth-key:not(.auth-key-action) { width: 90%; height: 60px; justify-self: center; }
-  .auth-key-action { font-size: 15px; }
+  .auth-key-action { width: 90%; justify-self: center; font-size: 15px; }
+  .auth-keypad > .auth-key:nth-child(3n + 1) { position: relative; left: 6px; }
+  .auth-keypad > .auth-key:nth-child(3n) { position: relative; right: 6px; }
 
   .auth-container::before {
     left: 0;

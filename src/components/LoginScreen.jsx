@@ -125,12 +125,12 @@ export default function LoginScreen({
             ))}
             <button className="auth-key auth-key-action" type="button"
               onClick={() => { setPassword(''); setError('') }} disabled={checkingSession || busy}
-              aria-label="Hapus semua angka">Hapus</button>
+              aria-label="Hapus semua angka">Clear</button>
             <button className="auth-key" type="button"
               onClick={() => enterDigit('0', targetApp)} disabled={checkingSession || busy}>0</button>
             <button className="auth-key auth-key-action" type="button"
               onClick={() => { setPassword((current) => current.slice(0, -1)); setError('') }}
-              disabled={checkingSession || busy} aria-label="Hapus angka terakhir">⌫</button>
+              disabled={checkingSession || busy} aria-label="Hapus angka terakhir">Hapus</button>
           </div>
         )}
         {error && <p className="auth-error" role="alert">{error}</p>}
