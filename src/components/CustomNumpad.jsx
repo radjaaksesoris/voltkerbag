@@ -23,6 +23,15 @@ export default function CustomNumpad() {
     function syncInputReadOnly() {
       const isMobile = window.matchMedia('(max-width: 640px)').matches
       document.querySelectorAll(INPUT_SELECTOR).forEach((input) => {
+        if (input.dataset.customNumpad === 'money') {
+          if (input.dataset.customNumpadManagedReadonly === 'true') {
+            input.readOnly = input.dataset.customNumpadOriginalReadonly === 'true'
+            delete input.dataset.customNumpadOriginalReadonly
+            delete input.dataset.customNumpadManagedReadonly
+          }
+          return
+        }
+
         if (isMobile && !input.disabled) {
           if (input.dataset.customNumpadManagedReadonly !== 'true') {
             if (input.readOnly) return
@@ -52,7 +61,7 @@ export default function CustomNumpad() {
       if (input instanceof HTMLInputElement && input.matches(INPUT_SELECTOR)) syncInputReadOnly()
       const shouldShow = input instanceof HTMLInputElement &&
         input.matches(INPUT_SELECTOR) &&
-        input.dataset.customNumpadManagedReadonly === 'true' &&
+        (input.dataset.customNumpadManagedReadonly === 'true' || input.dataset.customNumpad === 'money') &&
         !input.disabled &&
         window.matchMedia('(max-width: 640px)').matches
       activeInputRef.current = shouldShow ? input : null
