@@ -320,7 +320,7 @@
   }
   .auth-pin-loading { right: 4px; }
   .auth-input { margin: 14px 0; }
-  .auth-key { height: 54px; font-size: 22px; }
+  .auth-key { height: 54px; border-radius: 5px 18px 5px 18px; font-size: 22px; }
   .auth-key:not(.auth-key-action) { width: 90%; height: 64px; justify-self: center; }
   .auth-key-action { width: 90%; justify-self: center; font-size: 15px; }
   .auth-keypad > .auth-key:nth-child(3n + 1) { position: relative; left: 6px; }

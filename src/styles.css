@@ -1085,7 +1085,7 @@ h2 {
 .menu-shortcuts {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 16px;
+  gap: 20px 18px;
 }
 .menu-landing .menu-shortcuts > .menu-shortcut {
   position: relative;
@@ -1095,7 +1095,7 @@ h2 {
   flex-direction: column;
   align-items: flex-start;
   justify-content: flex-end;
-  min-height: 166px;
+  min-height: 184px;
   overflow: hidden;
   padding: 17px 15px;
   border: 0;
@@ -1192,8 +1192,8 @@ h2 {
   .loading-number-reel { min-width: .54em; text-align: center; }
   .menu-list-section { gap: 7px; }
   .menu-list-heading h2 { font-size: 24px; }
-  .menu-shortcuts { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px 8px; }
-  .menu-landing .menu-shortcuts > .menu-shortcut { min-height: 142px; padding: 13px 12px; border-radius: 22px 7px 22px 7px; }
+  .menu-shortcuts { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px 14px; }
+  .menu-landing .menu-shortcuts > .menu-shortcut { min-height: 156px; padding: 13px 12px; border-radius: 22px 7px 22px 7px; }
   .menu-shortcut::before { top: -38px; right: -29px; width: 102px; height: 102px; }
   .menu-art-icon { right: -7px; width: clamp(68px, 19vw, 88px); height: clamp(68px, 19vw, 88px); }
   .menu-shortcut-label { max-width: 92%; font-size: clamp(12px, 3.5vw, 15px); }
