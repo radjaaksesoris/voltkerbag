@@ -104,20 +104,6 @@ export default function CustomNumpad() {
   }, [])
 
   useLayoutEffect(() => {
-    const keypad = keypadRef.current
-    if (!activeInput?.isConnected || !keypad || !window.matchMedia('(max-width: 640px)').matches) {
-      return undefined
-    }
-
-    keypad.style.setProperty('--custom-numpad-top', `${keypad.getBoundingClientRect().top}px`)
-    keypad.classList.add('custom-numpad-expanded')
-    return () => {
-      keypad.classList.remove('custom-numpad-expanded')
-      keypad.style.removeProperty('--custom-numpad-top')
-    }
-  }, [activeInput])
-
-  useLayoutEffect(() => {
     if (!activeInput?.isConnected || !window.matchMedia('(max-width: 640px)').matches) {
       return undefined
     }

@@ -2559,12 +2559,6 @@ label { display: block; margin-bottom: 6px; color: var(--muted); font-size: 11px
     background: var(--card);
     box-shadow: 0 8px 28px rgba(24, 22, 21, .24);
   }
-  .custom-numpad-expanded {
-    top: var(--custom-numpad-top);
-    display: flex;
-    flex-direction: column;
-    padding-bottom: 9px;
-  }
   .custom-numpad-heading { display: flex; align-items: center; gap: 8px; margin-bottom: 7px; }
   .custom-numpad-heading strong { flex: 1; color: var(--muted); font-size: 11px; }
   .custom-numpad-heading button { min-height: 30px; padding: 5px 10px; border: 1px solid var(--border); border-radius: 7px; background: var(--card); color: var(--accent-dark); font-size: 11px; font-weight: 700; }
@@ -2572,8 +2566,6 @@ label { display: block; margin-bottom: 6px; color: var(--muted); font-size: 11px
   .custom-numpad-error { margin: 0 0 7px; color: var(--danger); font-size: 10px; }
   .custom-numpad-keys { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 5px; }
   .custom-numpad-keys button { min-height: 39px; border: 1px solid var(--border); border-radius: 8px; background: #fffefa; color: var(--ink); font-size: 17px; font-weight: 700; touch-action: manipulation; }
-  .custom-numpad-expanded .custom-numpad-keys { flex: 1; grid-template-rows: repeat(4, minmax(0, 1fr)); min-height: 0; }
-  .custom-numpad-expanded .custom-numpad-keys button { height: 100%; min-height: 0; font-size: clamp(17px, 3.5vh, 30px); }
   .custom-numpad-keys button:active { background: var(--accent-soft); }
   .custom-numpad-keys .custom-numpad-done { border-color: var(--accent); background: var(--accent); color: #fffaf3; font-size: 11px; }
   .custom-numpad-keys .custom-numpad-backspace { color: var(--accent-dark); }
