@@ -96,13 +96,22 @@ export default function LoginScreen({
         <p className="auth-pin-label">Masukkan password</p>
         <div className="auth-input auth-pin-input">
           <input id={`login-password-${targetApp}`} type="password" autoComplete="current-password"
-            aria-label="Kata sandi" placeholder="○ ○ ○ ○ ○ ○"
+            className={isMobile ? 'auth-pin-native' : undefined}
+            aria-label="Kata sandi" placeholder={isMobile ? undefined : '○ ○ ○ ○ ○ ○'}
             inputMode={isMobile ? 'none' : undefined} readOnly={isMobile}
             disabled={checkingSession || busy} required
             maxLength={isMobile ? 6 : undefined} value={password}
             onChange={(event) => setPassword(
               isMobile ? event.target.value.replace(/\D/g, '') : event.target.value
             )} />
+          {isMobile && (
+            <div className="auth-pin-dots" aria-hidden="true">
+              {Array.from({ length: 6 }, (_, index) => (
+                <span key={index} className={index < password.length ? 'is-filled' : ''} />
+              ))}
+            </div>
+          )}
+          {isMobile && busy && <span className="auth-pin-loading" role="status">Memverifikasi akun</span>}
         </div>
         {isMobile && (
           <div className="auth-keypad" role="group" aria-label="Keypad kata sandi">
