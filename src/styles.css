@@ -755,8 +755,6 @@ button:focus-visible, input:focus-visible, select:focus-visible {
   .session-control .btn { padding: 7px 9px; }
   .topbar .pwa-install-button { gap: 3px; padding: 7px 8px; font-size: 10px; }
   .topbar .chat-launch-button { gap: 4px; padding: 7px 9px; font-size: 10px; }
-  .topbar .session-refresh-button { width: 34px; height: 34px; justify-content: center; padding: 0; }
-  .topbar .session-refresh-button span { display: none; }
   .connection-banner { align-items: flex-start; flex-direction: column; gap: 8px; font-size: 11px; }
   .pwa-update-banner { align-items: flex-start; flex-direction: column; gap: 8px; font-size: 11px; }
 }
@@ -2065,33 +2063,21 @@ label { display: block; margin-bottom: 6px; color: var(--muted); font-size: 11px
   .cart-item-bottom .cart-sub { grid-column: 3; grid-row: 1 / span 2; align-self: end; font-size: 12px; }
 }
 .cart-notification { position: fixed; z-index: 40; right: 16px; bottom: 20px; left: 16px; display: flex; width: fit-content; max-width: min(420px, calc(100vw - 32px)); align-items: center; gap: 9px; margin-inline: auto; padding: 12px 16px; border: 1px solid rgba(255, 255, 255, .15); border-radius: 12px; background: #315f4b; color: #fffaf3; box-shadow: 0 10px 28px rgba(24, 22, 21, .22); font-size: 12px; line-height: 1.4; animation: cart-notification-in .18s ease-out; }
-.cart-notification-over-modal {
+.cart-notification-in-header {
   z-index: 80;
-  top: calc(12px + env(safe-area-inset-top));
   right: auto;
-  bottom: auto !important;
   left: 50%;
   width: max-content;
-  height: auto !important;
+  height: auto;
   min-height: 0;
-  max-width: calc(100vw - 32px);
-  transform: translateX(-50%);
-  border-color: #b5282e;
-  background: linear-gradient(135deg, #ffe58a, #ffc84a);
-  color: #6f1c21;
+  bottom: auto;
+  transform: translateY(-50%);
   box-shadow: 0 10px 28px rgba(65, 24, 20, .28);
-  animation-name: cart-notification-over-modal-in;
 }
 .cart-notification .icon { color: #c9e5d2; }
-.cart-notification-over-modal .icon { color: #a5222a; }
 .cart-notification span { min-width: 0; overflow-wrap: anywhere; }
 .cart-notification strong { color: #fff; }
-.cart-notification-over-modal strong { color: #7d1e26; }
 @keyframes cart-notification-in { from { opacity: 0; transform: translateY(7px); } to { opacity: 1; transform: translateY(0); } }
-@keyframes cart-notification-over-modal-in {
-  from { opacity: 0; transform: translate(-50%, 7px); }
-  to { opacity: 1; transform: translate(-50%, 0); }
-}
 .cart-checkout { flex: 0 0 auto; padding-top: 8px; border-top: 1px solid var(--border); }
 .cart-checkout label { margin-bottom: 4px; }
 .cart-checkout-options { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
@@ -2738,7 +2724,6 @@ label { display: block; margin-bottom: 6px; color: var(--muted); font-size: 11px
   .mobile-cart-count { display: inline-grid; min-width: 20px; height: 20px; place-items: center; padding-inline: 4px; border-radius: 10px; background: rgba(255, 255, 255, .2); font-size: 10px; }
   .pos-grid { display: block; }
   .cart-notification { bottom: calc(80px + env(safe-area-inset-bottom)); max-width: calc(100vw - 30px); padding: 10px 13px; font-size: 11px; }
-  .cart-notification.cart-notification-over-modal { bottom: auto !important; }
   .pos-grid.mobile-cart-open .pos-products { display: none; }
   .pos-grid:not(.mobile-cart-open) .cart { display: none; }
   .cart-view-header { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: -4px 0 12px; padding-bottom: 10px; border-bottom: 1px solid var(--border); }

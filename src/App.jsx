@@ -577,8 +577,7 @@ function ActiveApp() {
           </a>
           <SessionControl
             email={session.user.email}
-            refreshPageId={page}
-            refreshPageLabel={currentPage.label}
+            showLogout={false}
             onSignedOut={() => {
               clearRequestedAppMode()
               setSession(null)

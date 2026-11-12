@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { getAll, getProductImageUrl, getProductThumbnailUrl, completeSale, recordTransactionPayment, onRefresh, requestPageRefresh } from '../db'
 import { rupiah } from '../format'
@@ -51,8 +51,35 @@ export default function Transactions() {
   const cartNotificationTimeout = useRef(null)
   const [loadError, setLoadError] = useState('')
   const [loaded, setLoaded] = useState(false)
+  const [notificationPosition, setNotificationPosition] = useState(null)
 
   useEffect(() => () => window.clearTimeout(cartNotificationTimeout.current), [])
+
+  useLayoutEffect(() => {
+    if (!cartNotification) {
+      setNotificationPosition(null)
+      return undefined
+    }
+
+    function positionNotification() {
+      const chatButton = document.querySelector('.topbar .chat-launch-button')
+      const chatBounds = chatButton?.getBoundingClientRect()
+      if (!chatBounds || chatBounds.width === 0 || chatBounds.left <= 24) {
+        setNotificationPosition(null)
+        return
+      }
+
+      setNotificationPosition({
+        top: chatBounds.top + chatBounds.height / 2,
+        right: window.innerWidth - chatBounds.left + 8,
+        maxWidth: Math.min(300, chatBounds.left - 24)
+      })
+    }
+
+    positionNotification()
+    window.addEventListener('resize', positionNotification)
+    return () => window.removeEventListener('resize', positionNotification)
+  }, [cartNotification])
 
   useEffect(() => {
     if (!previewProduct) return undefined
@@ -622,7 +649,8 @@ export default function Transactions() {
       {cartNotification && (
         createPortal(
           <div
-            className={'cart-notification' + (previewProduct ? ' cart-notification-over-modal' : '')}
+            className="cart-notification cart-notification-in-header"
+            style={notificationPosition || undefined}
             role="status"
             aria-live="polite">
             <Icon name="check" size={17} />

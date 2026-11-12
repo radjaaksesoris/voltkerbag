@@ -1,8 +1,6 @@
 import { useState } from 'react'
-import Icon from './Icon.jsx'
-import { requestPageRefresh } from '../refreshEvents.js'
 
-export default function SessionControl({ email, onSignedOut, refreshPageId, refreshPageLabel }) {
+export default function SessionControl({ email, onSignedOut, showLogout = true }) {
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
 
@@ -24,17 +22,7 @@ export default function SessionControl({ email, onSignedOut, refreshPageId, refr
     <div className="session-control">
       <span className="session-online"><span className="dot-online" />Terhubung</span>
       <span className="session-email" title={email}>{email}</span>
-      {refreshPageId ? (
-        <button
-          className="btn btn-sm session-refresh-button"
-          type="button"
-          aria-label={`Refresh ${refreshPageLabel || 'halaman'}`}
-          title={`Refresh ${refreshPageLabel || 'halaman'}`}
-          onClick={() => requestPageRefresh(refreshPageId)}>
-          <Icon name="sync" size={16} />
-          <span>Refresh</span>
-        </button>
-      ) : (
+      {showLogout && (
         <button className="btn btn-sm" type="button" onClick={logout} disabled={busy}>
           {busy ? 'Keluar...' : 'Keluar'}
         </button>
