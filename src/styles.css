@@ -3227,7 +3227,7 @@ label { display: block; margin-bottom: 6px; color: var(--muted); font-size: 11px
 }
 .app:not(.menu-landing) .dashboard-overview-sticky .dashboard-stats-grid {
   display: grid;
-  grid-template-columns: repeat(12, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 10px;
   margin: 0;
 }
@@ -3249,7 +3249,7 @@ label { display: block; margin-bottom: 6px; color: var(--muted); font-size: 11px
   box-shadow: 0 12px 24px rgba(99, 34, 30, .1);
 }
 .app:not(.menu-landing) .dashboard-overview-sticky .dashboard-stats-grid .dashboard-stat-card.dashboard-revenue-card {
-  grid-column: span 7;
+  grid-column: span 1;
   border-color: #912027;
   border-radius: 7px 22px 7px 22px;
   background:
@@ -3284,18 +3284,13 @@ label { display: block; margin-bottom: 6px; color: var(--muted); font-size: 11px
   pointer-events: none;
 }
 .app:not(.menu-landing) .dashboard-overview-sticky .dashboard-profit-card {
-  grid-column: span 5;
+  grid-column: span 1;
   border-left: 3px solid #b5282e;
   background: linear-gradient(115deg, rgba(255, 253, 248, .97), rgba(250, 238, 230, .92));
 }
 .app:not(.menu-landing) .dashboard-overview-sticky .dashboard-stock-summary {
-  grid-column: span 5;
+  grid-column: span 1;
   background: linear-gradient(115deg, rgba(255, 253, 248, .97), rgba(248, 241, 229, .93));
-}
-.app:not(.menu-landing) .dashboard-overview-sticky .dashboard-stock-counts {
-  grid-column: span 7;
-  border-color: rgba(145, 32, 39, .12);
-  background: linear-gradient(110deg, rgba(248, 237, 228, .96), rgba(255, 253, 248, .91));
 }
 .app:not(.menu-landing) .dashboard-overview-sticky .dashboard-stat-icon {
   width: 44px;
@@ -3686,11 +3681,6 @@ label { display: block; margin-bottom: 6px; color: var(--muted); font-size: 11px
     gap: 6px;
     padding-inline: 8px;
   }
-  .app:not(.menu-landing) .dashboard-overview-sticky .dashboard-stock-counts {
-    grid-column: 1 / -1;
-    min-height: 78px;
-    padding: 12px 14px;
-  }
   .app:not(.menu-landing) .dashboard-overview-sticky .dashboard-stat-icon {
     width: 34px;
     height: 34px;
@@ -3726,22 +3716,6 @@ label { display: block; margin-bottom: 6px; color: var(--muted); font-size: 11px
   .app:not(.menu-landing) .dashboard-overview-sticky .dashboard-stat-content > strong,
   .app:not(.menu-landing) .dashboard-overview-sticky .dashboard-stock-metric > strong {
     font-size: clamp(13px, 3.8vw, 16px);
-  }
-  .app:not(.menu-landing) .dashboard-overview-sticky .dashboard-stock-counts {
-    justify-content: space-between;
-    gap: 10px;
-  }
-  .app:not(.menu-landing) .dashboard-overview-sticky .dashboard-stock-counts .dashboard-stock-metric {
-    min-width: 0;
-  }
-  .app:not(.menu-landing) .dashboard-overview-sticky .dashboard-stock-counts .dashboard-stock-metric + .dashboard-stock-metric {
-    padding-left: 14px;
-  }
-  .app:not(.menu-landing) .dashboard-overview-sticky .dashboard-stock-metric > strong {
-    font-size: 19px;
-  }
-  .app:not(.menu-landing) .dashboard-overview-sticky .dashboard-stock-icon {
-    display: none;
   }
   .app:not(.menu-landing) .dashboard-transactions {
     padding: 14px 10px;

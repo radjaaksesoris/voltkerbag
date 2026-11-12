@@ -126,8 +126,6 @@ export default function Dashboard() {
   const pageStart = (currentPage - 1) * TRANSACTIONS_PER_PAGE
   const pageTransactions = report.transactions
   const totalAsset = Number(report.inventory?.total_asset || 0)
-  const lowStockCount = Number(report.inventory?.low_stock_count || 0)
-  const productCount = Number(report.inventory?.product_count || 0)
 
   function updateSelectedTransaction(updatedTransaction) {
     setReport((current) => ({
@@ -227,17 +225,6 @@ export default function Dashboard() {
               <span>Nilai Stok (Modal)</span>
               <strong>{rupiah(totalAsset)}</strong>
             </div>
-          </div>
-          <div className="stat-card dashboard-stat-card dashboard-stock-counts">
-            <div className="dashboard-stock-metric">
-              <span>Stok Menipis</span>
-              <strong className={lowStockCount ? 'danger' : ''}>{lowStockCount}</strong>
-            </div>
-            <div className="dashboard-stock-metric">
-              <span>Total Produk</span>
-              <strong>{productCount}</strong>
-            </div>
-            <span className="dashboard-stock-icon"><Icon name="boxes" size={40} /></span>
           </div>
         </div>
       </div>
