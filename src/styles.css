@@ -2553,7 +2553,7 @@ label { display: block; margin-bottom: 6px; color: var(--muted); font-size: 11px
     right: 8px;
     bottom: 0;
     left: 8px;
-    padding: 9px 9px calc(77px + env(safe-area-inset-bottom));
+    padding: 9px 9px calc(12px + env(safe-area-inset-bottom));
     border: 1px solid var(--border);
     border-radius: 14px;
     background: var(--card);
@@ -2565,7 +2565,7 @@ label { display: block; margin-bottom: 6px; color: var(--muted); font-size: 11px
   .custom-numpad-heading .custom-numpad-done { border-color: var(--accent); background: var(--accent); color: #fffaf3; }
   .custom-numpad-error { margin: 0 0 7px; color: var(--danger); font-size: 10px; }
   .custom-numpad-keys { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 5px; }
-  .custom-numpad-keys button { min-height: 39px; border: 1px solid var(--border); border-radius: 8px; background: #fffefa; color: var(--ink); font-size: 17px; font-weight: 700; touch-action: manipulation; }
+  .custom-numpad-keys button { min-height: 51px; border: 1px solid var(--border); border-radius: 8px; background: #fffefa; color: var(--ink); font-size: 19px; font-weight: 700; touch-action: manipulation; }
   .custom-numpad-keys button:active { background: var(--accent-soft); }
   .custom-numpad-keys .custom-numpad-done { border-color: var(--accent); background: var(--accent); color: #fffaf3; font-size: 11px; }
   .custom-numpad-keys .custom-numpad-backspace { color: var(--accent-dark); }
