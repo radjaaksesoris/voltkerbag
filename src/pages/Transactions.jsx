@@ -620,10 +620,16 @@ export default function Transactions() {
       </div>
 
       {cartNotification && (
-        <div className="cart-notification" role="status" aria-live="polite">
-          <Icon name="check" size={17} />
-          <span><strong>{cartNotification.name}</strong> · {cartNotification.qty} {cartNotification.unit} di keranjang</span>
-        </div>
+        createPortal(
+          <div
+            className={'cart-notification' + (previewProduct ? ' cart-notification-over-modal' : '')}
+            role="status"
+            aria-live="polite">
+            <Icon name="check" size={17} />
+            <span><strong>{cartNotification.name}</strong> · {cartNotification.qty} {cartNotification.unit} di keranjang</span>
+          </div>,
+          document.body
+        )
       )}
 
       {previewProduct && (
