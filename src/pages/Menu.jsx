@@ -186,24 +186,34 @@ export default function Menu({ items, onNavigate, onLogout, logoutBusy, logoutEr
         )}
       </section>
 
-      {summary && (
-        <section className="menu-finance-strip" aria-label="Ringkasan kas dan hutang">
-          <div className="menu-finance-metric">
-            <span className="menu-finance-icon cash"><Icon name="wallet" size={24} /></span>
-            <span className="menu-finance-copy">
-              <span>Saldo kas</span>
-              <strong>{rupiah(summary.cashBalance)}</strong>
-            </span>
-          </div>
-          <div className="menu-finance-metric">
-            <span className="menu-finance-icon debt"><Icon name="alertTriangle" size={24} /></span>
-            <span className="menu-finance-copy">
-              <span>Total hutang</span>
-              <strong>{rupiah(summary.totalDebt)}</strong>
-            </span>
-          </div>
-        </section>
-      )}
+      <section className="menu-finance-strip" aria-label="Ringkasan kas dan hutang">
+        <div className="menu-finance-metric">
+          <span className="menu-finance-icon cash"><Icon name="wallet" size={24} /></span>
+          <span className="menu-finance-copy">
+            <span>Saldo kas</span>
+            <strong>
+              {summary
+                ? rupiah(summary.cashBalance)
+                : loaded && loadError
+                  ? '—'
+                  : <span className="menu-finance-value-loading" aria-label="Memuat saldo kas" />}
+            </strong>
+          </span>
+        </div>
+        <div className="menu-finance-metric">
+          <span className="menu-finance-icon debt"><Icon name="alertTriangle" size={24} /></span>
+          <span className="menu-finance-copy">
+            <span>Total hutang</span>
+            <strong>
+              {summary
+                ? rupiah(summary.totalDebt)
+                : loaded && loadError
+                  ? '—'
+                  : <span className="menu-finance-value-loading" aria-label="Memuat total hutang" />}
+            </strong>
+          </span>
+        </div>
+      </section>
 
       <section className="menu-list-section">
         <div className="menu-list-heading">
