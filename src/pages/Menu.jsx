@@ -4,6 +4,7 @@ import { dateRangeTimestamps, localDateValue } from '../dateFilter'
 import { rupiah } from '../format'
 import Icon from '../components/Icon.jsx'
 import LoadingNumber from '../components/LoadingNumber.jsx'
+import MenuShortcutIcon from '../components/MenuShortcutIcon.jsx'
 
 function getPeriodRange() {
   const now = new Date()
@@ -231,7 +232,7 @@ export default function Menu({ items, onNavigate, onLogout, logoutBusy, logoutEr
                 key={item.id}
                 className={'menu-shortcut menu-shortcut-' + (index % 4)}
                 href={import.meta.env.BASE_URL + 'chat/?mode=chat'}>
-                <span className="menu-shortcut-icon"><Icon name={item.icon} size={30} /></span>
+                <span className="menu-shortcut-icon"><MenuShortcutIcon name={item.icon} /></span>
                 <span className="menu-shortcut-label">{item.label}</span>
                 <span className="menu-shortcut-description">{item.description}</span>
               </a>
@@ -241,7 +242,7 @@ export default function Menu({ items, onNavigate, onLogout, logoutBusy, logoutEr
                 className={'menu-shortcut menu-shortcut-' + (index % 4)}
                 type="button"
                 onClick={() => item.id === 'refresh' ? requestPageRefresh('menu') : onNavigate(item.id)}>
-                <span className="menu-shortcut-icon"><Icon name={item.icon} size={30} /></span>
+                <span className="menu-shortcut-icon"><MenuShortcutIcon name={item.icon} /></span>
                 <span className="menu-shortcut-label">{item.label}</span>
                 <span className="menu-shortcut-description">{item.description}</span>
               </button>

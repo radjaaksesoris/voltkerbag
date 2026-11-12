@@ -1097,6 +1097,8 @@ h2 {
 .menu-shortcut:hover { transform: translateY(-3px); color: #912027; }
 .menu-shortcut:active { transform: translateY(-1px) scale(.98); }
 .menu-shortcut:focus-visible { outline: 3px solid rgba(181, 40, 46, .48); outline-offset: 2px; }
+.menu-art-icon { width: 46px; height: 46px; overflow: visible; transition: transform .24s cubic-bezier(.2, .8, .2, 1); }
+.menu-shortcut:hover .menu-art-icon { transform: scale(1.07) rotate(-2deg); }
 .menu-shortcut-icon {
   display: grid;
   width: clamp(88px, 9vw, 112px);
@@ -1146,11 +1148,12 @@ h2 {
   .menu-shortcuts { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px 8px; }
   .menu-shortcut { min-height: 156px; padding: 8px 4px; border-radius: 12px; }
   .menu-shortcut-icon { width: clamp(88px, 24vw, 108px); height: clamp(88px, 24vw, 108px); border-radius: 23px; }
-  .menu-shortcut-icon .icon { width: 36px; height: 36px; }
+  .menu-art-icon { width: 42px; height: 42px; }
   .menu-shortcut-label { margin-top: 10px; font-size: clamp(12px, 3.5vw, 15px); }
 }
 @media (prefers-reduced-motion: reduce) {
   .loading-number-track { animation: none; }
+  .menu-art-icon { transition: none; }
   .page-toolbar .date-filter { width: 100%; }
   .date-filter { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: stretch; gap: 8px; }
   .date-filter-field { min-width: 0; }
