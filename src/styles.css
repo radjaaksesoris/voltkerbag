@@ -710,6 +710,11 @@ button:focus-visible, input:focus-visible, select:focus-visible {
   font-weight: 700;
 }
 .session-online .dot-online { background: #3b765e; }
+.session-online.is-offline { color: #a5222a; }
+.session-online.is-offline .dot-online { background: #ed3543; box-shadow: 0 0 0 3px rgba(237, 53, 67, .16); }
+.topbar .session-online.is-offline,
+.topbar .session-online.is-offline .dot-online { color: #fffaf3; }
+.topbar .session-online.is-offline .dot-online { background: #ff6b64; box-shadow: 0 0 0 3px rgba(255, 107, 100, .2); }
 .session-email { max-width: 230px; overflow: hidden; color: var(--muted); font-size: 11px; text-overflow: ellipsis; white-space: nowrap; }
 .session-error { position: absolute; top: calc(100% + 6px); right: 0; max-width: 320px; color: var(--danger); font-size: 11px; }
 .topbar { position: relative; }
