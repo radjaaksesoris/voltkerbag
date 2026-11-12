@@ -49,6 +49,7 @@ export default function Transactions() {
   const transactionsPageRef = useRef(null)
   const productScrollTop = useRef(0)
   const cartNotificationTimeout = useRef(null)
+  const cartNotificationRef = useRef(null)
   const [loadError, setLoadError] = useState('')
   const [loaded, setLoaded] = useState(false)
   const [notificationPosition, setNotificationPosition] = useState(null)
@@ -64,16 +65,23 @@ export default function Transactions() {
     function positionNotification() {
       const chatButton = document.querySelector('.topbar .chat-launch-button')
       const chatBounds = chatButton?.getBoundingClientRect()
-      if (!chatBounds || chatBounds.width === 0 || chatBounds.left <= 24) {
+      const notification = cartNotificationRef.current
+      if (!chatBounds || !notification || chatBounds.width === 0 || chatBounds.left <= 24) {
         setNotificationPosition(null)
         return
       }
 
+      const maxWidth = Math.min(320, chatBounds.left - 24)
+      const notificationWidth = Math.min(notification.scrollWidth, maxWidth)
       setNotificationPosition({
         top: chatBounds.top + chatBounds.height / 2,
-        left: 'auto',
-        right: window.innerWidth - chatBounds.left + 8,
-        maxWidth: Math.min(300, chatBounds.left - 24)
+        left: Math.max(8, chatBounds.left - notificationWidth - 8),
+        right: 'auto',
+        bottom: 'auto',
+        maxWidth,
+        width: 'max-content',
+        height: 'auto',
+        maxHeight: 'none'
       })
     }
 
@@ -650,6 +658,7 @@ export default function Transactions() {
       {cartNotification && (
         createPortal(
           <div
+            ref={cartNotificationRef}
             className="cart-notification cart-notification-in-header"
             style={notificationPosition || undefined}
             role="status"

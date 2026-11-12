@@ -2072,6 +2072,7 @@ label { display: block; margin-bottom: 6px; color: var(--muted); font-size: 11px
   min-height: 0;
   bottom: auto;
   flex: 0 0 auto;
+  margin: 0;
   transform: translateY(-50%);
   border-color: #b5282e;
   background: linear-gradient(135deg, #ffe58a, #ffc84a);
