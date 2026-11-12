@@ -176,11 +176,11 @@ export default function Dashboard() {
             <button
               className="dashboard-date-reset"
               type="button"
-              aria-label="Reset filter tanggal ke hari ini"
-              title="Reset ke hari ini"
+              aria-label="Atur filter tanggal ke hari ini"
+              title="Hari ini"
               onClick={resetDashboardDateRange}>
               <Icon name="sync" size={18} />
-              <span>Reset</span>
+              <span>Hari Ini</span>
             </button>
             <button
               className="dashboard-date-search"
