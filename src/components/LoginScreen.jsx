@@ -14,6 +14,8 @@ export default function LoginScreen({
   checkingSession = false,
   connectionError,
   updateBanner,
+  onLoginStart,
+  onLoginError,
   onSignedIn,
   onRetry,
   defaultAppMode = 'table'
@@ -43,6 +45,7 @@ export default function LoginScreen({
       setError('Masukkan kata sandi berupa angka.')
       return
     }
+    onLoginStart?.(targetApp)
     setBusy(true)
     setError('')
     try {
@@ -51,6 +54,7 @@ export default function LoginScreen({
       setPassword('')
       onSignedIn(session, targetApp)
     } catch (err) {
+      onLoginError?.()
       setError(err.message || String(err))
     } finally {
       setBusy(false)

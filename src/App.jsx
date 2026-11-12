@@ -90,6 +90,7 @@ function ActiveApp() {
   const currentPage = NAV.find((n) => n.id === page)
   const contentRef = useRef(null)
   const serviceWorkerRegistration = useRef(null)
+  const pendingLoginTarget = useRef(null)
 
   function navigateToPage(nextPage) {
     setVisitedPages((visited) => {
@@ -217,6 +218,7 @@ function ActiveApp() {
               setSession(null)
               setConnectionError('')
             } else if (nextSession) {
+              if (pendingLoginTarget.current === 'chat') return
               setSession(nextSession)
               setConnectionError(navigator.onLine ? '' : 'Koneksi internet tidak tersedia. Data terbaru tidak dapat disimpan.')
             }
@@ -225,6 +227,7 @@ function ActiveApp() {
         }
         const currentSession = await getAuthSession()
         if (!active) return
+        if (pendingLoginTarget.current === 'chat') return
         setSession(currentSession)
         if (!navigator.onLine) {
           setConnectionError('Koneksi internet tidak tersedia. Data terbaru tidak dapat disimpan.')
@@ -362,11 +365,18 @@ function ActiveApp() {
         checkingSession={checkingSession}
         connectionError={connectionError}
         updateBanner={pwaUpdateBanner}
+        onLoginStart={(targetApp) => {
+          pendingLoginTarget.current = targetApp
+        }}
+        onLoginError={() => {
+          pendingLoginTarget.current = null
+        }}
         onSignedIn={(nextSession, targetApp) => {
           if (targetApp === 'chat') {
             window.location.assign(import.meta.env.BASE_URL + 'chat/?mode=chat')
             return
           }
+          pendingLoginTarget.current = null
           setSession(nextSession)
           setConnectionError('')
         }}
