@@ -321,6 +321,7 @@
   .auth-pin-loading { right: 4px; }
   .auth-input { margin: 14px 0; }
   .auth-key { height: 54px; font-size: 22px; }
+  .auth-key:not(.auth-key-action) { width: 90%; height: 60px; justify-self: center; }
   .auth-key-action { font-size: 15px; }
 
   .auth-container::before {
