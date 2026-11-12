@@ -3800,10 +3800,19 @@ label { display: block; margin-bottom: 6px; color: var(--muted); font-size: 11px
 }
 
 .app:not(.menu-landing) .transactions-page .pos-products-toolbar {
+  position: sticky;
+  z-index: 15;
+  top: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 15px;
+  padding: 6px;
   border: 1px solid #ead8d1;
   border-radius: 6px 20px 6px 20px;
   background: rgba(255, 253, 248, .92);
   box-shadow: 0 8px 20px rgba(99, 34, 30, .08);
+  backdrop-filter: blur(12px);
 }
 .app:not(.menu-landing) .transactions-page .pos-products-toolbar .search {
   border-color: #eaded8;
@@ -3889,6 +3898,11 @@ label { display: block; margin-bottom: 6px; color: var(--muted); font-size: 11px
 }
 
 @media (max-width: 640px) {
+  .app:not(.menu-landing) .transactions-page .pos-products-toolbar {
+    top: 8px;
+    margin-bottom: 26px;
+    padding: 5px;
+  }
   .app:not(.menu-landing) .transactions-page .pos-products-toolbar {
     margin: 0 0 18px;
     padding: 5px;
