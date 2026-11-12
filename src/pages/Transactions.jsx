@@ -24,7 +24,6 @@ export default function Transactions() {
   const [cart, setCart] = useState([])
   const [cartNotification, setCartNotification] = useState(null)
   const [mobileCartOpen, setMobileCartOpen] = useState(false)
-  const [expandedProductId, setExpandedProductId] = useState(null)
   const [previewProduct, setPreviewProduct] = useState(null)
   const [q, setQ] = useState('')
   const [pay, setPay] = useState('')
@@ -425,18 +424,17 @@ export default function Transactions() {
               <article
                 key={p.id}
                 className="product-card"
-                onClick={(event) => {
-                  if (event.target.closest('button')) return
-                  if (window.matchMedia('(max-width: 640px)').matches) {
-                    setExpandedProductId(p.id)
+                role="button"
+                tabIndex={0}
+                onClick={() => setPreviewProduct(p)}
+                onKeyDown={(event) => {
+                  if (event.key === 'Enter' || event.key === ' ') {
+                    event.preventDefault()
+                    setPreviewProduct(p)
                   }
                 }}>
                 <div className="product-card-heading">
-                  <button
-                    className="product-image-trigger"
-                    type="button"
-                    aria-label={'Lihat ' + p.name + ' dan pilih satuan'}
-                    onClick={() => setPreviewProduct(p)}>
+                  <div className="product-image-trigger">
                     {p.image_path ? (
                       <img
                         className="product-card-image"
@@ -456,40 +454,11 @@ export default function Transactions() {
                     ) : (
                       <div className="product-illustration"><Icon name="bag" size={22} /></div>
                     )}
-                  </button>
+                  </div>
                   <div className="product-card-info">
                     <strong>{p.name}</strong>
                     <span className="muted small product-stock-label">Stok {compactStockLabel(p)}</span>
                   </div>
-                </div>
-                <button
-                  className="product-units-toggle"
-                  type="button"
-                  aria-expanded={expandedProductId === p.id}
-                  aria-controls={'product-sale-options-' + p.id}
-                  onClick={() => setExpandedProductId((current) => current === p.id ? null : p.id)}>
-                  <span>Pilih satuan</span>
-                  <Icon name="chevronDown" size={16} />
-                </button>
-                <div
-                  className={'product-sale-options ' + (expandedProductId === p.id ? 'is-expanded' : 'is-collapsed')}
-                  id={'product-sale-options-' + p.id}
-                  aria-label={'Satuan dan harga ' + p.name}>
-                  {saleUnits(p.unit || 'pcs').map((unit) => (
-                    <button
-                      key={unit}
-                      className="product-sale-option"
-                      type="button"
-                      aria-label={'Tambah 1 ' + unit + ' ' + p.name + ', ' + rupiah(saleUnitPrice(p, unit))}
-                      disabled={!canAddOne(p.id, unit)}
-                      onClick={() => {
-                        addToCart(p, unit)
-                        setExpandedProductId(null)
-                      }}>
-                      <span>+ {unit}</span>
-                      <strong>{rupiah(saleUnitPrice(p, unit))}</strong>
-                    </button>
-                  ))}
                 </div>
               </article>
             ))}
