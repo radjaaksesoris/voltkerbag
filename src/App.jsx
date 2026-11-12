@@ -14,34 +14,58 @@ const CHUNK_RELOAD_KEY = 'voltker:chunk-reload-attempted'
 function PageLoadingFallback({ pageId }) {
   if (pageId === 'dashboard') {
     return (
-      <div className="page">
-        <div className="dashboard-insights-heading">
-          <div>
-            <span className="dashboard-insights-kicker">PERFORMA TOKO</span>
-            <h3>Ringkasan penjualan</h3>
-          </div>
-          <span className="dashboard-insights-period" role="status">Memuat data...</span>
-        </div>
-        <div className="stats-grid dashboard-stats-grid dashboard-loading-grid" aria-label="Memuat ringkasan penjualan">
-          <div className="stat-card dashboard-stat-card dashboard-revenue-card">
-            <span className="dashboard-stat-icon"><Icon name="trend" size={27} /></span>
-            <div className="dashboard-stat-content">
-              <span>Omzet Hari Ini</span>
-              <strong><LoadingNumber label="omzet hari ini" /></strong>
+      <div className="page dashboard-page">
+        <div className="dashboard-overview-sticky">
+          <div className="dashboard-filter-row">
+            <div className="dashboard-date-range">
+              <label className="dashboard-date-field">
+                <Icon name="calendar" size={23} />
+                <span>Dari Tanggal</span>
+                <input type="date" disabled aria-label="Dari tanggal" />
+              </label>
+              <label className="dashboard-date-field">
+                <Icon name="calendar" size={23} />
+                <span>Sampai Tanggal</span>
+                <input type="date" disabled aria-label="Sampai tanggal" />
+              </label>
+              <button className="dashboard-date-reset" type="button" disabled>
+                <Icon name="sync" size={18} />
+                <span>Hari Ini</span>
+              </button>
+              <button className="dashboard-date-search" type="button" disabled>
+                <Icon name="search" size={22} />
+                <span>Cari</span>
+              </button>
             </div>
           </div>
-          <div className="stat-card dashboard-stat-card dashboard-profit-card">
-            <span className="dashboard-stat-icon"><Icon name="tag" size={27} /></span>
-            <div className="dashboard-stat-content">
-              <span>Laba Kotor Hari Ini</span>
-              <strong><LoadingNumber label="laba kotor hari ini" /></strong>
+          <div className="dashboard-insights-heading">
+            <div>
+              <span className="dashboard-insights-kicker">PERFORMA TOKO</span>
+              <h3>Ringkasan penjualan</h3>
             </div>
+            <span className="dashboard-insights-period" role="status">Memuat data...</span>
           </div>
-          <div className="stat-card dashboard-stat-card dashboard-stock-summary">
-            <span className="dashboard-stat-icon"><Icon name="box" size={27} /></span>
-            <div className="dashboard-stat-content">
-              <span>Nilai Stok (Modal)</span>
-              <strong><LoadingNumber label="nilai stok" /></strong>
+          <div className="stats-grid dashboard-stats-grid" aria-label="Memuat ringkasan penjualan">
+            <div className="stat-card dashboard-stat-card dashboard-revenue-card">
+              <span className="dashboard-stat-icon"><Icon name="trend" size={27} /></span>
+              <div className="dashboard-stat-content">
+                <span>Omzet Hari Ini</span>
+                <strong><LoadingNumber label="omzet hari ini" /></strong>
+              </div>
+            </div>
+            <div className="stat-card dashboard-stat-card dashboard-profit-card">
+              <span className="dashboard-stat-icon"><Icon name="tag" size={27} /></span>
+              <div className="dashboard-stat-content">
+                <span>Laba Kotor Hari Ini</span>
+                <strong><LoadingNumber label="laba kotor hari ini" /></strong>
+              </div>
+            </div>
+            <div className="stat-card dashboard-stat-card dashboard-stock-summary">
+              <span className="dashboard-stat-icon"><Icon name="box" size={27} /></span>
+              <div className="dashboard-stat-content">
+                <span>Nilai Stok (Modal)</span>
+                <strong><LoadingNumber label="nilai stok" /></strong>
+              </div>
             </div>
           </div>
         </div>
@@ -53,6 +77,24 @@ function PageLoadingFallback({ pageId }) {
     return (
       <div className="page">
         <div className="finance-overview-sticky">
+          <div className="finance-date-filter">
+            <div className="finance-date-range">
+              <label className="dashboard-date-field">
+                <Icon name="calendar" size={23} />
+                <span>Dari tanggal</span>
+                <input type="date" disabled aria-label="Dari tanggal" />
+              </label>
+              <label className="dashboard-date-field">
+                <Icon name="calendar" size={23} />
+                <span>Sampai tanggal</span>
+                <input type="date" disabled aria-label="Sampai tanggal" />
+              </label>
+              <div className="finance-date-quick-actions">
+                <button className="finance-date-quick" type="button" disabled>Hari ini</button>
+                <button className="finance-date-quick" type="button" disabled>Bulan ini</button>
+              </div>
+            </div>
+          </div>
           <div className="stats-grid dashboard-stats-grid finance-summary-grid finance-loading-summary" aria-label="Memuat ringkasan keuangan">
             <div className="stat-card dashboard-stat-card finance-income-card">
               <span className="dashboard-stat-icon"><Icon name="trend" size={27} /></span>
@@ -61,7 +103,7 @@ function PageLoadingFallback({ pageId }) {
                 <strong>+<LoadingNumber label="pemasukan penjualan" /></strong>
               </div>
             </div>
-            <div className="stat-card dashboard-stat-card finance-debt-card">
+            <div className="stat-card dashboard-stat-card debt-stat-card finance-debt-card">
               <span className="dashboard-stat-icon"><Icon name="tag" size={27} /></span>
               <span className="dashboard-stat-content">
                 <span>Total Hutang</span>

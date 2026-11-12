@@ -327,6 +327,24 @@ export default function Finance() {
   if (!loaded) return (
     <div className="page">
       <div className="finance-overview-sticky">
+        <div className="finance-date-filter">
+          <div className="finance-date-range">
+            <label className="dashboard-date-field">
+              <Icon name="calendar" size={23} />
+              <span>Dari tanggal</span>
+              <input type="date" value={dateRange.from} disabled aria-label="Dari tanggal" />
+            </label>
+            <label className="dashboard-date-field">
+              <Icon name="calendar" size={23} />
+              <span>Sampai tanggal</span>
+              <input type="date" value={dateRange.to} disabled aria-label="Sampai tanggal" />
+            </label>
+            <div className="finance-date-quick-actions">
+              <button className="finance-date-quick" type="button" disabled>Hari ini</button>
+              <button className="finance-date-quick" type="button" disabled>Bulan ini</button>
+            </div>
+          </div>
+        </div>
         <div className="stats-grid dashboard-stats-grid finance-summary-grid finance-loading-summary" aria-label="Memuat ringkasan keuangan">
           <div className="stat-card dashboard-stat-card finance-income-card">
             <span className="dashboard-stat-icon"><Icon name="trend" size={27} /></span>

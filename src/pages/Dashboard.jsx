@@ -115,40 +115,6 @@ export default function Dashboard() {
   const today = localDateValue(new Date())
   const isTodayRange = dateRange.from === today && dateRange.to === today
 
-  if (!loaded) return (
-    <div className="page">
-      <div className="dashboard-insights-heading">
-        <div>
-          <span className="dashboard-insights-kicker">PERFORMA TOKO</span>
-          <h3>Ringkasan penjualan</h3>
-        </div>
-        <span className="dashboard-insights-period" role="status">Memuat data...</span>
-      </div>
-      <div className="stats-grid dashboard-stats-grid dashboard-loading-grid" aria-label="Memuat ringkasan penjualan">
-        <div className="stat-card dashboard-stat-card dashboard-revenue-card">
-          <span className="dashboard-stat-icon"><Icon name="trend" size={27} /></span>
-          <div className="dashboard-stat-content">
-            <span>{isTodayRange ? 'Omzet Hari Ini' : 'Omzet Periode'}</span>
-            <strong><LoadingNumber label={isTodayRange ? 'omzet hari ini' : 'omzet periode'} /></strong>
-          </div>
-        </div>
-        <div className="stat-card dashboard-stat-card dashboard-profit-card">
-          <span className="dashboard-stat-icon"><Icon name="tag" size={27} /></span>
-          <div className="dashboard-stat-content">
-            <span>{isTodayRange ? 'Laba Kotor Hari Ini' : 'Laba Kotor Periode'}</span>
-            <strong><LoadingNumber label={isTodayRange ? 'laba kotor hari ini' : 'laba kotor periode'} /></strong>
-          </div>
-        </div>
-        <div className="stat-card dashboard-stat-card dashboard-stock-summary">
-          <span className="dashboard-stat-icon"><Icon name="box" size={27} /></span>
-          <div className="dashboard-stat-content">
-            <span>Nilai Stok (Modal)</span>
-            <strong><LoadingNumber label="nilai stok" /></strong>
-          </div>
-        </div>
-      </div>
-    </div>
-  )
   if (loadError) {
     return <div className="page"><p className="form-error" role="alert">{loadError}</p>
       <button className="btn" onClick={() => requestPageRefresh('dashboard')}>Coba lagi</button>
@@ -235,8 +201,8 @@ export default function Dashboard() {
             <span className="dashboard-insights-kicker">PERFORMA TOKO</span>
             <h3>Ringkasan penjualan</h3>
           </div>
-          <span className="dashboard-insights-period">
-            {isTodayRange ? 'Hari ini' : 'Periode pilihan'}
+          <span className="dashboard-insights-period" role={!loaded ? 'status' : undefined}>
+            {loaded ? (isTodayRange ? 'Hari ini' : 'Periode pilihan') : 'Memuat data...'}
           </span>
         </div>
         <div className="stats-grid dashboard-stats-grid">
@@ -244,27 +210,27 @@ export default function Dashboard() {
             <span className="dashboard-stat-icon"><Icon name="trend" size={27} /></span>
             <div className="dashboard-stat-content">
               <span>{isTodayRange ? 'Omzet Hari Ini' : 'Omzet Periode'}</span>
-              <strong>{rupiah(report.revenue)}</strong>
+              <strong>{loaded ? rupiah(report.revenue) : <LoadingNumber label={isTodayRange ? 'omzet hari ini' : 'omzet periode'} />}</strong>
             </div>
           </div>
           <div className="stat-card dashboard-stat-card dashboard-profit-card">
             <span className="dashboard-stat-icon"><Icon name="tag" size={27} /></span>
             <div className="dashboard-stat-content">
               <span>{isTodayRange ? 'Laba Kotor Hari Ini' : 'Laba Kotor Periode'}</span>
-              <strong>{rupiah(report.gross_profit)}</strong>
+              <strong>{loaded ? rupiah(report.gross_profit) : <LoadingNumber label={isTodayRange ? 'laba kotor hari ini' : 'laba kotor periode'} />}</strong>
             </div>
           </div>
           <div className="stat-card dashboard-stat-card dashboard-stock-summary">
             <span className="dashboard-stat-icon"><Icon name="box" size={27} /></span>
             <div className="dashboard-stat-content">
               <span>Nilai Stok (Modal)</span>
-              <strong>{rupiah(totalAsset)}</strong>
+              <strong>{loaded ? rupiah(totalAsset) : <LoadingNumber label="nilai stok" />}</strong>
             </div>
           </div>
         </div>
       </div>
 
-      <div className="card table-card dashboard-transactions">
+      {loaded && <div className="card table-card dashboard-transactions">
         {customerLoadError && <p className="form-error" role="alert">{customerLoadError}</p>}
         <div className="dashboard-transactions-heading">
           <h3>Transaksi Terakhir</h3>
@@ -392,7 +358,7 @@ export default function Dashboard() {
             )}
           </div>
         )}
-      </div>
+      </div>}
       {selectedTransaction && (
         <TransactionDetails
           transaction={selectedTransaction}
