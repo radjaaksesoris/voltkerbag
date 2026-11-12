@@ -1075,8 +1075,8 @@ h2 {
 .loading-number-digits { display: inline-flex; align-items: center; }
 .loading-number-group { display: inline-flex; align-items: center; }
 .loading-number-group + .loading-number-group::before { content: '.'; }
-.loading-number-reel { display: inline-block; height: 1em; overflow: hidden; vertical-align: bottom; }
-.loading-number-track { display: block; animation: loading-number-roll .9s steps(10, end) infinite; animation-delay: calc(var(--reel-index) * -.13s); }
+.loading-number-reel { display: inline-block; width: .62em; height: 1em; flex: 0 0 .62em; overflow: hidden; border-radius: .12em; background: color-mix(in srgb, currentColor 9%, transparent); text-align: center; vertical-align: bottom; }
+.loading-number-track { display: block; animation: loading-number-roll .9s steps(10, end) infinite; animation-delay: calc(250ms + var(--reel-index) * 80ms); }
 .loading-number-track > span { display: block; height: 1em; }
 @keyframes loading-number-roll { to { transform: translateY(-90%); } }
 .menu-list-section { display: grid; gap: 11px; }
