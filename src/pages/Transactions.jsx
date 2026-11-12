@@ -71,6 +71,7 @@ export default function Transactions() {
 
       setNotificationPosition({
         top: chatBounds.top + chatBounds.height / 2,
+        left: 'auto',
         right: window.innerWidth - chatBounds.left + 8,
         maxWidth: Math.min(300, chatBounds.left - 24)
       })
