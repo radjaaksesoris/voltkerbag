@@ -63,19 +63,20 @@ export default function Transactions() {
     }
 
     function positionNotification() {
-      const chatButton = document.querySelector('.topbar .chat-launch-button')
-      const chatBounds = chatButton?.getBoundingClientRect()
+      const popup = document.querySelector('.product-quick-view-modal')
+      const popupBounds = popup?.getBoundingClientRect()
       const notification = cartNotificationRef.current
-      if (!chatBounds || !notification || chatBounds.width === 0 || chatBounds.left <= 24) {
+      if (!popupBounds || !notification || popupBounds.width === 0) {
         setNotificationPosition(null)
         return
       }
 
-      const maxWidth = Math.min(320, chatBounds.left - 24)
+      const maxWidth = Math.min(420, popupBounds.width, window.innerWidth - 32)
       const notificationWidth = Math.min(notification.scrollWidth, maxWidth)
+      const notificationHeight = notification.getBoundingClientRect().height
       setNotificationPosition({
-        top: chatBounds.top + chatBounds.height / 2,
-        left: Math.max(8, chatBounds.left - notificationWidth - 8),
+        top: Math.max(8, popupBounds.top - notificationHeight - 10),
+        left: Math.max(16, popupBounds.left + (popupBounds.width - notificationWidth) / 2),
         right: 'auto',
         bottom: 'auto',
         maxWidth,
@@ -88,7 +89,7 @@ export default function Transactions() {
     positionNotification()
     window.addEventListener('resize', positionNotification)
     return () => window.removeEventListener('resize', positionNotification)
-  }, [cartNotification])
+  }, [cartNotification, previewProduct])
 
   useEffect(() => {
     if (!previewProduct) return undefined
