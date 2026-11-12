@@ -207,7 +207,7 @@ export default function Menu({ items, onNavigate, onLogout, logoutBusy, logoutEr
           </span>
         </div>
         <div className="menu-finance-metric">
-          <span className="menu-finance-icon debt"><Icon name="alertTriangle" size={24} /></span>
+          <span className="menu-finance-icon"><Icon name="coins" size={24} /></span>
           <span className="menu-finance-copy">
             <span>Total hutang</span>
             <strong>

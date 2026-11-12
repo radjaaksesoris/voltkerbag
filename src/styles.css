@@ -1069,7 +1069,6 @@ h2 {
   box-shadow: 0 8px 22px rgba(99, 34, 30, .07);
 }
 .menu-finance-icon { display: grid; width: 58px; height: 58px; flex: 0 0 auto; place-items: center; border-radius: 50%; background: #fde9e8; color: #a71f2d; }
-.menu-finance-icon.debt { background: #a91c2a; color: #fffaf3; }
 .menu-finance-copy { display: grid; min-width: 0; gap: 3px; }
 .menu-finance-copy > span { color: #766a67; font-size: 14px; font-weight: 600; }
 .menu-finance-copy > strong { overflow: hidden; color: #2c2321; font-size: clamp(15px, 2vw, 23px); font-weight: 800; letter-spacing: -.4px; text-overflow: ellipsis; white-space: nowrap; font-variant-numeric: tabular-nums; }
