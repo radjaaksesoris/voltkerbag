@@ -3817,7 +3817,7 @@ label { display: block; margin-bottom: 6px; color: var(--muted); font-size: 11px
   white-space: nowrap;
 }
 .app:not(.menu-landing) .transactions-page .mobile-cart-toggle {
-  border-radius: 5px 15px 15px 5px;
+  border-radius: 5px 15px 5px 15px;
 }
 .app:not(.menu-landing) .transactions-page .product-card {
   border-color: #eaded8;
