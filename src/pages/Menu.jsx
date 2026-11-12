@@ -3,6 +3,7 @@ import { getDashboardData, getFinanceData, onRefresh, requestPageRefresh } from 
 import { dateRangeTimestamps, localDateValue } from '../dateFilter'
 import { rupiah } from '../format'
 import Icon from '../components/Icon.jsx'
+import LoadingNumber from '../components/LoadingNumber.jsx'
 
 function getPeriodRange() {
   const now = new Date()
@@ -154,7 +155,11 @@ export default function Menu({ items, onNavigate, onLogout, logoutBusy, logoutEr
           {loaded && loadError ? (
             <p className="menu-summary-error" role="alert">{loadError}</p>
           ) : !loaded ? (
-            <p className="menu-summary-loading" role="status">Memuat ringkasan...</p>
+            <>
+              <span className="menu-summary-label">Omzet periode</span>
+              <strong className="menu-summary-value"><LoadingNumber label="omzet periode" /></strong>
+              <span className="menu-summary-period" role="status">Memuat ringkasan...</span>
+            </>
           ) : (
             <>
               <span className="menu-summary-label">{summarySlides[activeSummary].label}</span>
@@ -196,7 +201,7 @@ export default function Menu({ items, onNavigate, onLogout, logoutBusy, logoutEr
                 ? rupiah(summary.cashBalance)
                 : loaded && loadError
                   ? '—'
-                  : <span className="menu-finance-value-loading" aria-label="Memuat saldo kas" />}
+                  : <LoadingNumber label="saldo kas" />}
             </strong>
           </span>
         </div>
@@ -209,7 +214,7 @@ export default function Menu({ items, onNavigate, onLogout, logoutBusy, logoutEr
                 ? rupiah(summary.totalDebt)
                 : loaded && loadError
                   ? '—'
-                  : <span className="menu-finance-value-loading" aria-label="Memuat total hutang" />}
+                  : <LoadingNumber label="total hutang" />}
             </strong>
           </span>
         </div>

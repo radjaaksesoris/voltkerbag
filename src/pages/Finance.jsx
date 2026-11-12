@@ -7,6 +7,7 @@ import CustomerIdentity from '../components/CustomerIdentity.jsx'
 import SelectInput from '../components/SelectInput.jsx'
 import Icon from '../components/Icon.jsx'
 import { isSafeRupiahAmount } from '../money'
+import LoadingNumber from '../components/LoadingNumber.jsx'
 
 const TYPES = {
   income: { label: 'Pemasukan', cls: 'badge-ok' },
@@ -323,7 +324,44 @@ export default function Finance() {
     }
   }
 
-  if (!loaded) return <div className="page"><p className="muted">Memuat data keuangan dari server...</p></div>
+  if (!loaded) return (
+    <div className="page">
+      <div className="finance-overview-sticky">
+        <div className="stats-grid dashboard-stats-grid finance-summary-grid finance-loading-summary" aria-label="Memuat ringkasan keuangan">
+          <div className="stat-card dashboard-stat-card finance-income-card">
+            <span className="dashboard-stat-icon"><Icon name="trend" size={27} /></span>
+            <div className="dashboard-stat-content">
+              <span>Pemasukan Penjualan</span>
+              <strong>+<LoadingNumber label="pemasukan penjualan" /></strong>
+            </div>
+          </div>
+          <div className="stat-card dashboard-stat-card debt-stat-card finance-debt-card">
+            <span className="dashboard-stat-icon"><Icon name="tag" size={27} /></span>
+            <span className="dashboard-stat-content">
+              <span>Total Hutang</span>
+              <strong><LoadingNumber label="total hutang" /></strong>
+              <span className="debt-stat-hint">Memuat data...</span>
+            </span>
+          </div>
+          <div className="stat-card dashboard-stat-card finance-cash-card">
+            <span className="dashboard-stat-icon"><Icon name="wallet" size={27} /></span>
+            <div className="dashboard-stat-content">
+              <span>Saldo Kas</span>
+              <strong><LoadingNumber label="saldo kas" /></strong>
+            </div>
+          </div>
+          <div className="stat-card dashboard-stat-card finance-profit-card">
+            <span className="dashboard-stat-icon"><Icon name="trend" size={27} /></span>
+            <div className="dashboard-stat-content">
+              <span>Laba</span>
+              <strong><LoadingNumber label="laba" /></strong>
+            </div>
+          </div>
+        </div>
+      </div>
+      <p className="muted">Memuat data keuangan dari server...</p>
+    </div>
+  )
   if (loadError) {
     return <div className="page"><p className="form-error" role="alert">{loadError}</p>
       <button className="btn" onClick={() => requestPageRefresh('finance')}>Coba lagi</button>
