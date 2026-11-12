@@ -5,10 +5,93 @@ import PageErrorBoundary from './components/PageErrorBoundary.jsx'
 import CustomNumpad from './components/CustomNumpad.jsx'
 import AppDisabledNotice from './components/AppDisabledNotice.jsx'
 import Icon from './components/Icon.jsx'
+import LoadingNumber from './components/LoadingNumber.jsx'
 import { APP_TEMPORARILY_DISABLED } from './appAvailability.js'
 import { clearRequestedAppMode } from './appMode.js'
 
 const CHUNK_RELOAD_KEY = 'voltker:chunk-reload-attempted'
+
+function PageLoadingFallback({ pageId }) {
+  if (pageId === 'dashboard') {
+    return (
+      <div className="page">
+        <div className="dashboard-insights-heading">
+          <div>
+            <span className="dashboard-insights-kicker">PERFORMA TOKO</span>
+            <h3>Ringkasan penjualan</h3>
+          </div>
+          <span className="dashboard-insights-period" role="status">Memuat data...</span>
+        </div>
+        <div className="stats-grid dashboard-stats-grid dashboard-loading-grid" aria-label="Memuat ringkasan penjualan">
+          <div className="stat-card dashboard-stat-card dashboard-revenue-card">
+            <span className="dashboard-stat-icon"><Icon name="trend" size={27} /></span>
+            <div className="dashboard-stat-content">
+              <span>Omzet Hari Ini</span>
+              <strong><LoadingNumber label="omzet hari ini" /></strong>
+            </div>
+          </div>
+          <div className="stat-card dashboard-stat-card dashboard-profit-card">
+            <span className="dashboard-stat-icon"><Icon name="tag" size={27} /></span>
+            <div className="dashboard-stat-content">
+              <span>Laba Kotor Hari Ini</span>
+              <strong><LoadingNumber label="laba kotor hari ini" /></strong>
+            </div>
+          </div>
+          <div className="stat-card dashboard-stat-card dashboard-stock-summary">
+            <span className="dashboard-stat-icon"><Icon name="box" size={27} /></span>
+            <div className="dashboard-stat-content">
+              <span>Nilai Stok (Modal)</span>
+              <strong><LoadingNumber label="nilai stok" /></strong>
+            </div>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  if (pageId === 'finance') {
+    return (
+      <div className="page">
+        <div className="finance-overview-sticky">
+          <div className="stats-grid dashboard-stats-grid finance-summary-grid finance-loading-summary" aria-label="Memuat ringkasan keuangan">
+            <div className="stat-card dashboard-stat-card finance-income-card">
+              <span className="dashboard-stat-icon"><Icon name="trend" size={27} /></span>
+              <div className="dashboard-stat-content">
+                <span>Pemasukan Penjualan</span>
+                <strong>+<LoadingNumber label="pemasukan penjualan" /></strong>
+              </div>
+            </div>
+            <div className="stat-card dashboard-stat-card finance-debt-card">
+              <span className="dashboard-stat-icon"><Icon name="tag" size={27} /></span>
+              <span className="dashboard-stat-content">
+                <span>Total Hutang</span>
+                <strong><LoadingNumber label="total hutang" /></strong>
+                <span className="debt-stat-hint">Memuat data...</span>
+              </span>
+            </div>
+            <div className="stat-card dashboard-stat-card finance-cash-card">
+              <span className="dashboard-stat-icon"><Icon name="wallet" size={27} /></span>
+              <div className="dashboard-stat-content">
+                <span>Saldo Kas</span>
+                <strong><LoadingNumber label="saldo kas" /></strong>
+              </div>
+            </div>
+            <div className="stat-card dashboard-stat-card finance-profit-card">
+              <span className="dashboard-stat-icon"><Icon name="trend" size={27} /></span>
+              <div className="dashboard-stat-content">
+                <span>Laba</span>
+                <strong><LoadingNumber label="laba" /></strong>
+              </div>
+            </div>
+          </div>
+        </div>
+        <p className="muted">Memuat data keuangan dari server...</p>
+      </div>
+    )
+  }
+
+  return <p className="login-loading" role="status">Memuat halaman...</p>
+}
 
 function lazyPage(importPage, preload = false) {
   let pagePromise
@@ -478,7 +561,7 @@ function ActiveApp() {
             return (
               <div key={id} className={'page-slot page-slot-' + id} hidden={page !== id}>
                 <PageErrorBoundary>
-                  <Suspense fallback={<p className="login-loading">Memuat halaman...</p>}>
+                  <Suspense fallback={<PageLoadingFallback pageId={id} />}>
                     {id === 'menu'
                       ? <Page
                           items={NAV.filter((item) => item.id !== 'menu')}

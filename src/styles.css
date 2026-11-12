@@ -1073,13 +1073,20 @@ h2 {
 .menu-finance-copy > span { color: #766a67; font-size: 14px; font-weight: 600; }
 .menu-finance-copy > strong { overflow: hidden; color: #2c2321; font-size: clamp(15px, 2vw, 23px); font-weight: 800; letter-spacing: -.4px; text-overflow: ellipsis; white-space: nowrap; font-variant-numeric: tabular-nums; }
 .loading-number { display: inline-flex; align-items: baseline; font-variant-numeric: tabular-nums; line-height: 1; white-space: nowrap; }
-.loading-number-digits { display: inline-flex; align-items: center; }
-.loading-number-group { display: inline-flex; align-items: center; }
-.loading-number-group + .loading-number-group::before { content: '.'; }
-.loading-number-reel { display: inline-block; width: .62em; height: 1em; flex: 0 0 .62em; overflow: hidden; border-radius: .12em; background: color-mix(in srgb, currentColor 9%, transparent); text-align: center; vertical-align: bottom; }
-.loading-number-track { display: block; animation: loading-number-roll .9s steps(10, end) infinite; animation-delay: calc(250ms + var(--reel-index) * 80ms); }
-.loading-number-track > span { display: block; height: 1em; }
-@keyframes loading-number-roll { to { transform: translateY(-90%); } }
+.loading-number-placeholder {
+  display: inline-block;
+  width: 7em;
+  max-width: 100%;
+  height: .72em;
+  overflow: hidden;
+  border-radius: .18em;
+  background-color: color-mix(in srgb, currentColor 10%, transparent);
+  background-image: linear-gradient(100deg, transparent 20%, color-mix(in srgb, currentColor 17%, transparent) 50%, transparent 80%);
+  background-size: 220% 100%;
+  animation: loading-number-shimmer 1.5s ease-in-out infinite;
+  vertical-align: baseline;
+}
+@keyframes loading-number-shimmer { to { background-position: -220% 0; } }
 .menu-list-section { display: grid; gap: 11px; }
 .menu-list-heading { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
 .menu-list-heading h2 { margin: 0 0 0 2px; color: #302523; font-family: 'Poppins', 'Avenir Next', system-ui, sans-serif; font-size: clamp(24px, 3vw, 30px); font-weight: 700; letter-spacing: -.5px; }
@@ -1190,7 +1197,6 @@ h2 {
   .menu-finance-copy > span { font-size: 11px; }
   .menu-finance-copy > strong { font-size: clamp(12px, 3.5vw, 16px); letter-spacing: -.25px; }
   .menu-finance-copy > strong .loading-number { font-size: .88em; }
-  .loading-number-reel { min-width: .54em; text-align: center; }
   .menu-list-section { gap: 7px; }
   .menu-list-heading h2 { font-size: 24px; }
   .menu-shortcuts { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px 14px; }
@@ -1200,7 +1206,7 @@ h2 {
   .menu-shortcut-label { max-width: 92%; font-size: clamp(12px, 3.5vw, 15px); }
 }
 @media (prefers-reduced-motion: reduce) {
-  .loading-number-track { animation: none; }
+  .loading-number-placeholder { animation: none; }
   .menu-shortcut,
   .menu-art-icon { transition: none; }
   .page-toolbar .date-filter { width: 100%; }
