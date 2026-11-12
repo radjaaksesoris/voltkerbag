@@ -15,7 +15,7 @@ function PageLoadingFallback({ pageId }) {
   if (pageId === 'dashboard') {
     return (
       <div className="page dashboard-page">
-        <div className="dashboard-overview-sticky">
+        <div className="dashboard-filter-sticky">
           <div className="dashboard-filter-row">
             <div className="dashboard-date-range">
               <label className="dashboard-date-field">
@@ -38,6 +38,8 @@ function PageLoadingFallback({ pageId }) {
               </button>
             </div>
           </div>
+        </div>
+        <div className="dashboard-overview-sticky">
           <div className="dashboard-insights-heading">
             <div>
               <span className="dashboard-insights-kicker">PERFORMA TOKO</span>
