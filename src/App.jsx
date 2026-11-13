@@ -215,7 +215,6 @@ function ActiveApp() {
   const [updateReady, setUpdateReady] = useState(false)
   const [applyingUpdate, setApplyingUpdate] = useState(false)
   const [returningToMenu, setReturningToMenu] = useState(false)
-  const [returningFromPage, setReturningFromPage] = useState(null)
   const currentPage = NAV.find((n) => n.id === page)
   const contentRef = useRef(null)
   const serviceWorkerRegistration = useRef(null)
@@ -239,7 +238,6 @@ function ActiveApp() {
       return
     }
 
-    setReturningFromPage(page)
     setReturningToMenu(true)
     returnTransitionTimer.current = window.setTimeout(completeReturnTransition, 1250)
   }
@@ -249,7 +247,6 @@ function ActiveApp() {
     returnTransitionTimer.current = null
     navigateToPage('menu')
     setReturningToMenu(false)
-    setReturningFromPage(null)
   }
 
   function finishReturnTransition(event) {
@@ -630,18 +627,11 @@ function ActiveApp() {
 
         {pwaUpdateBanner}
 
-        <div className={'content' + (returningToMenu ? ' menu-returning' : '')} ref={contentRef}>
+        <div className="content" ref={contentRef}>
           {NAV.filter(({ id }) => visitedPages.has(id)).map(({ id }) => {
             const Page = PAGES[id]
-            const isReturnTarget = returningToMenu && id === 'menu'
-            const isReturnSource = returningToMenu && id === returningFromPage
             return (
-              <div
-                key={id}
-                className={'page-slot page-slot-' + id
-                  + (isReturnTarget ? ' page-slot-return-target' : '')
-                  + (isReturnSource ? ' page-slot-return-source' : '')}
-                hidden={page !== id && !isReturnTarget && !isReturnSource}>
+              <div key={id} className={'page-slot page-slot-' + id} hidden={page !== id}>
                 <PageErrorBoundary>
                   <Suspense fallback={<PageLoadingFallback pageId={id} />}>
                     {id === 'menu'
@@ -658,7 +648,7 @@ function ActiveApp() {
             )
           })}
         </div>
-        {page !== 'menu' && !returningToMenu && (
+        {page !== 'menu' && (
           <button
             className="mobile-menu-back"
             type="button"
@@ -667,12 +657,6 @@ function ActiveApp() {
             <Icon name="arrowLeft" size={19} />
             <span>Kembali ke Menu Utama</span>
           </button>
-        )}
-        {returningToMenu && (
-          <div
-            className="menu-return-flow"
-            aria-hidden="true"
-            onAnimationEnd={finishReturnTransition} />
         )}
       </main>
       {showInstallInstructions && !isInstalled && (
@@ -691,6 +675,12 @@ function ActiveApp() {
             </div>
           </section>
         </div>
+      )}
+      {returningToMenu && (
+        <div
+          className="menu-return-flow"
+          aria-hidden="true"
+          onAnimationEnd={finishReturnTransition} />
       )}
       <CustomNumpad />
     </div>
