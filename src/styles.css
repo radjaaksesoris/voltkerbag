@@ -742,6 +742,17 @@ button:focus-visible, input:focus-visible, select:focus-visible {
   font-size: 12px;
 }
 .pwa-update-banner .btn { flex: 0 0 auto; }
+.main > .pwa-update-banner {
+  position: fixed;
+  z-index: 40;
+  top: max(76px, calc(env(safe-area-inset-top) + 70px));
+  left: 50%;
+  width: min(calc(100vw - 24px), 620px);
+  border: 1px solid #e8cb8f;
+  border-radius: 10px;
+  box-shadow: 0 8px 24px rgba(71, 49, 33, .14);
+  transform: translateX(-50%);
+}
 .login-page > .pwa-update-banner {
   position: fixed;
   z-index: 3;

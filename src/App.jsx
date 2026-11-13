@@ -585,16 +585,14 @@ function ActiveApp() {
 
     try {
       if (!('serviceWorker' in navigator)) {
-        await saveSessionForAppReload()
-        window.location.reload()
+        setUpdateReady(false)
         return
       }
 
       const registration = serviceWorkerRegistration.current
         || await navigator.serviceWorker.getRegistration()
       if (!registration) {
-        await saveSessionForAppReload()
-        window.location.reload()
+        setUpdateReady(false)
         return
       }
       serviceWorkerRegistration.current = registration
@@ -626,8 +624,7 @@ function ActiveApp() {
       if (registration.waiting && navigator.serviceWorker.controller) {
         await applyAppUpdate()
       } else {
-        await saveSessionForAppReload()
-        window.location.reload()
+        setUpdateReady(false)
       }
     } catch (error) {
       console.error('Gagal memeriksa pembaruan aplikasi:', error)
@@ -648,21 +645,19 @@ function ActiveApp() {
       ? 'Buka menu browser ⋮, lalu pilih “Instal aplikasi” atau “Tambahkan ke layar utama”.'
       : 'Gunakan menu browser, lalu pilih “Instal aplikasi” atau “Install VOLTKER”.'
 
-  const pwaUpdateBanner = (updateReady || checkingAppUpdate || updateCheckError) && (
+  const pwaUpdateBanner = ((updateReady && !checkingAppUpdate && !applyingUpdate) || updateCheckError) && (
     <div className="pwa-update-banner" role={updateCheckError ? 'alert' : 'status'} aria-live="polite">
       <span>
         {applyingUpdate
           ? 'Menerapkan pembaruan...'
-          : checkingAppUpdate
-            ? 'Memeriksa dan menyiapkan pembaruan...'
-            : updateCheckError || 'Pembaruan VOLTKER siap. Muat ulang untuk menggunakan versi terbaru.'}
+          : updateCheckError || 'Pembaruan VOLTKER siap. Muat ulang untuk menggunakan versi terbaru.'}
       </span>
       <button
         className="btn btn-sm btn-primary"
         type="button"
         onClick={updateCheckError ? checkForAppUpdate : applyAppUpdate}
         disabled={applyingUpdate || checkingAppUpdate}>
-        {applyingUpdate ? 'Memperbarui...' : checkingAppUpdate ? 'Memeriksa...' : updateCheckError ? 'Coba lagi' : 'Perbarui sekarang'}
+        {applyingUpdate ? 'Memperbarui...' : updateCheckError ? 'Coba lagi' : 'Perbarui sekarang'}
       </button>
     </div>
   )
