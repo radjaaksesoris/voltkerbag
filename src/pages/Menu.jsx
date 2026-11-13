@@ -265,7 +265,7 @@ export default function Menu({
                 <span className="menu-shortcut-label">{item.label}</span>
                 <span className="menu-shortcut-description">{item.description}</span>
                 {item.id === 'refresh' && updateAvailable && (
-                  <span className="menu-update-badge" aria-hidden="true">UPDATE</span>
+                  <span className="menu-update-badge" aria-hidden="true" />
                 )}
               </button>
             )

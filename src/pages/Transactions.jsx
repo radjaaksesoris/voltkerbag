@@ -63,17 +63,16 @@ export default function Transactions() {
     }
 
     function positionNotification() {
-      const popup = document.querySelector('.product-quick-view-modal')
-      const popupBounds = popup?.getBoundingClientRect()
-      const toolbarBounds = document.querySelector('.pos-products-toolbar')?.getBoundingClientRect()
+      const toolbarBounds = transactionsPageRef.current
+        ?.querySelector('.pos-products-toolbar')
+        ?.getBoundingClientRect()
       const notification = cartNotificationRef.current
       if (!notification) {
         setNotificationPosition(null)
         return
       }
 
-      const anchorBounds = popupBounds?.width ? popupBounds : toolbarBounds
-      if (!anchorBounds?.width) {
+      if (!toolbarBounds?.width) {
         setNotificationPosition({
           top: 'auto',
           right: 16,
@@ -87,14 +86,19 @@ export default function Transactions() {
         return
       }
 
-      const maxWidth = Math.min(420, anchorBounds.width, window.innerWidth - 32)
+      const maxWidth = Math.min(420, toolbarBounds.width, window.innerWidth - 32)
       const notificationWidth = Math.min(notification.scrollWidth, maxWidth)
       const notificationHeight = notification.getBoundingClientRect().height
+      const notificationCenterY = Math.max(
+        notificationHeight / 2 + 8,
+        Math.min(
+          window.innerHeight - notificationHeight / 2 - 8,
+          toolbarBounds.bottom + 8 + notificationHeight / 2
+        )
+      )
       setNotificationPosition({
-        top: popupBounds?.width
-          ? Math.max(8, popupBounds.top - notificationHeight - 10)
-          : Math.min(window.innerHeight - notificationHeight - 8, toolbarBounds.bottom + 8),
-        left: Math.max(16, anchorBounds.left + (anchorBounds.width - notificationWidth) / 2),
+        top: notificationCenterY,
+        left: Math.max(16, toolbarBounds.left + (toolbarBounds.width - notificationWidth) / 2),
         right: 'auto',
         bottom: 'auto',
         maxWidth,
@@ -106,7 +110,11 @@ export default function Transactions() {
 
     positionNotification()
     window.addEventListener('resize', positionNotification)
-    return () => window.removeEventListener('resize', positionNotification)
+    window.addEventListener('scroll', positionNotification, true)
+    return () => {
+      window.removeEventListener('resize', positionNotification)
+      window.removeEventListener('scroll', positionNotification, true)
+    }
   }, [cartNotification, previewProduct])
 
   useEffect(() => {
@@ -535,11 +543,11 @@ export default function Transactions() {
 
         <div className="card cart">
           <div className="cart-view-header">
-            <button className="btn cart-back-button" type="button" onClick={() => switchMobileView(false)}>
-              <Icon name="bag" size={16} />
-              Pilih produk
-            </button>
             <strong>{cart.length} item · {rupiah(total)}</strong>
+            <button className="btn cart-back-button" type="button" onClick={() => switchMobileView(false)}>
+              <Icon name="arrowLeft" size={16} />
+              <span>Back</span>
+            </button>
           </div>
           <div className="cart-items">
             <div className="cart-items-heading">
