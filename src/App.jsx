@@ -245,6 +245,8 @@ function ActiveApp() {
   const returnTransitionTimer = useRef(null)
   const menuTransitionTimer = useRef(null)
   const menuTransitionActive = useRef(false)
+  const menuTransitionPhase = useRef(null)
+  const menuTransitionData = useRef(null)
 
   useEffect(() => () => {
     window.clearTimeout(returnTransitionTimer.current)
@@ -276,23 +278,40 @@ function ActiveApp() {
       Math.hypot(width - x, y),
       Math.hypot(x, height - y),
       Math.hypot(width - x, height - y)
-    ))
+    )) + 2
 
+    const transition = { page: nextPage, x, y, radius, phase: 'expand' }
     menuTransitionActive.current = true
-    setMenuTransition({ page: nextPage, x, y, width, height, radius, phase: 'expand' })
+    menuTransitionPhase.current = 'expand'
+    menuTransitionData.current = transition
+    setMenuTransition(transition)
+    menuTransitionTimer.current = window.setTimeout(startMenuReveal, 700)
+  }
+
+  function startMenuReveal() {
+    if (!menuTransitionActive.current || menuTransitionPhase.current !== 'expand') return
+    const transition = menuTransitionData.current
+    if (!transition) return
+
+    window.clearTimeout(menuTransitionTimer.current)
+    menuTransitionTimer.current = null
+    menuTransitionPhase.current = 'reveal'
+    navigateToPage(transition.page)
+    const revealTransition = { ...transition, phase: 'reveal' }
+    menuTransitionData.current = revealTransition
+    setMenuTransition(revealTransition)
+    menuTransitionTimer.current = window.setTimeout(() => {
+      menuTransitionTimer.current = null
+      menuTransitionActive.current = false
+      menuTransitionPhase.current = null
+      menuTransitionData.current = null
+      setMenuTransition(null)
+    }, 650)
   }
 
   function finishMenuExpansion(event) {
     if (event.target !== event.currentTarget || event.animationName !== 'menu-tab-expand') return
-    if (!menuTransition || menuTransition.phase !== 'expand') return
-
-    navigateToPage(menuTransition.page)
-    setMenuTransition((current) => current ? { ...current, phase: 'reveal' } : current)
-    menuTransitionTimer.current = window.setTimeout(() => {
-      menuTransitionTimer.current = null
-      menuTransitionActive.current = false
-      setMenuTransition(null)
-    }, 650)
+    startMenuReveal()
   }
 
   function returnToMenu() {
@@ -772,46 +791,23 @@ function ActiveApp() {
               className="menu-tab-expansion"
               aria-hidden="true"
               style={{
+                '--menu-tab-x': `${menuTransition.x}px`,
+                '--menu-tab-y': `${menuTransition.y}px`,
+                '--menu-tab-radius': `${menuTransition.radius}px`,
                 left: `${menuTransition.x}px`,
                 top: `${menuTransition.y}px`,
                 width: `${menuTransition.radius * 2}px`,
                 height: `${menuTransition.radius * 2}px`
               }}
               onAnimationEnd={finishMenuExpansion} />
-          : <svg
+          : <div
               className="menu-tab-reveal"
               aria-hidden="true"
-              focusable="false"
-              viewBox={`0 0 ${menuTransition.width} ${menuTransition.height}`}
-              preserveAspectRatio="none">
-              <defs>
-                <mask
-                  id="menu-tab-reveal-mask"
-                  maskUnits="userSpaceOnUse"
-                  x="0"
-                  y="0"
-                  width={menuTransition.width}
-                  height={menuTransition.height}>
-                  <rect width={menuTransition.width} height={menuTransition.height} fill="white" />
-                  <circle cx={menuTransition.x} cy={menuTransition.y} r="0" fill="black">
-                    <animate
-                      attributeName="r"
-                      from="0"
-                      to={menuTransition.radius}
-                      dur="600ms"
-                      calcMode="spline"
-                      keyTimes="0;1"
-                      keySplines=".2 .8 .2 1"
-                      fill="freeze" />
-                  </circle>
-                </mask>
-              </defs>
-              <rect
-                width={menuTransition.width}
-                height={menuTransition.height}
-                fill="#7b1e24"
-                mask="url(#menu-tab-reveal-mask)" />
-            </svg>
+              style={{
+                '--menu-tab-x': `${menuTransition.x}px`,
+                '--menu-tab-y': `${menuTransition.y}px`,
+                '--menu-tab-radius': `${menuTransition.radius}px`
+              }} />
       )}
     </div>
   )

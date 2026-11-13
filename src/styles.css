@@ -578,14 +578,24 @@ button:focus-visible, input:focus-visible, select:focus-visible {
   border-radius: 50%;
   background: #7b1e24;
   animation: menu-tab-expand 520ms cubic-bezier(.2, .8, .2, 1) forwards;
+  will-change: transform;
 }
 .menu-tab-reveal {
   inset: 0;
   width: 100vw;
   height: 100dvh;
+  background: #7b1e24;
+  clip-path: circle(var(--menu-tab-radius) at var(--menu-tab-x) var(--menu-tab-y));
+  animation: menu-tab-reveal 600ms cubic-bezier(.2, .8, .2, 1) forwards;
+  will-change: clip-path;
 }
 @keyframes menu-tab-expand {
+  from { transform: translate(-50%, -50%) scale(0); }
   to { transform: translate(-50%, -50%) scale(1); }
+}
+@keyframes menu-tab-reveal {
+  from { clip-path: circle(var(--menu-tab-radius) at var(--menu-tab-x) var(--menu-tab-y)); }
+  to { clip-path: circle(0 at var(--menu-tab-x) var(--menu-tab-y)); }
 }
 .sidebar-foot {
   display: flex;
