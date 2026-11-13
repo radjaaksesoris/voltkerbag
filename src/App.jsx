@@ -540,6 +540,14 @@ function ActiveApp() {
     </div>
   )
 
+  if (!session && checkingSession) {
+    return (
+      <main className="auth-page auth-session-checking" role="status" aria-live="polite">
+        Memeriksa sesi...
+      </main>
+    )
+  }
+
   if (!session) {
     return (
       <LoginScreen

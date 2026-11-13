@@ -10,6 +10,12 @@
   font-family: 'Poppins', system-ui, sans-serif;
   color: #333;
 }
+.auth-session-checking {
+  align-items: center;
+  justify-content: center;
+  color: #756b62;
+  font-size: 14px;
+}
 .auth-page *,
 .auth-page *::before,
 .auth-page *::after { box-sizing: border-box; font-family: inherit; }
