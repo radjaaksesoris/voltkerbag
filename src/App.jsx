@@ -234,13 +234,13 @@ function ActiveApp() {
       navigateToPage('menu')
       return
     }
-
     setReturningToMenu(true)
-    navigateToPage('menu')
+    setReturningToMenu(true)
   }
 
   function finishReturnTransition(event) {
     if (event.target !== event.currentTarget || event.animationName !== 'menu-return-flow') return
+    navigateToPage('menu')
     setReturningToMenu(false)
   }
 
@@ -534,7 +534,7 @@ function ActiveApp() {
   }
 
   return (
-    <div className={'app ' + (navHidden ? 'nav-hidden ' : '') + (page === 'menu' ? 'menu-landing' : '')}>
+    <div className={'app ' + (navHidden ? 'nav-hidden ' : '') + (page === 'menu' ? 'menu-landing ' : '') + (returningToMenu ? 'returning-to-menu' : '')}>
       <div className="app-background" aria-hidden="true">
         <img src={import.meta.env.BASE_URL + 'voltker-app-background.jpg'} alt="" decoding="async" />
       </div>
@@ -616,10 +616,17 @@ function ActiveApp() {
         {pwaUpdateBanner}
 
         <div className="content" ref={contentRef}>
-          {NAV.filter(({ id }) => visitedPages.has(id)).map(({ id }) => {
+          {NAV.filter(({ id }) => visitedPages.has(id) || (returningToMenu && id === 'menu')).map(({ id }) => {
             const Page = PAGES[id]
+            const isReturnTarget = returningToMenu && id === 'menu'
+            const isReturnSource = returningToMenu && id === page
             return (
-              <div key={id} className={'page-slot page-slot-' + id} hidden={page !== id}>
+              <div
+                key={id}
+                className={'page-slot page-slot-' + id
+                  + (isReturnTarget ? ' is-return-target' : '')
+                  + (isReturnSource ? ' is-return-source' : '')}
+                hidden={page !== id && !isReturnTarget}>
                 <PageErrorBoundary>
                   <Suspense fallback={<PageLoadingFallback pageId={id} />}>
                     {id === 'menu'
