@@ -170,7 +170,6 @@ export default function Purchases() {
       <section className="card purchase-form-card">
         <div className="purchase-heading">
           <div>
-            <span className="purchase-eyebrow">PENCATATAN PENGELUARAN</span>
             <h2>Pembelian</h2>
             <p className="muted">Catat pembelian bahan produksi sebagai pengeluaran keuangan.</p>
           </div>

@@ -580,7 +580,6 @@ export default function Products() {
       <div className="products-sticky-header">
         <section className="products-overview">
           <div className="products-overview-copy">
-            <span className="products-eyebrow">INVENTARIS TOKO</span>
             <h2>Stok barang</h2>
             <p>Kelola jumlah stok, modal, dan harga jual produk.</p>
           </div>
