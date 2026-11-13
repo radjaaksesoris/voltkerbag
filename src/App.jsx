@@ -238,15 +238,21 @@ function ActiveApp() {
       return
     }
 
+    setVisitedPages((visited) => new Set([...visited, 'menu']))
     setReturningToMenu(true)
-    returnTransitionTimer.current = window.setTimeout(() => navigateToPage('menu'), 550)
+    returnTransitionTimer.current = window.setTimeout(completeReturnTransition, 650)
+  }
+
+  function completeReturnTransition() {
+    window.clearTimeout(returnTransitionTimer.current)
+    returnTransitionTimer.current = null
+    navigateToPage('menu')
+    setReturningToMenu(false)
   }
 
   function finishReturnTransition(event) {
     if (event.target !== event.currentTarget || event.animationName !== 'menu-return-flow') return
-    window.clearTimeout(returnTransitionTimer.current)
-    returnTransitionTimer.current = null
-    setReturningToMenu(false)
+    completeReturnTransition()
   }
 
   async function logoutFromMenu() {
@@ -641,6 +647,26 @@ function ActiveApp() {
             )
           })}
         </div>
+        {returningToMenu && (
+          <>
+            <div className="menu-return-reveal" aria-hidden="true" inert="">
+              <PageErrorBoundary>
+                <Suspense fallback={<PageLoadingFallback pageId="menu" />}>
+                  <Menu
+                    items={NAV.filter((item) => item.id !== 'menu')}
+                    onNavigate={navigateToPage}
+                    onLogout={logoutFromMenu}
+                    logoutBusy={logoutBusy}
+                    logoutError={logoutError} />
+                </Suspense>
+              </PageErrorBoundary>
+            </div>
+            <div
+              className="menu-return-flow"
+              aria-hidden="true"
+              onAnimationEnd={finishReturnTransition} />
+          </>
+        )}
         {page !== 'menu' && (
           <button
             className="mobile-menu-back"
@@ -667,14 +693,6 @@ function ActiveApp() {
               <button className="btn btn-primary" type="button" onClick={() => setShowInstallInstructions(false)}>Mengerti</button>
             </div>
           </section>
-        </div>
-      )}
-      {returningToMenu && (
-        <div
-          className="menu-return-flow"
-          aria-hidden="true"
-          onAnimationEnd={finishReturnTransition}>
-          <img src={import.meta.env.BASE_URL + 'voltker-logo-320.png'} alt="" />
         </div>
       )}
       <CustomNumpad />

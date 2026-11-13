@@ -2622,43 +2622,41 @@ label { display: block; margin-bottom: 6px; color: var(--muted); font-size: 11px
   .mobile-menu-back:active { transform: translateY(2px); }
   .mobile-menu-back:disabled { cursor: wait; opacity: .8; }
   .mobile-menu-back:focus-visible { outline: 3px solid rgba(181, 40, 46, .42); outline-offset: 3px; }
+  .menu-return-reveal {
+    position: fixed;
+    z-index: 21;
+    inset: 0;
+    overflow: hidden;
+    background: linear-gradient(110deg, #f5e5e0, #f8f5ee);
+    clip-path: inset(100% 0 0);
+    pointer-events: none;
+    animation: menu-return-reveal 650ms cubic-bezier(.65, 0, .35, 1) forwards;
+  }
+  .menu-return-reveal .menu-page {
+    box-sizing: border-box;
+    width: 100%;
+    min-height: 100%;
+    padding: calc(12px + env(safe-area-inset-top)) 12px calc(16px + env(safe-area-inset-bottom));
+  }
   .menu-return-flow {
     position: fixed;
-    z-index: 2000;
-    top: 100dvh;
+    z-index: 22;
+    top: 0;
     right: 0;
     left: 0;
-    display: flex;
     width: 100vw;
-    height: 300dvh;
-    align-items: center;
-    justify-content: center;
-    transform: translateY(0);
-    border-radius: 50% / 12%;
+    height: 12dvh;
+    transform: translateY(100dvh);
+    border-radius: 50% / 24%;
     background: linear-gradient(180deg, #c4343c, #7f1c22 50%, #c4343c);
-    color: #fffaf3;
-    font-size: 26px;
-    font-weight: 700;
     pointer-events: none;
-    animation: menu-return-flow 1.1s cubic-bezier(.65, 0, .35, 1) forwards;
+    animation: menu-return-flow 650ms cubic-bezier(.65, 0, .35, 1) forwards;
   }
-  .menu-return-flow img {
-    display: block;
-    width: min(360px, 84vw);
-    height: auto;
-    filter: brightness(0) invert(1);
-    animation: menu-return-logo-flow 1.1s cubic-bezier(.45, .05, .55, .95) both;
-    will-change: transform, opacity;
-  }
-  @keyframes menu-return-logo-flow {
-    0% { transform: translateY(14vh) scale(.9); opacity: 0; }
-    28% { transform: translateY(7vh) scale(.96); opacity: .8; }
-    52% { transform: translateY(0) scale(1); opacity: 1; }
-    76% { transform: translateY(-9vh) scale(1.04); opacity: .85; }
-    100% { transform: translateY(-20vh) scale(1.08); opacity: 0; }
+  @keyframes menu-return-reveal {
+    to { clip-path: inset(0); }
   }
   @keyframes menu-return-flow {
-    to { transform: translateY(-133.3333%); }
+    to { transform: translateY(0); }
   }
   .topbar { min-height: 70px; padding: 10px 14px; }
   .topbar-start { flex: 1; gap: 9px; }
