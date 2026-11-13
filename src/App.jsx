@@ -239,14 +239,19 @@ function ActiveApp() {
     }
 
     setReturningToMenu(true)
-    returnTransitionTimer.current = window.setTimeout(() => navigateToPage('menu'), 550)
+    returnTransitionTimer.current = window.setTimeout(completeReturnTransition, 1250)
+  }
+
+  function completeReturnTransition() {
+    window.clearTimeout(returnTransitionTimer.current)
+    returnTransitionTimer.current = null
+    navigateToPage('menu')
+    setReturningToMenu(false)
   }
 
   function finishReturnTransition(event) {
     if (event.target !== event.currentTarget || event.animationName !== 'menu-return-flow') return
-    window.clearTimeout(returnTransitionTimer.current)
-    returnTransitionTimer.current = null
-    setReturningToMenu(false)
+    completeReturnTransition()
   }
 
   async function logoutFromMenu() {
