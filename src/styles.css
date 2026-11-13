@@ -1130,6 +1130,27 @@ h2 {
 .menu-shortcut:hover { transform: translateY(-3px); filter: brightness(1.04); box-shadow: 0 12px 24px rgba(145, 32, 39, .23), inset 0 1px 0 rgba(255, 255, 255, .2); }
 .menu-shortcut:active { transform: translateY(-1px) scale(.98); }
 .menu-shortcut:focus-visible { outline: 3px solid rgba(181, 40, 46, .48); outline-offset: 2px; }
+.menu-landing .menu-shortcuts > .menu-shortcut.is-dropping {
+  z-index: 2;
+  pointer-events: none;
+  transform-origin: center top;
+  animation: menu-shortcut-drop .72s cubic-bezier(.52, .02, .88, .42) both;
+  will-change: transform, opacity;
+}
+.menu-landing .menu-shortcuts > .menu-shortcut.is-returning {
+  animation: menu-shortcut-return .46s cubic-bezier(.2, .8, .25, 1) both;
+}
+@keyframes menu-shortcut-drop {
+  0% { transform: translate3d(0, 0, 0) rotate(0) scale(1); opacity: 1; }
+  9% { transform: translate3d(0, -5px, 0) rotate(-1deg) scale(.99); opacity: 1; }
+  18% { transform: translate3d(0, 2px, 0) rotate(1deg) scale(1); opacity: 1; }
+  100% { transform: translate3d(12px, 110vh, 0) rotate(13deg) scale(.9); opacity: 0; }
+}
+@keyframes menu-shortcut-return {
+  0% { transform: translate3d(8px, 54px, 0) rotate(6deg) scale(.94); opacity: 0; }
+  68% { transform: translate3d(0, -5px, 0) rotate(-1deg) scale(1.02); opacity: 1; }
+  100% { transform: translate3d(0, 0, 0) rotate(0) scale(1); opacity: 1; }
+}
 .menu-art-icon {
   position: absolute;
   top: 45%;

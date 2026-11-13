@@ -26,7 +26,52 @@ export default function Menu({ items, onNavigate, onLogout, logoutBusy, logoutEr
   const [loadError, setLoadError] = useState('')
   const [loaded, setLoaded] = useState(false)
   const [activeSummary, setActiveSummary] = useState(0)
+  const [droppingShortcutId, setDroppingShortcutId] = useState(null)
+  const [returningShortcutId, setReturningShortcutId] = useState(null)
   const requestId = useRef(0)
+  const pendingShortcutAction = useRef(null)
+  const shortcutActionTimer = useRef(null)
+
+  useEffect(() => () => window.clearTimeout(shortcutActionTimer.current), [])
+
+  function startShortcutAction(id, action) {
+    if (pendingShortcutAction.current) return
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      action()
+      return
+    }
+
+    pendingShortcutAction.current = { id, action }
+    setReturningShortcutId(null)
+    setDroppingShortcutId(id)
+    shortcutActionTimer.current = window.setTimeout(completeShortcutDrop, 900)
+  }
+
+  function completeShortcutDrop() {
+    const pending = pendingShortcutAction.current
+    if (!pending) return
+
+    pendingShortcutAction.current = null
+    window.clearTimeout(shortcutActionTimer.current)
+    setDroppingShortcutId(null)
+    pending.action()
+    if (pending.id === 'refresh') setReturningShortcutId(pending.id)
+  }
+
+  function handleShortcutAnimationEnd(event, id) {
+    if (event.target !== event.currentTarget) return
+    if (droppingShortcutId === id) {
+      completeShortcutDrop()
+    } else if (returningShortcutId === id) {
+      setReturningShortcutId(null)
+    }
+  }
+
+  function shortcutClassName(index, id) {
+    return 'menu-shortcut menu-shortcut-' + (index % 4)
+      + (droppingShortcutId === id ? ' is-dropping' : '')
+      + (returningShortcutId === id ? ' is-returning' : '')
+  }
 
   useEffect(() => {
     let active = true
@@ -230,8 +275,16 @@ export default function Menu({ items, onNavigate, onLogout, logoutBusy, logoutEr
             item.id === 'chat' ? (
               <a
                 key={item.id}
-                className={'menu-shortcut menu-shortcut-' + (index % 4)}
-                href={import.meta.env.BASE_URL + 'chat/?mode=chat'}>
+                className={shortcutClassName(index, item.id)}
+                href={import.meta.env.BASE_URL + 'chat/?mode=chat'}
+                onAnimationEnd={(event) => handleShortcutAnimationEnd(event, item.id)}
+                onClick={(event) => {
+                  if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return
+                  event.preventDefault()
+                  startShortcutAction(item.id, () => {
+                    window.location.assign(import.meta.env.BASE_URL + 'chat/?mode=chat')
+                  })
+                }}>
                 <span className="menu-shortcut-icon"><MenuShortcutIcon name={item.icon} /></span>
                 <span className="menu-shortcut-label">{item.label}</span>
                 <span className="menu-shortcut-description">{item.description}</span>
@@ -239,9 +292,13 @@ export default function Menu({ items, onNavigate, onLogout, logoutBusy, logoutEr
             ) : (
               <button
                 key={item.id}
-                className={'menu-shortcut menu-shortcut-' + (index % 4)}
+                className={shortcutClassName(index, item.id)}
                 type="button"
-                onClick={() => item.id === 'refresh' ? requestPageRefresh('menu') : onNavigate(item.id)}>
+                onAnimationEnd={(event) => handleShortcutAnimationEnd(event, item.id)}
+                onClick={() => startShortcutAction(
+                  item.id,
+                  () => item.id === 'refresh' ? requestPageRefresh('menu') : onNavigate(item.id)
+                )}>
                 <span className="menu-shortcut-icon"><MenuShortcutIcon name={item.icon} /></span>
                 <span className="menu-shortcut-label">{item.label}</span>
                 <span className="menu-shortcut-description">{item.description}</span>
