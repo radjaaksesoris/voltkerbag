@@ -214,10 +214,14 @@ function ActiveApp() {
   const [installError, setInstallError] = useState('')
   const [updateReady, setUpdateReady] = useState(false)
   const [applyingUpdate, setApplyingUpdate] = useState(false)
+  const [returningToMenu, setReturningToMenu] = useState(false)
   const currentPage = NAV.find((n) => n.id === page)
   const contentRef = useRef(null)
   const serviceWorkerRegistration = useRef(null)
   const pendingLoginTarget = useRef(null)
+  const returnTransitionTimer = useRef(null)
+
+  useEffect(() => () => window.clearTimeout(returnTransitionTimer.current), [])
 
   function navigateToPage(nextPage) {
     setVisitedPages((visited) => {
@@ -225,6 +229,24 @@ function ActiveApp() {
       return new Set([...visited, nextPage])
     })
     setPage(nextPage)
+  }
+
+  function returnToMenu() {
+    if (returningToMenu) return
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      navigateToPage('menu')
+      return
+    }
+
+    setReturningToMenu(true)
+    returnTransitionTimer.current = window.setTimeout(() => navigateToPage('menu'), 550)
+  }
+
+  function finishReturnTransition(event) {
+    if (event.target !== event.currentTarget || event.animationName !== 'menu-return-flow') return
+    window.clearTimeout(returnTransitionTimer.current)
+    returnTransitionTimer.current = null
+    setReturningToMenu(false)
   }
 
   async function logoutFromMenu() {
@@ -620,7 +642,11 @@ function ActiveApp() {
           })}
         </div>
         {page !== 'menu' && (
-          <button className="mobile-menu-back" type="button" onClick={() => navigateToPage('menu')}>
+          <button
+            className="mobile-menu-back"
+            type="button"
+            onClick={returnToMenu}
+            disabled={returningToMenu}>
             <Icon name="arrowLeft" size={19} />
             <span>Kembali ke Menu Utama</span>
           </button>
@@ -641,6 +667,14 @@ function ActiveApp() {
               <button className="btn btn-primary" type="button" onClick={() => setShowInstallInstructions(false)}>Mengerti</button>
             </div>
           </section>
+        </div>
+      )}
+      {returningToMenu && (
+        <div
+          className="menu-return-flow"
+          aria-hidden="true"
+          onAnimationEnd={finishReturnTransition}>
+          <span>Menu Utama</span>
         </div>
       )}
       <CustomNumpad />

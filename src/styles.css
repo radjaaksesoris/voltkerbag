@@ -2600,27 +2600,50 @@ label { display: block; margin-bottom: 6px; color: var(--muted); font-size: 11px
   .mobile-menu-back {
     position: fixed;
     z-index: 20;
-    right: 16px;
-    bottom: calc(12px + env(safe-area-inset-bottom));
-    left: 16px;
+    right: 0;
+    bottom: 0;
+    left: 0;
     display: flex;
-    min-height: 54px;
+    min-height: calc(60px + env(safe-area-inset-bottom));
     align-items: center;
     justify-content: center;
-    gap: 10px;
-    border: 1px solid rgba(255, 255, 255, .22);
-    border-radius: 15px;
-    background: linear-gradient(145deg, #c13a40, #912027);
-    box-shadow: 0 8px 22px rgba(99, 34, 30, .24), inset 0 1px 0 rgba(255, 255, 255, .2);
+    gap: 8px;
+    padding: 0 16px env(safe-area-inset-bottom);
+    border: 0;
+    border-radius: 34px 34px 0 0;
+    background: linear-gradient(160deg, #8b2026, #741a20);
     color: #fffaf3;
     font: inherit;
     font-size: 14px;
-    font-weight: 700;
-    transition: filter .18s ease, transform .18s ease;
+    font-weight: 600;
+    transition: filter .18s ease, transform .18s ease, opacity .18s ease;
   }
   .mobile-menu-back:hover { filter: brightness(1.07); }
-  .mobile-menu-back:active { transform: scale(.98); }
+  .mobile-menu-back:active { transform: translateY(2px); }
+  .mobile-menu-back:disabled { cursor: wait; opacity: .8; }
   .mobile-menu-back:focus-visible { outline: 3px solid rgba(181, 40, 46, .42); outline-offset: 3px; }
+  .menu-return-flow {
+    position: fixed;
+    z-index: 2000;
+    top: 100dvh;
+    left: 50%;
+    display: flex;
+    width: min(100vw, 430px);
+    height: 300dvh;
+    align-items: center;
+    justify-content: center;
+    transform: translate(-50%, 0);
+    border-radius: 50% / 12%;
+    background: linear-gradient(180deg, #c4343c, #7f1c22 50%, #c4343c);
+    color: #fffaf3;
+    font-size: 26px;
+    font-weight: 700;
+    pointer-events: none;
+    animation: menu-return-flow 1.1s cubic-bezier(.65, 0, .35, 1) forwards;
+  }
+  @keyframes menu-return-flow {
+    to { transform: translate(-50%, -133.3333%); }
+  }
   .topbar { min-height: 70px; padding: 10px 14px; }
   .topbar-start { flex: 1; gap: 9px; }
   .nav-toggle { width: 38px; height: 38px; border-radius: 9px; }
