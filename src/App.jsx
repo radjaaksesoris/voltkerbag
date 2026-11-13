@@ -219,9 +219,6 @@ function ActiveApp() {
   const contentRef = useRef(null)
   const serviceWorkerRegistration = useRef(null)
   const pendingLoginTarget = useRef(null)
-  const returnTransitionTimer = useRef(null)
-
-  useEffect(() => () => window.clearTimeout(returnTransitionTimer.current), [])
 
   function navigateToPage(nextPage) {
     setVisitedPages((visited) => {
@@ -239,13 +236,11 @@ function ActiveApp() {
     }
 
     setReturningToMenu(true)
-    returnTransitionTimer.current = window.setTimeout(() => navigateToPage('menu'), 360)
+    navigateToPage('menu')
   }
 
   function finishReturnTransition(event) {
     if (event.target !== event.currentTarget || event.animationName !== 'menu-return-flow') return
-    window.clearTimeout(returnTransitionTimer.current)
-    returnTransitionTimer.current = null
     setReturningToMenu(false)
   }
 
