@@ -262,7 +262,12 @@ export default function Purchases() {
               return (
                 <tr key={entry.id}>
                   <td className="purchase-row-number" data-label="No.">{pageStart + index + 1}</td>
-                  <td className="purchase-details" data-label="Pembelian">{purchase.purchase}</td>
+                  <td className="purchase-details" data-label="Pembelian">
+                    <div className="purchase-item-heading">
+                      <span className="purchase-item-title">{purchase.purchase}</span>
+                      <span className="purchase-item-type">Pembelian</span>
+                    </div>
+                  </td>
                   <td data-label="Tanggal">{dateOnly(entry.date || entry.createdAt)}</td>
                   <td className="danger" data-label="Nominal">{rupiah(entry.amount)}</td>
                   <td className="purchase-details" data-label="Vendor">{purchase.vendor}</td>

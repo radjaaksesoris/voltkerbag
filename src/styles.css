@@ -4054,6 +4054,8 @@ label { display: block; margin-bottom: 6px; color: var(--muted); font-size: 11px
 }
 .app:not(.menu-landing) .purchase-table tbody td:first-child { border-left: 1px solid #eaded8; border-radius: 14px 0 0 5px; }
 .app:not(.menu-landing) .purchase-table tbody td:last-child { border-right: 1px solid #eaded8; border-radius: 0 5px 14px 0; }
+.app:not(.menu-landing) .purchase-item-heading { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.app:not(.menu-landing) .purchase-item-type { display: none; }
 .app:not(.menu-landing) .purchase-table tbody tr:hover td { background: #fff8f4; }
 .app:not(.menu-landing) .purchase-table td.danger { color: var(--accent-dark); font-variant-numeric: tabular-nums; font-weight: 700; white-space: nowrap; }
 .app:not(.menu-landing) .purchase-table td[colspan] { border: 1px solid #eaded8; border-radius: 14px 5px 14px 5px; text-align: center; }
@@ -4115,11 +4117,39 @@ label { display: block; margin-bottom: 6px; color: var(--muted); font-size: 11px
   }
   .app:not(.menu-landing) .purchase-table tbody td:nth-child(2) {
     grid-column: 1 / -1;
-    padding-bottom: 8px;
-    border-bottom: 1px solid #eaded8;
-    color: #281e1c;
+    margin: -8px -10px 0;
+    padding: 11px 12px;
+    border-bottom: 0;
+    border-radius: 15px 5px 0 0;
+    background: linear-gradient(112deg, #b5282e, #912027);
+    color: #fffaf3;
+    font-size: 12px;
+    font-weight: 700;
+  }
+  .app:not(.menu-landing) .purchase-table tbody td:nth-child(2)::before { content: none; }
+  .app:not(.menu-landing) .purchase-item-heading {
+    display: flex;
+    min-width: 0;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+  }
+  .app:not(.menu-landing) .purchase-item-title {
+    min-width: 0;
+    color: inherit;
     font-size: 13px;
     font-weight: 700;
+    line-height: 1.35;
+    overflow-wrap: anywhere;
+  }
+  .app:not(.menu-landing) .purchase-item-type {
+    display: block;
+    flex: 0 0 auto;
+    color: rgba(255, 250, 243, .82);
+    font-size: 8px;
+    font-weight: 700;
+    letter-spacing: .7px;
+    text-transform: uppercase;
   }
   .app:not(.menu-landing) .purchase-table tbody td:nth-child(4) { text-align: left; }
   .app:not(.menu-landing) .purchase-table tbody td:nth-child(3) { white-space: nowrap; }
