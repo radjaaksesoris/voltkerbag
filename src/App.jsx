@@ -239,7 +239,7 @@ function ActiveApp() {
     }
 
     setReturningToMenu(true)
-    returnTransitionTimer.current = window.setTimeout(() => navigateToPage('menu'), 550)
+    returnTransitionTimer.current = window.setTimeout(() => navigateToPage('menu'), 360)
   }
 
   function finishReturnTransition(event) {
@@ -673,9 +673,7 @@ function ActiveApp() {
         <div
           className="menu-return-flow"
           aria-hidden="true"
-          onAnimationEnd={finishReturnTransition}>
-          <img src={import.meta.env.BASE_URL + 'voltker-logo-320.png'} alt="" />
-        </div>
+          onAnimationEnd={finishReturnTransition} />
       )}
       <CustomNumpad />
     </div>
