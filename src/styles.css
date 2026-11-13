@@ -4190,16 +4190,35 @@ label { display: block; margin-bottom: 6px; color: var(--muted); font-size: 11px
 .app:not(.menu-landing) .products-sticky-header {
   position: sticky;
   z-index: 24;
+  isolation: isolate;
   top: 0;
   display: grid;
   gap: 10px;
+  overflow: hidden;
   margin: -8px -8px 0;
   padding: 8px;
-  border: 1px solid #761920;
+  border: 1px solid rgba(255, 255, 255, .18);
   border-radius: 6px 24px 6px 24px;
-  background: #8f2028;
+  background:
+    radial-gradient(ellipse at 2% 5%, rgba(255, 195, 175, .22), transparent 42%),
+    linear-gradient(112deg, #b5282e 0%, #a1242b 56%, #912027 100%);
   box-shadow: none;
 }
+.app:not(.menu-landing) .products-sticky-header::before,
+.app:not(.menu-landing) .products-sticky-header::after {
+  position: absolute;
+  z-index: -1;
+  right: -44px;
+  width: 250px;
+  aspect-ratio: 1;
+  border: 1px solid rgba(255, 244, 238, .12);
+  border-radius: 50%;
+  background: rgba(255, 226, 218, .1);
+  content: '';
+  pointer-events: none;
+}
+.app:not(.menu-landing) .products-sticky-header::before { top: -110px; }
+.app:not(.menu-landing) .products-sticky-header::after { right: 12%; bottom: -205px; width: 300px; }
 .app:not(.menu-landing) .products-overview {
   display: grid;
   grid-template-columns: minmax(0, 1.35fr) minmax(250px, .85fr);
@@ -4379,7 +4398,9 @@ label { display: block; margin-bottom: 6px; color: var(--muted); font-size: 11px
     margin: 0 5px;
     padding: 8px;
     border-radius: 6px 20px 6px 20px;
-    background: #8f2028;
+    background:
+      radial-gradient(ellipse at 2% 5%, rgba(255, 195, 175, .22), transparent 42%),
+      linear-gradient(112deg, #b5282e 0%, #a1242b 56%, #912027 100%);
     box-shadow: none;
   }
   .app:not(.menu-landing) .products-overview {
