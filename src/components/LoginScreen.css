@@ -331,7 +331,7 @@
     top: 66%;
     width: 100%;
     height: 300%;
-    border-radius: 50% / 16.6667%;
+    border-radius: 50vw / 50vw;
     background: #7b1e24;
   }
   .auth-container.active::before { left: 0; top: -266%; }
