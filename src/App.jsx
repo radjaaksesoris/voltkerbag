@@ -237,13 +237,20 @@ function ActiveApp() {
   const [updateReady, setUpdateReady] = useState(false)
   const [applyingUpdate, setApplyingUpdate] = useState(false)
   const [returningToMenu, setReturningToMenu] = useState(false)
+  const [menuNavigationTarget, setMenuNavigationTarget] = useState(null)
   const currentPage = NAV.find((n) => n.id === page)
   const contentRef = useRef(null)
   const serviceWorkerRegistration = useRef(null)
   const pendingLoginTarget = useRef(null)
   const returnTransitionTimer = useRef(null)
+  const menuNavigationTimer = useRef(null)
+  const menuNavigationActive = useRef(false)
+  const menuNavigationSwitched = useRef(false)
 
-  useEffect(() => () => window.clearTimeout(returnTransitionTimer.current), [])
+  useEffect(() => () => {
+    window.clearTimeout(returnTransitionTimer.current)
+    window.clearTimeout(menuNavigationTimer.current)
+  }, [])
 
   function navigateToPage(nextPage) {
     setVisitedPages((visited) => {
@@ -251,6 +258,43 @@ function ActiveApp() {
       return new Set([...visited, nextPage])
     })
     setPage(nextPage)
+  }
+
+  function navigateFromMenu(nextPage) {
+    if (menuNavigationActive.current) return
+    if (
+      window.matchMedia('(prefers-reduced-motion: reduce)').matches
+      || !window.matchMedia('(max-width: 640px)').matches
+    ) {
+      navigateToPage(nextPage)
+      return
+    }
+
+    menuNavigationActive.current = true
+    menuNavigationSwitched.current = false
+    setMenuNavigationTarget(nextPage)
+    menuNavigationTimer.current = window.setTimeout(() => finishMenuNavigation(null, nextPage), 1250)
+  }
+
+  function switchMenuNavigationWhenCovered(event) {
+    if (event.target !== event.currentTarget || event.animationName !== 'menu-return-switch') return
+    if (!menuNavigationTarget || menuNavigationSwitched.current) return
+    menuNavigationSwitched.current = true
+    navigateToPage(menuNavigationTarget)
+  }
+
+  function finishMenuNavigation(event, fallbackTarget = null) {
+    if (event && (event.target !== event.currentTarget || event.animationName !== 'menu-navigation-flow')) return
+    if (!menuNavigationActive.current) return
+    const targetPage = fallbackTarget || menuNavigationTarget
+    if (!menuNavigationSwitched.current && targetPage) {
+      navigateToPage(targetPage)
+    }
+    window.clearTimeout(menuNavigationTimer.current)
+    menuNavigationTimer.current = null
+    menuNavigationActive.current = false
+    menuNavigationSwitched.current = false
+    setMenuNavigationTarget(null)
   }
 
   function returnToMenu() {
@@ -673,7 +717,7 @@ function ActiveApp() {
                     {id === 'menu'
                       ? <Page
                           items={NAV.filter((item) => item.id !== 'menu')}
-                          onNavigate={navigateToPage}
+                          onNavigate={navigateFromMenu}
                           onLogout={logoutFromMenu}
                           logoutBusy={logoutBusy}
                           logoutError={logoutError} />
@@ -721,6 +765,17 @@ function ActiveApp() {
             className="menu-return-switch-marker"
             style={{ animationDelay: `${getMenuReturnCoverDelay()}ms` }}
             onAnimationEnd={switchToMenuWhenCovered} />
+        </div>
+      )}
+      {menuNavigationTarget && (
+        <div
+          className="menu-navigation-flow"
+          aria-hidden="true"
+          onAnimationEnd={finishMenuNavigation}>
+          <span
+            className="menu-return-switch-marker"
+            style={{ animationDelay: `${getMenuReturnCoverDelay()}ms` }}
+            onAnimationEnd={switchMenuNavigationWhenCovered} />
         </div>
       )}
       <CustomNumpad />

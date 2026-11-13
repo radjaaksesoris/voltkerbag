@@ -2637,6 +2637,21 @@ label { display: block; margin-bottom: 6px; color: var(--muted); font-size: 11px
     will-change: transform;
     animation: menu-return-flow 1.1s cubic-bezier(.65, 0, .35, 1) forwards;
   }
+  .menu-navigation-flow {
+    position: fixed;
+    z-index: 2000;
+    top: -300dvh;
+    right: 0;
+    left: 0;
+    width: 100vw;
+    height: 300dvh;
+    transform: translateY(0);
+    border-radius: 50vw / 50vw;
+    background: #7b1e24;
+    pointer-events: none;
+    will-change: transform;
+    animation: menu-navigation-flow 1.1s cubic-bezier(.65, 0, .35, 1) forwards;
+  }
   .menu-return-switch-marker {
     position: absolute;
     width: 0;
@@ -2650,6 +2665,9 @@ label { display: block; margin-bottom: 6px; color: var(--muted); font-size: 11px
   }
   @keyframes menu-return-flow {
     to { transform: translateY(-133.3333%); }
+  }
+  @keyframes menu-navigation-flow {
+    to { transform: translateY(133.3333%); }
   }
   .topbar { min-height: 70px; padding: 10px 14px; }
   .topbar-start { flex: 1; gap: 9px; }
