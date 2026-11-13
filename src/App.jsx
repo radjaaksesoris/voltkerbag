@@ -21,7 +21,9 @@ function getMenuReturnCoverDelay() {
 
   for (let index = 0; index < 24; index += 1) {
     const t = (low + high) / 2
-    const progress = 3 * (1 - t) * t * t + t * t * t
+    const progress = 3 * (1 - t) ** 2 * t * 0.65
+      + 3 * (1 - t) * t * t * 0.35
+      + t * t * t
     if (progress < coverProgress) low = t
     else high = t
   }
