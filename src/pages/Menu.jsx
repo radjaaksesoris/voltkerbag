@@ -28,17 +28,21 @@ export default function Menu({ items, onNavigate, onLogout, logoutBusy, logoutEr
   const [activeSummary, setActiveSummary] = useState(0)
   const [droppingShortcutId, setDroppingShortcutId] = useState(null)
   const [returningShortcutId, setReturningShortcutId] = useState(null)
+  const [dropDistance, setDropDistance] = useState(0)
   const requestId = useRef(0)
   const pendingShortcutAction = useRef(null)
 
-  function startShortcutAction(id, action) {
+  function startShortcutAction(id, action, element) {
     if (pendingShortcutAction.current) return
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
       action()
       return
     }
 
+    const shortcutRect = element.getBoundingClientRect()
+    const contentBottom = element.closest('.content')?.getBoundingClientRect().bottom ?? window.innerHeight
     pendingShortcutAction.current = { id, action }
+    setDropDistance(Math.max(0, contentBottom - shortcutRect.top + shortcutRect.height + 16))
     setReturningShortcutId(null)
     setDroppingShortcutId(id)
   }
@@ -49,6 +53,7 @@ export default function Menu({ items, onNavigate, onLogout, logoutBusy, logoutEr
 
     pendingShortcutAction.current = null
     setDroppingShortcutId(null)
+    setDropDistance(0)
     pending.action()
     if (pending.id === 'refresh') setReturningShortcutId(pending.id)
   }
@@ -271,6 +276,9 @@ export default function Menu({ items, onNavigate, onLogout, logoutBusy, logoutEr
               <a
                 key={item.id}
                 className={shortcutClassName(index, item.id)}
+                style={droppingShortcutId === item.id
+                  ? { '--menu-drop-distance': `${dropDistance}px` }
+                  : undefined}
                 href={import.meta.env.BASE_URL + 'chat/?mode=chat'}
                 onAnimationEnd={(event) => handleShortcutAnimationEnd(event, item.id)}
                 onClick={(event) => {
@@ -278,7 +286,7 @@ export default function Menu({ items, onNavigate, onLogout, logoutBusy, logoutEr
                   event.preventDefault()
                   startShortcutAction(item.id, () => {
                     window.location.assign(import.meta.env.BASE_URL + 'chat/?mode=chat')
-                  })
+                  }, event.currentTarget)
                 }}>
                 <span className="menu-shortcut-icon"><MenuShortcutIcon name={item.icon} /></span>
                 <span className="menu-shortcut-label">{item.label}</span>
@@ -288,11 +296,15 @@ export default function Menu({ items, onNavigate, onLogout, logoutBusy, logoutEr
               <button
                 key={item.id}
                 className={shortcutClassName(index, item.id)}
+                style={droppingShortcutId === item.id
+                  ? { '--menu-drop-distance': `${dropDistance}px` }
+                  : undefined}
                 type="button"
                 onAnimationEnd={(event) => handleShortcutAnimationEnd(event, item.id)}
-                onClick={() => startShortcutAction(
+                onClick={(event) => startShortcutAction(
                   item.id,
-                  () => item.id === 'refresh' ? requestPageRefresh('menu') : onNavigate(item.id)
+                  () => item.id === 'refresh' ? requestPageRefresh('menu') : onNavigate(item.id),
+                  event.currentTarget
                 )}>
                 <span className="menu-shortcut-icon"><MenuShortcutIcon name={item.icon} /></span>
                 <span className="menu-shortcut-label">{item.label}</span>
