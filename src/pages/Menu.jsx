@@ -241,7 +241,9 @@ export default function Menu({ items, onNavigate, onLogout, logoutBusy, logoutEr
                 key={item.id}
                 className={'menu-shortcut menu-shortcut-' + (index % 4)}
                 type="button"
-                onClick={() => item.id === 'refresh' ? requestPageRefresh('menu') : onNavigate(item.id)}>
+                onClick={(event) => item.id === 'refresh'
+                  ? requestPageRefresh('menu')
+                  : onNavigate(item.id, event.currentTarget)}>
                 <span className="menu-shortcut-icon"><MenuShortcutIcon name={item.icon} /></span>
                 <span className="menu-shortcut-label">{item.label}</span>
                 <span className="menu-shortcut-description">{item.description}</span>

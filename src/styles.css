@@ -567,6 +567,26 @@ button:focus-visible, input:focus-visible, select:focus-visible {
 .menu-landing .sidebar,
 .menu-landing .topbar { display: none; }
 .menu-landing .content { width: 100%; max-width: none; padding: 28px clamp(18px, 3vw, 42px); }
+.menu-tab-expansion,
+.menu-tab-reveal {
+  position: fixed;
+  z-index: 2000;
+  pointer-events: all;
+}
+.menu-tab-expansion {
+  transform: translate(-50%, -50%) scale(0);
+  border-radius: 50%;
+  background: #7b1e24;
+  animation: menu-tab-expand 520ms cubic-bezier(.2, .8, .2, 1) forwards;
+}
+.menu-tab-reveal {
+  inset: 0;
+  width: 100vw;
+  height: 100dvh;
+}
+@keyframes menu-tab-expand {
+  to { transform: translate(-50%, -50%) scale(1); }
+}
 .sidebar-foot {
   display: flex;
   align-items: center;
