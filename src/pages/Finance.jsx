@@ -547,7 +547,7 @@ export default function Finance() {
         <div className="card table-card finance-ledger">
           <div className="finance-ledger-heading">
             <h3>Buku Kas</h3>
-            <button className="btn btn-primary" type="button" onClick={openNewEntry}>+ Tambah catatan</button>
+            <button className="btn btn-primary finance-add-entry-button" type="button" onClick={openNewEntry}>+ Tambah catatan</button>
           </div>
           {report.pending_expedition_count > 0 && (
             <div className="finance-pending-alert" role="alert">

@@ -623,7 +623,7 @@ export default function Products() {
               </button>
             )}
           </div>
-          <button className="btn btn-primary" onClick={openAdd}>+ Tambah Produk</button>
+          <button className="btn btn-primary products-add-button" onClick={openAdd}>+ Tambah Produk</button>
         </div>
       </div>
 

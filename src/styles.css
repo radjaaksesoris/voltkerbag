@@ -4340,6 +4340,36 @@ label { display: block; margin-bottom: 6px; color: var(--muted); font-size: 11px
   border-radius: 5px 16px 5px 16px;
   white-space: nowrap;
 }
+.app:not(.menu-landing) .products-toolbar > .products-add-button {
+  border-color: #9c741d;
+  background: linear-gradient(145deg, #c3a13d, #a98527);
+  color: #2f2612;
+  box-shadow: 0 5px 12px rgba(89, 66, 15, .16);
+}
+.app:not(.menu-landing) .products-toolbar > .products-add-button:hover:not(:disabled) {
+  border-color: #7d5e18;
+  background: linear-gradient(145deg, #b49131, #97751f);
+  color: #211a0d;
+}
+.app:not(.menu-landing) .products-toolbar > .products-add-button:focus-visible {
+  outline: 3px solid rgba(169, 132, 37, .38);
+  outline-offset: 3px;
+}
+.app:not(.menu-landing) .finance-ledger-heading > .finance-add-entry-button {
+  border-color: #9c741d;
+  background: linear-gradient(145deg, #c3a13d, #a98527);
+  color: #2f2612;
+  box-shadow: 0 5px 12px rgba(89, 66, 15, .16);
+}
+.app:not(.menu-landing) .finance-ledger-heading > .finance-add-entry-button:hover:not(:disabled) {
+  border-color: #7d5e18;
+  background: linear-gradient(145deg, #b49131, #97751f);
+  color: #211a0d;
+}
+.app:not(.menu-landing) .finance-ledger-heading > .finance-add-entry-button:focus-visible {
+  outline: 3px solid rgba(169, 132, 37, .38);
+  outline-offset: 3px;
+}
 .app:not(.menu-landing) .products-table-card {
   max-width: none;
   padding: clamp(14px, 2vw, 22px);
@@ -4702,12 +4732,24 @@ label { display: block; margin-bottom: 6px; color: var(--muted); font-size: 11px
   box-shadow: 0 8px 22px rgba(99, 34, 30, .07);
 }
 .app:not(.menu-landing) .finance-overview-sticky .finance-date-range {
-  grid-template-columns: minmax(0, 1.25fr) minmax(0, 1.25fr) repeat(2, minmax(90px, .75fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: stretch;
   gap: 8px;
   padding: 8px;
   border-color: #eaded8;
   border-radius: 5px 16px 5px 16px;
   background: #fffdfa;
+}
+.app:not(.menu-landing) .finance-overview-sticky .finance-date-range .dashboard-date-field + .dashboard-date-field {
+  border-left: 0;
+}
+.app:not(.menu-landing) .finance-overview-sticky .finance-date-quick-actions {
+  display: grid;
+  grid-column: 1 / -1;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  padding-top: 8px;
+  border-top: 1px solid #eaded8;
 }
 .app:not(.menu-landing) .finance-overview-sticky .finance-date-range .dashboard-date-field {
   grid-template-columns: 22px minmax(0, 1fr);
