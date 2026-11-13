@@ -463,7 +463,9 @@ export default function Finance() {
             <span className="dashboard-stat-content">
               <span>Total Hutang</span>
               <strong>{rupiah(totalCredit)}</strong>
-              <span className="debt-stat-hint">Lihat pelanggan dengan hutang</span>
+              <span className="debt-stat-hint">
+                Nama pelanggan <Icon name="arrowRight" size={14} />
+              </span>
             </span>
           </button>
           <div className="stat-card dashboard-stat-card finance-cash-card">
