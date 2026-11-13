@@ -839,6 +839,10 @@ function ActiveApp() {
           className="menu-return-flow"
           aria-hidden="true"
           onAnimationEnd={finishReturnTransition}>
+          <img
+            className="menu-return-logo"
+            src={import.meta.env.BASE_URL + 'voltker-logo-320.png'}
+            alt="" />
           <span
             className="menu-return-switch-marker"
             style={{ animationDelay: `${getMenuReturnCoverDelay()}ms` }}
