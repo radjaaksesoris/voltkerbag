@@ -77,7 +77,7 @@ export default function Products() {
     const menuWidth = 148
     const leftOfButton = rect.left - menuWidth - 8
     const left = leftOfButton >= 8 ? leftOfButton : rect.right + 8
-    const menuHeight = 132
+    const menuHeight = 90
     setActionMenuPosition({
       left: Math.min(left, window.innerWidth - menuWidth - 8),
       top: Math.min(
@@ -679,10 +679,21 @@ export default function Products() {
                   ))}
                 </td>
                 <td data-label="Stok">
-                  <span className={'badge product-stock-badge ' + (availableQuantity(p, p.unit || 'pcs') <= 5 ? 'badge-danger' : 'badge-ok')}>
-                    <span className="product-stock-title">Stok</span>
-                    <span className="product-stock-desktop">{stockLabel(p)}</span>
-                  </span>
+                  <div className="product-stock-actions">
+                    <span className={'badge product-stock-badge ' + (availableQuantity(p, p.unit || 'pcs') <= 5 ? 'badge-danger' : 'badge-ok')}>
+                      <span className="product-stock-title">Stok</span>
+                      <span className="product-stock-desktop">{stockLabel(p)}</span>
+                    </span>
+                    <button
+                      className="btn btn-sm product-stock-add-button"
+                      type="button"
+                      aria-label={'Tambah stok untuk ' + p.name}
+                      title="Tambah Stok"
+                      onClick={() => openAddStock(p)}>
+                      <Icon name="plus" size={13} />
+                      <span>Tambah Stok</span>
+                    </button>
+                  </div>
                 </td>
                 <td className="row-actions">
                   <button
@@ -724,13 +735,6 @@ export default function Products() {
           onKeyDown={navigateActionMenu}
           style={{ left: actionMenuPosition.left, top: actionMenuPosition.top }}
         >
-          <button type="button" role="menuitem" onClick={() => {
-            const product = items.find((item) => item.id === actionMenuProductId)
-            setActionMenuProductId(null)
-            if (product) openAddStock(product)
-          }}>
-            <Icon name="plus" size={14} /> Tambah Stok
-          </button>
           <button type="button" role="menuitem" onClick={() => {
             const product = items.find((item) => item.id === actionMenuProductId)
             setActionMenuProductId(null)

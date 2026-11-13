@@ -1798,6 +1798,28 @@ tbody tr:hover { background: #fbf5ed; }
 .products-table .product-price-row { white-space: normal; }
 .products-table .product-price-cell strong { font-size: 12px; overflow-wrap: anywhere; }
 .products-table .badge { display: inline-block; white-space: normal; }
+.products-table .product-stock-actions { display: grid; justify-items: stretch; gap: 5px; }
+.products-table .product-stock-add-button {
+  display: inline-flex;
+  min-width: 0;
+  min-height: 27px;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  margin: 0;
+  padding: 4px 3px;
+  border-color: #b7d1c0;
+  background: #f0f7f1;
+  color: #315f45;
+  font-size: 9px;
+  line-height: 1.15;
+}
+.products-table .product-stock-add-button span { overflow-wrap: anywhere; }
+.products-table .product-stock-add-button:hover:not(:disabled) {
+  border-color: #6f9c7d;
+  background: #e2f0e5;
+  color: #234a34;
+}
 .products-table .row-actions { display: table-cell; text-align: right; }
 .products-table .product-action-trigger { display: inline-flex; align-items: center; justify-content: center; min-width: 34px; min-height: 34px; margin: 0; padding: 6px; }
 
@@ -4729,6 +4751,23 @@ label { display: block; margin-bottom: 6px; color: var(--muted); font-size: 11px
     text-transform: uppercase;
   }
   .app:not(.menu-landing) .products-table .product-stock-badge { gap: 4px; }
+  .app:not(.menu-landing) .products-table .product-stock-actions {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .app:not(.menu-landing) .products-table .product-stock-badge {
+    min-width: 0;
+    flex: 1 1 auto;
+  }
+  .app:not(.menu-landing) .products-table .product-stock-add-button {
+    flex: 0 0 auto;
+    min-height: 24px;
+    padding: 4px 6px;
+    border-radius: 5px 10px 5px 10px;
+    font-size: 8px;
+    white-space: nowrap;
+  }
   .app:not(.menu-landing) .products-table .product-action-trigger { min-width: 30px; min-height: 30px; }
   .app:not(.menu-landing) .product-grid-pagination { flex-direction: column; gap: 8px; text-align: center; }
 }
