@@ -278,11 +278,12 @@ function ActiveApp() {
       Math.hypot(width - x, height - y)
     )) + 2
 
-    const transition = { page: nextPage, x, y, radius }
+    const transition = { page: nextPage, x, y, radius, covered: false }
     menuTransitionActive.current = true
     setMenuTransition(transition)
     menuTransitionTimer.current = window.setTimeout(() => {
       navigateToPage(nextPage)
+      setMenuTransition((current) => current ? { ...current, covered: true } : current)
       menuTransitionTimer.current = window.setTimeout(() => {
         menuTransitionTimer.current = null
         menuTransitionActive.current = false
@@ -763,14 +764,26 @@ function ActiveApp() {
       )}
       <CustomNumpad />
       {menuTransition && (
-        <div
-          className="menu-tab-transition"
-          aria-hidden="true"
-          style={{
-            '--menu-tab-x': `${menuTransition.x}px`,
-            '--menu-tab-y': `${menuTransition.y}px`,
-            '--menu-tab-radius': `${menuTransition.radius}px`
-          }} />
+        <>
+          {!menuTransition.covered && (
+            <div
+              className="menu-tab-expansion"
+              aria-hidden="true"
+              style={{
+                '--menu-tab-x': `${menuTransition.x}px`,
+                '--menu-tab-y': `${menuTransition.y}px`,
+                '--menu-tab-radius': `${menuTransition.radius}px`
+              }} />
+          )}
+          <div
+            className="menu-tab-hole-cover"
+            aria-hidden="true"
+            style={{
+              '--menu-tab-x': `${menuTransition.x}px`,
+              '--menu-tab-y': `${menuTransition.y}px`,
+              '--menu-tab-radius': `${menuTransition.radius}px`
+            }} />
+        </>
       )}
     </div>
   )
