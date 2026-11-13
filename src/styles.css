@@ -4254,13 +4254,20 @@ label { display: block; margin-bottom: 6px; color: var(--muted); font-size: 11px
   gap: 12px;
   margin: 0;
 }
-.app:not(.menu-landing) .products-search {
+.app:not(.menu-landing) .products-toolbar .products-search-field {
   grid-column: 1;
   grid-row: 1;
   width: 100%;
   min-width: 0;
+  max-width: none;
+  flex: 1 1 auto;
+}
+.app:not(.menu-landing) .products-search {
+  width: 100%;
+  min-width: 0;
   height: 46px;
   margin: 0;
+  padding-right: 42px;
   border-color: #eaded8;
   border-radius: 5px 14px 5px 14px;
   background: rgba(255, 253, 248, .95);
@@ -4359,7 +4366,16 @@ label { display: block; margin-bottom: 6px; color: var(--muted); font-size: 11px
   .app:not(.menu-landing) .products-overview-stats { grid-template-columns: minmax(0, 1.25fr) minmax(0, .75fr); gap: 8px; }
   .app:not(.menu-landing) .products-overview-stat { min-height: 64px; padding: 8px 10px; }
   .app:not(.menu-landing) .products-overview-stat > strong { font-size: 19px; }
-  .app:not(.menu-landing) .products-toolbar { gap: 8px; }
+  .app:not(.menu-landing) .products-toolbar {
+    gap: 8px;
+    padding: 5px;
+    border: 1px solid #ead8d1;
+    border-radius: 6px 20px 6px 20px;
+    background: rgba(255, 253, 248, .96);
+    box-shadow: 0 7px 18px rgba(99, 34, 30, .09);
+    backdrop-filter: blur(12px);
+  }
+  .app:not(.menu-landing) .products-search { height: 44px; min-height: 44px; padding-block: 0; }
   .app:not(.menu-landing) .products-search { height: 42px; min-height: 42px; padding-inline: 10px; font-size: 11px; }
   .app:not(.menu-landing) .products-toolbar > .btn { min-height: 42px; padding-inline: 10px; font-size: 10px; }
   .app:not(.menu-landing) .products-table-card { padding: 13px 10px; border-radius: 18px 5px 18px 5px; }
@@ -4392,6 +4408,7 @@ label { display: block; margin-bottom: 6px; color: var(--muted); font-size: 11px
   .app:not(.menu-landing) .products-table tbody tr:has(td[colspan]) { display: block; }
   .app:not(.menu-landing) .products-table tbody td {
     min-width: 0;
+    width: auto !important;
     padding: 7px 0;
     border: 0;
     background: transparent;

@@ -49,6 +49,7 @@ export default function Products() {
   const [loadError, setLoadError] = useState('')
   const [actionError, setActionError] = useState('')
   const [loaded, setLoaded] = useState(false)
+  const productsSearchRef = useRef(null)
   const nameInputRef = useRef(null)
   const originalImagePathRef = useRef(null)
   const categoryInputRef = useRef(null)
@@ -595,11 +596,33 @@ export default function Products() {
         </div>
       </section>
       <div className="products-toolbar">
-        <input className="input search products-search" placeholder="Cari produk atau kategori..."
-          value={q} onChange={(e) => {
-            setQ(e.target.value)
-            setVisibleProductCount(PRODUCT_PAGE_SIZE)
-          }} />
+        <div className="search-field products-search-field">
+          <input
+            ref={productsSearchRef}
+            className="input search products-search"
+            placeholder="Cari Item Barang..."
+            aria-label="Cari produk"
+            value={q}
+            onChange={(e) => {
+              setQ(e.target.value)
+              setVisibleProductCount(PRODUCT_PAGE_SIZE)
+            }}
+          />
+          {q && (
+            <button
+              className="search-clear"
+              type="button"
+              aria-label="Hapus pencarian"
+              title="Hapus pencarian"
+              onClick={() => {
+                setQ('')
+                setVisibleProductCount(PRODUCT_PAGE_SIZE)
+                productsSearchRef.current?.focus()
+              }}>
+              <Icon name="close" size={16} />
+            </button>
+          )}
+        </div>
         <button className="btn btn-primary" onClick={openAdd}>+ Tambah Produk</button>
       </div>
 
