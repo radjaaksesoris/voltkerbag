@@ -250,7 +250,7 @@ function ActiveApp() {
   }
 
   function finishReturnTransition(event) {
-    if (event.target !== event.currentTarget || event.animationName !== 'menu-return-flow') return
+    if (event.target !== event.currentTarget || event.animationName !== 'menu-return-reveal') return
     completeReturnTransition()
   }
 
@@ -646,6 +646,24 @@ function ActiveApp() {
             )
           })}
         </div>
+        {returningToMenu && (
+          <div
+            className="menu-return-reveal"
+            aria-hidden="true"
+            inert=""
+            onAnimationEnd={finishReturnTransition}>
+            <PageErrorBoundary>
+              <Suspense fallback={<PageLoadingFallback pageId="menu" />}>
+                <Menu
+                  items={NAV.filter((item) => item.id !== 'menu')}
+                  onNavigate={navigateToPage}
+                  onLogout={logoutFromMenu}
+                  logoutBusy={logoutBusy}
+                  logoutError={logoutError} />
+              </Suspense>
+            </PageErrorBoundary>
+          </div>
+        )}
         {page !== 'menu' && (
           <button
             className="mobile-menu-back"
@@ -673,12 +691,6 @@ function ActiveApp() {
             </div>
           </section>
         </div>
-      )}
-      {returningToMenu && (
-        <div
-          className="menu-return-flow"
-          aria-hidden="true"
-          onAnimationEnd={finishReturnTransition} />
       )}
       <CustomNumpad />
     </div>
