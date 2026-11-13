@@ -20,7 +20,15 @@ function formatPeriodDate(value) {
     .format(new Date(year, month - 1, day))
 }
 
-export default function Menu({ items, onNavigate, onLogout, logoutBusy, logoutError }) {
+export default function Menu({
+  items,
+  onNavigate,
+  onLogout,
+  logoutBusy,
+  logoutError,
+  updateAvailable = false,
+  onApplyAppUpdate
+}) {
   const [query, setQuery] = useState('')
   const [summary, setSummary] = useState(null)
   const [loadError, setLoadError] = useState('')
@@ -241,10 +249,14 @@ export default function Menu({ items, onNavigate, onLogout, logoutBusy, logoutEr
                 key={item.id}
                 className={'menu-shortcut menu-shortcut-' + (index % 4)}
                 type="button"
+                aria-label={item.id === 'refresh' && updateAvailable
+                  ? 'Perbarui Aplikasi, pembaruan tersedia'
+                  : item.label}
                 onClick={() => {
                   if (item.id === 'refresh') {
                     requestPageRefresh('menu')
-                    requestAppUpdateCheck()
+                    if (updateAvailable) onApplyAppUpdate?.()
+                    else requestAppUpdateCheck()
                   } else {
                     onNavigate(item.id)
                   }
@@ -252,6 +264,9 @@ export default function Menu({ items, onNavigate, onLogout, logoutBusy, logoutEr
                 <span className="menu-shortcut-icon"><MenuShortcutIcon name={item.icon} /></span>
                 <span className="menu-shortcut-label">{item.label}</span>
                 <span className="menu-shortcut-description">{item.description}</span>
+                {item.id === 'refresh' && updateAvailable && (
+                  <span className="menu-update-badge" aria-hidden="true">UPDATE</span>
+                )}
               </button>
             )
           ))}

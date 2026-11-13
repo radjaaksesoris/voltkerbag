@@ -645,7 +645,7 @@ function ActiveApp() {
       ? 'Buka menu browser ⋮, lalu pilih “Instal aplikasi” atau “Tambahkan ke layar utama”.'
       : 'Gunakan menu browser, lalu pilih “Instal aplikasi” atau “Install VOLTKER”.'
 
-  const pwaUpdateBanner = ((updateReady && !checkingAppUpdate && !applyingUpdate) || updateCheckError) && (
+  const pwaUpdateBanner = updateCheckError && (
     <div className="pwa-update-banner" role={updateCheckError ? 'alert' : 'status'} aria-live="polite">
       <span>
         {applyingUpdate
@@ -798,7 +798,9 @@ function ActiveApp() {
                           onNavigate={navigateFromMenu}
                           onLogout={logoutFromMenu}
                           logoutBusy={logoutBusy}
-                          logoutError={logoutError} />
+                          logoutError={logoutError}
+                          updateAvailable={updateReady}
+                          onApplyAppUpdate={applyAppUpdate} />
                       : <Page />}
                   </Suspense>
                 </PageErrorBoundary>

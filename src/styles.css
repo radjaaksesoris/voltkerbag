@@ -1180,6 +1180,22 @@ h2 {
   text-wrap: balance;
   text-shadow: 0 1px 8px rgba(91, 13, 23, .3);
 }
+.menu-update-badge {
+  position: absolute;
+  z-index: 3;
+  top: 10px;
+  right: 10px;
+  padding: 4px 7px;
+  border: 1px solid rgba(255, 255, 255, .65);
+  border-radius: 999px;
+  background: #fffaf3;
+  color: #861d26;
+  font-size: 8px;
+  font-weight: 800;
+  letter-spacing: .45px;
+  line-height: 1.2;
+  box-shadow: 0 2px 8px rgba(91, 13, 23, .2);
+}
 .menu-shortcut-description { display: none; }
 .menu-empty-state { grid-column: 1 / -1; padding: 14px; border-radius: 12px; background: rgba(255, 255, 255, .72); color: #776a64; font-size: 13px; }
 @media (max-width: 640px) {
