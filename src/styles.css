@@ -4196,9 +4196,9 @@ label { display: block; margin-bottom: 6px; color: var(--muted); font-size: 11px
   margin: -8px -8px 0;
   padding: 8px;
   border: 1px solid #761920;
-  border-bottom: 3px solid #6b151c;
   border-radius: 6px 24px 6px 24px;
   background: #8f2028;
+  box-shadow: none;
 }
 .app:not(.menu-landing) .products-overview {
   display: grid;
@@ -4379,8 +4379,8 @@ label { display: block; margin-bottom: 6px; color: var(--muted); font-size: 11px
     margin: 0 5px;
     padding: 8px;
     border-radius: 6px 20px 6px 20px;
-    border-bottom-width: 3px;
     background: #8f2028;
+    box-shadow: none;
   }
   .app:not(.menu-landing) .products-overview {
     grid-template-columns: minmax(0, 1fr);
