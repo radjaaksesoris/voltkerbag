@@ -1134,7 +1134,7 @@ h2 {
   z-index: 2;
   pointer-events: none;
   transform-origin: center top;
-  animation: menu-shortcut-drop .72s cubic-bezier(.52, .02, .88, .42) both;
+  animation: menu-shortcut-drop 1.25s cubic-bezier(.45, .02, .8, .55) both;
   will-change: transform, opacity;
 }
 .menu-landing .menu-shortcuts > .menu-shortcut.is-returning {

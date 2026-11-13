@@ -30,9 +30,6 @@ export default function Menu({ items, onNavigate, onLogout, logoutBusy, logoutEr
   const [returningShortcutId, setReturningShortcutId] = useState(null)
   const requestId = useRef(0)
   const pendingShortcutAction = useRef(null)
-  const shortcutActionTimer = useRef(null)
-
-  useEffect(() => () => window.clearTimeout(shortcutActionTimer.current), [])
 
   function startShortcutAction(id, action) {
     if (pendingShortcutAction.current) return
@@ -44,7 +41,6 @@ export default function Menu({ items, onNavigate, onLogout, logoutBusy, logoutEr
     pendingShortcutAction.current = { id, action }
     setReturningShortcutId(null)
     setDroppingShortcutId(id)
-    shortcutActionTimer.current = window.setTimeout(completeShortcutDrop, 900)
   }
 
   function completeShortcutDrop() {
@@ -52,7 +48,6 @@ export default function Menu({ items, onNavigate, onLogout, logoutBusy, logoutEr
     if (!pending) return
 
     pendingShortcutAction.current = null
-    window.clearTimeout(shortcutActionTimer.current)
     setDroppingShortcutId(null)
     pending.action()
     if (pending.id === 'refresh') setReturningShortcutId(pending.id)
@@ -60,9 +55,9 @@ export default function Menu({ items, onNavigate, onLogout, logoutBusy, logoutEr
 
   function handleShortcutAnimationEnd(event, id) {
     if (event.target !== event.currentTarget) return
-    if (droppingShortcutId === id) {
+    if (event.animationName === 'menu-shortcut-drop' && droppingShortcutId === id) {
       completeShortcutDrop()
-    } else if (returningShortcutId === id) {
+    } else if (event.animationName === 'menu-shortcut-return' && returningShortcutId === id) {
       setReturningShortcutId(null)
     }
   }
