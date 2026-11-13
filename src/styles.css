@@ -1960,6 +1960,7 @@ label { display: block; margin-bottom: 6px; color: var(--muted); font-size: 11px
 .badge-partial { background: #fff0d6; color: #855400; }
 .badge-neutral { background: #eee9df; color: #766c63; }
 .products-table .product-stock-badge {
+  position: relative;
   box-sizing: border-box;
   display: inline-flex;
   width: 100%;
@@ -1969,6 +1970,7 @@ label { display: block; margin-bottom: 6px; color: var(--muted); font-size: 11px
   padding: 4px 6px;
   white-space: normal;
 }
+.products-table .product-stock-title { display: none; }
 .form-error { margin: 0 0 12px; color: var(--danger); font-size: 12px; font-weight: 600; }
 
 /* Point of sale */
@@ -4622,9 +4624,26 @@ label { display: block; margin-bottom: 6px; color: var(--muted); font-size: 11px
     text-transform: uppercase;
     white-space: nowrap;
   }
-  .app:not(.menu-landing) .products-table tbody td[data-label="Stok"]::before { display: inline-block; margin: 0 7px 0 0; vertical-align: middle; }
+  .app:not(.menu-landing) .products-table tbody td[data-label="Stok"]::before { content: none; }
   .app:not(.menu-landing) .products-table .product-price-cell strong { font-size: 9px; }
-  .app:not(.menu-landing) .products-table .product-stock-badge { min-height: 0; padding: 4px 7px; font-size: 9px; }
+  .app:not(.menu-landing) .products-table .product-stock-badge {
+    min-height: 24px;
+    padding: 4px 7px;
+    font-size: 9px;
+  }
+  .app:not(.menu-landing) .products-table .product-stock-title {
+    position: absolute;
+    top: 2px;
+    left: 7px;
+    display: block;
+    color: currentColor;
+    font-size: 6px;
+    font-weight: 700;
+    line-height: 1;
+    letter-spacing: .3px;
+    opacity: .75;
+    text-transform: uppercase;
+  }
   .app:not(.menu-landing) .products-table .product-action-trigger { min-width: 30px; min-height: 30px; }
   .app:not(.menu-landing) .product-grid-pagination { flex-direction: column; gap: 8px; text-align: center; }
 }

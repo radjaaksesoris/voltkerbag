@@ -680,6 +680,7 @@ export default function Products() {
                 </td>
                 <td data-label="Stok">
                   <span className={'badge product-stock-badge ' + (availableQuantity(p, p.unit || 'pcs') <= 5 ? 'badge-danger' : 'badge-ok')}>
+                    <span className="product-stock-title">Stok</span>
                     <span className="product-stock-desktop">{stockLabel(p)}</span>
                   </span>
                 </td>
