@@ -26,52 +26,7 @@ export default function Menu({ items, onNavigate, onLogout, logoutBusy, logoutEr
   const [loadError, setLoadError] = useState('')
   const [loaded, setLoaded] = useState(false)
   const [activeSummary, setActiveSummary] = useState(0)
-  const [droppingShortcutId, setDroppingShortcutId] = useState(null)
-  const [returningShortcutId, setReturningShortcutId] = useState(null)
-  const [dropDistance, setDropDistance] = useState(0)
   const requestId = useRef(0)
-  const pendingShortcutAction = useRef(null)
-
-  function startShortcutAction(id, action, element) {
-    if (pendingShortcutAction.current) return
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-      action()
-      return
-    }
-
-    const shortcutRect = element.getBoundingClientRect()
-    const contentBottom = element.closest('.content')?.getBoundingClientRect().bottom ?? window.innerHeight
-    pendingShortcutAction.current = { id, action }
-    setDropDistance(Math.max(0, contentBottom - shortcutRect.top + shortcutRect.height + 16))
-    setReturningShortcutId(null)
-    setDroppingShortcutId(id)
-  }
-
-  function completeShortcutDrop() {
-    const pending = pendingShortcutAction.current
-    if (!pending) return
-
-    pendingShortcutAction.current = null
-    setDroppingShortcutId(null)
-    setDropDistance(0)
-    pending.action()
-    if (pending.id === 'refresh') setReturningShortcutId(pending.id)
-  }
-
-  function handleShortcutAnimationEnd(event, id) {
-    if (event.target !== event.currentTarget) return
-    if (event.animationName === 'menu-shortcut-drop' && droppingShortcutId === id) {
-      completeShortcutDrop()
-    } else if (event.animationName === 'menu-shortcut-return' && returningShortcutId === id) {
-      setReturningShortcutId(null)
-    }
-  }
-
-  function shortcutClassName(index, id) {
-    return 'menu-shortcut menu-shortcut-' + (index % 4)
-      + (droppingShortcutId === id ? ' is-dropping' : '')
-      + (returningShortcutId === id ? ' is-returning' : '')
-  }
 
   useEffect(() => {
     let active = true
@@ -275,19 +230,8 @@ export default function Menu({ items, onNavigate, onLogout, logoutBusy, logoutEr
             item.id === 'chat' ? (
               <a
                 key={item.id}
-                className={shortcutClassName(index, item.id)}
-                style={droppingShortcutId === item.id
-                  ? { '--menu-drop-distance': `${dropDistance}px` }
-                  : undefined}
-                href={import.meta.env.BASE_URL + 'chat/?mode=chat'}
-                onAnimationEnd={(event) => handleShortcutAnimationEnd(event, item.id)}
-                onClick={(event) => {
-                  if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return
-                  event.preventDefault()
-                  startShortcutAction(item.id, () => {
-                    window.location.assign(import.meta.env.BASE_URL + 'chat/?mode=chat')
-                  }, event.currentTarget)
-                }}>
+                className={'menu-shortcut menu-shortcut-' + (index % 4)}
+                href={import.meta.env.BASE_URL + 'chat/?mode=chat'}>
                 <span className="menu-shortcut-icon"><MenuShortcutIcon name={item.icon} /></span>
                 <span className="menu-shortcut-label">{item.label}</span>
                 <span className="menu-shortcut-description">{item.description}</span>
@@ -295,17 +239,9 @@ export default function Menu({ items, onNavigate, onLogout, logoutBusy, logoutEr
             ) : (
               <button
                 key={item.id}
-                className={shortcutClassName(index, item.id)}
-                style={droppingShortcutId === item.id
-                  ? { '--menu-drop-distance': `${dropDistance}px` }
-                  : undefined}
+                className={'menu-shortcut menu-shortcut-' + (index % 4)}
                 type="button"
-                onAnimationEnd={(event) => handleShortcutAnimationEnd(event, item.id)}
-                onClick={(event) => startShortcutAction(
-                  item.id,
-                  () => item.id === 'refresh' ? requestPageRefresh('menu') : onNavigate(item.id),
-                  event.currentTarget
-                )}>
+                onClick={() => item.id === 'refresh' ? requestPageRefresh('menu') : onNavigate(item.id)}>
                 <span className="menu-shortcut-icon"><MenuShortcutIcon name={item.icon} /></span>
                 <span className="menu-shortcut-label">{item.label}</span>
                 <span className="menu-shortcut-description">{item.description}</span>
