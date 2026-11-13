@@ -10,6 +10,7 @@ import { APP_TEMPORARILY_DISABLED } from './appAvailability.js'
 import { clearRequestedAppMode } from './appMode.js'
 
 const CHUNK_RELOAD_KEY = 'voltker:chunk-reload-attempted'
+const MENU_RETURN_TRANSITION_MS = 1100
 
 function PageLoadingFallback({ pageId }) {
   if (pageId === 'dashboard') {
@@ -215,6 +216,7 @@ function ActiveApp() {
   const [updateReady, setUpdateReady] = useState(false)
   const [applyingUpdate, setApplyingUpdate] = useState(false)
   const [returningToMenu, setReturningToMenu] = useState(false)
+  const [returningFromPage, setReturningFromPage] = useState(null)
   const currentPage = NAV.find((n) => n.id === page)
   const contentRef = useRef(null)
   const serviceWorkerRegistration = useRef(null)
@@ -238,8 +240,9 @@ function ActiveApp() {
       return
     }
 
+    setReturningFromPage(page)
     setReturningToMenu(true)
-    returnTransitionTimer.current = window.setTimeout(completeReturnTransition, 1250)
+    returnTransitionTimer.current = window.setTimeout(completeReturnTransition, MENU_RETURN_TRANSITION_MS)
   }
 
   function completeReturnTransition() {
@@ -247,6 +250,7 @@ function ActiveApp() {
     returnTransitionTimer.current = null
     navigateToPage('menu')
     setReturningToMenu(false)
+    setReturningFromPage(null)
   }
 
   function finishReturnTransition(event) {
@@ -627,11 +631,19 @@ function ActiveApp() {
 
         {pwaUpdateBanner}
 
-        <div className="content" ref={contentRef}>
+        <div className={'content' + (returningToMenu ? ' menu-returning' : '')} ref={contentRef}>
           {NAV.filter(({ id }) => visitedPages.has(id)).map(({ id }) => {
             const Page = PAGES[id]
+            const isReturnTarget = returningToMenu && id === 'menu'
+            const isReturnSource = returningToMenu && id === returningFromPage
+            const pageIsVisible = page === id || isReturnTarget || isReturnSource
             return (
-              <div key={id} className={'page-slot page-slot-' + id} hidden={page !== id}>
+              <div
+                key={id}
+                className={'page-slot page-slot-' + id
+                  + (isReturnTarget ? ' page-slot-return-target' : '')
+                  + (isReturnSource ? ' page-slot-return-source' : '')}
+                hidden={!pageIsVisible}>
                 <PageErrorBoundary>
                   <Suspense fallback={<PageLoadingFallback pageId={id} />}>
                     {id === 'menu'
