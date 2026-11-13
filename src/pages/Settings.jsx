@@ -378,6 +378,27 @@ export default function Settings() {
 
   return (
     <div className="page settings-page">
+      <header className="settings-overview">
+        <div className="settings-overview-copy">
+          <span className="settings-eyebrow">PREFERENSI TOKO</span>
+          <h2>Pengaturan</h2>
+          <p>Kelola daftar pelanggan, vendor, dan ekspedisi untuk operasional toko.</p>
+        </div>
+        <div className="settings-overview-stats" aria-label="Ringkasan data pengaturan">
+          <div className="settings-overview-stat">
+            <span>Pelanggan</span>
+            <strong>{customers.length}</strong>
+          </div>
+          <div className="settings-overview-stat">
+            <span>Vendor</span>
+            <strong>{vendors.length}</strong>
+          </div>
+          <div className="settings-overview-stat">
+            <span>Ekspedisi</span>
+            <strong>{expeditions.length}</strong>
+          </div>
+        </div>
+      </header>
       <details className="card settings-section" defaultOpen>
         <summary className="settings-section-heading">
           <div>

@@ -325,7 +325,7 @@ export default function Finance() {
   }
 
   if (!loaded) return (
-    <div className="page">
+    <div className="page finance-page">
       <div className="finance-overview-sticky">
         <div className="finance-date-filter">
           <div className="finance-date-range">
@@ -387,7 +387,7 @@ export default function Finance() {
   }
 
   return (
-    <div className="page">
+    <div className="page finance-page">
       {actionError && !showEntryForm && <p className="form-error" role="alert">{actionError}</p>}
       <div className="finance-overview-sticky">
         <div className="finance-date-filter">
