@@ -1086,6 +1086,14 @@ export default function ChatApp() {
     }
   }
 
+  if (!session && checkingSession) {
+    return (
+      <main className="chat-loading" role="status" aria-live="polite">
+        Memeriksa sesi...
+      </main>
+    )
+  }
+
   if (!session) {
     return (
       <LoginScreen
