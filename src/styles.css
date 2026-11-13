@@ -2631,8 +2631,8 @@ label { display: block; margin-bottom: 6px; color: var(--muted); font-size: 11px
     width: 100vw;
     height: 300dvh;
     transform: translateY(0);
-    border-radius: 50% / 3%;
-    background: linear-gradient(180deg, #c4343c, #7f1c22 50%, #c4343c);
+    border-radius: 50vw / 50vw;
+    background: #b5282e;
     pointer-events: none;
     will-change: transform;
     animation: menu-return-flow 1.1s cubic-bezier(.65, 0, .35, 1) forwards;
