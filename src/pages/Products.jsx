@@ -577,53 +577,55 @@ export default function Products() {
   return (
     <div className="page products-page">
       {actionError && <p className="form-error" role="alert">{actionError}</p>}
-      <section className="products-overview">
-        <div className="products-overview-copy">
-          <span className="products-eyebrow">INVENTARIS TOKO</span>
-          <h2>Stok barang</h2>
-          <p>Kelola jumlah stok, modal, dan harga jual produk.</p>
-        </div>
-        <div className="products-overview-stats">
-          <div className="products-overview-stat">
-            <span>Total produk</span>
-            <strong>{items.length}</strong>
+      <div className="products-sticky-header">
+        <section className="products-overview">
+          <div className="products-overview-copy">
+            <span className="products-eyebrow">INVENTARIS TOKO</span>
+            <h2>Stok barang</h2>
+            <p>Kelola jumlah stok, modal, dan harga jual produk.</p>
           </div>
-          <div className="products-overview-stat products-low-stock-stat">
-            <span>Stok menipis</span>
-            <strong>{lowStock.length}</strong>
-            <small>5 atau kurang</small>
+          <div className="products-overview-stats">
+            <div className="products-overview-stat">
+              <span>Total produk</span>
+              <strong>{items.length}</strong>
+            </div>
+            <div className="products-overview-stat products-low-stock-stat">
+              <span>Stok menipis</span>
+              <strong>{lowStock.length}</strong>
+              <small>5 atau kurang</small>
+            </div>
           </div>
-        </div>
-      </section>
-      <div className="products-toolbar">
-        <div className="search-field products-search-field">
-          <input
-            ref={productsSearchRef}
-            className="input search products-search"
-            placeholder="Cari Item Barang..."
-            aria-label="Cari produk"
-            value={q}
-            onChange={(e) => {
-              setQ(e.target.value)
-              setVisibleProductCount(PRODUCT_PAGE_SIZE)
-            }}
-          />
-          {q && (
-            <button
-              className="search-clear"
-              type="button"
-              aria-label="Hapus pencarian"
-              title="Hapus pencarian"
-              onClick={() => {
-                setQ('')
+        </section>
+        <div className="products-toolbar">
+          <div className="search-field products-search-field">
+            <input
+              ref={productsSearchRef}
+              className="input search products-search"
+              placeholder="Cari Item Barang..."
+              aria-label="Cari produk"
+              value={q}
+              onChange={(e) => {
+                setQ(e.target.value)
                 setVisibleProductCount(PRODUCT_PAGE_SIZE)
-                productsSearchRef.current?.focus()
-              }}>
-              <Icon name="close" size={16} />
-            </button>
-          )}
+              }}
+            />
+            {q && (
+              <button
+                className="search-clear"
+                type="button"
+                aria-label="Hapus pencarian"
+                title="Hapus pencarian"
+                onClick={() => {
+                  setQ('')
+                  setVisibleProductCount(PRODUCT_PAGE_SIZE)
+                  productsSearchRef.current?.focus()
+                }}>
+                <Icon name="close" size={16} />
+              </button>
+            )}
+          </div>
+          <button className="btn btn-primary" onClick={openAdd}>+ Tambah Produk</button>
         </div>
-        <button className="btn btn-primary" onClick={openAdd}>+ Tambah Produk</button>
       </div>
 
       <div className="card table-card products-table-card">
