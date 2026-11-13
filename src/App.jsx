@@ -11,6 +11,28 @@ import { clearRequestedAppMode } from './appMode.js'
 
 const CHUNK_RELOAD_KEY = 'voltker:chunk-reload-attempted'
 
+function getMenuReturnCoverDelay() {
+  const viewportHeight = window.innerHeight
+  if (!viewportHeight) return 0
+
+  const coverProgress = Math.min(1, (viewportHeight + window.innerWidth / 2) / (viewportHeight * 4))
+  let low = 0
+  let high = 1
+
+  for (let index = 0; index < 24; index += 1) {
+    const t = (low + high) / 2
+    const progress = 3 * (1 - t) * t * t + t * t * t
+    if (progress < coverProgress) low = t
+    else high = t
+  }
+
+  const t = (low + high) / 2
+  const timeProgress = 3 * (1 - t) ** 2 * t * 0.65
+    + 3 * (1 - t) * t * t * 0.35
+    + t * t * t
+  return timeProgress * 1100
+}
+
 function PageLoadingFallback({ pageId }) {
   if (pageId === 'dashboard') {
     return (
@@ -247,6 +269,11 @@ function ActiveApp() {
     returnTransitionTimer.current = null
     navigateToPage('menu')
     setReturningToMenu(false)
+  }
+
+  function switchToMenuWhenCovered(event) {
+    if (event.target !== event.currentTarget || event.animationName !== 'menu-return-switch') return
+    navigateToPage('menu')
   }
 
   function finishReturnTransition(event) {
@@ -680,7 +707,12 @@ function ActiveApp() {
         <div
           className="menu-return-flow"
           aria-hidden="true"
-          onAnimationEnd={finishReturnTransition} />
+          onAnimationEnd={finishReturnTransition}>
+          <span
+            className="menu-return-switch-marker"
+            style={{ animationDelay: `${getMenuReturnCoverDelay()}ms` }}
+            onAnimationEnd={switchToMenuWhenCovered} />
+        </div>
       )}
       <CustomNumpad />
     </div>
