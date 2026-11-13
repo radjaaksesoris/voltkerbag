@@ -237,19 +237,13 @@ function ActiveApp() {
   const [updateReady, setUpdateReady] = useState(false)
   const [applyingUpdate, setApplyingUpdate] = useState(false)
   const [returningToMenu, setReturningToMenu] = useState(false)
-  const [menuTransition, setMenuTransition] = useState(null)
   const currentPage = NAV.find((n) => n.id === page)
   const contentRef = useRef(null)
   const serviceWorkerRegistration = useRef(null)
   const pendingLoginTarget = useRef(null)
   const returnTransitionTimer = useRef(null)
-  const menuTransitionTimer = useRef(null)
-  const menuTransitionActive = useRef(false)
 
-  useEffect(() => () => {
-    window.clearTimeout(returnTransitionTimer.current)
-    window.clearTimeout(menuTransitionTimer.current)
-  }, [])
+  useEffect(() => () => window.clearTimeout(returnTransitionTimer.current), [])
 
   function navigateToPage(nextPage) {
     setVisitedPages((visited) => {
@@ -257,39 +251,6 @@ function ActiveApp() {
       return new Set([...visited, nextPage])
     })
     setPage(nextPage)
-  }
-
-  function navigateFromMenu(nextPage, source) {
-    if (menuTransitionActive.current) return
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-      navigateToPage(nextPage)
-      return
-    }
-
-    const bounds = source.getBoundingClientRect()
-    const x = bounds.left + bounds.width / 2
-    const y = bounds.top + bounds.height / 2
-    const width = window.innerWidth
-    const height = window.innerHeight
-    const radius = Math.ceil(Math.max(
-      Math.hypot(x, y),
-      Math.hypot(width - x, y),
-      Math.hypot(x, height - y),
-      Math.hypot(width - x, height - y)
-    )) + 2
-
-    const transition = { page: nextPage, x, y, radius, covered: false }
-    menuTransitionActive.current = true
-    setMenuTransition(transition)
-    menuTransitionTimer.current = window.setTimeout(() => {
-      navigateToPage(nextPage)
-      setMenuTransition((current) => current ? { ...current, covered: true } : current)
-      menuTransitionTimer.current = window.setTimeout(() => {
-        menuTransitionTimer.current = null
-        menuTransitionActive.current = false
-        setMenuTransition(null)
-      }, 600)
-    }, 520)
   }
 
   function returnToMenu() {
@@ -712,7 +673,7 @@ function ActiveApp() {
                     {id === 'menu'
                       ? <Page
                           items={NAV.filter((item) => item.id !== 'menu')}
-                          onNavigate={(nextPage, source) => navigateFromMenu(nextPage, source)}
+                          onNavigate={navigateToPage}
                           onLogout={logoutFromMenu}
                           logoutBusy={logoutBusy}
                           logoutError={logoutError} />
@@ -763,28 +724,6 @@ function ActiveApp() {
         </div>
       )}
       <CustomNumpad />
-      {menuTransition && (
-        <>
-          {!menuTransition.covered && (
-            <div
-              className="menu-tab-expansion"
-              aria-hidden="true"
-              style={{
-                '--menu-tab-x': `${menuTransition.x}px`,
-                '--menu-tab-y': `${menuTransition.y}px`,
-                '--menu-tab-radius': `${menuTransition.radius}px`
-              }} />
-          )}
-          <div
-            className="menu-tab-hole-cover"
-            aria-hidden="true"
-            style={{
-              '--menu-tab-x': `${menuTransition.x}px`,
-              '--menu-tab-y': `${menuTransition.y}px`,
-              '--menu-tab-radius': `${menuTransition.radius}px`
-            }} />
-        </>
-      )}
     </div>
   )
 }

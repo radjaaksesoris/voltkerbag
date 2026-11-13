@@ -567,43 +567,6 @@ button:focus-visible, input:focus-visible, select:focus-visible {
 .menu-landing .sidebar,
 .menu-landing .topbar { display: none; }
 .menu-landing .content { width: 100%; max-width: none; padding: 28px clamp(18px, 3vw, 42px); }
-@property --menu-tab-hole-radius {
-  syntax: '<length>';
-  inherits: false;
-  initial-value: 0px;
-}
-.menu-tab-expansion,
-.menu-tab-hole-cover {
-  position: fixed;
-  z-index: 2000;
-  inset: 0;
-  pointer-events: all;
-}
-.menu-tab-expansion {
-  background: #7b1e24;
-  clip-path: circle(0 at var(--menu-tab-x) var(--menu-tab-y));
-  animation: menu-tab-expand 520ms cubic-bezier(.2, .8, .2, 1) forwards;
-  will-change: clip-path;
-}
-.menu-tab-hole-cover {
-  opacity: 0;
-  background: radial-gradient(
-    circle at var(--menu-tab-x) var(--menu-tab-y),
-    transparent 0,
-    transparent var(--menu-tab-hole-radius),
-    #7b1e24 calc(var(--menu-tab-hole-radius) + 1px)
-  );
-  animation: menu-tab-open-hole 600ms cubic-bezier(.2, .8, .2, 1) 500ms forwards;
-  will-change: opacity, --menu-tab-hole-radius;
-}
-@keyframes menu-tab-expand {
-  to { clip-path: circle(var(--menu-tab-radius) at var(--menu-tab-x) var(--menu-tab-y)); }
-}
-@keyframes menu-tab-open-hole {
-  0% { opacity: 0; --menu-tab-hole-radius: 0px; }
-  3.3333% { opacity: 1; --menu-tab-hole-radius: 0px; }
-  100% { opacity: 1; --menu-tab-hole-radius: var(--menu-tab-radius); }
-}
 .sidebar-foot {
   display: flex;
   align-items: center;
