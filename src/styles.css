@@ -2631,7 +2631,7 @@ label { display: block; margin-bottom: 6px; color: var(--muted); font-size: 11px
     width: 100vw;
     height: 300dvh;
     transform: translateY(0);
-    border-radius: 50% / 12%;
+    border-radius: 50% / 3%;
     background: linear-gradient(180deg, #c4343c, #7f1c22 50%, #c4343c);
     pointer-events: none;
     will-change: transform;
