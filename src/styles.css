@@ -1094,8 +1094,7 @@ h2 {
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 20px 18px;
 }
-.menu-landing .menu-shortcuts > .menu-shortcut,
-.app.returning-to-menu .page-slot.is-return-target .menu-shortcuts > .menu-shortcut {
+.menu-landing .menu-shortcuts > .menu-shortcut {
   position: relative;
   isolation: isolate;
   display: flex;
@@ -1200,8 +1199,7 @@ h2 {
   .menu-list-section { gap: 7px; }
   .menu-list-heading h2 { font-size: 24px; }
   .menu-shortcuts { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px 14px; }
-  .menu-landing .menu-shortcuts > .menu-shortcut,
-  .app.returning-to-menu .page-slot.is-return-target .menu-shortcuts > .menu-shortcut { min-height: 156px; padding: 13px 12px; border-radius: 22px 7px 22px 7px; }
+  .menu-landing .menu-shortcuts > .menu-shortcut { min-height: 156px; padding: 13px 12px; border-radius: 22px 7px 22px 7px; }
   .menu-shortcut::before { top: -38px; right: -29px; width: 102px; height: 102px; }
   .menu-art-icon { right: -7px; width: clamp(68px, 19vw, 88px); height: clamp(68px, 19vw, 88px); }
   .menu-shortcut-label { max-width: 92%; font-size: clamp(12px, 3.5vw, 15px); }
@@ -2597,32 +2595,6 @@ label { display: block; margin-bottom: 6px; color: var(--muted); font-size: 11px
   .main { width: 100%; }
   .content { padding-bottom: calc(84px + env(safe-area-inset-bottom)); }
   .menu-landing .content { padding: calc(12px + env(safe-area-inset-top)) 12px calc(16px + env(safe-area-inset-bottom)); }
-  .app.returning-to-menu .content {
-    z-index: 11;
-    overflow: visible;
-  }
-  .app.returning-to-menu .page-slot.is-return-target,
-  .app.returning-to-menu .page-slot.is-return-source {
-    position: fixed;
-    inset: 0;
-    width: auto;
-    overflow-y: auto;
-    overscroll-behavior: contain;
-    pointer-events: none;
-  }
-  .app.returning-to-menu .page-slot.is-return-target {
-    z-index: 20;
-    padding: calc(12px + env(safe-area-inset-top)) 15px calc(16px + env(safe-area-inset-bottom));
-    background: linear-gradient(110deg, #f5e5e0, #f8f5ee);
-  }
-  .app.returning-to-menu .page-slot.is-return-source {
-    z-index: 30;
-    padding: calc(14px + env(safe-area-inset-top)) 15px calc(84px + env(safe-area-inset-bottom));
-    background: var(--bg);
-    animation: menu-return-source-reveal 1.1s cubic-bezier(.65, 0, .35, 1) both;
-    will-change: clip-path;
-  }
-  .app.returning-to-menu .page-slot.is-return-target .menu-page { width: 100%; }
   .sidebar { display: none; }
   .nav-toggle { display: none; }
   .mobile-menu-back {
@@ -2652,33 +2624,41 @@ label { display: block; margin-bottom: 6px; color: var(--muted); font-size: 11px
   .mobile-menu-back:focus-visible { outline: 3px solid rgba(181, 40, 46, .42); outline-offset: 3px; }
   .menu-return-flow {
     position: fixed;
-    z-index: 40;
+    z-index: 2000;
     top: 100dvh;
     right: 0;
     left: 0;
     display: flex;
     width: 100vw;
-    height: 20dvh;
+    height: 300dvh;
     align-items: center;
     justify-content: center;
-    transform: translate3d(0, 0, 0);
+    transform: translateY(0);
     border-radius: 50% / 12%;
     background: linear-gradient(180deg, #c4343c, #7f1c22 50%, #c4343c);
     color: #fffaf3;
     font-size: 26px;
     font-weight: 700;
     pointer-events: none;
-    contain: paint;
-    backface-visibility: hidden;
-    will-change: transform;
     animation: menu-return-flow 1.1s cubic-bezier(.65, 0, .35, 1) forwards;
   }
-  @keyframes menu-return-flow {
-    to { transform: translate3d(0, -120dvh, 0); }
+  .menu-return-flow img {
+    display: block;
+    width: min(360px, 84vw);
+    height: auto;
+    filter: brightness(0) invert(1);
+    animation: menu-return-logo-flow 1.1s cubic-bezier(.45, .05, .55, .95) both;
+    will-change: transform, opacity;
   }
-  @keyframes menu-return-source-reveal {
-    from { clip-path: inset(0 0 0 0); }
-    to { clip-path: inset(0 0 100% 0); }
+  @keyframes menu-return-logo-flow {
+    0% { transform: translateY(14vh) scale(.9); opacity: 0; }
+    28% { transform: translateY(7vh) scale(.96); opacity: .8; }
+    52% { transform: translateY(0) scale(1); opacity: 1; }
+    76% { transform: translateY(-9vh) scale(1.04); opacity: .85; }
+    100% { transform: translateY(-20vh) scale(1.08); opacity: 0; }
+  }
+  @keyframes menu-return-flow {
+    to { transform: translateY(-133.3333%); }
   }
   .topbar { min-height: 70px; padding: 10px 14px; }
   .topbar-start { flex: 1; gap: 9px; }
