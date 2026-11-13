@@ -259,6 +259,7 @@ function renderChatText(text, formatCurrencyAsTable = true, onSummaryMetricClick
 export default function ChatApp() {
   const [session, setSession] = useState(null)
   const [checkingSession, setCheckingSession] = useState(true)
+  const pendingLoginTarget = useRef(null)
   const [connectionError, setConnectionError] = useState('')
   const [assistantConnection, setAssistantConnection] = useState({
     status: 'checking',
@@ -568,6 +569,7 @@ export default function ChatApp() {
           setMessages([])
           setProductCreation(null)
         } else if (nextSession) {
+          if (pendingLoginTarget.current === 'table') return
           setSession(nextSession)
           setConnectionError('')
         }
@@ -1102,13 +1104,21 @@ export default function ChatApp() {
         connectionError={connectionError}
         updateBanner={null}
         defaultAppMode="chat"
+        onLoginStart={(targetApp) => {
+          pendingLoginTarget.current = targetApp
+        }}
+        onLoginError={() => {
+          pendingLoginTarget.current = null
+        }}
         onSignedIn={async (nextSession, targetApp) => {
           if (targetApp === 'table') {
+            pendingLoginTarget.current = 'table'
             const { handoffSession } = await import('../supabaseSync')
             handoffSession(nextSession)
             window.location.assign(import.meta.env.BASE_URL + '?mode=table')
             return
           }
+          pendingLoginTarget.current = null
           setSession(nextSession)
           setConnectionError('')
         }}
