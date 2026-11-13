@@ -231,7 +231,7 @@
   left: 50%;
   width: 300%;
   height: 100%;
-  border-radius: 150px;
+  border-radius: 50%;
   background: var(--auth-primary);
   z-index: 2;
   transition: 1.1s ease-in-out;
@@ -331,7 +331,7 @@
     top: 66%;
     width: 100%;
     height: 300%;
-    border-radius: 20vw;
+    border-radius: 50%;
     background: #7b1e24;
   }
   .auth-container.active::before { left: 0; top: -266%; }
