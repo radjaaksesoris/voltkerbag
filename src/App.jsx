@@ -245,8 +245,6 @@ function ActiveApp() {
   const returnTransitionTimer = useRef(null)
   const menuTransitionTimer = useRef(null)
   const menuTransitionActive = useRef(false)
-  const menuTransitionPhase = useRef(null)
-  const menuTransitionData = useRef(null)
 
   useEffect(() => () => {
     window.clearTimeout(returnTransitionTimer.current)
@@ -280,44 +278,17 @@ function ActiveApp() {
       Math.hypot(width - x, height - y)
     )) + 2
 
-    const transition = { page: nextPage, x, y, radius, phase: 'expand' }
+    const transition = { page: nextPage, x, y, radius }
     menuTransitionActive.current = true
-    menuTransitionPhase.current = 'expand'
-    menuTransitionData.current = transition
     setMenuTransition(transition)
-    menuTransitionTimer.current = window.setTimeout(startMenuReveal, 700)
-  }
-
-  function startMenuReveal() {
-    if (!menuTransitionActive.current || menuTransitionPhase.current !== 'expand') return
-    const transition = menuTransitionData.current
-    if (!transition) return
-
-    window.clearTimeout(menuTransitionTimer.current)
-    menuTransitionTimer.current = null
-    menuTransitionPhase.current = 'reveal'
-    navigateToPage(transition.page)
-    const revealTransition = { ...transition, phase: 'reveal' }
-    menuTransitionData.current = revealTransition
-    setMenuTransition(revealTransition)
-    menuTransitionTimer.current = window.setTimeout(finishMenuReveal, 750)
-  }
-
-  function finishMenuExpansion(event) {
-    if (event.target !== event.currentTarget || event.animationName !== 'menu-tab-expand') return
-    startMenuReveal()
-  }
-
-  function finishMenuReveal(event) {
-    if (event && (event.target !== event.currentTarget || event.animationName !== 'menu-tab-hole-expand')) return
-    if (menuTransitionPhase.current !== 'reveal') return
-
-    window.clearTimeout(menuTransitionTimer.current)
-    menuTransitionTimer.current = null
-    menuTransitionActive.current = false
-    menuTransitionPhase.current = null
-    menuTransitionData.current = null
-    setMenuTransition(null)
+    menuTransitionTimer.current = window.setTimeout(() => {
+      navigateToPage(nextPage)
+      menuTransitionTimer.current = window.setTimeout(() => {
+        menuTransitionTimer.current = null
+        menuTransitionActive.current = false
+        setMenuTransition(null)
+      }, 600)
+    }, 520)
   }
 
   function returnToMenu() {
@@ -792,51 +763,14 @@ function ActiveApp() {
       )}
       <CustomNumpad />
       {menuTransition && (
-        menuTransition.phase === 'expand'
-          ? <div
-              className="menu-tab-expansion"
-              aria-hidden="true"
-              style={{
-                '--menu-tab-x': `${menuTransition.x}px`,
-                '--menu-tab-y': `${menuTransition.y}px`,
-                '--menu-tab-radius': `${menuTransition.radius}px`,
-                left: `${menuTransition.x}px`,
-                top: `${menuTransition.y}px`,
-                width: `${menuTransition.radius * 2}px`,
-                height: `${menuTransition.radius * 2}px`
-              }}
-              onAnimationEnd={finishMenuExpansion} />
-          : <svg
-              className="menu-tab-reveal"
-              aria-hidden="true"
-              focusable="false"
-              viewBox={`0 0 ${window.innerWidth} ${window.innerHeight}`}
-              preserveAspectRatio="none">
-              <defs>
-                <mask
-                  id="menu-tab-reveal-mask"
-                  maskUnits="userSpaceOnUse"
-                  x="0"
-                  y="0"
-                  width={window.innerWidth}
-                  height={window.innerHeight}>
-                  <rect width={window.innerWidth} height={window.innerHeight} fill="white" />
-                  <circle
-                    className="menu-tab-hole"
-                    cx={menuTransition.x}
-                    cy={menuTransition.y}
-                    r="0"
-                    fill="black"
-                    style={{ '--menu-tab-radius': `${menuTransition.radius}px` }}
-                    onAnimationEnd={finishMenuReveal} />
-                </mask>
-              </defs>
-              <rect
-                width={window.innerWidth}
-                height={window.innerHeight}
-                fill="#7b1e24"
-                mask="url(#menu-tab-reveal-mask)" />
-            </svg>
+        <div
+          className="menu-tab-transition"
+          aria-hidden="true"
+          style={{
+            '--menu-tab-x': `${menuTransition.x}px`,
+            '--menu-tab-y': `${menuTransition.y}px`,
+            '--menu-tab-radius': `${menuTransition.radius}px`
+          }} />
       )}
     </div>
   )
