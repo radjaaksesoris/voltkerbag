@@ -300,18 +300,24 @@ function ActiveApp() {
     const revealTransition = { ...transition, phase: 'reveal' }
     menuTransitionData.current = revealTransition
     setMenuTransition(revealTransition)
-    menuTransitionTimer.current = window.setTimeout(() => {
-      menuTransitionTimer.current = null
-      menuTransitionActive.current = false
-      menuTransitionPhase.current = null
-      menuTransitionData.current = null
-      setMenuTransition(null)
-    }, 650)
+    menuTransitionTimer.current = window.setTimeout(finishMenuReveal, 750)
   }
 
   function finishMenuExpansion(event) {
     if (event.target !== event.currentTarget || event.animationName !== 'menu-tab-expand') return
     startMenuReveal()
+  }
+
+  function finishMenuReveal(event) {
+    if (event && (event.target !== event.currentTarget || event.animationName !== 'menu-tab-hole-expand')) return
+    if (menuTransitionPhase.current !== 'reveal') return
+
+    window.clearTimeout(menuTransitionTimer.current)
+    menuTransitionTimer.current = null
+    menuTransitionActive.current = false
+    menuTransitionPhase.current = null
+    menuTransitionData.current = null
+    setMenuTransition(null)
   }
 
   function returnToMenu() {
@@ -800,14 +806,37 @@ function ActiveApp() {
                 height: `${menuTransition.radius * 2}px`
               }}
               onAnimationEnd={finishMenuExpansion} />
-          : <div
+          : <svg
               className="menu-tab-reveal"
               aria-hidden="true"
-              style={{
-                '--menu-tab-x': `${menuTransition.x}px`,
-                '--menu-tab-y': `${menuTransition.y}px`,
-                '--menu-tab-radius': `${menuTransition.radius}px`
-              }} />
+              focusable="false"
+              viewBox={`0 0 ${window.innerWidth} ${window.innerHeight}`}
+              preserveAspectRatio="none">
+              <defs>
+                <mask
+                  id="menu-tab-reveal-mask"
+                  maskUnits="userSpaceOnUse"
+                  x="0"
+                  y="0"
+                  width={window.innerWidth}
+                  height={window.innerHeight}>
+                  <rect width={window.innerWidth} height={window.innerHeight} fill="white" />
+                  <circle
+                    className="menu-tab-hole"
+                    cx={menuTransition.x}
+                    cy={menuTransition.y}
+                    r="0"
+                    fill="black"
+                    style={{ '--menu-tab-radius': `${menuTransition.radius}px` }}
+                    onAnimationEnd={finishMenuReveal} />
+                </mask>
+              </defs>
+              <rect
+                width={window.innerWidth}
+                height={window.innerHeight}
+                fill="#7b1e24"
+                mask="url(#menu-tab-reveal-mask)" />
+            </svg>
       )}
     </div>
   )
