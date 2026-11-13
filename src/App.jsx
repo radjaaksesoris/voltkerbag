@@ -525,8 +525,10 @@ function ActiveApp() {
         onLoginError={() => {
           pendingLoginTarget.current = null
         }}
-        onSignedIn={(nextSession, targetApp) => {
+        onSignedIn={async (nextSession, targetApp) => {
           if (targetApp === 'chat') {
+            const { handoffSessionToChat } = await import('./supabaseSync')
+            handoffSessionToChat(nextSession)
             window.location.assign(import.meta.env.BASE_URL + 'chat/?mode=chat')
             return
           }

@@ -2,6 +2,7 @@ import { createClient } from '@supabase/supabase-js'
 
 const SUPABASE_URL = 'https://rylqzasdlxxxvygsqfvw.supabase.co'
 const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || ''
+const CHAT_SESSION_HANDOFF_KEY = 'voltker:chat-session-handoff'
 
 let client
 
@@ -49,6 +50,46 @@ export async function signIn(email, password) {
   const { data, error } = await getClient().auth.signInWithPassword({ email, password })
   if (error) throw new Error('Gagal masuk: ' + error.message)
   if (!data.session) throw new Error('Server tidak mengembalikan sesi login.')
+  return data.session
+}
+
+export function handoffSessionToChat(session) {
+  if (!session?.access_token || !session?.refresh_token) {
+    throw new Error('Sesi login tidak lengkap untuk membuka Chat.')
+  }
+  try {
+    sessionStorage.setItem(CHAT_SESSION_HANDOFF_KEY, JSON.stringify({
+      access_token: session.access_token,
+      refresh_token: session.refresh_token
+    }))
+  } catch (error) {
+    throw new Error('Sesi login tidak dapat diteruskan ke Chat: ' + error.message)
+  }
+}
+
+export async function restoreChatSessionHandoff() {
+  let serializedSession
+  try {
+    serializedSession = sessionStorage.getItem(CHAT_SESSION_HANDOFF_KEY)
+    if (serializedSession === null) return null
+    sessionStorage.removeItem(CHAT_SESSION_HANDOFF_KEY)
+  } catch (error) {
+    throw new Error('Sesi login Chat tidak dapat dipulihkan: ' + error.message)
+  }
+
+  let tokens
+  try {
+    tokens = JSON.parse(serializedSession)
+  } catch {
+    throw new Error('Data sesi untuk membuka Chat tidak valid. Silakan masuk kembali.')
+  }
+  if (typeof tokens?.access_token !== 'string' || typeof tokens?.refresh_token !== 'string') {
+    throw new Error('Data sesi untuk membuka Chat tidak lengkap. Silakan masuk kembali.')
+  }
+
+  const { data, error } = await getClient().auth.setSession(tokens)
+  if (error) throw new Error('Sesi login tidak dapat diteruskan ke Chat: ' + error.message)
+  if (!data.session) throw new Error('Server tidak mengembalikan sesi login Chat.')
   return data.session
 }
 

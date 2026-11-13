@@ -51,8 +51,8 @@ export default function LoginScreen({
     try {
       const { signIn } = await import('../supabaseSync')
       const session = await signIn(loginEmail, loginPassword)
+      await onSignedIn(session, targetApp)
       setPassword('')
-      onSignedIn(session, targetApp)
     } catch (err) {
       onLoginError?.()
       setError(err.message || String(err))

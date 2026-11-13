@@ -3,7 +3,12 @@ import LoginScreen from '../components/LoginScreen.jsx'
 import Icon from '../components/Icon.jsx'
 import ReceiptPreview from '../components/ReceiptPreview.jsx'
 import { downloadInvoiceJpeg } from '../invoiceJpeg'
-import { onAuthStateChange, getAuthSession, verifyAuthSession } from '../supabaseSync'
+import {
+  onAuthStateChange,
+  getAuthSession,
+  restoreChatSessionHandoff,
+  verifyAuthSession
+} from '../supabaseSync'
 import { executeAction, prepareAction, queryStore } from './chatDomain.js'
 import { checkAssistantConnection, requestAssistantPlan } from './assistantApi.js'
 import { formatQueryAnswer } from './queryAnswer.js'
@@ -540,7 +545,9 @@ export default function ChatApp() {
 
     async function verifyConnection() {
       try {
-        const currentSession = await getAuthSession()
+        const handedOffSession = await restoreChatSessionHandoff()
+        if (!active) return
+        const currentSession = handedOffSession || await getAuthSession()
         if (!active) return
         const verifiedSession = currentSession ? await verifyAuthSession() : null
         if (!active) return
