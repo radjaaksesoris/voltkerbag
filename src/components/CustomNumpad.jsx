@@ -1,5 +1,6 @@
 import { useLayoutEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
+import Icon from './Icon.jsx'
 
 const INPUT_SELECTOR = 'input[data-custom-numpad]'
 
@@ -337,8 +338,13 @@ export default function CustomNumpad() {
         <button type="button" onPointerDown={handlePastePointerDown} onClick={handlePasteClick}>
           Tempel
         </button>
-        <button type="button" onPointerDown={handleClosePointerDown} onClick={closeNumpad}>
-          Close
+        <button
+          type="button"
+          aria-label="Tutup keypad"
+          title="Tutup keypad"
+          onPointerDown={handleClosePointerDown}
+          onClick={closeNumpad}>
+          <Icon name="close" size={16} />
         </button>
       </div>
       {pasteError && <p className="custom-numpad-error" role="status">{pasteError}</p>}

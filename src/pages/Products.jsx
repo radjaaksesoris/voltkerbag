@@ -574,10 +574,27 @@ export default function Products() {
   const editingProduct = editId ? items.find((product) => product.id === editId) : null
 
   return (
-    <div className="page">
+    <div className="page products-page">
       {actionError && <p className="form-error" role="alert">{actionError}</p>}
+      <section className="products-overview">
+        <div className="products-overview-copy">
+          <span className="products-eyebrow">INVENTARIS TOKO</span>
+          <h2>Stok barang</h2>
+          <p>Kelola jumlah stok, modal, dan harga jual produk.</p>
+        </div>
+        <div className="products-overview-stats">
+          <div className="products-overview-stat">
+            <span>Total produk</span>
+            <strong>{items.length}</strong>
+          </div>
+          <div className="products-overview-stat products-low-stock-stat">
+            <span>Stok menipis</span>
+            <strong>{lowStock.length}</strong>
+            <small>5 atau kurang</small>
+          </div>
+        </div>
+      </section>
       <div className="products-toolbar">
-        <p className="muted products-summary"><strong>{items.length} produk</strong> · {lowStock.length} stok menipis (≤5)</p>
         <input className="input search products-search" placeholder="Cari produk atau kategori..."
           value={q} onChange={(e) => {
             setQ(e.target.value)
@@ -587,6 +604,12 @@ export default function Products() {
       </div>
 
       <div className="card table-card products-table-card">
+        <div className="products-table-heading">
+          <div>
+            <h3>Daftar produk</h3>
+            <span>{filtered.length} produk ditemukan</span>
+          </div>
+        </div>
         <table className="products-table">
           <thead>
             <tr><th>No.</th><th>Produk</th><th>Kategori</th><th>Satuan</th><th>Modal Rata-rata</th><th>Harga Jual</th><th>Stok</th><th>Aksi</th></tr>
@@ -623,15 +646,15 @@ export default function Products() {
                 </td>
                 <td>{p.category || '-'}</td>
                 <td>{p.unit || 'pcs'}</td>
-                <td>{rupiah((Number(p.cost) || 0) * purchaseCostFactor(p.unit))}/{purchaseCostUnit(p.unit)}</td>
-                <td className="product-price-cell">
+                <td data-label="Modal rata-rata">{rupiah((Number(p.cost) || 0) * purchaseCostFactor(p.unit))}/{purchaseCostUnit(p.unit)}</td>
+                <td className="product-price-cell" data-label="Harga jual">
                   {saleUnits(p.unit || 'pcs').map((unit) => (
                     <div className="product-price-row" key={unit}>
                       <strong>{rupiah(saleUnitPrice(p, unit))}/{unit}</strong>
                     </div>
                   ))}
                 </td>
-                <td>
+                <td data-label="Stok">
                   <span className={'badge product-stock-badge ' + (availableQuantity(p, p.unit || 'pcs') <= 5 ? 'badge-danger' : 'badge-ok')}>
                     <span className="product-stock-desktop">{stockLabel(p)}</span>
                   </span>
