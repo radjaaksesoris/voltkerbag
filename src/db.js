@@ -4,7 +4,7 @@ import {
   isValidBackupChunkManifestEntry,
   isValidBackupChunkRows
 } from './backupFormat'
-export { requestPageRefresh } from './refreshEvents.js'
+export { requestAppUpdateCheck, requestPageRefresh } from './refreshEvents.js'
 
 const TABLES = {
   products: 'products',

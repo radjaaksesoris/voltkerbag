@@ -236,6 +236,8 @@ function ActiveApp() {
   const [installError, setInstallError] = useState('')
   const [updateReady, setUpdateReady] = useState(false)
   const [applyingUpdate, setApplyingUpdate] = useState(false)
+  const [checkingAppUpdate, setCheckingAppUpdate] = useState(false)
+  const [updateCheckError, setUpdateCheckError] = useState('')
   const [returningToMenu, setReturningToMenu] = useState(false)
   const [menuNavigationTarget, setMenuNavigationTarget] = useState(null)
   const currentPage = NAV.find((n) => n.id === page)
@@ -538,28 +540,107 @@ function ActiveApp() {
     }
   }
 
-  function applyAppUpdate() {
-    const waitingWorker = serviceWorkerRegistration.current?.waiting
-    if (!waitingWorker) {
-      window.location.reload()
-      return
-    }
-
+  async function applyAppUpdate() {
     setApplyingUpdate(true)
-    const reloadWhenActivated = () => {
-      if (waitingWorker.state === 'activated') {
-        waitingWorker.removeEventListener('statechange', reloadWhenActivated)
+    setUpdateCheckError('')
+    try {
+      await saveSessionForAppReload()
+      const waitingWorker = serviceWorkerRegistration.current?.waiting
+      if (!waitingWorker) {
         window.location.reload()
-      } else if (waitingWorker.state === 'redundant') {
-        waitingWorker.removeEventListener('statechange', reloadWhenActivated)
-        setApplyingUpdate(false)
-        setUpdateReady(false)
+        return
       }
+
+      const reloadWhenActivated = () => {
+        if (waitingWorker.state === 'activated') {
+          waitingWorker.removeEventListener('statechange', reloadWhenActivated)
+          window.location.reload()
+        } else if (waitingWorker.state === 'redundant') {
+          waitingWorker.removeEventListener('statechange', reloadWhenActivated)
+          setApplyingUpdate(false)
+          setUpdateReady(false)
+          setUpdateCheckError('Pembaruan aplikasi gagal dipasang. Silakan coba lagi.')
+        }
+      }
+      waitingWorker.addEventListener('statechange', reloadWhenActivated)
+      waitingWorker.postMessage({ type: 'SKIP_WAITING' })
+      reloadWhenActivated()
+    } catch (error) {
+      console.error('Gagal menerapkan pembaruan aplikasi:', error)
+      setApplyingUpdate(false)
+      setUpdateCheckError(error.message || 'Pembaruan gagal diterapkan. Silakan coba lagi.')
     }
-    waitingWorker.addEventListener('statechange', reloadWhenActivated)
-    waitingWorker.postMessage({ type: 'SKIP_WAITING' })
-    reloadWhenActivated()
   }
+
+  async function saveSessionForAppReload() {
+    if (!session) return
+    const { handoffSession } = await import('./supabaseSync')
+    handoffSession(session)
+  }
+
+  async function checkForAppUpdate() {
+    if (checkingAppUpdate || applyingUpdate) return
+    setCheckingAppUpdate(true)
+    setUpdateCheckError('')
+
+    try {
+      if (!('serviceWorker' in navigator)) {
+        await saveSessionForAppReload()
+        window.location.reload()
+        return
+      }
+
+      const registration = serviceWorkerRegistration.current
+        || await navigator.serviceWorker.getRegistration()
+      if (!registration) {
+        await saveSessionForAppReload()
+        window.location.reload()
+        return
+      }
+      serviceWorkerRegistration.current = registration
+      await registration.update()
+
+      const installingWorker = registration.installing
+      if (installingWorker) {
+        await new Promise((resolve, reject) => {
+          const timeout = window.setTimeout(() => {
+            installingWorker.removeEventListener('statechange', onStateChange)
+            reject(new Error('Pemasangan pembaruan terlalu lama. Periksa koneksi lalu coba lagi.'))
+          }, 30000)
+          const onStateChange = () => {
+            if (installingWorker.state === 'installed') {
+              window.clearTimeout(timeout)
+              installingWorker.removeEventListener('statechange', onStateChange)
+              resolve()
+            } else if (installingWorker.state === 'redundant') {
+              window.clearTimeout(timeout)
+              installingWorker.removeEventListener('statechange', onStateChange)
+              reject(new Error('Pembaruan aplikasi gagal diunduh. Periksa koneksi lalu coba lagi.'))
+            }
+          }
+          installingWorker.addEventListener('statechange', onStateChange)
+          onStateChange()
+        })
+      }
+
+      if (registration.waiting && navigator.serviceWorker.controller) {
+        await applyAppUpdate()
+      } else {
+        await saveSessionForAppReload()
+        window.location.reload()
+      }
+    } catch (error) {
+      console.error('Gagal memeriksa pembaruan aplikasi:', error)
+      setUpdateCheckError(error.message || 'Tidak dapat memeriksa pembaruan aplikasi. Periksa koneksi lalu coba lagi.')
+    } finally {
+      setCheckingAppUpdate(false)
+    }
+  }
+
+  useEffect(() => {
+    window.addEventListener('voltker:check-app-update', checkForAppUpdate)
+    return () => window.removeEventListener('voltker:check-app-update', checkForAppUpdate)
+  }, [session, checkingAppUpdate, applyingUpdate])
 
   const installInstructions = /iphone|ipad|ipod/i.test(navigator.userAgent)
     ? 'Ketuk tombol Bagikan di browser, lalu pilih “Tambahkan ke Layar Utama”.'
@@ -567,19 +648,21 @@ function ActiveApp() {
       ? 'Buka menu browser ⋮, lalu pilih “Instal aplikasi” atau “Tambahkan ke layar utama”.'
       : 'Gunakan menu browser, lalu pilih “Instal aplikasi” atau “Install VOLTKER”.'
 
-  const pwaUpdateBanner = updateReady && (
-    <div className="pwa-update-banner" role="status" aria-live="polite">
+  const pwaUpdateBanner = (updateReady || checkingAppUpdate || updateCheckError) && (
+    <div className="pwa-update-banner" role={updateCheckError ? 'alert' : 'status'} aria-live="polite">
       <span>
         {applyingUpdate
           ? 'Menerapkan pembaruan...'
-          : 'Pembaruan VOLTKER siap. Muat ulang untuk menggunakan versi terbaru.'}
+          : checkingAppUpdate
+            ? 'Memeriksa dan menyiapkan pembaruan...'
+            : updateCheckError || 'Pembaruan VOLTKER siap. Muat ulang untuk menggunakan versi terbaru.'}
       </span>
       <button
         className="btn btn-sm btn-primary"
         type="button"
-        onClick={applyAppUpdate}
-        disabled={applyingUpdate}>
-        {applyingUpdate ? 'Memperbarui...' : 'Perbarui sekarang'}
+        onClick={updateCheckError ? checkForAppUpdate : applyAppUpdate}
+        disabled={applyingUpdate || checkingAppUpdate}>
+        {applyingUpdate ? 'Memperbarui...' : checkingAppUpdate ? 'Memeriksa...' : updateCheckError ? 'Coba lagi' : 'Perbarui sekarang'}
       </button>
     </div>
   )

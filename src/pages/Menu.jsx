@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { getDashboardData, getFinanceData, onRefresh, requestPageRefresh } from '../db'
+import { getDashboardData, getFinanceData, onRefresh, requestAppUpdateCheck, requestPageRefresh } from '../db'
 import { dateRangeTimestamps, localDateValue } from '../dateFilter'
 import { rupiah } from '../format'
 import Icon from '../components/Icon.jsx'
@@ -94,7 +94,7 @@ export default function Menu({ items, onNavigate, onLogout, logoutBusy, logoutEr
     const shortcuts = [
       ...items,
       { id: 'chat', label: 'Chat', description: 'Tanya dan kelola toko lewat chat.', icon: 'chat' },
-      { id: 'refresh', label: 'Segarkan Data', description: 'Muat ulang ringkasan menu.', icon: 'sync' }
+      { id: 'refresh', label: 'Perbarui Aplikasi', description: 'Periksa versi terbaru dan segarkan ringkasan menu.', icon: 'sync' }
     ]
     const normalizedQuery = query.trim().toLocaleLowerCase('id-ID')
     if (!normalizedQuery) return shortcuts
@@ -241,9 +241,14 @@ export default function Menu({ items, onNavigate, onLogout, logoutBusy, logoutEr
                 key={item.id}
                 className={'menu-shortcut menu-shortcut-' + (index % 4)}
                 type="button"
-                onClick={() => item.id === 'refresh'
-                  ? requestPageRefresh('menu')
-                  : onNavigate(item.id)}>
+                onClick={() => {
+                  if (item.id === 'refresh') {
+                    requestPageRefresh('menu')
+                    requestAppUpdateCheck()
+                  } else {
+                    onNavigate(item.id)
+                  }
+                }}>
                 <span className="menu-shortcut-icon"><MenuShortcutIcon name={item.icon} /></span>
                 <span className="menu-shortcut-label">{item.label}</span>
                 <span className="menu-shortcut-description">{item.description}</span>
