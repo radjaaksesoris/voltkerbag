@@ -4199,7 +4199,6 @@ label { display: block; margin-bottom: 6px; color: var(--muted); font-size: 11px
   border-bottom: 3px solid #6b151c;
   border-radius: 6px 24px 6px 24px;
   background: #8f2028;
-  box-shadow: 0 8px 22px rgba(99, 34, 30, .1);
 }
 .app:not(.menu-landing) .products-overview {
   display: grid;
