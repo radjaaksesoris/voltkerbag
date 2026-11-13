@@ -6,7 +6,7 @@ import { downloadInvoiceJpeg } from '../invoiceJpeg'
 import {
   onAuthStateChange,
   getAuthSession,
-  restoreChatSessionHandoff,
+  restoreSessionHandoff,
   verifyAuthSession
 } from '../supabaseSync'
 import { executeAction, prepareAction, queryStore } from './chatDomain.js'
@@ -545,7 +545,7 @@ export default function ChatApp() {
 
     async function verifyConnection() {
       try {
-        const handedOffSession = await restoreChatSessionHandoff()
+        const handedOffSession = await restoreSessionHandoff()
         if (!active) return
         const currentSession = handedOffSession || await getAuthSession()
         if (!active) return
@@ -1102,8 +1102,10 @@ export default function ChatApp() {
         connectionError={connectionError}
         updateBanner={null}
         defaultAppMode="chat"
-        onSignedIn={(nextSession, targetApp) => {
+        onSignedIn={async (nextSession, targetApp) => {
           if (targetApp === 'table') {
+            const { handoffSession } = await import('../supabaseSync')
+            handoffSession(nextSession)
             window.location.assign(import.meta.env.BASE_URL + '?mode=table')
             return
           }

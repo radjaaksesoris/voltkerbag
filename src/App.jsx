@@ -390,7 +390,7 @@ function ActiveApp() {
         return
       }
       try {
-        const { getAuthSession, onAuthStateChange, verifyAuthSession } = await import('./supabaseSync')
+        const { getAuthSession, onAuthStateChange, restoreSessionHandoff, verifyAuthSession } = await import('./supabaseSync')
         if (!active) return
         if (!authListenerInitialized) {
           unsubscribe = onAuthStateChange((event, nextSession) => {
@@ -406,7 +406,8 @@ function ActiveApp() {
           })
           authListenerInitialized = true
         }
-        const currentSession = await getAuthSession()
+        const handedOffSession = await restoreSessionHandoff()
+        const currentSession = handedOffSession || await getAuthSession()
         if (!active) return
         if (pendingLoginTarget.current === 'chat') return
         setSession(currentSession)
@@ -554,8 +555,8 @@ function ActiveApp() {
         }}
         onSignedIn={async (nextSession, targetApp) => {
           if (targetApp === 'chat') {
-            const { handoffSessionToChat } = await import('./supabaseSync')
-            handoffSessionToChat(nextSession)
+            const { handoffSession } = await import('./supabaseSync')
+            handoffSession(nextSession)
             window.location.assign(import.meta.env.BASE_URL + 'chat/?mode=chat')
             return
           }
