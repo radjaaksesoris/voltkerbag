@@ -4024,6 +4024,14 @@ label { display: block; margin-bottom: 6px; color: var(--muted); font-size: 11px
   .app:not(.menu-landing) .transactions-page .cart-items-list .cart-row {
     border-color: #e7c2bb;
     background: #fff4f1;
+    color: #352320;
+  }
+  .app:not(.menu-landing) .transactions-page .cart-items-list .cart-info > strong,
+  .app:not(.menu-landing) .transactions-page .cart-items-list .cart-row .qty-ctrl > span {
+    color: #352320;
+  }
+  .app:not(.menu-landing) .transactions-page .cart-items-list .cart-row .muted {
+    color: #705b55;
   }
   .app:not(.menu-landing) .transactions-page .cart-items-list .cart-row:nth-child(even) {
     border-color: #d9a8a2;

@@ -65,18 +65,36 @@ export default function Transactions() {
     function positionNotification() {
       const popup = document.querySelector('.product-quick-view-modal')
       const popupBounds = popup?.getBoundingClientRect()
+      const toolbarBounds = document.querySelector('.pos-products-toolbar')?.getBoundingClientRect()
       const notification = cartNotificationRef.current
-      if (!popupBounds || !notification || popupBounds.width === 0) {
+      if (!notification) {
         setNotificationPosition(null)
         return
       }
 
-      const maxWidth = Math.min(420, popupBounds.width, window.innerWidth - 32)
+      const anchorBounds = popupBounds?.width ? popupBounds : toolbarBounds
+      if (!anchorBounds?.width) {
+        setNotificationPosition({
+          top: 'auto',
+          right: 16,
+          bottom: 20,
+          left: 'auto',
+          maxWidth: 'min(420px, calc(100vw - 32px))',
+          width: 'fit-content',
+          height: 'auto',
+          maxHeight: 'none'
+        })
+        return
+      }
+
+      const maxWidth = Math.min(420, anchorBounds.width, window.innerWidth - 32)
       const notificationWidth = Math.min(notification.scrollWidth, maxWidth)
       const notificationHeight = notification.getBoundingClientRect().height
       setNotificationPosition({
-        top: Math.max(8, popupBounds.top - notificationHeight - 10),
-        left: Math.max(16, popupBounds.left + (popupBounds.width - notificationWidth) / 2),
+        top: popupBounds?.width
+          ? Math.max(8, popupBounds.top - notificationHeight - 10)
+          : Math.min(window.innerHeight - notificationHeight - 8, toolbarBounds.bottom + 8),
+        left: Math.max(16, anchorBounds.left + (anchorBounds.width - notificationWidth) / 2),
         right: 'auto',
         bottom: 'auto',
         maxWidth,
