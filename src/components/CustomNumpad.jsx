@@ -247,13 +247,6 @@ export default function CustomNumpad() {
     const isNumberInput = input.type === 'number'
     const acceptsDecimal = input.dataset.customNumpad === 'decimal'
 
-    if (key === 'clear') {
-      delete input.dataset.customNumpadDecimalPending
-      updateInputValue(input, '', 0)
-      input.focus()
-      return
-    }
-
     if (key === 'backspace') {
       if (isNumberInput) {
         delete input.dataset.customNumpadDecimalPending
@@ -322,6 +315,10 @@ export default function CustomNumpad() {
     if (event.detail === 0) pasteFromClipboard()
   }
 
+  function handleClosePointerDown(event) {
+    event.preventDefault()
+  }
+
   function closeNumpad() {
     activeInputRef.current = null
     setActiveInput(null)
@@ -340,8 +337,8 @@ export default function CustomNumpad() {
         <button type="button" onPointerDown={handlePastePointerDown} onClick={handlePasteClick}>
           Tempel
         </button>
-        <button type="button" onPointerDown={handlePointerKey('clear')} onClick={handleKeyboardClick('clear')}>
-          Hapus
+        <button type="button" onPointerDown={handleClosePointerDown} onClick={closeNumpad}>
+          Close
         </button>
       </div>
       {pasteError && <p className="custom-numpad-error" role="status">{pasteError}</p>}
