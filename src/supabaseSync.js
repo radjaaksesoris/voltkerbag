@@ -16,7 +16,7 @@ export function getClient() {
 
   if (!client) {
     client = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-      auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true }
+      auth: { persistSession: false, autoRefreshToken: true, detectSessionInUrl: true }
     })
   }
   return client
