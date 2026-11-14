@@ -1,4 +1,4 @@
-import { memo, Suspense, lazy, useEffect, useRef, useState } from 'react'
+import { memo, Suspense, lazy, useCallback, useEffect, useRef, useState } from 'react'
 import LoginScreen from './components/LoginScreen.jsx'
 import SessionControl from './components/SessionControl.jsx'
 import PageErrorBoundary from './components/PageErrorBoundary.jsx'
@@ -215,6 +215,7 @@ const NAV = [
   { id: 'finance', label: 'Keuangan', description: 'Pantau pemasukan, pengeluaran, dan saldo kas toko.', icon: 'wallet' },
   { id: 'settings', label: 'Setting', description: 'Kelola nama pelanggan dan gambar produk.', icon: 'settings' }
 ]
+const MENU_ITEMS = NAV.filter((item) => item.id !== 'menu')
 
 function getInitialPage() {
   return 'menu'
@@ -256,15 +257,15 @@ function ActiveApp() {
     window.clearTimeout(menuNavigationTimer.current)
   }, [])
 
-  function navigateToPage(nextPage) {
+  const navigateToPage = useCallback((nextPage) => {
     setVisitedPages((visited) => {
       if (visited.has(nextPage)) return visited
       return new Set([...visited, nextPage])
     })
     setPage(nextPage)
-  }
+  }, [])
 
-  function navigateFromMenu(nextPage) {
+  const navigateFromMenu = useCallback((nextPage) => {
     if (menuNavigationActive.current) return
     if (
       window.matchMedia('(prefers-reduced-motion: reduce)').matches
@@ -278,7 +279,7 @@ function ActiveApp() {
     menuNavigationSwitched.current = false
     setMenuNavigationTarget(nextPage)
     menuNavigationTimer.current = window.setTimeout(() => finishMenuNavigation(null, nextPage), 1250)
-  }
+  }, [navigateToPage])
 
   function switchMenuNavigationWhenCovered(event) {
     if (event.target !== event.currentTarget || event.animationName !== 'menu-return-switch') return
@@ -329,7 +330,7 @@ function ActiveApp() {
     completeReturnTransition()
   }
 
-  async function logoutFromMenu() {
+  const logoutFromMenu = useCallback(async () => {
     setLogoutBusy(true)
     setLogoutError('')
     try {
@@ -342,7 +343,7 @@ function ActiveApp() {
     } finally {
       setLogoutBusy(false)
     }
-  }
+  }, [])
 
   useEffect(() => {
     function captureInstallPrompt(event) {
@@ -542,7 +543,7 @@ function ActiveApp() {
     }
   }
 
-  async function applyAppUpdate() {
+  const applyAppUpdate = useCallback(async () => {
     setApplyingUpdate(true)
     setUpdateCheckError('')
     try {
@@ -572,7 +573,7 @@ function ActiveApp() {
       setApplyingUpdate(false)
       setUpdateCheckError(error.message || 'Pembaruan gagal diterapkan. Silakan coba lagi.')
     }
-  }
+  }, [session])
 
   async function saveSessionForAppReload() {
     if (!session) return
@@ -796,7 +797,7 @@ function ActiveApp() {
                   <Suspense fallback={<PageLoadingFallback pageId={id} />}>
                     {id === 'menu'
                       ? <Page
-                          items={NAV.filter((item) => item.id !== 'menu')}
+                          items={MENU_ITEMS}
                           onNavigate={navigateFromMenu}
                           onLogout={logoutFromMenu}
                           logoutBusy={logoutBusy}
