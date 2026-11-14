@@ -1,5 +1,4 @@
 import { useEffect, useRef, useState } from 'react'
-import * as Dialog from '@radix-ui/react-dialog'
 import { getAll, getDashboardData, onRefresh, requestPageRefresh } from '../db'
 import { rupiah, dateOnly, dateTime } from '../format'
 import {
@@ -37,14 +36,11 @@ export default function Dashboard() {
   const [nameSort, setNameSort] = useState('date')
   const [transactionPage, setTransactionPage] = useState(1)
   const [selectedTransaction, setSelectedTransaction] = useState(null)
-  const [historyOpen, setHistoryOpen] = useState(false)
   const [customers, setCustomers] = useState([])
   const [customerLoadError, setCustomerLoadError] = useState('')
   const [loadError, setLoadError] = useState('')
   const [loaded, setLoaded] = useState(false)
   const requestId = useRef(0)
-  const detailTriggerRef = useRef(null)
-  const hadSelectedTransaction = useRef(false)
 
   useEffect(() => {
     let active = true
@@ -116,25 +112,6 @@ export default function Dashboard() {
     }
   }, [dateRange, transactionPage, creditFirst, nameSort])
 
-  useEffect(() => {
-    if (hadSelectedTransaction.current && !selectedTransaction) {
-      detailTriggerRef.current?.focus({ preventScroll: true })
-    }
-    hadSelectedTransaction.current = Boolean(selectedTransaction)
-  }, [selectedTransaction])
-
-  useEffect(() => {
-    if (!selectedTransaction) return
-    function closeDetailsOnEscape(event) {
-      if (event.key !== 'Escape') return
-      event.preventDefault()
-      event.stopPropagation()
-      setSelectedTransaction(null)
-    }
-    document.addEventListener('keydown', closeDetailsOnEscape, true)
-    return () => document.removeEventListener('keydown', closeDetailsOnEscape, true)
-  }, [selectedTransaction])
-
   const today = localDateValue(new Date())
   const isTodayRange = dateRange.from === today && dateRange.to === today
 
@@ -150,7 +127,6 @@ export default function Dashboard() {
   const pageStart = (currentPage - 1) * TRANSACTIONS_PER_PAGE
   const pageTransactions = report.transactions
   const totalAsset = Number(report.inventory?.total_asset || 0)
-  const periodLabel = getDashboardPeriodLabel(dateRange)
 
   function updateSelectedTransaction(updatedTransaction) {
     setReport((current) => ({
@@ -262,211 +238,145 @@ export default function Dashboard() {
         </div>
       </div>
 
-      <Dialog.Root
-        open={historyOpen}
-        modal={!selectedTransaction}
-        onOpenChange={setHistoryOpen}>
-        {customerLoadError && <p className="form-error dashboard-customer-error" role="alert">{customerLoadError}</p>}
-        {loaded && (
-          <div className="dashboard-history-action">
-            <Dialog.Trigger asChild>
-              <button
-                type="button"
-                className="dashboard-history-cta"
-                aria-label={`Lihat riwayat transaksi, ${report.total_count} transaksi, ${periodLabel}`}>
-                <span className="dashboard-history-cta-icon"><Icon name="table" size={23} /></span>
-                <span className="dashboard-history-cta-copy">
-                  <strong>Lihat riwayat transaksi</strong>
-                  <span>
-                    {report.total_count === 0
-                      ? `Belum ada transaksi · ${periodLabel}`
-                      : `${report.total_count} transaksi · ${periodLabel}`}
+      {loaded && <div className="card table-card dashboard-transactions">
+        {customerLoadError && <p className="form-error" role="alert">{customerLoadError}</p>}
+        <div className="dashboard-transactions-heading">
+          <h3>Transaksi Terakhir</h3>
+        </div>
+        <table className="dashboard-transaction-table">
+          <thead>
+            <tr>
+              <th className="dashboard-row-number">No</th>
+              <th>
+                <button
+                  type="button"
+                  className={'dashboard-payment-sort' + (nameSort !== 'date' ? ' active' : '')}
+                  aria-pressed={nameSort !== 'date'}
+                  aria-label={
+                    nameSort === 'asc'
+                      ? 'Urutkan nama Z ke A'
+                      : nameSort === 'desc'
+                        ? 'Urutkan nama berdasarkan tanggal transaksi'
+                        : 'Urutkan nama A ke Z'
+                  }
+                  onClick={() => {
+                    setCreditFirst(false)
+                    setNameSort((current) => current === 'date' ? 'asc' : current === 'asc' ? 'desc' : 'date')
+                    setTransactionPage(1)
+                  }}>
+                  <span>NAMA</span>
+                  <span className="dashboard-payment-sort-indicator" aria-hidden="true">
+                    {nameSort === 'asc' ? '↑' : nameSort === 'desc' ? '↓' : '↕'}
                   </span>
-                </span>
-                <Icon className="dashboard-history-cta-arrow" name="arrowRight" size={21} />
-              </button>
-            </Dialog.Trigger>
-          </div>
-        )}
-        <Dialog.Portal>
-          <Dialog.Overlay className="transaction-history-overlay" />
-          <Dialog.Content
-            className="transaction-history-dialog"
-            onEscapeKeyDown={(event) => {
-              if (selectedTransaction) event.preventDefault()
-            }}
-            onInteractOutside={(event) => {
-              if (selectedTransaction) event.preventDefault()
-            }}>
-            <header className="transaction-history-header">
-              <div className="transaction-history-title">
-                <span className="dashboard-insights-kicker">BUKU BESAR TOKO</span>
-                <Dialog.Title>Riwayat transaksi</Dialog.Title>
-                <Dialog.Description>
-                  {periodLabel} · {report.total_count} transaksi
-                </Dialog.Description>
-              </div>
-              <Dialog.Close asChild>
-                <button className="transaction-history-close" type="button" aria-label="Tutup riwayat transaksi">
-                  <Icon name="close" size={21} />
-                  <span>Tutup</span>
                 </button>
-              </Dialog.Close>
-            </header>
-            {report.total_count === 0 ? (
-              <div className="transaction-history-empty" role="status">
-                <span className="dashboard-empty-mark" aria-hidden="true"><Icon name="table" size={18} /></span>
+              </th>
+              <th>TANGGAL</th>
+              <th>
+                <button
+                  type="button"
+                  className={'dashboard-payment-sort' + (creditFirst ? ' active' : '')}
+                  aria-pressed={creditFirst}
+                  aria-label={creditFirst ? 'Urutkan kembali berdasarkan tanggal' : 'Tampilkan kredit yang belum lunas di atas'}
+                  onClick={() => {
+                    setCreditFirst((current) => !current)
+                    setNameSort('date')
+                    setTransactionPage(1)
+                  }}>
+                  <span>PEMBAYARAN</span>
+                  <span className="dashboard-payment-sort-indicator" aria-hidden="true">{creditFirst ? '↑' : '↕'}</span>
+                </button>
+              </th>
+              <th className="right">NOMINAL</th>
+              <th className="right">DETAIL</th>
+            </tr>
+          </thead>
+          <tbody>
+            {report.total_count === 0 && <tr><td colSpan="6" className="muted center">
+              <div className="dashboard-empty-state">
+                <span className="dashboard-empty-mark" aria-hidden="true">—</span>
                 <strong>{hasFilter ? 'Belum ada transaksi di periode ini' : 'Belum ada transaksi'}</strong>
                 <span>{hasFilter ? 'Coba pilih rentang tanggal yang lain.' : 'Transaksi yang masuk akan muncul di sini.'}</span>
               </div>
-            ) : (
-              <div className="transaction-history-body">
-                <div className="transaction-history-table-scroll">
-                  <table className="dashboard-transaction-table">
-                    <caption className="transaction-history-caption">Daftar transaksi pada {periodLabel}</caption>
-                    <thead>
-                      <tr>
-                        <th className="dashboard-row-number">No</th>
-                        <th>
-                          <button
-                            type="button"
-                            className={'dashboard-payment-sort' + (nameSort !== 'date' ? ' active' : '')}
-                            aria-pressed={nameSort !== 'date'}
-                            aria-label={
-                              nameSort === 'asc'
-                                ? 'Urutkan nama Z ke A'
-                                : nameSort === 'desc'
-                                  ? 'Urutkan nama berdasarkan tanggal transaksi'
-                                  : 'Urutkan nama A ke Z'
-                            }
-                            onClick={() => {
-                              setCreditFirst(false)
-                              setNameSort((current) => current === 'date' ? 'asc' : current === 'asc' ? 'desc' : 'date')
-                              setTransactionPage(1)
-                            }}>
-                            <span>NAMA</span>
-                            <span className="dashboard-payment-sort-indicator" aria-hidden="true">
-                              {nameSort === 'asc' ? '↑' : nameSort === 'desc' ? '↓' : '↕'}
-                            </span>
-                          </button>
-                        </th>
-                        <th>TANGGAL</th>
-                        <th>
-                          <button
-                            type="button"
-                            className={'dashboard-payment-sort' + (creditFirst ? ' active' : '')}
-                            aria-pressed={creditFirst}
-                            aria-label={creditFirst ? 'Urutkan kembali berdasarkan tanggal' : 'Tampilkan kredit yang belum lunas di atas'}
-                            onClick={() => {
-                              setCreditFirst((current) => !current)
-                              setNameSort('date')
-                              setTransactionPage(1)
-                            }}>
-                            <span>PEMBAYARAN</span>
-                            <span className="dashboard-payment-sort-indicator" aria-hidden="true">{creditFirst ? '↑' : '↕'}</span>
-                          </button>
-                        </th>
-                        <th className="right">NOMINAL</th>
-                        <th className="right">DETAIL</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {pageTransactions.map((t, index) => {
-                        const balanceDue = getTransactionBalanceDue(t)
-                        const isCredit = t.paymentType === 'credit'
-                        const isPaid = isCredit && balanceDue === 0
-                        const isPartiallyPaid = isCredit && !isPaid && getTransactionPaidAmount(t) > 0
-                        const customer = customers.find((row) => row.name === t.customerName)
-                        return (
-                          <tr key={t.id}>
-                            <td className="dashboard-row-number">{pageStart + index + 1}</td>
-                            <td>
-                              <div className="dashboard-customer-cell">
-                                <CustomerIdentity
-                                  name={t.customerName}
-                                  customer={customer}
-                                  className="transaction-customer"
-                                />
-                                <span className="transaction-invoice">{getInvoiceNumber(t)}</span>
-                              </div>
-                            </td>
-                            <td><span>{dateOnly(t.createdAt)}</span></td>
-                            <td><span className={'badge ' + (isPartiallyPaid ? 'badge-partial' : isCredit && !isPaid ? 'badge-danger' : 'badge-ok')}>
-                              {isPaid ? 'Lunas' : isCredit ? 'Kredit' : 'Tunai'}
-                            </span></td>
-                            <td className="right accent"><strong>{rupiah(t.total)}</strong></td>
-                            <td className="right">
-                              <button
-                                className="btn btn-sm btn-primary"
-                                type="button"
-                                onClick={(event) => {
-                                  detailTriggerRef.current = event.currentTarget
-                                  setSelectedTransaction({
-                                    ...t,
-                                    customerPhone: customer?.phone || '',
-                                    customerAddress: customer?.address || '',
-                                    expedition: t.expedition || ''
-                                  })
-                                }}>
-                                Detail
-                              </button>
-                            </td>
-                          </tr>
-                        )
-                      })}
-                    </tbody>
-                  </table>
-                </div>
-                <div className="dashboard-pagination">
-                  <span className="muted small" aria-live="polite">
-                    Menampilkan {pageStart + 1}–{Math.min(pageStart + TRANSACTIONS_PER_PAGE, report.total_count)} dari {report.total_count} transaksi
-                  </span>
-                  {pageCount > 1 && (
-                    <div className="dashboard-pagination-controls" aria-label="Navigasi halaman transaksi">
-                      <button
-                        className="btn btn-sm"
-                        type="button"
-                        disabled={currentPage === 1}
-                        onClick={() => setTransactionPage(currentPage - 1)}>
-                        Sebelumnya
-                      </button>
-                      <span className="small" aria-live="polite">Halaman {currentPage} dari {pageCount}</span>
-                      <button
-                        className="btn btn-sm"
-                        type="button"
-                        disabled={currentPage === pageCount}
-                        onClick={() => setTransactionPage(currentPage + 1)}>
-                        Berikutnya
-                      </button>
+            </td></tr>}
+            {pageTransactions.map((t, index) => {
+              const balanceDue = getTransactionBalanceDue(t)
+              const isCredit = t.paymentType === 'credit'
+              const isPaid = isCredit && balanceDue === 0
+              const isPartiallyPaid = isCredit && !isPaid && getTransactionPaidAmount(t) > 0
+              return (
+                <tr key={t.id}>
+                  <td className="dashboard-row-number">{pageStart + index + 1}</td>
+                  <td>
+                    <div className="dashboard-customer-cell">
+                      <CustomerIdentity
+                        name={t.customerName}
+                        customer={customers.find((customer) => customer.name === t.customerName)}
+                        className="transaction-customer"
+                      />
+                      <span className="transaction-invoice">{getInvoiceNumber(t)}</span>
                     </div>
-                  )}
-                </div>
+                  </td>
+                  <td>
+                    <span className="dashboard-date-desktop">{dateOnly(t.createdAt)}</span>
+                    <span className="dashboard-date-mobile">{dateOnly(t.createdAt)}</span>
+                  </td>
+                  <td><span className={'badge ' + (isPartiallyPaid ? 'badge-partial' : isCredit && !isPaid ? 'badge-danger' : 'badge-ok')}>
+                    {isPaid ? 'Lunas' : isCredit ? 'Kredit' : 'Tunai'}
+                  </span></td>
+                  <td className="right accent">
+                    <strong className="dashboard-amount-desktop">{rupiah(t.total)}</strong>
+                    <strong className="dashboard-amount-mobile">{rupiah(t.total).replace(/[^\d.,-]/g, '')}</strong>
+                  </td>
+                  <td className="right">
+                    <button className="btn btn-sm btn-primary" onClick={() => setSelectedTransaction({
+                      ...t,
+                      customerPhone: customers.find((customer) => customer.name === t.customerName)?.phone || '',
+                      customerAddress: customers.find((customer) => customer.name === t.customerName)?.address || '',
+                      expedition: t.expedition || ''
+                    })}>Detail</button>
+                  </td>
+                </tr>
+              )
+            })}
+          </tbody>
+        </table>
+        {report.total_count > 0 && (
+          <div className="dashboard-pagination">
+            <span className="muted small">
+              Menampilkan {pageStart + 1}–{Math.min(pageStart + TRANSACTIONS_PER_PAGE, report.total_count)} dari {report.total_count} transaksi
+            </span>
+            {pageCount > 1 && (
+              <div className="dashboard-pagination-controls" aria-label="Navigasi halaman transaksi">
+                <button
+                  className="btn btn-sm"
+                  type="button"
+                  disabled={currentPage === 1}
+                  onClick={() => setTransactionPage(currentPage - 1)}>
+                  Sebelumnya
+                </button>
+                <span className="small">Halaman {currentPage} dari {pageCount}</span>
+                <button
+                  className="btn btn-sm"
+                  type="button"
+                  disabled={currentPage === pageCount}
+                  onClick={() => setTransactionPage(currentPage + 1)}>
+                  Berikutnya
+                </button>
               </div>
             )}
-          </Dialog.Content>
-        </Dialog.Portal>
-      </Dialog.Root>
+          </div>
+        )}
+      </div>}
       {selectedTransaction && (
         <TransactionDetails
           transaction={selectedTransaction}
           onClose={() => setSelectedTransaction(null)}
           onTransactionUpdated={updateSelectedTransaction}
           allowPayment={false}
-          overlayClassName="transaction-history-detail-overlay"
         />
       )}
     </div>
   )
-}
-
-function getDashboardPeriodLabel(range) {
-  const formatDate = (date) => date ? dateOnly(`${date}T00:00:00`) : ''
-  const from = formatDate(range.from)
-  const to = formatDate(range.to)
-  if (from && to) return from === to ? from : `${from} – ${to}`
-  if (from) return `Sejak ${from}`
-  if (to) return `Sampai ${to}`
-  return 'Semua tanggal'
 }
 
 function getTransactionBalanceDue(transaction) {

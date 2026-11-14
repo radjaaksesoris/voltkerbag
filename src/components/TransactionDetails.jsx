@@ -10,7 +10,7 @@ import CustomerIdentity from './CustomerIdentity.jsx'
 import { downloadInvoiceJpeg } from '../invoiceJpeg'
 import { isSafeRupiahAmount } from '../money'
 
-export default function TransactionDetails({ transaction, onClose, onTransactionUpdated, allowPayment = true, overlayClassName = '' }) {
+export default function TransactionDetails({ transaction, onClose, onTransactionUpdated, allowPayment = true }) {
   const [showReceipt, setShowReceipt] = useState(false)
   const [invoiceDownloading, setInvoiceDownloading] = useState(false)
   const [invoiceDownloadError, setInvoiceDownloadError] = useState('')
@@ -119,7 +119,7 @@ export default function TransactionDetails({ transaction, onClose, onTransaction
   }
 
   return createPortal(
-    <div className={'overlay' + (overlayClassName ? ` ${overlayClassName}` : '')} onClick={onClose}>
+    <div className="overlay" onClick={onClose}>
       <section
         className="modal transaction-details"
         role="dialog"
