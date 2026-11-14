@@ -10,8 +10,9 @@ import { APP_TEMPORARILY_DISABLED } from './appAvailability.js'
 import { clearRequestedAppMode } from './appMode.js'
 
 const CHUNK_RELOAD_KEY = 'voltker:chunk-reload-attempted'
-const MENU_TRANSITION_DURATION_MS = 1100
+const MENU_TRANSITION_DURATION_MS = 1250
 const MENU_TRANSITION_SWITCH_DELAY_MS = MENU_TRANSITION_DURATION_MS / 2
+const MENU_TRANSITION_FALLBACK_DELAY_MS = MENU_TRANSITION_DURATION_MS + 150
 
 function PageLoadingFallback({ pageId }) {
   if (pageId === 'dashboard') {
@@ -264,7 +265,10 @@ function ActiveApp() {
       return new Set([...visited, nextPage])
     })
     setMenuNavigationTarget(nextPage)
-    menuNavigationTimer.current = window.setTimeout(() => finishMenuNavigation(null, nextPage), 1250)
+    menuNavigationTimer.current = window.setTimeout(
+      () => finishMenuNavigation(null, nextPage),
+      MENU_TRANSITION_FALLBACK_DELAY_MS
+    )
   }, [navigateToPage])
 
   function switchMenuNavigationWhenCovered(event) {
@@ -299,7 +303,10 @@ function ActiveApp() {
     returningToMenuRef.current = true
     if (returnButtonRef.current) returnButtonRef.current.disabled = true
     returnFlowRef.current?.classList.add('is-active')
-    returnTransitionTimer.current = window.setTimeout(completeReturnTransition, 1250)
+    returnTransitionTimer.current = window.setTimeout(
+      completeReturnTransition,
+      MENU_TRANSITION_FALLBACK_DELAY_MS
+    )
   }
 
   function completeReturnTransition() {
