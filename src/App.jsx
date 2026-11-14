@@ -224,6 +224,7 @@ function ActiveApp() {
   const contentRef = useRef(null)
   const returnButtonRef = useRef(null)
   const returnFlowRef = useRef(null)
+  const menuNavigationFlowRef = useRef(null)
   const returningToMenuRef = useRef(false)
   const serviceWorkerRegistration = useRef(null)
   const pendingLoginTarget = useRef(null)
@@ -257,6 +258,11 @@ function ActiveApp() {
 
     menuNavigationActive.current = true
     menuNavigationSwitched.current = false
+    menuNavigationFlowRef.current?.classList.add('is-active')
+    setVisitedPages((visited) => {
+      if (visited.has(nextPage)) return visited
+      return new Set([...visited, nextPage])
+    })
     setMenuNavigationTarget(nextPage)
     menuNavigationTimer.current = window.setTimeout(() => finishMenuNavigation(null, nextPage), 1250)
   }, [navigateToPage])
@@ -279,6 +285,7 @@ function ActiveApp() {
     menuNavigationTimer.current = null
     menuNavigationActive.current = false
     menuNavigationSwitched.current = false
+    menuNavigationFlowRef.current?.classList.remove('is-active')
     setMenuNavigationTarget(null)
   }
 
@@ -837,17 +844,16 @@ function ActiveApp() {
           style={{ animationDelay: `${MENU_TRANSITION_SWITCH_DELAY_MS}ms` }}
           onAnimationEnd={switchToMenuWhenCovered} />
       </div>
-      {menuNavigationTarget && (
-        <div
-          className="menu-navigation-flow"
-          aria-hidden="true"
-          onAnimationEnd={finishMenuNavigation}>
-          <span
-            className="menu-return-switch-marker"
-            style={{ animationDelay: `${MENU_TRANSITION_SWITCH_DELAY_MS}ms` }}
-            onAnimationEnd={switchMenuNavigationWhenCovered} />
-        </div>
-      )}
+      <div
+        ref={menuNavigationFlowRef}
+        className="menu-navigation-flow"
+        aria-hidden="true"
+        onAnimationEnd={finishMenuNavigation}>
+        <span
+          className="menu-return-switch-marker"
+          style={{ animationDelay: `${MENU_TRANSITION_SWITCH_DELAY_MS}ms` }}
+          onAnimationEnd={switchMenuNavigationWhenCovered} />
+      </div>
       <CustomNumpad />
     </div>
   )
