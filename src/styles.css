@@ -4621,7 +4621,22 @@ label { display: block; margin-bottom: 6px; color: var(--muted); font-size: 11px
 .app:not(.menu-landing) .products-table td:nth-child(8) { width: 8%; }
 .app:not(.menu-landing) .products-table .product-name-content { justify-content: flex-start; }
 .app:not(.menu-landing) .products-table .product-name-text { text-align: left; }
-.app:not(.menu-landing) .products-table .product-stock-badge { border-radius: 5px 12px 5px 12px; }
+.app:not(.menu-landing) .products-table .product-stock-badge {
+  border: 1px solid rgba(181, 40, 46, .14);
+  border-radius: 5px 12px 5px 12px;
+  background: rgba(181, 40, 46, .1);
+  color: #912027;
+}
+.app:not(.menu-landing) .products-table .product-stock-add-button {
+  border-color: #b5282e;
+  background: #b5282e;
+  color: #fffaf3;
+}
+.app:not(.menu-landing) .products-table .product-stock-add-button:hover:not(:disabled) {
+  border-color: #912027;
+  background: #912027;
+  color: #fffaf3;
+}
 .app:not(.menu-landing) .product-grid-pagination {
   flex-direction: row;
   justify-content: space-between;
