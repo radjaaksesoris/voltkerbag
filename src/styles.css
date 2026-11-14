@@ -2727,6 +2727,9 @@ label { display: block; margin-bottom: 6px; color: var(--muted); font-size: 11px
   .menu-return-flow.is-active .menu-return-switch-marker {
     animation: menu-return-switch 1ms linear forwards;
   }
+  .menu-navigation-flow .menu-return-switch-marker {
+    animation: menu-return-switch 1ms linear forwards;
+  }
   @keyframes menu-return-switch {
     to { opacity: .01; }
   }
