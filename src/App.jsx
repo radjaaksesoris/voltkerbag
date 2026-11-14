@@ -10,30 +10,8 @@ import { APP_TEMPORARILY_DISABLED } from './appAvailability.js'
 import { clearRequestedAppMode } from './appMode.js'
 
 const CHUNK_RELOAD_KEY = 'voltker:chunk-reload-attempted'
-
-function getMenuReturnCoverDelay() {
-  const viewportHeight = window.innerHeight
-  if (!viewportHeight) return 0
-
-  const coverDistance = viewportHeight + window.innerWidth / 2
-  const totalDistance = viewportHeight * 2 + window.innerWidth / 2 + 24
-  const coverProgress = Math.min(1, coverDistance / totalDistance)
-  let low = 0
-  let high = 1
-
-  for (let index = 0; index < 24; index += 1) {
-    const t = (low + high) / 2
-    const progress = 3 * (1 - t) ** 2 * t * 0.65
-      + 3 * (1 - t) * t * t * 0.35
-      + t * t * t
-    if (progress < coverProgress) low = t
-    else high = t
-  }
-
-  const t = (low + high) / 2
-  const timeProgress = 3 * (1 - t) * t * t + t * t * t
-  return timeProgress * 1100
-}
+const MENU_TRANSITION_DURATION_MS = 1100
+const MENU_TRANSITION_SWITCH_DELAY_MS = MENU_TRANSITION_DURATION_MS / 2
 
 function PageLoadingFallback({ pageId }) {
   if (pageId === 'dashboard') {
@@ -856,7 +834,7 @@ function ActiveApp() {
           alt="" />
         <span
           className="menu-return-switch-marker"
-          style={{ animationDelay: `${getMenuReturnCoverDelay()}ms` }}
+          style={{ animationDelay: `${MENU_TRANSITION_SWITCH_DELAY_MS}ms` }}
           onAnimationEnd={switchToMenuWhenCovered} />
       </div>
       {menuNavigationTarget && (
@@ -866,7 +844,7 @@ function ActiveApp() {
           onAnimationEnd={finishMenuNavigation}>
           <span
             className="menu-return-switch-marker"
-            style={{ animationDelay: `${getMenuReturnCoverDelay()}ms` }}
+            style={{ animationDelay: `${MENU_TRANSITION_SWITCH_DELAY_MS}ms` }}
             onAnimationEnd={switchMenuNavigationWhenCovered} />
         </div>
       )}
