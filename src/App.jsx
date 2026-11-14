@@ -15,7 +15,9 @@ function getMenuReturnCoverDelay() {
   const viewportHeight = window.innerHeight
   if (!viewportHeight) return 0
 
-  const coverProgress = Math.min(1, (viewportHeight + window.innerWidth / 2) / (viewportHeight * 4))
+  const coverDistance = viewportHeight + window.innerWidth / 2
+  const totalDistance = viewportHeight * 2 + window.innerWidth / 2 + 24
+  const coverProgress = Math.min(1, coverDistance / totalDistance)
   let low = 0
   let high = 1
 
@@ -29,9 +31,7 @@ function getMenuReturnCoverDelay() {
   }
 
   const t = (low + high) / 2
-  const timeProgress = 3 * (1 - t) ** 2 * t * 0.65
-    + 3 * (1 - t) * t * t * 0.35
-    + t * t * t
+  const timeProgress = 3 * (1 - t) * t * t + t * t * t
   return timeProgress * 1100
 }
 
@@ -241,10 +241,12 @@ function ActiveApp() {
   const [applyingUpdate, setApplyingUpdate] = useState(false)
   const [checkingAppUpdate, setCheckingAppUpdate] = useState(false)
   const [updateCheckError, setUpdateCheckError] = useState('')
-  const [returningToMenu, setReturningToMenu] = useState(false)
   const [menuNavigationTarget, setMenuNavigationTarget] = useState(null)
   const currentPage = NAV.find((n) => n.id === page)
   const contentRef = useRef(null)
+  const returnButtonRef = useRef(null)
+  const returnFlowRef = useRef(null)
+  const returningToMenuRef = useRef(false)
   const serviceWorkerRegistration = useRef(null)
   const pendingLoginTarget = useRef(null)
   const returnTransitionTimer = useRef(null)
@@ -303,21 +305,25 @@ function ActiveApp() {
   }
 
   function returnToMenu() {
-    if (returningToMenu) return
+    if (returningToMenuRef.current) return
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
       navigateToPage('menu')
       return
     }
 
-    setReturningToMenu(true)
+    returningToMenuRef.current = true
+    if (returnButtonRef.current) returnButtonRef.current.disabled = true
+    returnFlowRef.current?.classList.add('is-active')
     returnTransitionTimer.current = window.setTimeout(completeReturnTransition, 1250)
   }
 
   function completeReturnTransition() {
     window.clearTimeout(returnTransitionTimer.current)
     returnTransitionTimer.current = null
+    returningToMenuRef.current = false
+    returnFlowRef.current?.classList.remove('is-active')
+    if (returnButtonRef.current) returnButtonRef.current.disabled = false
     navigateToPage('menu')
-    setReturningToMenu(false)
   }
 
   function switchToMenuWhenCovered(event) {
@@ -815,8 +821,8 @@ function ActiveApp() {
           <button
             className="mobile-menu-back"
             type="button"
-            onClick={returnToMenu}
-            disabled={returningToMenu}>
+            ref={returnButtonRef}
+            onClick={returnToMenu}>
             <Icon name="arrowLeft" size={19} />
             <span>Kembali ke Menu Utama</span>
           </button>
@@ -839,21 +845,20 @@ function ActiveApp() {
           </section>
         </div>
       )}
-      {returningToMenu && (
-        <div
-          className="menu-return-flow"
-          aria-hidden="true"
-          onAnimationEnd={finishReturnTransition}>
-          <img
-            className="menu-return-logo"
-            src={import.meta.env.BASE_URL + 'voltker-logo-320.png'}
-            alt="" />
-          <span
-            className="menu-return-switch-marker"
-            style={{ animationDelay: `${getMenuReturnCoverDelay()}ms` }}
-            onAnimationEnd={switchToMenuWhenCovered} />
-        </div>
-      )}
+      <div
+        ref={returnFlowRef}
+        className="menu-return-flow"
+        aria-hidden="true"
+        onAnimationEnd={finishReturnTransition}>
+        <img
+          className="menu-return-logo"
+          src={import.meta.env.BASE_URL + 'voltker-logo-320.png'}
+          alt="" />
+        <span
+          className="menu-return-switch-marker"
+          style={{ animationDelay: `${getMenuReturnCoverDelay()}ms` }}
+          onAnimationEnd={switchToMenuWhenCovered} />
+      </div>
       {menuNavigationTarget && (
         <div
           className="menu-navigation-flow"
