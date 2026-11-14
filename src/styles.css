@@ -2683,7 +2683,7 @@ label { display: block; margin-bottom: 6px; color: var(--muted); font-size: 11px
     right: 0;
     left: 0;
     width: 100vw;
-    height: calc(100dvh + 50vw);
+    height: calc(100dvh + 100vw + 48px);
     transform: translateY(0);
     border-radius: 50vw / 50vw;
     background: #7b1e24;
@@ -2706,11 +2706,11 @@ label { display: block; margin-bottom: 6px; color: var(--muted); font-size: 11px
   .menu-navigation-flow {
     position: fixed;
     z-index: 2000;
-    top: calc(-100dvh - 50vw - 24px);
+    top: calc(-100dvh - 100vw - 48px);
     right: 0;
     left: 0;
     width: 100vw;
-    height: calc(100dvh + 50vw);
+    height: calc(100dvh + 100vw + 48px);
     transform: translateY(0);
     border-radius: 50vw / 50vw;
     background: #7b1e24;
@@ -2738,10 +2738,10 @@ label { display: block; margin-bottom: 6px; color: var(--muted); font-size: 11px
     to { opacity: .01; }
   }
   @keyframes menu-return-flow {
-    to { transform: translateY(calc(-200dvh - 50vw - 24px)); }
+    to { transform: translateY(calc(-200dvh - 100vw - 48px)); }
   }
   @keyframes menu-navigation-flow {
-    to { transform: translateY(calc(200dvh + 50vw + 24px)); }
+    to { transform: translateY(calc(200dvh + 100vw + 48px)); }
   }
   .topbar { min-height: 70px; padding: 10px 14px; }
   .topbar-start { flex: 1; gap: 9px; }
