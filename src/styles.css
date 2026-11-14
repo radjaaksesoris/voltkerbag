@@ -4310,6 +4310,9 @@ label { display: block; margin-bottom: 6px; color: var(--muted); font-size: 11px
     font-size: 12px;
     font-weight: 700;
   }
+  .app:not(.menu-landing) .purchase-table tbody tr:hover td:nth-child(2) {
+    background: linear-gradient(112deg, #b5282e, #912027);
+  }
   .app:not(.menu-landing) .purchase-table tbody td:nth-child(2)::before { content: none; }
   .app:not(.menu-landing) .purchase-item-heading {
     display: flex;
