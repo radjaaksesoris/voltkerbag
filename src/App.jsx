@@ -10,34 +10,11 @@ import { APP_TEMPORARILY_DISABLED } from './appAvailability.js'
 import { clearRequestedAppMode } from './appMode.js'
 
 const CHUNK_RELOAD_KEY = 'voltker:chunk-reload-attempted'
-const MENU_TRANSITION_DURATION_MS = 650
+const MENU_TRANSITION_DURATION_MS = 320
 const MENU_TRANSITION_FALLBACK_DELAY_MS = MENU_TRANSITION_DURATION_MS + 150
 
 function getMenuTransitionSwitchDelay() {
-  const viewportHeight = window.visualViewport?.height || window.innerHeight
-  const viewportWidth = window.visualViewport?.width || window.innerWidth
-  if (!viewportHeight || !viewportWidth) return MENU_TRANSITION_DURATION_MS / 2
-
-  const panelHeight = viewportHeight + viewportWidth + 48
-  const cornerRadius = viewportWidth / 2
-  const firstFullyCoveredProgress = (viewportHeight + cornerRadius) / (2 * panelHeight)
-  const lastFullyCoveredProgress = (panelHeight - cornerRadius) / (2 * panelHeight)
-  const coverProgress = (firstFullyCoveredProgress + lastFullyCoveredProgress) / 2
-  let low = 0
-  let high = 1
-
-  for (let index = 0; index < 24; index += 1) {
-    const t = (low + high) / 2
-    const progress = 3 * (1 - t) * t * t + t * t * t
-    if (progress < coverProgress) low = t
-    else high = t
-  }
-
-  const t = (low + high) / 2
-  const timeProgress = 3 * (1 - t) ** 2 * t * 0.65
-    + 3 * (1 - t) * t * t * 0.35
-    + t * t * t
-  return timeProgress * MENU_TRANSITION_DURATION_MS
+  return MENU_TRANSITION_DURATION_MS / 2
 }
 
 function PageLoadingFallback({ pageId }) {
@@ -868,10 +845,6 @@ function ActiveApp() {
         className="menu-return-flow"
         aria-hidden="true"
         onAnimationEnd={finishReturnTransition}>
-        <img
-          className="menu-return-logo"
-          src={import.meta.env.BASE_URL + 'voltker-logo-320.png'}
-          alt="" />
         <span
           className="menu-return-switch-marker"
           style={{ animationDelay: `${getMenuTransitionSwitchDelay()}ms` }}

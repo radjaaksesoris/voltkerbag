@@ -2682,47 +2682,30 @@ label { display: block; margin-bottom: 6px; color: var(--muted); font-size: 11px
   .menu-return-flow {
     position: fixed;
     z-index: 2000;
-    top: 100dvh;
-    right: 0;
-    left: 0;
-    width: 100vw;
-    height: calc(100dvh + 100vw + 48px);
-    transform: translateY(0);
-    border-radius: 50vw / 50vw;
+    inset: 0;
     background: #7b1e24;
+    opacity: 0;
     pointer-events: none;
     visibility: hidden;
   }
   .menu-return-flow.is-active {
     visibility: visible;
-    animation: menu-return-flow .65s cubic-bezier(.65, 0, .35, 1) forwards;
-  }
-  .menu-return-logo {
-    position: absolute;
-    top: 12px;
-    left: 50%;
-    width: clamp(92px, 24vw, 122px);
-    height: auto;
-    filter: brightness(0) invert(1);
-    transform: translateX(-50%);
+    will-change: opacity;
+    animation: menu-return-flow .32s ease-in-out forwards;
   }
   .menu-navigation-flow {
     position: fixed;
     z-index: 2000;
-    top: calc(-100dvh - 100vw - 48px);
-    right: 0;
-    left: 0;
-    width: 100vw;
-    height: calc(100dvh + 100vw + 48px);
-    transform: translateY(0);
-    border-radius: 50vw / 50vw;
+    inset: 0;
     background: #7b1e24;
+    opacity: 0;
     pointer-events: none;
     visibility: hidden;
   }
   .menu-navigation-flow.is-active {
     visibility: visible;
-    animation: menu-navigation-flow .65s cubic-bezier(.65, 0, .35, 1) forwards;
+    will-change: opacity;
+    animation: menu-navigation-flow .32s ease-in-out forwards;
   }
   .menu-return-switch-marker {
     position: absolute;
@@ -2741,10 +2724,12 @@ label { display: block; margin-bottom: 6px; color: var(--muted); font-size: 11px
     to { opacity: .01; }
   }
   @keyframes menu-return-flow {
-    to { transform: translateY(calc(-200dvh - 100vw - 48px)); }
+    0%, 100% { opacity: 0; }
+    35%, 65% { opacity: 1; }
   }
   @keyframes menu-navigation-flow {
-    to { transform: translateY(calc(200dvh + 100vw + 48px)); }
+    0%, 100% { opacity: 0; }
+    35%, 65% { opacity: 1; }
   }
   .topbar { min-height: 70px; padding: 10px 14px; }
   .topbar-start { flex: 1; gap: 9px; }
