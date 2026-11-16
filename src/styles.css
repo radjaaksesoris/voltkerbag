@@ -2693,6 +2693,15 @@ label { display: block; margin-bottom: 6px; color: var(--muted); font-size: 11px
     will-change: opacity;
     animation: menu-return-flow .32s ease-in-out forwards;
   }
+  .menu-transition-logo {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    display: block;
+    width: clamp(180px, 62vw, 280px);
+    height: auto;
+    transform: translate(-50%, -50%);
+  }
   .menu-navigation-flow {
     position: fixed;
     z-index: 2000;

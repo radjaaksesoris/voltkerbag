@@ -845,6 +845,10 @@ function ActiveApp() {
         className="menu-return-flow"
         aria-hidden="true"
         onAnimationEnd={finishReturnTransition}>
+        <img
+          className="menu-transition-logo"
+          src={import.meta.env.BASE_URL + 'voltker-logo-320.png'}
+          alt="" />
         <span
           className="menu-return-switch-marker"
           style={{ animationDelay: `${getMenuTransitionSwitchDelay()}ms` }}
@@ -855,6 +859,10 @@ function ActiveApp() {
         className="menu-navigation-flow"
         aria-hidden="true"
         onAnimationEnd={finishMenuNavigation}>
+        <img
+          className="menu-transition-logo"
+          src={import.meta.env.BASE_URL + 'voltker-logo-320.png'}
+          alt="" />
         <span
           className="menu-return-switch-marker"
           style={{ animationDelay: `${getMenuTransitionSwitchDelay()}ms` }}
