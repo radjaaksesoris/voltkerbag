@@ -10,7 +10,7 @@ import { APP_TEMPORARILY_DISABLED } from './appAvailability.js'
 import { clearRequestedAppMode } from './appMode.js'
 
 const CHUNK_RELOAD_KEY = 'voltker:chunk-reload-attempted'
-const MENU_TRANSITION_DURATION_MS = 1250
+const MENU_TRANSITION_DURATION_MS = 650
 const MENU_TRANSITION_FALLBACK_DELAY_MS = MENU_TRANSITION_DURATION_MS + 150
 
 function getMenuTransitionSwitchDelay() {
