@@ -2648,7 +2648,11 @@ label { display: block; margin-bottom: 6px; color: var(--muted); font-size: 11px
   }
   .app { display: flex; padding-bottom: 0; }
   .main { width: 100%; }
-  .content { padding-bottom: calc(84px + env(safe-area-inset-bottom)); }
+  .content {
+    padding-bottom: calc(84px + env(safe-area-inset-bottom));
+    -webkit-overflow-scrolling: touch;
+    touch-action: pan-y;
+  }
   .menu-landing .content { padding: calc(12px + env(safe-area-inset-top)) 12px calc(16px + env(safe-area-inset-bottom)); }
   .sidebar { display: none; }
   .nav-toggle { display: none; }
