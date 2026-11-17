@@ -1032,11 +1032,14 @@ h2 {
   background: #912027;
   box-shadow: 0 20px 38px rgba(94, 21, 28, .24), inset 0 1px 0 rgba(255, 255, 255, .18);
 }
+.menu-summary-card-1 { background-color: #704018; }
+.menu-summary-card-2 { background-color: #164b47; }
 .menu-summary-track {
   display: flex;
   min-height: 270px;
   transition: transform .38s cubic-bezier(.22, .68, 0, 1);
 }
+.menu-summary-track-no-transition { transition: none; }
 .menu-summary-slide {
   position: relative;
   isolation: isolate;

@@ -34,6 +34,8 @@ export default function Menu({
   const [loadError, setLoadError] = useState('')
   const [loaded, setLoaded] = useState(false)
   const [activeSummary, setActiveSummary] = useState(0)
+  const [summaryTrackIndex, setSummaryTrackIndex] = useState(1)
+  const [summaryTrackTransition, setSummaryTrackTransition] = useState(true)
   const [summaryPaused, setSummaryPaused] = useState(false)
   const requestId = useRef(0)
   const summaryTouchStart = useRef(null)
@@ -124,14 +126,36 @@ export default function Menu({
     ? `${formatPeriodDate(summary.range.from)}–${formatPeriodDate(summary.range.to)} ${summary.range.to.slice(0, 4)} · ${summary.transactionCount} transaksi`
     : ''
 
+  function moveSummaryTo(nextIndex) {
+    if (summarySlides.length < 2 || nextIndex === activeSummary) return
+
+    if (activeSummary === summarySlides.length - 1 && nextIndex === 0) {
+      setSummaryTrackIndex(summarySlides.length + 1)
+    } else if (activeSummary === 0 && nextIndex === summarySlides.length - 1) {
+      setSummaryTrackIndex(0)
+    } else {
+      setSummaryTrackIndex(nextIndex + 1)
+    }
+    setActiveSummary(nextIndex)
+  }
+
+  function finishSummaryTrackTransition(event) {
+    if (event.target !== event.currentTarget || event.propertyName !== 'transform') return
+    if (summaryTrackIndex !== 0 && summaryTrackIndex !== summarySlides.length + 1) return
+
+    setSummaryTrackTransition(false)
+    setSummaryTrackIndex(summaryTrackIndex === 0 ? summarySlides.length : 1)
+    window.requestAnimationFrame(() => setSummaryTrackTransition(true))
+  }
+
   useEffect(() => {
     if (summarySlides.length < 2 || summaryPaused) return undefined
 
     const intervalId = window.setInterval(() => {
-      setActiveSummary((index) => (index + 1) % summarySlides.length)
+      moveSummaryTo((activeSummary + 1) % summarySlides.length)
     }, 4000)
     return () => window.clearInterval(intervalId)
-  }, [summarySlides.length, summaryPaused])
+  }, [activeSummary, summarySlides.length, summaryPaused])
 
   function startSummarySwipe(event) {
     setSummaryPaused(true)
@@ -155,8 +179,8 @@ export default function Menu({
     const deltaY = touch.clientY - start.y
     if (Math.abs(deltaX) < 40 || Math.abs(deltaX) <= Math.abs(deltaY)) return
 
-    setActiveSummary((index) =>
-      (index + (deltaX < 0 ? 1 : summarySlides.length - 1)) % summarySlides.length
+    moveSummaryTo(
+      (activeSummary + (deltaX < 0 ? 1 : summarySlides.length - 1)) % summarySlides.length
     )
   }
 
@@ -197,7 +221,7 @@ export default function Menu({
       {logoutError && <p className="menu-logout-error" role="alert">{logoutError}</p>}
 
       <section
-        className="menu-summary-card"
+        className={`menu-summary-card menu-summary-card-${activeSummary}`}
         aria-label="Ringkasan periode"
         onTouchStart={startSummarySwipe}
         onTouchEnd={finishSummarySwipe}
@@ -206,24 +230,50 @@ export default function Menu({
           setSummaryPaused(false)
         }}>
         <div
-          className="menu-summary-track"
-          style={{ transform: `translateX(-${activeSummary * 100}%)` }}>
-          {summarySlides.length > 0 ? summarySlides.map((slide, index) => (
-            <div
-              key={slide.label}
-              className={`menu-summary-slide menu-summary-slide-${index}`}
-              aria-hidden={index !== activeSummary}>
+          className={`menu-summary-track${summaryTrackTransition ? '' : ' menu-summary-track-no-transition'}`}
+          style={{
+            transform: `translateX(-${(summarySlides.length > 1 ? summaryTrackIndex : 0) * 100}%)`
+          }}
+          onTransitionEnd={finishSummaryTrackTransition}>
+          {summarySlides.length > 1 ? [
+            summarySlides[summarySlides.length - 1],
+            ...summarySlides,
+            summarySlides[0]
+          ].map((slide, trackIndex) => {
+            const index = trackIndex === 0
+              ? summarySlides.length - 1
+              : trackIndex === summarySlides.length + 1
+                ? 0
+                : trackIndex - 1
+            return (
+              <div
+                key={`${slide.label}-${trackIndex}`}
+                className={`menu-summary-slide menu-summary-slide-${index}`}
+                aria-hidden={trackIndex !== summaryTrackIndex}>
+                <div className="menu-summary-copy">
+                  <span className="menu-summary-kicker">Ringkasan periode</span>
+                  <span className="menu-summary-label">{slide.label}</span>
+                  <strong className="menu-summary-value">{rupiah(slide.value)}</strong>
+                  <span className="menu-summary-period">{periodLabel}</span>
+                </div>
+                <span className="menu-summary-art" aria-hidden="true">
+                  <Icon name={slide.icon} size={118} />
+                </span>
+              </div>
+            )
+          }) : summarySlides.length === 1 ? (
+            <div className="menu-summary-slide menu-summary-slide-0">
               <div className="menu-summary-copy">
                 <span className="menu-summary-kicker">Ringkasan periode</span>
-                <span className="menu-summary-label">{slide.label}</span>
-                <strong className="menu-summary-value">{rupiah(slide.value)}</strong>
+                <span className="menu-summary-label">{summarySlides[0].label}</span>
+                <strong className="menu-summary-value">{rupiah(summarySlides[0].value)}</strong>
                 <span className="menu-summary-period">{periodLabel}</span>
               </div>
               <span className="menu-summary-art" aria-hidden="true">
-                <Icon name={slide.icon} size={118} />
+                <Icon name={summarySlides[0].icon} size={118} />
               </span>
             </div>
-          )) : (
+          ) : (
             <div className="menu-summary-slide menu-summary-slide-default">
               <div className="menu-summary-copy">
                 <span className="menu-summary-kicker">Ringkasan periode</span>
@@ -257,7 +307,7 @@ export default function Menu({
                 className={index === activeSummary ? 'active' : ''}
                 aria-label={slide.label}
                 aria-pressed={index === activeSummary}
-                onClick={() => setActiveSummary(index)} />
+                onClick={() => moveSummaryTo(index)} />
             ))}
           </div>
         )}
