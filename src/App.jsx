@@ -27,6 +27,34 @@ async function preserveSessionBeforeChunkReload() {
   }
 }
 
+function waitForServiceWorkerInstall(worker) {
+  if (worker.state === 'installed') return Promise.resolve()
+  if (worker.state === 'redundant') {
+    return Promise.reject(new Error('Pembaruan aplikasi gagal diunduh. Periksa koneksi lalu coba lagi.'))
+  }
+
+  return new Promise((resolve, reject) => {
+    const timeout = window.setTimeout(() => {
+      worker.removeEventListener('statechange', onStateChange)
+      reject(new Error('Pemasangan pembaruan terlalu lama. Periksa koneksi lalu coba lagi.'))
+    }, 30000)
+    const onStateChange = () => {
+      if (worker.state === 'installed') {
+        window.clearTimeout(timeout)
+        worker.removeEventListener('statechange', onStateChange)
+        resolve()
+      } else if (worker.state === 'redundant') {
+        window.clearTimeout(timeout)
+        worker.removeEventListener('statechange', onStateChange)
+        reject(new Error('Pembaruan aplikasi gagal diunduh. Periksa koneksi lalu coba lagi.'))
+      }
+    }
+
+    worker.addEventListener('statechange', onStateChange)
+    onStateChange()
+  })
+}
+
 function PageLoadingFallback({ pageId }) {
   if (pageId === 'dashboard') {
     return (
@@ -584,10 +612,18 @@ function ActiveApp() {
       const registration = serviceWorkerRegistration.current
         || await navigator.serviceWorker.getRegistration()
       serviceWorkerRegistration.current = registration || null
-      const waitingWorker = registration?.waiting
+      if (!registration) {
+        throw new Error('Pembaruan belum tersedia. Periksa kembali koneksi lalu coba lagi.')
+      }
+
+      let waitingWorker = registration.waiting
       if (!waitingWorker) {
-        window.location.reload()
-        return
+        await registration.update()
+        if (registration.installing) await waitForServiceWorkerInstall(registration.installing)
+        waitingWorker = registration.waiting
+      }
+      if (!waitingWorker) {
+        throw new Error('Pembaruan belum siap dipasang. Silakan tekan Perbarui lagi.')
       }
 
       const reloadWhenActivated = () => {
@@ -639,25 +675,7 @@ function ActiveApp() {
 
       const installingWorker = registration.installing
       if (installingWorker) {
-        await new Promise((resolve, reject) => {
-          const timeout = window.setTimeout(() => {
-            installingWorker.removeEventListener('statechange', onStateChange)
-            reject(new Error('Pemasangan pembaruan terlalu lama. Periksa koneksi lalu coba lagi.'))
-          }, 30000)
-          const onStateChange = () => {
-            if (installingWorker.state === 'installed') {
-              window.clearTimeout(timeout)
-              installingWorker.removeEventListener('statechange', onStateChange)
-              resolve()
-            } else if (installingWorker.state === 'redundant') {
-              window.clearTimeout(timeout)
-              installingWorker.removeEventListener('statechange', onStateChange)
-              reject(new Error('Pembaruan aplikasi gagal diunduh. Periksa koneksi lalu coba lagi.'))
-            }
-          }
-          installingWorker.addEventListener('statechange', onStateChange)
-          onStateChange()
-        })
+        await waitForServiceWorkerInstall(installingWorker)
       }
 
       if (registration.waiting && navigator.serviceWorker.controller) {
@@ -839,6 +857,7 @@ function ActiveApp() {
                           logoutBusy={logoutBusy}
                           logoutError={logoutError}
                           updateAvailable={updateReady}
+                          applyingUpdate={applyingUpdate}
                           onApplyAppUpdate={applyAppUpdate} />
                       : <Page />}
                   </Suspense>

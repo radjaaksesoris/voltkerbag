@@ -27,6 +27,7 @@ export default function Menu({
   logoutBusy,
   logoutError,
   updateAvailable = false,
+  applyingUpdate = false,
   onApplyAppUpdate
 }) {
   const [query, setQuery] = useState('')
@@ -368,20 +369,29 @@ export default function Menu({
                 }
                 type="button"
                 aria-label={item.id === 'refresh' && updateAvailable
-                  ? 'Perbarui Aplikasi, pembaruan tersedia'
+                  ? (applyingUpdate ? 'Memperbarui aplikasi' : 'Perbarui Aplikasi, pembaruan tersedia')
                   : item.label}
+                disabled={item.id === 'refresh' && applyingUpdate}
                 onClick={() => {
                   if (item.id === 'refresh') {
-                    requestPageRefresh('menu')
                     if (updateAvailable) onApplyAppUpdate?.()
-                    else requestAppUpdateCheck()
+                    else {
+                      requestPageRefresh('menu')
+                      requestAppUpdateCheck()
+                    }
                   } else {
                     onNavigate(item.id)
                   }
                 }}>
                 <span className="menu-shortcut-icon"><MenuShortcutIcon name={item.icon} /></span>
-                <span className="menu-shortcut-label">{item.label}</span>
-                <span className="menu-shortcut-description">{item.description}</span>
+                <span className="menu-shortcut-label">
+                  {item.id === 'refresh' && applyingUpdate ? 'Memperbarui aplikasi...' : item.label}
+                </span>
+                <span className="menu-shortcut-description">
+                  {item.id === 'refresh' && applyingUpdate
+                    ? 'Memasang versi terbaru, mohon tunggu.'
+                    : item.description}
+                </span>
                 {item.id === 'refresh' && updateAvailable && (
                   <span className="menu-update-hint" aria-hidden="true">
                     <span className="menu-update-arrow">↓</span>
