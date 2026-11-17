@@ -5321,7 +5321,16 @@ label { display: block; margin-bottom: 6px; color: var(--muted); font-size: 11px
   color: #912027;
 }
 @media (max-width: 640px) {
-  .app:not(.menu-landing) .products-toolbar { flex-wrap: wrap; }
-  .app:not(.menu-landing) .products-low-stock-filter { min-height: 38px; padding: 7px 10px; font-size: 11px; }
-  .app:not(.menu-landing) .products-table tbody td.product-stock-cell.is-low-stock { box-shadow: inset 0 3px #b5282e; }
+  .app:not(.menu-landing) .products-table tbody td.product-stock-cell,
+  .app:not(.menu-landing) .products-table tbody td.product-stock-cell.is-low-stock {
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+    color: inherit;
+  }
+  .app:not(.menu-landing) .products-table .product-stock-cell.is-low-stock .product-stock-badge {
+    box-shadow: inset 3px 0 #b5282e;
+  }
+  .app:not(.menu-landing) .products-table-heading { gap: 8px; }
+  .app:not(.menu-landing) .products-low-stock-filter { min-height: 32px; padding: 5px 8px; font-size: 9px; }
 }

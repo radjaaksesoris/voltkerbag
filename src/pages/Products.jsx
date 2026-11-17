@@ -653,19 +653,6 @@ export default function Products({ lowStockFilterRequest = 0 }) {
               </button>
             )}
           </div>
-          {lowStock.length > 0 && (
-            <button
-              type="button"
-              className={'btn products-low-stock-filter' + (lowStockOnly ? ' active' : '')}
-              aria-pressed={lowStockOnly}
-              onClick={() => {
-                setLowStockOnly((enabled) => !enabled)
-                setVisibleProductCount(PRODUCT_PAGE_SIZE)
-              }}>
-              <Icon name="box" size={15} />
-              {lowStockOnly ? 'Semua produk' : `Stok menipis (${lowStock.length})`}
-            </button>
-          )}
           <button className="btn btn-primary products-add-button" onClick={openAdd}>+ Tambah Produk</button>
         </div>
       </div>
@@ -676,6 +663,19 @@ export default function Products({ lowStockFilterRequest = 0 }) {
             <h3>Daftar produk</h3>
             <span>{filtered.length} produk ditemukan</span>
           </div>
+          {lowStock.length > 0 && (
+            <button
+              type="button"
+              className={'btn products-low-stock-filter' + (lowStockOnly ? ' active' : '')}
+              aria-pressed={lowStockOnly}
+              onClick={() => {
+                setLowStockOnly((enabled) => !enabled)
+                setVisibleProductCount(PRODUCT_PAGE_SIZE)
+              }}>
+              <Icon name={lowStockOnly ? 'close' : 'box'} size={15} />
+              {lowStockOnly ? 'Hapus filter' : `Stok menipis (${lowStock.length})`}
+            </button>
+          )}
         </div>
         <table className="products-table">
           <thead>
