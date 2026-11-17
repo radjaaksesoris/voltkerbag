@@ -145,7 +145,9 @@ export default function Menu({
 
     setSummaryTrackTransition(false)
     setSummaryTrackIndex(summaryTrackIndex === 0 ? summarySlides.length : 1)
-    window.requestAnimationFrame(() => setSummaryTrackTransition(true))
+    window.requestAnimationFrame(() => {
+      window.requestAnimationFrame(() => setSummaryTrackTransition(true))
+    })
   }
 
   useEffect(() => {

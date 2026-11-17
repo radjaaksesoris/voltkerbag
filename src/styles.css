@@ -1036,6 +1036,8 @@ h2 {
 .menu-summary-card-2 { background-color: #164b47; }
 .menu-summary-track {
   display: flex;
+  width: 100%;
+  min-width: 0;
   min-height: 270px;
   transition: transform .38s cubic-bezier(.22, .68, 0, 1);
 }
