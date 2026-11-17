@@ -9,6 +9,7 @@ import Icon from './Icon.jsx'
 import CustomerIdentity from './CustomerIdentity.jsx'
 import { downloadInvoiceJpeg } from '../invoiceJpeg'
 import { isSafeRupiahAmount } from '../money'
+import { returnedQuantity } from '../transactionReturns.js'
 
 export default function TransactionDetails({ transaction, onClose, onTransactionUpdated, allowPayment = true }) {
   const [currentTransaction, setCurrentTransaction] = useState(transaction)
@@ -139,14 +140,6 @@ export default function TransactionDetails({ transaction, onClose, onTransaction
     }
   }
 
-  function returnedQuantity(lineIndex) {
-    return (currentTransaction.returns || []).reduce((total, entry) => (
-      total + (entry.items || []).reduce((lineTotal, item) => (
-        lineTotal + (item.lineIndex === lineIndex ? Number(item.qty) || 0 : 0)
-      ), 0)
-    ), 0)
-  }
-
   async function submitReturn(event) {
     event.preventDefault()
     if (operationLock.current) return
@@ -158,7 +151,7 @@ export default function TransactionDetails({ transaction, onClose, onTransaction
       !Number.isSafeInteger(lineIndex)
       || !Number.isSafeInteger(qty)
       || qty <= 0
-      || qty > Number(currentTransaction.items[lineIndex]?.qty) - returnedQuantity(lineIndex)
+      || qty > Number(currentTransaction.items[lineIndex]?.qty) - returnedQuantity(currentTransaction, lineIndex)
     ))) {
       setReturnError('Periksa jumlah retur. Jumlah harus bilangan bulat dan tidak melebihi sisa barang.')
       return
@@ -252,17 +245,22 @@ export default function TransactionDetails({ transaction, onClose, onTransaction
           <table>
             <thead><tr><th>Barang</th><th className="right">Jumlah</th><th className="right">Harga</th><th className="right">Subtotal</th></tr></thead>
             <tbody>
-              {currentTransaction.items.map((item, index) => (
-                <tr key={index}>
-                  <td><strong>{item.name}</strong></td>
-                  <td className="right">
-                    {item.qty - returnedQuantity(index)} {item.unit || 'pcs'}
-                    {returnedQuantity(index) > 0 && <span className="transaction-returned-quantity"> (retur {returnedQuantity(index)})</span>}
-                  </td>
-                  <td className="right">{rupiah(item.price)}</td>
-                  <td className="right">{rupiah(item.price * item.qty)}</td>
-                </tr>
-              ))}
+              {currentTransaction.items.map((item, index) => {
+                const returnedQty = returnedQuantity(currentTransaction, index)
+                const remainingQty = Number(item.qty) - returnedQty
+                if (remainingQty <= 0) return null
+                return (
+                  <tr key={index}>
+                    <td><strong>{item.name}</strong></td>
+                    <td className="right">
+                      {remainingQty} {item.unit || 'pcs'}
+                      {returnedQty > 0 && <span className="transaction-returned-quantity"> (retur {returnedQty})</span>}
+                    </td>
+                    <td className="right">{rupiah(item.price)}</td>
+                    <td className="right">{rupiah(item.price * remainingQty)}</td>
+                  </tr>
+                )
+              })}
             </tbody>
             <tfoot>
               <tr><th colSpan="3">Total transaksi</th><th className="right accent">{rupiah(currentTransaction.total)}</th></tr>
@@ -286,13 +284,13 @@ export default function TransactionDetails({ transaction, onClose, onTransaction
           </section>
         )}
 
-        {currentTransaction.items.some((item, index) => Number(item.qty) > returnedQuantity(index)) && (
+        {currentTransaction.items.some((item, index) => Number(item.qty) > returnedQuantity(currentTransaction, index)) && (
           <form className="transaction-details-return-form" onSubmit={submitReturn}>
             <h4>Retur barang</h4>
             <p className="muted small">Stok akan dikembalikan otomatis. Jika pembayaran melebihi total baru, kelebihannya dicatat sebagai refund tunai.</p>
             <div className="transaction-return-lines">
               {currentTransaction.items.map((item, index) => {
-                const remaining = Number(item.qty) - returnedQuantity(index)
+                const remaining = Number(item.qty) - returnedQuantity(currentTransaction, index)
                 if (remaining <= 0) return null
                 return (
                   <label key={index}>

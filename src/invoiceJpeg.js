@@ -1,5 +1,6 @@
 import { dateTime, rupiah } from './format.js'
 import { getInvoiceNumber } from './invoice.js'
+import { returnedAmount, returnedQuantity, transactionRefundTotal } from './transactionReturns.js'
 
 const WIDTH = 1240
 const MARGIN = 76
@@ -62,14 +63,20 @@ function multilineText(x, y, lines, { size = 24, color = COLORS.ink, weight = 40
 export function createInvoiceSvg(transaction) {
   const invoiceNumber = getInvoiceNumber(transaction)
   const items = Array.isArray(transaction.items) ? transaction.items : []
-  const rows = items.map((item) => {
-    const nameLines = wrapText(item.name || 'Barang', 48)
+  const rows = items.map((item, index) => {
+    const returnedQty = returnedQuantity(transaction, index)
+    const remainingQty = Number(item.qty) - returnedQty
+    const nameLines = remainingQty > 0
+      ? wrapText(item.name || 'Barang', 48)
+      : []
     return {
       item,
       nameLines,
+      remainingQty,
+      netAmount: Number(item.price) * Number(item.qty) - returnedAmount(transaction, index),
       height: Math.max(72, nameLines.length * 30 + 34)
     }
-  })
+  }).filter((row) => row.remainingQty > 0)
 
   const paidAmount = transaction.paidAmount != null
     ? Number(transaction.paidAmount)
@@ -78,16 +85,23 @@ export function createInvoiceSvg(transaction) {
   const summaryRows = [
     ['TOTAL TRANSAKSI', rupiah(transaction.total), true],
     ['Sudah dibayar', rupiah(paidAmount), false],
+    ...(transactionRefundTotal(transaction) > 0
+      ? [['Refund retur', rupiah(transactionRefundTotal(transaction)), false]]
+      : []),
     ...(isCredit
       ? [['Sisa tagihan', rupiah(transaction.balanceDue ?? Math.max(0, transaction.total - paidAmount)), false]]
       : [['Tunai diterima', rupiah(transaction.payment), false], ['Kembalian', rupiah(transaction.change), false]])
   ]
   const payments = isCredit && transaction.payments?.length ? transaction.payments : []
   const rowsHeight = rows.reduce((height, row) => height + row.height, 0)
+  const returns = transaction.returns || []
+  const returnsHeight = returns.length
+    ? 76 + returns.reduce((count, entry) => count + (entry.items || []).length, 0) * 42
+    : 0
   const paymentsHeight = payments.length ? 82 + payments.length * 42 : 0
   const summaryHeight = 116 + summaryRows.length * 54
   const tableTop = 588
-  const summaryTop = tableTop + 70 + rowsHeight + 42 + paymentsHeight
+  const summaryTop = tableTop + 70 + rowsHeight + returnsHeight + 42 + paymentsHeight
   const height = summaryTop + summaryHeight + 144
 
   const svg = [
@@ -126,15 +140,28 @@ export function createInvoiceSvg(transaction) {
   ]
 
   let y = tableTop + 58
-  rows.forEach(({ item, nameLines, height: rowHeight }, index) => {
+  rows.forEach(({ item, nameLines, remainingQty, netAmount, height: rowHeight }, index) => {
     if (index % 2 === 0) svg.push(`<rect x="${MARGIN}" y="${y}" width="${WIDTH - MARGIN * 2}" height="${rowHeight}" fill="${COLORS.panel}"/>`)
     svg.push(multilineText(MARGIN + 25, y + 42, nameLines, { size: 20, lineHeight: 29 }))
-    svg.push(text(824, y + 42, String(item.qty) + ' ' + String(item.unit || 'pcs'), { size: 19, anchor: 'middle' }))
+    svg.push(text(824, y + 42, String(remainingQty) + ' ' + String(item.unit || 'pcs'), { size: 19, anchor: 'middle' }))
     svg.push(text(1010, y + 42, rupiah(item.price), { size: 19, anchor: 'end' }))
-    svg.push(text(WIDTH - MARGIN - 24, y + 42, rupiah(Number(item.price) * Number(item.qty)), { size: 19, weight: 700, anchor: 'end' }))
+    svg.push(text(WIDTH - MARGIN - 24, y + 42, rupiah(netAmount), { size: 19, weight: 700, anchor: 'end' }))
     svg.push(`<path d="M${MARGIN} ${y + rowHeight}H${WIDTH - MARGIN}" stroke="${COLORS.border}" stroke-width="2"/>`)
     y += rowHeight
   })
+
+  if (returns.length) {
+    y += 42
+    svg.push(text(MARGIN, y, 'RETUR TERCATAT', { size: 19, color: COLORS.red, weight: 700 }))
+    y += 38
+    returns.forEach((entry) => {
+      ;(entry.items || []).forEach((item) => {
+        svg.push(text(MARGIN, y, dateTime(entry.date) + ' · ' + item.name + ' · ' + item.qty + ' ' + (item.unit || 'pcs'), { size: 16, color: COLORS.muted }))
+        svg.push(text(WIDTH - MARGIN, y, '-' + rupiah(Number(item.price) * Number(item.qty)), { size: 16, weight: 700, anchor: 'end' }))
+        y += 42
+      })
+    })
+  }
 
   if (payments.length) {
     y += 42

@@ -1,6 +1,7 @@
 import { rupiah, dateTime } from '../format'
 import { getInvoiceNumber } from '../invoice'
 import CustomerIdentity from './CustomerIdentity.jsx'
+import { returnedQuantity, transactionRefundTotal } from '../transactionReturns.js'
 
 function printRupiah(amount) {
   return rupiah(amount).replace(/\u00a0/g, ' ')
@@ -45,20 +46,43 @@ export default function Receipt({ transaction }) {
           <tr><th>Barang</th><th className="receipt-qty">QTY</th><th className="receipt-money">Harga</th><th className="receipt-money">Jumlah</th></tr>
         </thead>
         <tbody>
-          {transaction.items.map((item, index) => (
-            <tr key={index}>
-              <td>{item.name}</td>
-              <td className="receipt-qty">{item.qty} {item.unit || 'pcs'}</td>
-              <td className="receipt-money">{printRupiah(item.price)}</td>
-              <td className="receipt-money">{printRupiah(item.price * item.qty)}</td>
-            </tr>
-          ))}
+          {transaction.items.map((item, index) => {
+            const returnedQty = returnedQuantity(transaction, index)
+            const remainingQty = Number(item.qty) - returnedQty
+            if (remainingQty <= 0) return null
+            return (
+              <tr key={index}>
+                <td>{item.name}</td>
+                <td className="receipt-qty">
+                  {remainingQty} {item.unit || 'pcs'}
+                  {returnedQty > 0 && <small className="receipt-return-note"> (sisa setelah retur {returnedQty})</small>}
+                </td>
+                <td className="receipt-money">{printRupiah(item.price)}</td>
+                <td className="receipt-money">{printRupiah(item.price * remainingQty)}</td>
+              </tr>
+            )
+          })}
         </tbody>
       </table>
+
+      {transaction.returns?.length > 0 && (
+        <section className="receipt-return-history">
+          <strong>RETUR TERCATAT</strong>
+          {transaction.returns.flatMap((entry, entryIndex) => (entry.items || []).map((item, itemIndex) => (
+            <div key={`${entry.requestId || entryIndex}-${itemIndex}`}>
+              <span>{dateTime(entry.date)} · {item.name} · {item.qty} {item.unit || 'pcs'}</span>
+              <strong>-{printRupiah(Number(item.price) * Number(item.qty))}</strong>
+            </div>
+          )))}
+        </section>
+      )}
 
       <section className="receipt-totals">
         <div className="receipt-total"><span>TOTAL</span><strong>{printRupiah(transaction.total)}</strong></div>
         <div><span>Sudah dibayar</span><strong>{printRupiah(paidAmount)}</strong></div>
+        {transactionRefundTotal(transaction) > 0 && (
+          <div><span>Refund retur</span><strong>{printRupiah(transactionRefundTotal(transaction))}</strong></div>
+        )}
         {isCredit ? (
           <>
             <div><span>Sisa tagihan</span><strong>{printRupiah(balanceDue)}</strong></div>
@@ -81,7 +105,7 @@ export default function Receipt({ transaction }) {
 
       <footer className="receipt-footer">
         <span>Terima kasih telah berbelanja</span>
-        <span>Barang yang sudah dibeli tidak dapat ditukar</span>
+        <span>{transaction.returns?.length ? 'Retur yang tercatat telah diperhitungkan pada faktur ini' : 'Barang yang sudah dibeli tidak dapat ditukar'}</span>
       </footer>
     </article>
   )

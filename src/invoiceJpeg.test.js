@@ -44,3 +44,35 @@ test('escapes customer and item text in the generated invoice', () => {
   assert.match(svg, /RIWAYAT PEMBAYARAN/)
   assert.doesNotMatch(svg, /<script>/)
 })
+
+test('omits fully returned product lines but preserves return history, reduced total, and refund', () => {
+  const svg = createInvoiceSvg({
+    id: 21,
+    createdAt: '2026-11-17T10:00:00.000Z',
+    customerName: 'Pelanggan',
+    paymentType: 'cash',
+    items: [
+      { name: 'Barang A', qty: 50, unit: 'pcs', price: 4000 },
+      { name: 'Barang B', qty: 25, unit: 'pcs', price: 4000 }
+    ],
+    total: 200000,
+    paidAmount: 200000,
+    payment: 300000,
+    change: 0,
+    returns: [{
+      requestId: 'return-1',
+      date: '2026-11-17T11:00:00.000Z',
+      amount: 100000,
+      refundAmount: 100000,
+      items: [{ lineIndex: 1, name: 'Barang B', qty: 25, unit: 'pcs', price: 4000 }]
+    }]
+  })
+
+  assert.match(svg, /Barang A/)
+  assert.match(svg, /Barang B/)
+  assert.doesNotMatch(svg, />0 pcs<\/text>/)
+  assert.doesNotMatch(svg, /Retur tercatat:/)
+  assert.match(svg, /RETUR TERCATAT/)
+  assert.match(svg, /Refund retur/)
+  assert.match(svg, /-Rp/)
+})
