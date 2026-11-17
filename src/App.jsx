@@ -17,6 +17,16 @@ function getMenuTransitionSwitchDelay() {
   return MENU_TRANSITION_DURATION_MS * 0.35
 }
 
+async function preserveSessionBeforeChunkReload() {
+  try {
+    const { getAuthSession, handoffSession } = await import('./supabaseSync')
+    const session = await getAuthSession()
+    if (session) handoffSession(session)
+  } catch (error) {
+    console.error('Gagal mempertahankan sesi sebelum memuat ulang aplikasi:', error)
+  }
+}
+
 function PageLoadingFallback({ pageId }) {
   if (pageId === 'dashboard') {
     return (
@@ -152,9 +162,10 @@ function lazyPage(importPage, preload = false) {
           sessionStorage.removeItem(CHUNK_RELOAD_KEY)
           return module
         })
-        .catch((error) => {
+        .catch(async (error) => {
           if (!sessionStorage.getItem(CHUNK_RELOAD_KEY)) {
             sessionStorage.setItem(CHUNK_RELOAD_KEY, '1')
+            await preserveSessionBeforeChunkReload()
             window.location.reload()
           }
           throw error
@@ -371,10 +382,26 @@ function ActiveApp() {
     let isActive = true
     let registration
     let installingWorker
+    let updateCheckInterval
+    let updateCheckInFlight = false
 
     function checkWaitingWorker() {
       if (registration?.waiting && navigator.serviceWorker.controller) {
         setUpdateReady(true)
+      }
+    }
+
+    async function checkForAvailableUpdate() {
+      if (!registration || updateCheckInFlight || document.visibilityState !== 'visible') return
+
+      updateCheckInFlight = true
+      try {
+        await registration.update()
+        if (isActive) checkWaitingWorker()
+      } catch (error) {
+        console.warn('Pemeriksaan pembaruan service worker gagal; aplikasi tetap dapat digunakan:', error)
+      } finally {
+        updateCheckInFlight = false
       }
     }
 
@@ -402,6 +429,9 @@ function ActiveApp() {
         registration.addEventListener('updatefound', observeInstallingWorker)
         observeInstallingWorker()
         checkWaitingWorker()
+        checkForAvailableUpdate()
+        updateCheckInterval = window.setInterval(checkForAvailableUpdate, 60000)
+        document.addEventListener('visibilitychange', checkForAvailableUpdate)
       } catch (error) {
         console.error('Gagal memeriksa pembaruan aplikasi:', error)
       }
@@ -412,9 +442,11 @@ function ActiveApp() {
 
     return () => {
       isActive = false
+      window.clearInterval(updateCheckInterval)
       installingWorker?.removeEventListener('statechange', onWorkerStateChange)
       registration?.removeEventListener('updatefound', observeInstallingWorker)
       navigator.serviceWorker.removeEventListener('message', onServiceWorkerMessage)
+      document.removeEventListener('visibilitychange', checkForAvailableUpdate)
       if (serviceWorkerRegistration.current === registration) {
         serviceWorkerRegistration.current = null
       }
