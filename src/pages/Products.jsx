@@ -23,7 +23,7 @@ const EMPTY = {
 }
 
 const PRODUCT_NAME_COLLATOR = new Intl.Collator('id', { numeric: true, sensitivity: 'base' })
-const PRODUCT_PAGE_SIZE = 50
+const PRODUCT_PAGE_SIZE = 15
 
 export default function Products() {
   const [items, setItems] = useState([])
