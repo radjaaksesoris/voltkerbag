@@ -129,7 +129,7 @@ export default function Menu({
 
     const intervalId = window.setInterval(() => {
       setActiveSummary((index) => (index + 1) % summarySlides.length)
-    }, 5000)
+    }, 4000)
     return () => window.clearInterval(intervalId)
   }, [summarySlides.length, summaryPaused])
 
@@ -205,27 +205,49 @@ export default function Menu({
           summaryTouchStart.current = null
           setSummaryPaused(false)
         }}>
-        <div className="menu-summary-copy">
-          <span className="menu-summary-kicker">Ringkasan periode</span>
-          {loaded && loadError ? (
-            <p className="menu-summary-error" role="alert">{loadError}</p>
-          ) : !loaded ? (
-            <>
-              <span className="menu-summary-label">Omzet periode</span>
-              <strong className="menu-summary-value"><LoadingNumber label="omzet periode" /></strong>
-              <span className="menu-summary-period" role="status">Memuat ringkasan...</span>
-            </>
-          ) : (
-            <>
-              <span className="menu-summary-label">{summarySlides[activeSummary].label}</span>
-              <strong className="menu-summary-value">{rupiah(summarySlides[activeSummary].value)}</strong>
-              <span className="menu-summary-period">{periodLabel}</span>
-            </>
+        <div
+          className="menu-summary-track"
+          style={{ transform: `translateX(-${activeSummary * 100}%)` }}>
+          {summarySlides.length > 0 ? summarySlides.map((slide, index) => (
+            <div
+              key={slide.label}
+              className={`menu-summary-slide menu-summary-slide-${index}`}
+              aria-hidden={index !== activeSummary}>
+              <div className="menu-summary-copy">
+                <span className="menu-summary-kicker">Ringkasan periode</span>
+                <span className="menu-summary-label">{slide.label}</span>
+                <strong className="menu-summary-value">{rupiah(slide.value)}</strong>
+                <span className="menu-summary-period">{periodLabel}</span>
+              </div>
+              <span className="menu-summary-art" aria-hidden="true">
+                <Icon name={slide.icon} size={118} />
+              </span>
+            </div>
+          )) : (
+            <div className="menu-summary-slide menu-summary-slide-default">
+              <div className="menu-summary-copy">
+                <span className="menu-summary-kicker">Ringkasan periode</span>
+                {loaded && loadError ? (
+                  <>
+                    <p className="menu-summary-error" role="alert">{loadError}</p>
+                    <button className="menu-summary-retry" type="button" onClick={() => requestPageRefresh('menu')}>
+                      Coba lagi
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <span className="menu-summary-label">Omzet periode</span>
+                    <strong className="menu-summary-value"><LoadingNumber label="omzet periode" /></strong>
+                    <span className="menu-summary-period" role="status">Memuat ringkasan...</span>
+                  </>
+                )}
+              </div>
+              <span className="menu-summary-art" aria-hidden="true">
+                <Icon name="bag" size={118} />
+              </span>
+            </div>
           )}
         </div>
-        <span className="menu-summary-art" aria-hidden="true">
-          <Icon name={summarySlides[activeSummary]?.icon || 'bag'} size={118} />
-        </span>
         {summarySlides.length > 0 && (
           <div className="menu-summary-pagination" aria-label="Pilih ringkasan">
             {summarySlides.map((slide, index) => (
@@ -238,11 +260,6 @@ export default function Menu({
                 onClick={() => setActiveSummary(index)} />
             ))}
           </div>
-        )}
-        {loaded && loadError && (
-          <button className="menu-summary-retry" type="button" onClick={() => requestPageRefresh('menu')}>
-            Coba lagi
-          </button>
         )}
       </section>
 
