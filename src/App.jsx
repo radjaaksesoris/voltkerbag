@@ -549,7 +549,10 @@ function ActiveApp() {
     setUpdateCheckError('')
     try {
       await saveSessionForAppReload()
-      const waitingWorker = serviceWorkerRegistration.current?.waiting
+      const registration = serviceWorkerRegistration.current
+        || await navigator.serviceWorker.getRegistration()
+      serviceWorkerRegistration.current = registration || null
+      const waitingWorker = registration?.waiting
       if (!waitingWorker) {
         window.location.reload()
         return
@@ -626,7 +629,7 @@ function ActiveApp() {
       }
 
       if (registration.waiting && navigator.serviceWorker.controller) {
-        await applyAppUpdate()
+        setUpdateReady(true)
       } else {
         setUpdateReady(false)
       }
