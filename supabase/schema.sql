@@ -17,6 +17,7 @@ create table if not exists public.products (
   stock integer not null default 0,
   stock_pcs integer not null default 0,
   stock_cost_value double precision not null default 0,
+  low_stock_threshold integer not null default 5 check (low_stock_threshold >= 0),
   image_path text,
   "createdAt" timestamptz,
   "updatedAt" timestamptz
@@ -77,6 +78,7 @@ create table if not exists public.transactions (
   "paidAmount" double precision not null default 0,
   "balanceDue" double precision not null default 0,
   payments jsonb not null default '[]'::jsonb,
+  returns jsonb not null default '[]'::jsonb,
   "change" double precision not null default 0,
   "requestId" uuid,
   "createdAt" timestamptz,
@@ -186,7 +188,20 @@ alter table public.products add column if not exists sale_markup_lusin_pct doubl
 alter table public.products add column if not exists price_kodi double precision;
 alter table public.products add column if not exists stock_pcs integer;
 alter table public.products add column if not exists stock_cost_value double precision;
+alter table public.products add column if not exists low_stock_threshold integer not null default 5;
 alter table public.products add column if not exists image_path text;
+do $$
+begin
+  if not exists (
+    select 1 from pg_constraint
+    where conrelid = 'public.products'::regclass
+      and conname = 'products_low_stock_threshold_check'
+  ) then
+    alter table public.products
+      add constraint products_low_stock_threshold_check check (low_stock_threshold >= 0);
+  end if;
+end;
+$$;
 update public.products set unit = 'pcs' where unit is null;
 alter table public.products alter column unit set default 'pcs';
 alter table public.products alter column unit set not null;
@@ -301,6 +316,7 @@ alter table public.transactions add column if not exists "paymentType" text not 
 alter table public.transactions add column if not exists "paidAmount" double precision not null default 0;
 alter table public.transactions add column if not exists "balanceDue" double precision not null default 0;
 alter table public.transactions add column if not exists payments jsonb not null default '[]'::jsonb;
+alter table public.transactions add column if not exists returns jsonb not null default '[]'::jsonb;
 alter table public.transactions add column if not exists "change" double precision not null default 0;
 alter table public.transactions add column if not exists "requestId" uuid;
 alter table public.transactions add column if not exists "createdAt" timestamptz;
@@ -807,6 +823,7 @@ set search_path = public, pg_temp
 as $$
   select case lower(trim(coalesce(p_unit, '')))
     when 'lusin' then 12
+    when 'kodi' then 20
     else 1
   end;
 $$;
@@ -1691,6 +1708,237 @@ begin
 end;
 $$;
 
+create or replace function public.return_transaction_items(
+  p_transaction_id bigint,
+  p_items jsonb,
+  p_request_id uuid
+)
+returns jsonb
+language plpgsql
+security definer
+set search_path = public, pg_temp
+as $$
+declare
+  current_user_id uuid := auth.uid();
+  transaction_row public.transactions%rowtype;
+  product_row public.products%rowtype;
+  requested_line jsonb;
+  original_item jsonb;
+  previous_event jsonb;
+  returned_event jsonb;
+  returned_items jsonb := '[]'::jsonb;
+  line_index integer;
+  requested_qty integer;
+  original_qty integer;
+  already_returned bigint;
+  product_id bigint;
+  stock_add bigint;
+  current_stock_value double precision;
+  item_cost double precision;
+  item_price numeric;
+  returned_amount numeric := 0;
+  new_total double precision;
+  old_paid_amount double precision;
+  new_paid_amount double precision;
+  refund_amount double precision;
+  new_balance_due double precision;
+  returned_profit double precision := 0;
+  new_gross_profit double precision;
+  operation_time timestamptz := clock_timestamp();
+begin
+  if current_user_id is null then raise exception 'Login diperlukan.'; end if;
+  if p_transaction_id is null then raise exception 'Transaksi tidak valid.'; end if;
+  if p_request_id is null then raise exception 'ID permintaan retur wajib diisi.'; end if;
+  if jsonb_typeof(p_items) <> 'array' or jsonb_array_length(p_items) = 0
+     or jsonb_array_length(p_items) > 100 then
+    raise exception 'Daftar barang retur tidak valid.';
+  end if;
+  if exists (
+    select 1
+    from jsonb_array_elements(p_items) as input(value)
+    where coalesce(value ->> 'lineIndex', '') !~ '^[0-9]+$'
+       or coalesce(value ->> 'qty', '') !~ '^[0-9]+$'
+  ) then
+    raise exception 'Baris atau jumlah barang retur tidak valid.';
+  end if;
+  if (
+    select count(*) <> count(distinct value ->> 'lineIndex')
+    from jsonb_array_elements(p_items) as input(value)
+  ) then
+    raise exception 'Setiap barang hanya boleh muncul satu kali dalam satu retur.';
+  end if;
+
+  perform pg_advisory_xact_lock(hashtextextended(current_user_id::text || p_request_id::text, 0));
+  select * into transaction_row
+  from public.transactions
+  where id = p_transaction_id and owner_id = current_user_id
+  for update;
+  if not found then raise exception 'Transaksi tidak ditemukan atau tidak dapat diakses.'; end if;
+
+  select event.value into previous_event
+  from jsonb_array_elements(coalesce(transaction_row.returns, '[]'::jsonb)) as event(value)
+  where event.value ->> 'requestId' = p_request_id::text
+  limit 1;
+  if previous_event is not null then
+    if previous_event -> 'requestedItems' is distinct from p_items then
+      raise exception 'ID permintaan retur sudah digunakan.';
+    end if;
+    return previous_event;
+  end if;
+
+  for requested_line in
+    select input.value
+    from jsonb_array_elements(p_items) as input(value)
+    order by (
+      (transaction_row.items -> ((input.value ->> 'lineIndex')::integer) ->> 'productId')::bigint
+    ), (input.value ->> 'lineIndex')::integer
+  loop
+    line_index := (requested_line ->> 'lineIndex')::integer;
+    requested_qty := (requested_line ->> 'qty')::integer;
+    if requested_qty <= 0 then raise exception 'Jumlah barang retur harus lebih dari nol.'; end if;
+    original_item := transaction_row.items -> line_index;
+    if original_item is null or jsonb_typeof(original_item) <> 'object' then
+      raise exception 'Barang transaksi yang dipilih tidak ditemukan.';
+    end if;
+    if coalesce(original_item ->> 'qty', '') !~ '^[0-9]+$'
+       or coalesce(original_item ->> 'productId', '') !~ '^[0-9]+$' then
+      raise exception 'Data barang transaksi tidak mendukung retur.';
+    end if;
+    original_qty := (original_item ->> 'qty')::integer;
+    product_id := (original_item ->> 'productId')::bigint;
+    if coalesce(original_item ->> 'price', '') !~ '^[0-9]+([.][0-9]+)?([eE][+-]?[0-9]+)?$' then
+      raise exception 'Harga barang transaksi tidak valid untuk retur.';
+    end if;
+    item_price := (original_item ->> 'price')::numeric;
+    if item_price <= 0 or item_price <> trunc(item_price)
+       or item_price > 9007199254740991 then
+      raise exception 'Harga barang transaksi tidak valid untuk retur.';
+    end if;
+
+    select coalesce(sum((returned_item.value ->> 'qty')::bigint), 0)
+    into already_returned
+    from jsonb_array_elements(coalesce(transaction_row.returns, '[]'::jsonb)) as prior(value)
+    cross join lateral jsonb_array_elements(coalesce(prior.value -> 'items', '[]'::jsonb)) as returned_item(value)
+    where (returned_item.value ->> 'lineIndex')::integer = line_index;
+    if already_returned + requested_qty > original_qty then
+      raise exception 'Jumlah retur melebihi sisa barang pada transaksi.';
+    end if;
+
+    select * into product_row
+    from public.products
+    where id = product_id and owner_id = current_user_id
+    for update;
+    if not found then
+      raise exception 'Produk "%" sudah tidak tersedia di katalog; retur tidak dapat menambah stok.', original_item ->> 'name';
+    end if;
+
+    stock_add := requested_qty::bigint * public.product_unit_factor(original_item ->> 'unit');
+    if product_row.stock_pcs::bigint + stock_add > 2147483647 then
+      raise exception 'Stok produk "%" melebihi batas penyimpanan.', product_row.name;
+    end if;
+    item_cost := coalesce(
+      (original_item ->> 'cost')::double precision,
+      product_row.cost * public.product_unit_factor(original_item ->> 'unit')
+    );
+    if item_cost < 0 or item_cost::text in ('NaN', 'Infinity', '-Infinity') then
+      raise exception 'Modal historis produk "%" tidak valid untuk retur.', product_row.name;
+    end if;
+    current_stock_value := coalesce(product_row.stock_cost_value, product_row.cost * product_row.stock_pcs)
+      + item_cost * requested_qty;
+    if current_stock_value::text in ('NaN', 'Infinity', '-Infinity') then
+      raise exception 'Nilai modal stok produk "%" melebihi batas penyimpanan.', product_row.name;
+    end if;
+
+    update public.products
+    set stock_pcs = product_row.stock_pcs + stock_add::integer,
+        stock = (product_row.stock_pcs + stock_add)::double precision
+          / public.product_unit_factor(product_row.unit),
+        stock_cost_value = current_stock_value,
+        cost = case when product_row.stock_pcs + stock_add > 0
+          then current_stock_value / (product_row.stock_pcs + stock_add)
+          else product_row.cost
+        end,
+        "updatedAt" = operation_time
+    where id = product_id and owner_id = current_user_id;
+
+    returned_amount := returned_amount
+      + item_price * requested_qty;
+    returned_profit := returned_profit
+      + (item_price::double precision - item_cost) * requested_qty;
+    returned_items := returned_items || jsonb_build_array(jsonb_build_object(
+      'lineIndex', line_index,
+      'productId', product_id,
+      'name', original_item ->> 'name',
+      'unit', original_item ->> 'unit',
+      'qty', requested_qty,
+      'price', item_price::double precision,
+      'cost', item_cost
+    ));
+  end loop;
+
+  if returned_amount <= 0 or returned_amount <> trunc(returned_amount)
+     or returned_amount > 9007199254740991 then
+    raise exception 'Nilai retur melebihi batas nominal rupiah yang aman.';
+  end if;
+  if returned_amount > transaction_row.total then
+    raise exception 'Nilai retur melebihi sisa nilai transaksi.';
+  end if;
+
+  new_total := transaction_row.total - returned_amount::double precision;
+  old_paid_amount := coalesce(transaction_row."paidAmount", transaction_row.payment);
+  if transaction_row.total < 0
+     or transaction_row.total::text in ('NaN', 'Infinity', '-Infinity')
+     or old_paid_amount < 0
+     or old_paid_amount::text in ('NaN', 'Infinity', '-Infinity') then
+    raise exception 'Nilai pembayaran transaksi tidak valid untuk retur.';
+  end if;
+  refund_amount := greatest(0, old_paid_amount - new_total);
+  new_paid_amount := old_paid_amount - refund_amount;
+  new_balance_due := greatest(0, new_total - new_paid_amount);
+  new_gross_profit := coalesce(transaction_row.gross_profit, 0) - returned_profit;
+  returned_event := jsonb_build_object(
+    'requestId', p_request_id,
+    'date', operation_time,
+    'requestedItems', p_items,
+    'items', returned_items,
+    'amount', returned_amount,
+    'refundAmount', refund_amount,
+    'total', new_total,
+    'paidAmount', new_paid_amount,
+    'balanceDue', new_balance_due
+  );
+
+  update public.transactions
+  set total = new_total,
+      "paidAmount" = new_paid_amount,
+      "balanceDue" = new_balance_due,
+      gross_profit = new_gross_profit,
+      returns = coalesce(returns, '[]'::jsonb) || jsonb_build_array(returned_event),
+      "updatedAt" = operation_time
+  where id = p_transaction_id and owner_id = current_user_id;
+
+  if refund_amount > 0 then
+    insert into public.finance_entries (
+      owner_id, type, category, note, amount, "refId", "requestId", date, "createdAt", "updatedAt"
+    ) values (
+      current_user_id,
+      'expense',
+      'Refund Retur Penjualan',
+      'Refund retur · ' || coalesce(nullif(transaction_row."invoiceNo", ''), 'Transaksi #' || p_transaction_id::text)
+        || ' · ' || coalesce(nullif(transaction_row."customerName", ''), 'Pelanggan'),
+      refund_amount,
+      p_transaction_id,
+      p_request_id,
+      operation_time,
+      operation_time,
+      operation_time
+    );
+  end if;
+
+  return returned_event;
+end;
+$$;
+
 create or replace function public.record_transaction_payment(
   p_transaction_id bigint,
   p_amount double precision,
@@ -2088,7 +2336,9 @@ begin
   select jsonb_build_object(
     'product_count', count(*),
     'low_stock_count', count(*) filter (
-      where floor(p.stock_pcs::numeric / public.product_unit_factor(p.unit)) <= 5
+      where coalesce(p.low_stock_threshold, 5) > 0
+        and floor(p.stock_pcs::numeric / public.product_unit_factor(p.unit))
+          <= coalesce(p.low_stock_threshold, 5)
     ),
     'total_asset', coalesce(sum(p.stock_cost_value), 0)
   )
@@ -2320,6 +2570,7 @@ revoke all on function public.complete_sale(text, text, double precision, jsonb,
 revoke all on function public.add_manual_customer_credit(text, double precision, uuid) from public, anon;
 revoke all on function public.record_expedition_cost(bigint, double precision) from public, anon;
 revoke all on function public.record_transaction_payment(bigint, double precision, uuid) from public, anon;
+revoke all on function public.return_transaction_items(bigint, jsonb, uuid) from public, anon;
 revoke all on function public.record_customer_credit_payment(text, double precision, uuid) from public, anon;
 revoke all on function public.delete_manual_finance_entry(bigint) from public, anon;
 revoke all on function public.reset_store_data() from public, anon;
@@ -2330,6 +2581,7 @@ grant execute on function public.complete_sale(text, text, double precision, jso
 grant execute on function public.add_manual_customer_credit(text, double precision, uuid) to authenticated;
 grant execute on function public.record_expedition_cost(bigint, double precision) to authenticated;
 grant execute on function public.record_transaction_payment(bigint, double precision, uuid) to authenticated;
+grant execute on function public.return_transaction_items(bigint, jsonb, uuid) to authenticated;
 grant execute on function public.record_customer_credit_payment(text, double precision, uuid) to authenticated;
 grant execute on function public.delete_manual_finance_entry(bigint) to authenticated;
 grant execute on function public.reset_store_data() to authenticated;

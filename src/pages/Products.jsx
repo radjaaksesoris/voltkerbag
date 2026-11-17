@@ -8,7 +8,7 @@ import MoneyInput from '../components/MoneyInput.jsx'
 import CategorySelect from '../components/CategorySelect.jsx'
 import UnitSelect from '../components/UnitSelect.jsx'
 import Icon from '../components/Icon.jsx'
-import { availableQuantity, isWholeStockQuantity, productMarkupPercentage, productPrice, purchaseCostFactor, purchaseCostPerPiece, purchaseCostUnit, quantityToPcs, saleMarkupPercentage, saleMarkupPrice, salePricesFromMarkups, saleUnitPrice, saleUnits, stockCostValue, stockEntryUnit, stockInPcs, stockReceiptValuation, unitFactor, stockLabel } from '../productUnits'
+import { availableQuantity, isLowStock, isWholeStockQuantity, productMarkupPercentage, productPrice, purchaseCostFactor, purchaseCostPerPiece, purchaseCostUnit, quantityToPcs, saleMarkupPercentage, saleMarkupPrice, salePricesFromMarkups, saleUnitPrice, saleUnits, stockCostValue, stockEntryUnit, stockInPcs, stockReceiptValuation, unitFactor, stockLabel } from '../productUnits'
 
 const EMPTY = {
   name: '',
@@ -19,6 +19,7 @@ const EMPTY = {
   salePrices: { pcs: '', lusin: '' },
   cost: '',
   stock: '',
+  low_stock_threshold: '5',
   image_path: null
 }
 
@@ -65,6 +66,7 @@ export default function Products() {
   const customPriceInputRef = useRef(null)
   const costInputRef = useRef(null)
   const stockInputRef = useRef(null)
+  const lowStockThresholdInputRef = useRef(null)
   const imageInputRef = useRef(null)
   const imageProcessingRef = useRef(false)
   const stockRequest = useRef(null)
@@ -175,7 +177,7 @@ export default function Products() {
       .map(({ product }) => product)
   }, [searchableProducts, q])
   const lowStock = useMemo(
-    () => items.filter((p) => availableQuantity(p, p.unit || 'pcs') <= 5),
+    () => items.filter(isLowStock),
     [items]
   )
   const visibleProducts = filtered.slice(0, visibleProductCount)
@@ -210,6 +212,7 @@ export default function Products() {
       stock: String(saleUnits(editUnit).length === 2
         ? stockInPcs(p)
         : stockInPcs(p) / unitFactor(stockEntryUnit(editUnit))),
+      low_stock_threshold: String(p.low_stock_threshold ?? 5),
       image_path: p.image_path || null
     })
     setImageFile(null)
@@ -417,6 +420,11 @@ export default function Products() {
       setActionError('Jumlah stok harus menghasilkan jumlah PCS utuh. Periksa kembali jumlah dan satuannya.')
       return
     }
+    const lowStockThreshold = Number(form.low_stock_threshold)
+    if (!Number.isSafeInteger(lowStockThreshold) || lowStockThreshold < 0 || lowStockThreshold > 2147483647) {
+      setActionError('Batas stok menipis harus bilangan bulat nol atau lebih.')
+      return
+    }
     const stockPcs = quantityToPcs(baseStock, stockUnit)
     if (stockPcs > 2147483647) {
       setActionError('Jumlah stok melebihi batas yang dapat disimpan.')
@@ -442,6 +450,7 @@ export default function Products() {
         sale_markup_pcs_pct: isStandard ? markups.pcs : null,
         sale_markup_lusin_pct: isStandard ? markups.lusin : null,
         price_kodi: 0,
+        low_stock_threshold: lowStockThreshold,
         image_path: imagePath
       }
       if (!editId) {
@@ -503,7 +512,8 @@ export default function Products() {
           salePriceInputRefs.pcs.current,
           markupInputRefs.lusin.current,
           salePriceInputRefs.lusin.current,
-          stockInputRef.current
+          stockInputRef.current,
+          lowStockThresholdInputRef.current
         ]
       : [
       nameInputRef.current,
@@ -512,7 +522,8 @@ export default function Products() {
       unitInputRef.current,
       customPriceInputRef.current,
       costInputRef.current,
-      stockInputRef.current
+      stockInputRef.current,
+      lowStockThresholdInputRef.current
       ]
     const currentIndex = fields.indexOf(event.target)
     if (currentIndex < 0) return
@@ -591,7 +602,7 @@ export default function Products() {
             <div className="products-overview-stat products-low-stock-stat">
               <span>Stok menipis</span>
               <strong>{lowStock.length}</strong>
-              <small>5 atau kurang</small>
+              <small>Sesuai batas tiap produk</small>
             </div>
           </div>
         </section>
@@ -685,7 +696,7 @@ export default function Products() {
                 </td>
                 <td data-label="Stok">
                   <div className="product-stock-actions">
-                    <span className={'badge product-stock-badge ' + (availableQuantity(p, p.unit || 'pcs') <= 5 ? 'badge-danger' : 'badge-ok')}>
+                    <span className={'badge product-stock-badge ' + (isLowStock(p) ? 'badge-danger' : 'badge-ok')}>
                       <span className="product-stock-title">Stok</span>
                       <span className="product-stock-desktop">{stockLabel(p)}</span>
                     </span>
@@ -923,6 +934,25 @@ export default function Products() {
                 </div>
               </div>
             )}
+            <div className="product-low-stock-threshold-field">
+              <label htmlFor="product-low-stock-threshold">
+                Batas stok menipis ({form.unit || 'pcs'})
+              </label>
+              <input
+                ref={lowStockThresholdInputRef}
+                id="product-low-stock-threshold"
+                className="input"
+                type="number"
+                inputMode="none"
+                data-custom-numpad="integer"
+                min="0"
+                max="2147483647"
+                step="1"
+                value={form.low_stock_threshold}
+                onChange={(event) => setForm({ ...form, low_stock_threshold: event.target.value })}
+              />
+              <span className="muted small">Peringatan muncul saat stok sama dengan atau di bawah batas. Isi 0 untuk menonaktifkan.</span>
+            </div>
             <div className="modal-actions">
               {actionError && <p className="form-error" role="alert">{actionError}</p>}
               <button type="button" className="btn" disabled={saving || compressingImage} onClick={closeProductForm}>Batal</button>

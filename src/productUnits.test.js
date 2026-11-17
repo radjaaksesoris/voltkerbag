@@ -31,6 +31,9 @@ test('uses the main product unit consistently for the low-stock threshold', () =
   assert.equal(isLowStock({ unit: 'pcs', stock_pcs: 6 }), false)
   assert.equal(isLowStock({ unit: 'lusin', stock_pcs: 60 }), true)
   assert.equal(isLowStock({ unit: 'lusin', stock_pcs: 72 }), false)
+  assert.equal(isLowStock({ unit: 'pcs', stock_pcs: 8, low_stock_threshold: 10 }), true)
+  assert.equal(isLowStock({ unit: 'pcs', stock_pcs: 8, low_stock_threshold: 5 }), false)
+  assert.equal(isLowStock({ unit: 'pcs', stock_pcs: 0, low_stock_threshold: 0 }), false)
 })
 
 test('enters initial stock in lusin for standard products', () => {

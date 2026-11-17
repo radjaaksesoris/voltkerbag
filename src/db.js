@@ -713,6 +713,17 @@ export async function recordTransactionPayment(transactionId, amount, requestId)
   return data
 }
 
+export async function returnTransactionItems(transactionId, items, requestId) {
+  const { data, error } = await getClient().rpc('return_transaction_items', {
+    p_transaction_id: transactionId,
+    p_items: items,
+    p_request_id: requestId || crypto.randomUUID()
+  })
+  throwIfError(error, 'Gagal mencatat retur transaksi')
+  notifyRefresh()
+  return data
+}
+
 export async function recordCustomerCreditPayment(customerName, amount, requestId) {
   const { data, error } = await getClient().rpc('record_customer_credit_payment', {
     p_customer_name: customerName,

@@ -235,6 +235,15 @@ export default function Dashboard() {
               <strong>{loaded ? rupiah(totalAsset) : <LoadingNumber label="nilai stok" />}</strong>
             </div>
           </div>
+          {loaded && report.inventory.low_stock_count > 0 && (
+            <div className="dashboard-low-stock-alert" role="status" aria-live="polite">
+              <Icon name="box" size={18} />
+              <span>
+                <strong>{report.inventory.low_stock_count} produk</strong> sudah mencapai batas stok menipis.
+                Periksa daftar produk di tab Stok Barang.
+              </span>
+            </div>
+          )}
         </div>
       </div>
 

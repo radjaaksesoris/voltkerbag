@@ -33,7 +33,7 @@ function summarizeStock(data) {
   const stockRanking = Boolean(data.stock_order && !data.low_stock_only)
   if (matches.length === 0) {
     if (data.low_stock_only && !data.searched_product) {
-      return 'Tidak ada produk dengan stok rendah (maksimal 5 satuan utama).'
+      return 'Tidak ada produk yang mencapai batas stok menipis masing-masing.'
     }
     return data.total_products
       ? 'Maaf, saya belum menemukan produk yang cocok. Bisa sebutkan nama produk persis seperti yang tercatat di Stok Barang?'
@@ -54,7 +54,7 @@ function summarizeStock(data) {
     lines.push('Masih ada produk lainnya; buka rincian data untuk daftar lengkap.')
   }
   const orderLabel = data.low_stock_only
-    ? 'Produk dengan stok rendah (maksimal 5 satuan utama):'
+    ? 'Produk yang mencapai batas stok menipis masing-masing:'
     : data.stock_order === 'asc'
     ? 'Produk dengan stok paling sedikit (berdasarkan jumlah PCS):'
     : data.stock_order === 'desc'
@@ -158,7 +158,7 @@ export function formatQueryAnswer(intent, data = {}) {
   if (intent === 'inventory_summary') {
     return [
       'Jumlah produk: ' + (Number(data.product_count) || 0),
-      'Produk dengan stok rendah (maksimal 5 satuan utama): ' + (Number(data.low_stock_count) || 0),
+      'Produk yang mencapai batas stok menipis masing-masing: ' + (Number(data.low_stock_count) || 0),
       'Nilai modal seluruh stok: ' + rupiah(data.total_asset)
     ].join('\n')
   }
@@ -252,7 +252,7 @@ export function formatQueryAnswer(intent, data = {}) {
         : 'Tidak ada produk dengan stok rendah pada saat ini.'
     }
     return [
-      'Produk terlaris dengan stok rendah (ambang stok aplikasi: maksimal 5 satuan utama):',
+      'Produk terlaris yang mencapai batas stok menipis masing-masing:',
       ...data.products.map((product, index) =>
         (index + 1) + '. ' + product.name + ' · stok ' + product.stock +
         ' · penjualan ' + rupiah(product.sales) +

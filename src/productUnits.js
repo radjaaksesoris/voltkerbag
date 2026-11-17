@@ -85,7 +85,10 @@ export function availableQuantity(product, unit) {
 }
 
 export function isLowStock(product) {
-  return availableQuantity(product, product.unit || 'pcs') <= 5
+  const threshold = Number(product.low_stock_threshold ?? 5)
+  return Number.isFinite(threshold)
+    && threshold > 0
+    && availableQuantity(product, product.unit || 'pcs') <= threshold
 }
 
 export function productPrice(product, unit) {

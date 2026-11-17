@@ -95,12 +95,12 @@ test('reports genuinely low-stock products instead of only ranking all products'
     low_stock_only: true,
     matches: [{ name: 'Tas A', stock: '3 pcs', sale_prices: {} }]
   })
-  assert.match(answer, /Produk dengan stok rendah/)
+  assert.match(answer, /Produk yang mencapai batas stok menipis masing-masing/)
   assert.match(answer, /\*\*Tas A\*\* — Stok 3 pcs/)
   assert.equal(formatQueryAnswer('stock', {
     low_stock_only: true,
     matches: []
-  }), 'Tidak ada produk dengan stok rendah (maksimal 5 satuan utama).')
+  }), 'Tidak ada produk yang mencapai batas stok menipis masing-masing.')
 })
 
 test('includes HPP per sale unit for direct cost questions', () => {
@@ -372,7 +372,7 @@ test('reports current inventory count, low stock count, and recorded cost value'
     product_count: 12,
     low_stock_count: 3,
     total_asset: 1_500_000
-  }), 'Jumlah produk: 12\nProduk dengan stok rendah (maksimal 5 satuan utama): 3\nNilai modal seluruh stok: Rp\u00a01.500.000')
+  }), 'Jumlah produk: 12\nProduk yang mencapai batas stok menipis masing-masing: 3\nNilai modal seluruh stok: Rp\u00a01.500.000')
 })
 
 test('formats period comparison with an explicit low-sample caveat', () => {
