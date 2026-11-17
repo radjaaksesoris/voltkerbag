@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
-import { addProductStock, getAll, getProductImageUrl, put, remove, removeProductImage, setProductStock, updateProductDetails, uploadProductImage, onRefresh, requestPageRefresh } from '../db'
+import { addProductStock, getAll, getProductImageUrl, getProductThumbnailUrl, put, remove, removeProductImage, setProductStock, updateProductDetails, uploadProductImage, onRefresh, requestPageRefresh } from '../db'
 import { rupiah } from '../format'
 import { isSafeRupiahAmount } from '../money'
 import { compressProductImage } from '../productImage'
@@ -653,10 +653,15 @@ export default function Products() {
                   <div className="product-name-content">
                     {p.image_path && (
                       <img
-                        src={getProductImageUrl(p.image_path)}
+                        src={getProductThumbnailUrl(p.image_path)}
                         width="42"
                         height="42"
                         alt=""
+                        onError={(event) => {
+                          const image = event.currentTarget
+                          const originalUrl = getProductImageUrl(p.image_path)
+                          if (image.src !== originalUrl) image.src = originalUrl
+                        }}
                         loading={index < 4 ? 'eager' : 'lazy'}
                         fetchPriority={index < 2 ? 'high' : 'auto'}
                         decoding="async"
