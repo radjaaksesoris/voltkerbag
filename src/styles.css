@@ -3243,6 +3243,9 @@ label { display: block; margin-bottom: 6px; color: var(--muted); font-size: 11px
   background: var(--bg);
   font-family: 'Poppins', 'Avenir Next', system-ui, sans-serif;
 }
+body:has(.app) {
+  background: linear-gradient(110deg, #f5e5e0, #f8f5ee);
+}
 .app:not(.menu-landing) .app-background {
   background: linear-gradient(110deg, #f5e5e0, #f8f5ee);
 }
