@@ -34,7 +34,9 @@ export default function Menu({
   const [loadError, setLoadError] = useState('')
   const [loaded, setLoaded] = useState(false)
   const [activeSummary, setActiveSummary] = useState(0)
+  const [summaryPaused, setSummaryPaused] = useState(false)
   const requestId = useRef(0)
+  const summaryTouchStart = useRef(null)
 
   useEffect(() => {
     let active = true
@@ -122,6 +124,42 @@ export default function Menu({
     ? `${formatPeriodDate(summary.range.from)}–${formatPeriodDate(summary.range.to)} ${summary.range.to.slice(0, 4)} · ${summary.transactionCount} transaksi`
     : ''
 
+  useEffect(() => {
+    if (summarySlides.length < 2 || summaryPaused) return undefined
+
+    const intervalId = window.setInterval(() => {
+      setActiveSummary((index) => (index + 1) % summarySlides.length)
+    }, 5000)
+    return () => window.clearInterval(intervalId)
+  }, [summarySlides.length, summaryPaused])
+
+  function startSummarySwipe(event) {
+    setSummaryPaused(true)
+    if (event.touches.length !== 1) {
+      summaryTouchStart.current = null
+      return
+    }
+
+    const touch = event.touches[0]
+    summaryTouchStart.current = { x: touch.clientX, y: touch.clientY }
+  }
+
+  function finishSummarySwipe(event) {
+    setSummaryPaused(false)
+    const start = summaryTouchStart.current
+    summaryTouchStart.current = null
+    if (!start || summarySlides.length < 2) return
+
+    const touch = event.changedTouches[0]
+    const deltaX = touch.clientX - start.x
+    const deltaY = touch.clientY - start.y
+    if (Math.abs(deltaX) < 40 || Math.abs(deltaX) <= Math.abs(deltaY)) return
+
+    setActiveSummary((index) =>
+      (index + (deltaX < 0 ? 1 : summarySlides.length - 1)) % summarySlides.length
+    )
+  }
+
   return (
     <div className="page menu-page">
       <div className="menu-top-actions">
@@ -158,7 +196,15 @@ export default function Menu({
       </div>
       {logoutError && <p className="menu-logout-error" role="alert">{logoutError}</p>}
 
-      <section className="menu-summary-card" aria-label="Ringkasan periode">
+      <section
+        className="menu-summary-card"
+        aria-label="Ringkasan periode"
+        onTouchStart={startSummarySwipe}
+        onTouchEnd={finishSummarySwipe}
+        onTouchCancel={() => {
+          summaryTouchStart.current = null
+          setSummaryPaused(false)
+        }}>
         <div className="menu-summary-copy">
           <span className="menu-summary-kicker">Ringkasan periode</span>
           {loaded && loadError ? (
