@@ -366,8 +366,10 @@ export default function Menu({
                 className={
                   'menu-shortcut menu-shortcut-' + (index % 4)
                   + (item.id === 'refresh' && updateAvailable ? ' menu-shortcut-update-available' : '')
+                  + (item.id === 'refresh' && applyingUpdate ? ' menu-shortcut-update-applying' : '')
                 }
                 type="button"
+                aria-busy={item.id === 'refresh' && applyingUpdate}
                 aria-label={item.id === 'refresh' && updateAvailable
                   ? (applyingUpdate ? 'Memperbarui aplikasi' : 'Perbarui Aplikasi, pembaruan tersedia')
                   : item.label}
@@ -394,8 +396,12 @@ export default function Menu({
                 </span>
                 {item.id === 'refresh' && updateAvailable && (
                   <span className="menu-update-hint" aria-hidden="true">
-                    <span className="menu-update-arrow">↓</span>
-                    <span>Klik here for Update</span>
+                    {applyingUpdate
+                      ? <span>Pembaruan sedang berjalan...</span>
+                      : <>
+                          <span className="menu-update-arrow">↓</span>
+                          <span>Klik here for Update</span>
+                        </>}
                   </span>
                 )}
               </button>

@@ -270,6 +270,7 @@ function ActiveApp() {
   const menuNavigationFlowRef = useRef(null)
   const returningToMenuRef = useRef(false)
   const serviceWorkerRegistration = useRef(null)
+  const applyingUpdateRef = useRef(false)
   const pendingLoginTarget = useRef(null)
   const returnTransitionTimer = useRef(null)
   const menuNavigationTimer = useRef(null)
@@ -605,6 +606,8 @@ function ActiveApp() {
   }
 
   const applyAppUpdate = useCallback(async () => {
+    if (applyingUpdateRef.current) return
+    applyingUpdateRef.current = true
     setApplyingUpdate(true)
     setUpdateCheckError('')
     try {
@@ -612,18 +615,14 @@ function ActiveApp() {
       const registration = serviceWorkerRegistration.current
         || await navigator.serviceWorker.getRegistration()
       serviceWorkerRegistration.current = registration || null
-      if (!registration) {
-        throw new Error('Pembaruan belum tersedia. Periksa kembali koneksi lalu coba lagi.')
-      }
-
-      let waitingWorker = registration.waiting
-      if (!waitingWorker) {
-        await registration.update()
-        if (registration.installing) await waitForServiceWorkerInstall(registration.installing)
+      let waitingWorker = registration?.waiting
+      if (!waitingWorker && registration?.installing) {
+        await waitForServiceWorkerInstall(registration.installing)
         waitingWorker = registration.waiting
       }
       if (!waitingWorker) {
-        throw new Error('Pembaruan belum siap dipasang. Silakan tekan Perbarui lagi.')
+        window.location.reload()
+        return
       }
 
       const reloadWhenActivated = () => {
@@ -632,6 +631,7 @@ function ActiveApp() {
           window.location.reload()
         } else if (waitingWorker.state === 'redundant') {
           waitingWorker.removeEventListener('statechange', reloadWhenActivated)
+          applyingUpdateRef.current = false
           setApplyingUpdate(false)
           setUpdateReady(false)
           setUpdateCheckError('Pembaruan aplikasi gagal dipasang. Silakan coba lagi.')
@@ -642,6 +642,7 @@ function ActiveApp() {
       reloadWhenActivated()
     } catch (error) {
       console.error('Gagal menerapkan pembaruan aplikasi:', error)
+      applyingUpdateRef.current = false
       setApplyingUpdate(false)
       setUpdateCheckError(error.message || 'Pembaruan gagal diterapkan. Silakan coba lagi.')
     }

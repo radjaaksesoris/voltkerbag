@@ -1235,6 +1235,18 @@ h2 {
   content: '';
   pointer-events: none;
 }
+.menu-shortcut-update-applying,
+.menu-shortcut-update-applying:hover,
+.menu-shortcut-update-applying:active {
+  transform: none;
+  background: linear-gradient(145deg, #777, #565656);
+  color: #f0f0f0;
+  filter: grayscale(1);
+  opacity: .76;
+  cursor: wait;
+  box-shadow: 0 7px 16px rgba(40, 40, 40, .16), inset 0 1px 0 rgba(255, 255, 255, .12);
+}
+.menu-shortcut-update-applying::after { animation: none; opacity: 0; }
 .menu-update-hint {
   position: absolute;
   z-index: 3;
@@ -1256,6 +1268,11 @@ h2 {
   line-height: 1.15;
   text-align: center;
   text-shadow: none;
+}
+.menu-shortcut-update-applying .menu-update-hint {
+  border-color: rgba(255, 255, 255, .32);
+  background: rgba(75, 75, 75, .9);
+  color: #fff;
 }
 .menu-update-arrow {
   flex: 0 0 auto;
