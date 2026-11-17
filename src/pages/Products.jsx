@@ -26,11 +26,12 @@ const EMPTY = {
 const PRODUCT_NAME_COLLATOR = new Intl.Collator('id', { numeric: true, sensitivity: 'base' })
 const PRODUCT_PAGE_SIZE = 15
 
-export default function Products() {
+export default function Products({ lowStockFilterRequest = 0 }) {
   const [items, setItems] = useState([])
   const [categories, setCategories] = useState([])
   const [units, setUnits] = useState([])
   const [q, setQ] = useState('')
+  const [lowStockOnly, setLowStockOnly] = useState(false)
   const [visibleProductCount, setVisibleProductCount] = useState(PRODUCT_PAGE_SIZE)
   const [form, setForm] = useState(EMPTY)
   const [editId, setEditId] = useState(null)
@@ -51,6 +52,7 @@ export default function Products() {
   const [actionError, setActionError] = useState('')
   const [loaded, setLoaded] = useState(false)
   const productsSearchRef = useRef(null)
+  const productsTableRef = useRef(null)
   const nameInputRef = useRef(null)
   const originalImagePathRef = useRef(null)
   const categoryInputRef = useRef(null)
@@ -161,6 +163,23 @@ export default function Products() {
     return onRefresh(load, 'stok')
   }, [])
 
+  useEffect(() => {
+    if (!lowStockFilterRequest || !loaded) return
+    setLowStockOnly(true)
+    setQ('')
+    setVisibleProductCount(PRODUCT_PAGE_SIZE)
+    let secondFrame = 0
+    const firstFrame = window.requestAnimationFrame(() => {
+      secondFrame = window.requestAnimationFrame(() => {
+        productsTableRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      })
+    })
+    return () => {
+      window.cancelAnimationFrame(firstFrame)
+      window.cancelAnimationFrame(secondFrame)
+    }
+  }, [lowStockFilterRequest, loaded])
+
   const searchableProducts = useMemo(
     () => items
       .map((product) => ({
@@ -173,9 +192,9 @@ export default function Products() {
   const filtered = useMemo(() => {
     const query = q.trim().toLowerCase()
     return searchableProducts
-      .filter(({ searchText }) => searchText.includes(query))
+      .filter(({ product, searchText }) => searchText.includes(query) && (!lowStockOnly || isLowStock(product)))
       .map(({ product }) => product)
-  }, [searchableProducts, q])
+  }, [searchableProducts, q, lowStockOnly])
   const lowStock = useMemo(
     () => items.filter(isLowStock),
     [items]
@@ -634,11 +653,24 @@ export default function Products() {
               </button>
             )}
           </div>
+          {lowStock.length > 0 && (
+            <button
+              type="button"
+              className={'btn products-low-stock-filter' + (lowStockOnly ? ' active' : '')}
+              aria-pressed={lowStockOnly}
+              onClick={() => {
+                setLowStockOnly((enabled) => !enabled)
+                setVisibleProductCount(PRODUCT_PAGE_SIZE)
+              }}>
+              <Icon name="box" size={15} />
+              {lowStockOnly ? 'Semua produk' : `Stok menipis (${lowStock.length})`}
+            </button>
+          )}
           <button className="btn btn-primary products-add-button" onClick={openAdd}>+ Tambah Produk</button>
         </div>
       </div>
 
-      <div className="card table-card products-table-card">
+      <div className="card table-card products-table-card" ref={productsTableRef}>
         <div className="products-table-heading">
           <div>
             <h3>Daftar produk</h3>
@@ -658,7 +690,7 @@ export default function Products() {
               </td></tr>
             )}
             {visibleProducts.map((p, index) => (
-              <tr key={p.id}>
+              <tr key={p.id} className={isLowStock(p) ? 'product-row-low-stock' : undefined}>
                 <td className="product-number-cell">{index + 1}</td>
                 <td className="product-name-cell">
                   <div className="product-name-content">
@@ -694,10 +726,10 @@ export default function Products() {
                     </div>
                   ))}
                 </td>
-                <td data-label="Stok">
+                <td data-label="Stok" className={'product-stock-cell' + (isLowStock(p) ? ' is-low-stock' : '')}>
                   <div className="product-stock-actions">
                     <span className={'badge product-stock-badge ' + (isLowStock(p) ? 'badge-danger' : 'badge-ok')}>
-                      <span className="product-stock-title">Stok</span>
+                      <span className="product-stock-title">{isLowStock(p) ? 'Stok menipis' : 'Stok'}</span>
                       <span className="product-stock-desktop">{stockLabel(p)}</span>
                     </span>
                     <button

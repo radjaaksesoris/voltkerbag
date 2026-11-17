@@ -263,6 +263,7 @@ function ActiveApp() {
   const [checkingAppUpdate, setCheckingAppUpdate] = useState(false)
   const [updateCheckError, setUpdateCheckError] = useState('')
   const [menuNavigationTarget, setMenuNavigationTarget] = useState(null)
+  const [lowStockFilterRequest, setLowStockFilterRequest] = useState(0)
   const currentPage = NAV.find((n) => n.id === page)
   const contentRef = useRef(null)
   const returnButtonRef = useRef(null)
@@ -289,6 +290,11 @@ function ActiveApp() {
     })
     setPage(nextPage)
   }, [])
+
+  const openLowStockProducts = useCallback(() => {
+    setLowStockFilterRequest((request) => request + 1)
+    navigateToPage('stok')
+  }, [navigateToPage])
 
   const navigateFromMenu = useCallback((nextPage) => {
     if (menuNavigationActive.current) return
@@ -860,7 +866,11 @@ function ActiveApp() {
                           updateAvailable={updateReady}
                           applyingUpdate={applyingUpdate}
                           onApplyAppUpdate={applyAppUpdate} />
-                      : <Page />}
+                      : id === 'dashboard'
+                        ? <Page onOpenLowStockProducts={openLowStockProducts} />
+                        : id === 'stok'
+                          ? <Page lowStockFilterRequest={lowStockFilterRequest} />
+                          : <Page />}
                   </Suspense>
                 </PageErrorBoundary>
               </div>

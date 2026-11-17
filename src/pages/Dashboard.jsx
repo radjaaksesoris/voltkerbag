@@ -13,10 +13,11 @@ import { getInvoiceNumber } from '../invoice'
 import CustomerIdentity from '../components/CustomerIdentity.jsx'
 import Icon from '../components/Icon'
 import LoadingNumber from '../components/LoadingNumber.jsx'
+import { isLowStock } from '../productUnits.js'
 
 const TRANSACTIONS_PER_PAGE = 15
 
-export default function Dashboard() {
+export default function Dashboard({ onOpenLowStockProducts }) {
   const [report, setReport] = useState({
     transactions: [],
     total_count: 0,
@@ -37,6 +38,10 @@ export default function Dashboard() {
   const [transactionPage, setTransactionPage] = useState(1)
   const [selectedTransaction, setSelectedTransaction] = useState(null)
   const [customers, setCustomers] = useState([])
+  const [lowStockProducts, setLowStockProducts] = useState([])
+  const [lowStockProductsLoaded, setLowStockProductsLoaded] = useState(false)
+  const [lowStockProductsError, setLowStockProductsError] = useState('')
+  const [dismissedLowStockIds, setDismissedLowStockIds] = useState([])
   const [customerLoadError, setCustomerLoadError] = useState('')
   const [loadError, setLoadError] = useState('')
   const [loaded, setLoaded] = useState(false)
@@ -56,6 +61,31 @@ export default function Dashboard() {
     }
     loadCustomers()
     const unsubscribe = onRefresh(loadCustomers, 'dashboard')
+    return () => {
+      active = false
+      unsubscribe()
+    }
+  }, [])
+
+  useEffect(() => {
+    let active = true
+    async function loadLowStockProducts() {
+      try {
+        const products = await getAll('products')
+        if (!active) return
+        const lowProducts = products.filter(isLowStock)
+        const lowIds = new Set(lowProducts.map((product) => product.id))
+        setLowStockProducts(lowProducts)
+        setDismissedLowStockIds((dismissed) => dismissed.filter((id) => lowIds.has(id)))
+        setLowStockProductsError('')
+      } catch (error) {
+        if (active) setLowStockProductsError(error.message || 'Gagal memuat daftar produk stok menipis.')
+      } finally {
+        if (active) setLowStockProductsLoaded(true)
+      }
+    }
+    loadLowStockProducts()
+    const unsubscribe = onRefresh(loadLowStockProducts, 'dashboard')
     return () => {
       active = false
       unsubscribe()
@@ -127,6 +157,14 @@ export default function Dashboard() {
   const pageStart = (currentPage - 1) * TRANSACTIONS_PER_PAGE
   const pageTransactions = report.transactions
   const totalAsset = Number(report.inventory?.total_asset || 0)
+  const newLowStockProducts = lowStockProducts.filter((product) => !dismissedLowStockIds.includes(product.id))
+
+  function openLowStockProducts() {
+    setDismissedLowStockIds((dismissed) => [
+      ...new Set([...dismissed, ...newLowStockProducts.map((product) => product.id)])
+    ])
+    onOpenLowStockProducts?.()
+  }
 
   function updateSelectedTransaction(updatedTransaction) {
     setReport((current) => ({
@@ -235,14 +273,19 @@ export default function Dashboard() {
               <strong>{loaded ? rupiah(totalAsset) : <LoadingNumber label="nilai stok" />}</strong>
             </div>
           </div>
-          {loaded && report.inventory.low_stock_count > 0 && (
-            <div className="dashboard-low-stock-alert" role="status" aria-live="polite">
+          {loaded && lowStockProductsLoaded && newLowStockProducts.length > 0 && (
+            <button
+              type="button"
+              className="dashboard-low-stock-alert"
+              onClick={openLowStockProducts}
+              aria-label={`Buka ${newLowStockProducts.length} produk dengan stok menipis`}>
               <Icon name="box" size={18} />
-              <span>
-                <strong>{report.inventory.low_stock_count} produk</strong> sudah mencapai batas stok menipis.
-                Periksa daftar produk di tab Stok Barang.
-              </span>
-            </div>
+              <span>{newLowStockProducts.length} Produk, Stok menipis</span>
+              <Icon name="chevronRight" size={16} />
+            </button>
+          )}
+          {loaded && lowStockProductsError && report.inventory.low_stock_count > 0 && (
+            <p className="dashboard-low-stock-error" role="alert">{lowStockProductsError}</p>
           )}
         </div>
       </div>
