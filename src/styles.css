@@ -1487,8 +1487,8 @@ h3 { margin-bottom: 16px; color: var(--ink); font-size: 15px; font-weight: 700; 
 .purchase-details { color: var(--text); }
 .purchase-table td.danger { color: var(--accent-dark); font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap; }
 .purchase-delete-button { display: inline-grid; width: 28px; min-height: 28px; flex: 0 0 auto; place-items: center; padding: 0; }
-.app:not(.menu-landing) .purchase-delete-button { border: 0; border-radius: 50%; background: transparent; color: var(--accent-dark); }
-.app:not(.menu-landing) .purchase-delete-button:hover:not(:disabled) { background: #f8e9e5; }
+.app:not(.menu-landing) .purchase-delete-button { border: 0; border-radius: 0; background: transparent; color: var(--accent-dark); }
+.app:not(.menu-landing) .purchase-delete-button:hover:not(:disabled) { background: transparent; }
 .dashboard-row-number { width: 44px; color: var(--muted); font-variant-numeric: tabular-nums; }
 .dashboard-customer-cell { min-width: 0; }
 .transaction-customer, .transaction-invoice { display: block; }
@@ -4495,8 +4495,8 @@ body:has(.app) {
   }
   .app:not(.menu-landing) .purchase-table tbody td:nth-child(4) { text-align: left; }
   .app:not(.menu-landing) .purchase-table tbody td:nth-child(3) { white-space: nowrap; }
-  .app:not(.menu-landing) .purchase-delete-button { border: 1px solid rgba(255, 250, 243, .38); color: #fffaf3; }
-  .app:not(.menu-landing) .purchase-delete-button:hover:not(:disabled) { background: rgba(255, 250, 243, .14); }
+  .app:not(.menu-landing) .purchase-delete-button { border: 0; border-radius: 0; background: transparent; color: #fffaf3; }
+  .app:not(.menu-landing) .purchase-delete-button:hover:not(:disabled) { background: transparent; }
   .app:not(.menu-landing) .purchase-table tbody td[colspan] {
     display: block;
     padding: 14px 10px;
