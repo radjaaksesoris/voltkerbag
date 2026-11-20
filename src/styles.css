@@ -1477,18 +1477,18 @@ h3 { margin-bottom: 16px; color: var(--ink); font-size: 15px; font-weight: 700; 
 .purchase-table tbody td:first-child { border-left: 1px solid #eaded8; border-radius: 14px 0 0 5px; }
 .purchase-table tbody td:last-child { border-right: 1px solid #eaded8; border-radius: 0 5px 14px 0; }
 .purchase-table tbody tr:hover td { background: #fff8f4; }
-.purchase-table th:nth-child(1), .purchase-table td:nth-child(1) { width: 5%; }
-.purchase-table th:nth-child(2), .purchase-table td:nth-child(2) { width: 27%; }
-.purchase-table th:nth-child(3), .purchase-table td:nth-child(3) { width: 16%; }
-.purchase-table th:nth-child(4), .purchase-table td:nth-child(4) { width: 20%; }
-.purchase-table th:nth-child(5), .purchase-table td:nth-child(5) { width: 20%; }
-.purchase-table th:nth-child(6), .purchase-table td:nth-child(6) { width: 12%; }
+.purchase-table th:nth-child(1), .purchase-table td:nth-child(1) { width: 6%; }
+.purchase-table th:nth-child(2), .purchase-table td:nth-child(2) { width: 30%; }
+.purchase-table th:nth-child(3), .purchase-table td:nth-child(3) { width: 18%; }
+.purchase-table th:nth-child(4), .purchase-table td:nth-child(4) { width: 23%; }
+.purchase-table th:nth-child(5), .purchase-table td:nth-child(5) { width: 23%; }
 .purchase-table td { overflow-wrap: anywhere; }
 .purchase-row-number { color: var(--muted); font-variant-numeric: tabular-nums; }
 .purchase-details { color: var(--text); }
 .purchase-table td.danger { color: var(--accent-dark); font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap; }
-.purchase-action-cell { text-align: right !important; }
-.purchase-delete-button { display: inline-grid; width: 34px; min-height: 34px; place-items: center; padding: 0; }
+.purchase-delete-button { display: inline-grid; width: 28px; min-height: 28px; flex: 0 0 auto; place-items: center; padding: 0; }
+.app:not(.menu-landing) .purchase-delete-button { border: 0; border-radius: 50%; background: transparent; color: var(--accent-dark); }
+.app:not(.menu-landing) .purchase-delete-button:hover:not(:disabled) { background: #f8e9e5; }
 .dashboard-row-number { width: 44px; color: var(--muted); font-variant-numeric: tabular-nums; }
 .dashboard-customer-cell { min-width: 0; }
 .transaction-customer, .transaction-invoice { display: block; }
@@ -4495,12 +4495,8 @@ body:has(.app) {
   }
   .app:not(.menu-landing) .purchase-table tbody td:nth-child(4) { text-align: left; }
   .app:not(.menu-landing) .purchase-table tbody td:nth-child(3) { white-space: nowrap; }
-  .app:not(.menu-landing) .purchase-table tbody td.purchase-action-cell {
-    grid-column: 1 / -1;
-    align-items: flex-end;
-    padding: 2px 0 0;
-  }
-  .app:not(.menu-landing) .purchase-delete-button { min-height: 34px; }
+  .app:not(.menu-landing) .purchase-delete-button { border: 1px solid rgba(255, 250, 243, .38); color: #fffaf3; }
+  .app:not(.menu-landing) .purchase-delete-button:hover:not(:disabled) { background: rgba(255, 250, 243, .14); }
   .app:not(.menu-landing) .purchase-table tbody td[colspan] {
     display: block;
     padding: 14px 10px;

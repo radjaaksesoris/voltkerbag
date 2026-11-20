@@ -277,11 +277,11 @@ export default function Purchases() {
         </div>
         <table className="purchase-table">
           <thead>
-            <tr><th>No.</th><th>Pembelian</th><th>Tanggal</th><th>Nominal</th><th>Vendor</th><th>Aksi</th></tr>
+            <tr><th>No.</th><th>Pembelian</th><th>Tanggal</th><th>Nominal</th><th>Vendor</th></tr>
           </thead>
           <tbody>
             {entries.length === 0 ? (
-              <tr><td colSpan="6" className="muted center">Belum ada pembelian bahan yang dicatat.</td></tr>
+              <tr><td colSpan="5" className="muted center">Belum ada pembelian bahan yang dicatat.</td></tr>
             ) : entries.map((entry, index) => {
               const purchase = parsePurchaseNote(entry.note)
               return (
@@ -291,22 +291,20 @@ export default function Purchases() {
                     <div className="purchase-item-heading">
                       <span className="purchase-item-title">{purchase.purchase}</span>
                       <span className="purchase-item-type">Pembelian</span>
+                      <button
+                        className="btn btn-sm btn-danger purchase-delete-button"
+                        type="button"
+                        aria-label={'Hapus pembelian ' + purchase.purchase}
+                        title="Hapus riwayat pembelian"
+                        disabled={deletingEntryId !== null}
+                        onClick={() => deletePurchase(entry)}>
+                        <Icon name="close" size={16} />
+                      </button>
                     </div>
                   </td>
                   <td data-label="Tanggal">{dateOnly(entry.date || entry.createdAt)}</td>
                   <td className="danger" data-label="Nominal">{rupiah(entry.amount)}</td>
                   <td className="purchase-details" data-label="Vendor">{purchase.vendor}</td>
-                  <td className="purchase-action-cell" data-label="Aksi">
-                    <button
-                      className="btn btn-sm btn-danger purchase-delete-button"
-                      type="button"
-                      aria-label={'Hapus pembelian ' + purchase.purchase}
-                      title="Hapus riwayat pembelian"
-                      disabled={deletingEntryId !== null}
-                      onClick={() => deletePurchase(entry)}>
-                      <Icon name="close" size={16} />
-                    </button>
-                  </td>
                 </tr>
               )
             })}
