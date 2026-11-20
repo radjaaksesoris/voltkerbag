@@ -612,6 +612,14 @@ export async function getPurchaseEntries(page, pageSize) {
   return { entries: data || [], totalCount: count || 0 }
 }
 
+export async function removePurchaseEntry(id) {
+  const { error } = await getClient().rpc('delete_purchase_entry', {
+    p_entry_id: id
+  })
+  throwIfError(error, 'Gagal menghapus riwayat pembelian')
+  notifyRefresh()
+}
+
 export async function getTransactionSummary({ from, to }) {
   const { data, error } = await getClient().rpc('get_transaction_summary', {
     p_from: from,

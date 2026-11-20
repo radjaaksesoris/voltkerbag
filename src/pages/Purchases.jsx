@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
-import { getAll, getPurchaseEntries, onRefresh, requestPageRefresh, put } from '../db'
+import { getAll, getPurchaseEntries, onRefresh, requestPageRefresh, put, removePurchaseEntry } from '../db'
 import { dateOnly, rupiah } from '../format'
 import { dateRangeTimestamps, localDateValue } from '../dateFilter'
 import MoneyInput from '../components/MoneyInput.jsx'
@@ -26,9 +26,11 @@ export default function Purchases() {
   const [amount, setAmount] = useState('')
   const [purchaseDate, setPurchaseDate] = useState(() => localDateValue(new Date()))
   const [saving, setSaving] = useState(false)
+  const [deletingEntryId, setDeletingEntryId] = useState(null)
   const requestId = useRef(0)
   const vendorRequestId = useRef(0)
   const savingLock = useRef(false)
+  const deletingLock = useRef(false)
 
   useEffect(() => {
     if (!status) return undefined
@@ -150,6 +152,29 @@ export default function Purchases() {
     }
   }
 
+  async function deletePurchase(entry) {
+    if (deletingLock.current) return
+    const purchase = parsePurchaseNote(entry.note)
+    if (!confirm(
+      'Hapus riwayat pembelian "' + purchase.purchase + '"?\n\n' +
+      'Catatan pengeluaran terkait juga akan dihapus dari Keuangan. Tindakan ini tidak dapat dibatalkan.'
+    )) return
+
+    deletingLock.current = true
+    setDeletingEntryId(entry.id)
+    setActionError('')
+    setStatus('')
+    try {
+      await removePurchaseEntry(entry.id)
+      setStatus('Riwayat pembelian berhasil dihapus')
+    } catch (error) {
+      setActionError(error.message || 'Gagal menghapus riwayat pembelian.')
+    } finally {
+      deletingLock.current = false
+      setDeletingEntryId(null)
+    }
+  }
+
   if (!loaded) return <div className="page"><p className="muted">Memuat riwayat pembelian...</p></div>
   if (loadError) {
     return (
@@ -252,11 +277,11 @@ export default function Purchases() {
         </div>
         <table className="purchase-table">
           <thead>
-            <tr><th>No.</th><th>Pembelian</th><th>Tanggal</th><th>Nominal</th><th>Vendor</th></tr>
+            <tr><th>No.</th><th>Pembelian</th><th>Tanggal</th><th>Nominal</th><th>Vendor</th><th>Aksi</th></tr>
           </thead>
           <tbody>
             {entries.length === 0 ? (
-              <tr><td colSpan="5" className="muted center">Belum ada pembelian bahan yang dicatat.</td></tr>
+              <tr><td colSpan="6" className="muted center">Belum ada pembelian bahan yang dicatat.</td></tr>
             ) : entries.map((entry, index) => {
               const purchase = parsePurchaseNote(entry.note)
               return (
@@ -271,6 +296,18 @@ export default function Purchases() {
                   <td data-label="Tanggal">{dateOnly(entry.date || entry.createdAt)}</td>
                   <td className="danger" data-label="Nominal">{rupiah(entry.amount)}</td>
                   <td className="purchase-details" data-label="Vendor">{purchase.vendor}</td>
+                  <td className="purchase-action-cell" data-label="Aksi">
+                    <button
+                      className="btn btn-sm btn-danger purchase-delete-button"
+                      type="button"
+                      aria-label={'Hapus pembelian ' + purchase.purchase}
+                      title="Hapus riwayat pembelian"
+                      disabled={deletingEntryId !== null}
+                      onClick={() => deletePurchase(entry)}>
+                      <Icon name="trash" size={14} />
+                      <span>Hapus</span>
+                    </button>
+                  </td>
                 </tr>
               )
             })}
