@@ -2993,7 +2993,9 @@ label { display: block; margin-bottom: 6px; color: var(--muted); font-size: 11px
   .pos-grid.mobile-cart-open .pos-products { display: none; }
   .pos-grid:not(.mobile-cart-open) .cart { display: none; }
   .cart-view-header { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: -4px 0 12px; padding-bottom: 10px; border-bottom: 1px solid var(--border); }
-  .cart-view-header > strong { color: var(--accent-dark); font-size: 11px; text-align: right; }
+  .cart-view-header > strong { display: flex; min-width: 0; align-items: baseline; gap: 5px; color: var(--accent-dark); text-align: left; }
+  .cart-view-summary-count { font-size: 13px; white-space: nowrap; }
+  .cart-view-summary-total { font-size: 17px; font-variant-numeric: tabular-nums; white-space: nowrap; }
   .cart-back-button { display: inline-flex; align-items: center; gap: 5px; padding: 7px 9px; color: var(--accent-dark); }
   .cart { height: auto; min-height: 0; overflow: hidden; }
   .cart-checkout { padding-bottom: 12px; }

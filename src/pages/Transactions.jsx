@@ -543,7 +543,10 @@ export default function Transactions() {
 
         <div className="card cart">
           <div className="cart-view-header">
-            <strong>{cart.length} item · {rupiah(total)}</strong>
+            <strong className="cart-view-summary">
+              <span className="cart-view-summary-count">{cart.length} item</span>
+              <span className="cart-view-summary-total">· {rupiah(total)}</span>
+            </strong>
             <button className="btn cart-back-button" type="button" onClick={() => switchMobileView(false)}>
               <Icon name="arrowLeft" size={16} />
               <span>Back</span>
