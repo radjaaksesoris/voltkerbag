@@ -694,7 +694,7 @@ export default function Products({ lowStockFilterRequest = 0 }) {
                 <td className="product-number-cell">{index + 1}</td>
                 <td className="product-name-cell">
                   <div className="product-name-content">
-                    {p.image_path && (
+                    {p.image_path ? (
                       <img
                         src={getProductThumbnailUrl(p.image_path)}
                         width="42"
@@ -708,6 +708,15 @@ export default function Products({ lowStockFilterRequest = 0 }) {
                         loading={index < 4 ? 'eager' : 'lazy'}
                         fetchPriority={index < 2 ? 'high' : 'auto'}
                         decoding="async"
+                      />
+                    ) : (
+                      <img
+                        className="product-image-placeholder"
+                        src={import.meta.env.BASE_URL + 'voltker-icon-192.png'}
+                        width="42"
+                        height="42"
+                        alt=""
+                        aria-hidden="true"
                       />
                     )}
                     <div className="product-name-text">

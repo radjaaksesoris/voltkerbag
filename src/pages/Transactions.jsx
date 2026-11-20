@@ -515,7 +515,14 @@ export default function Transactions() {
                         decoding="async"
                       />
                     ) : (
-                      <div className="product-illustration"><Icon name="bag" size={22} /></div>
+                      <img
+                        className="product-card-image product-card-image-placeholder"
+                        src={import.meta.env.BASE_URL + 'voltker-icon-192.png'}
+                        width="48"
+                        height="48"
+                        alt=""
+                        aria-hidden="true"
+                      />
                     )}
                   </div>
                   <div className="product-card-info">
@@ -716,7 +723,12 @@ export default function Transactions() {
                   alt={previewProduct.name}
                 />
               ) : (
-                <div className="product-quick-view-placeholder"><Icon name="bag" size={42} /></div>
+                <img
+                  className="product-quick-view-placeholder"
+                  src={import.meta.env.BASE_URL + 'voltker-icon-192.png'}
+                  alt=""
+                  aria-hidden="true"
+                />
               )}
               <div className="product-quick-view-info">
                 <h3 id="product-quick-view-title">{previewProduct.name}</h3>
