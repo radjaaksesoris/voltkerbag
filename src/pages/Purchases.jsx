@@ -304,8 +304,7 @@ export default function Purchases() {
                       title="Hapus riwayat pembelian"
                       disabled={deletingEntryId !== null}
                       onClick={() => deletePurchase(entry)}>
-                      <Icon name="trash" size={14} />
-                      <span>Hapus</span>
+                      <Icon name="close" size={16} />
                     </button>
                   </td>
                 </tr>

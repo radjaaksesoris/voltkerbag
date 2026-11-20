@@ -1488,7 +1488,7 @@ h3 { margin-bottom: 16px; color: var(--ink); font-size: 15px; font-weight: 700; 
 .purchase-details { color: var(--text); }
 .purchase-table td.danger { color: var(--accent-dark); font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap; }
 .purchase-action-cell { text-align: right !important; }
-.purchase-delete-button { display: inline-flex; align-items: center; gap: 5px; }
+.purchase-delete-button { display: inline-grid; width: 34px; min-height: 34px; place-items: center; padding: 0; }
 .dashboard-row-number { width: 44px; color: var(--muted); font-variant-numeric: tabular-nums; }
 .dashboard-customer-cell { min-width: 0; }
 .transaction-customer, .transaction-invoice { display: block; }
