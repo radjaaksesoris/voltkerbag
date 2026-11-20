@@ -32,8 +32,19 @@ function summarizeStock(data) {
   const matches = data.matches || []
   const stockRanking = Boolean(data.stock_order && !data.low_stock_only)
   if (matches.length === 0) {
+    if (data.missing_image_only) {
+      if (!Number(data.total_products)) {
+        return 'Belum ada produk di daftar stok yang dapat diperiksa gambarnya.'
+      }
+      return 'Semua ' + (Number(data.total_products) || 0) + ' produk yang tercatat sudah memiliki gambar.'
+    }
     if (data.low_stock_only && !data.searched_product) {
       return 'Tidak ada produk yang mencapai batas stok menipis masing-masing.'
+    }
+    if (!data.searched_product) {
+      return data.total_products
+        ? 'Berikut stok produk yang tercatat, tetapi tidak ada hasil untuk ditampilkan.'
+        : 'Belum ada produk di daftar stok.'
     }
     return data.total_products
       ? 'Maaf, saya belum menemukan produk yang cocok. Bisa sebutkan nama produk persis seperti yang tercatat di Stok Barang?'
@@ -53,7 +64,9 @@ function summarizeStock(data) {
   if (!stockRanking && (data.truncated || matches.length > 10)) {
     lines.push('Masih ada produk lainnya; buka rincian data untuk daftar lengkap.')
   }
-  const orderLabel = data.low_stock_only
+  const orderLabel = data.missing_image_only
+    ? 'Ada ' + (Number(data.matching_count) || matches.length) + ' produk tanpa gambar:'
+    : data.low_stock_only
     ? 'Produk yang mencapai batas stok menipis masing-masing:'
     : data.stock_order === 'asc'
     ? 'Produk dengan stok paling sedikit (berdasarkan jumlah PCS):'

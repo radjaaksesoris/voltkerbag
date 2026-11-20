@@ -16,6 +16,25 @@ test('routes simple stock questions directly to the stock query', () => {
   })
 })
 
+test('understands stock capability and missing product-image questions', () => {
+  assert.deepEqual(resolveDirectQuery('Apakah kamu bisa melihat stok'), {
+    kind: 'query',
+    query: 'stock',
+    args: {}
+  })
+  assert.deepEqual(resolveDirectQuery('Apakah ada stok yang tidak punya gambar'), {
+    kind: 'query',
+    query: 'stock',
+    args: { missingImageOnly: true }
+  })
+  assert.deepEqual(resolveDirectQuery('Tampilkan produk tanpa foto'), {
+    kind: 'query',
+    query: 'stock',
+    args: { missingImageOnly: true }
+  })
+  assert.equal(resolveFastQuery('Hapus produk tanpa gambar'), null)
+})
+
 test('supports exact sales recap and modal-price questions from chat examples', () => {
   assert.deepEqual(resolveFastQuery('Rekap penjualan'), {
     kind: 'query',

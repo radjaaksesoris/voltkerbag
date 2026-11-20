@@ -20,8 +20,42 @@ test('formats stock matches and sale prices without an AI summary request', () =
 test('asks politely for a clearer product name when a stock search has no match', () => {
   assert.match(formatQueryAnswer('stock', {
     total_products: 4,
+    searched_product: 'tas xyz',
     matches: []
   }), /Maaf, saya belum menemukan produk yang cocok.*nama produk persis/s)
+})
+
+test('answers missing-image questions with a filtered product list and an empty-state answer', () => {
+  const answer = formatQueryAnswer('stock', {
+    total_products: 12,
+    matching_count: 2,
+    missing_image_only: true,
+    matches: [
+      { name: 'Tas A', stock: '4 pcs' },
+      { name: 'Tas B', stock: '2 lusin' }
+    ]
+  })
+
+  assert.match(answer, /^Ada 2 produk tanpa gambar:/)
+  assert.match(answer, /\*\*Tas A\*\* — Stok 4 pcs/)
+  assert.match(answer, /\*\*Tas B\*\* — Stok 2 lusin/)
+  assert.equal(formatQueryAnswer('stock', {
+    total_products: 12,
+    missing_image_only: true,
+    matches: []
+  }), 'Semua 12 produk yang tercatat sudah memiliki gambar.')
+  assert.equal(formatQueryAnswer('stock', {
+    total_products: 0,
+    missing_image_only: true,
+    matches: []
+  }), 'Belum ada produk di daftar stok yang dapat diperiksa gambarnya.')
+})
+
+test('does not ask for a product name when a general stock listing is empty', () => {
+  assert.equal(formatQueryAnswer('stock', {
+    total_products: 0,
+    matches: []
+  }), 'Belum ada produk di daftar stok.')
 })
 
 test('formats stock rankings with only the single product asked for', () => {

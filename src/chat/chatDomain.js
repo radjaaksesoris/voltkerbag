@@ -496,6 +496,7 @@ export async function queryStore(intent, args = {}) {
     const stockOrder = ['asc', 'desc'].includes(args.stockOrder) ? args.stockOrder : ''
     const matches = products
       .filter((product) => !query || (product.name + ' ' + (product.category || '')).toLocaleLowerCase('id-ID').includes(query))
+      .filter((product) => args.missingImageOnly !== true || !product.image_path)
       .filter((product) => !args.lowStockOnly || isLowStock(product))
       .sort((left, right) => stockOrder
         ? (stockOrder === 'asc' ? 1 : -1) * (stockInPcs(left) - stockInPcs(right))
@@ -505,12 +506,14 @@ export async function queryStore(intent, args = {}) {
       title: 'Data produk dan stok',
       data: {
         total_products: products.length,
+        matching_count: matches.length,
         searched_product: String(args.product || args.search || '').trim(),
         matches: matches.slice(0, stockOrder && !args.lowStockOnly ? 1 : 40).map(formatStockQuery),
         truncated: !stockOrder && matches.length > 40,
         include_cost: args.includeCost === true,
         stock_order: stockOrder,
-        low_stock_only: args.lowStockOnly === true
+        low_stock_only: args.lowStockOnly === true,
+        missing_image_only: args.missingImageOnly === true
       }
     }
   }

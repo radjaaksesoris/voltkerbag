@@ -2,6 +2,7 @@ const STOCK_TERMS = new Set(['stok', 'stoknya', 'stock', 'stocknya', 'persediaan
 const STOCK_QUESTION_TERMS = new Set([
   'berapa', 'cek', 'lihat', 'cari', 'tampilkan', 'jumlah', 'ada', 'tersedia', 'menipis',
   'masih', 'sisa', 'sisanya', 'tersisa', 'sekarang', 'saat', 'ini', 'apakah',
+  'bisa', 'bisakah', 'dapat', 'mampu', 'melihat', 'kamu',
   'tolong', 'dong', 'produk', 'barang', 'item', 'apa', 'nya', 'di', 'toko',
   'yang', 'dengan', 'untuk', 'harga', 'harganya', 'hpp', 'modal', 'pokok',
   'jual', 'per', 'pcs', 'lusin', 'paling', 'sedikit', 'minim', 'minimum', 'rendah',
@@ -214,6 +215,19 @@ export function resolveFastQuery(message) {
   }
 
   if (words.some((word) => WRITE_TERMS.has(word))) return null
+
+  const asksProductsWithoutImages = words.some((word) =>
+    ['gambar', 'gambarnya', 'foto', 'fotonya'].includes(word)
+  ) && words.some((word) =>
+    ['tidak', 'tanpa', 'belum', 'gak', 'ga', 'nggak'].includes(word)
+  )
+  if (asksProductsWithoutImages) {
+    return {
+      kind: 'query',
+      query: 'stock',
+      args: { missingImageOnly: true }
+    }
+  }
 
   if (words.some((word) => DEBT_TERMS.has(word))) {
     const customer = removeTerms(words, new Set([...DEBT_TERMS, ...DEBT_QUESTION_TERMS]))
@@ -645,6 +659,7 @@ export function resolveDirectQuery(message, hasAttachment = false) {
     'vendors', 'expeditions', 'categories', 'units'
   ])
 
+  if (plan.query === 'stock' && plan.args?.missingImageOnly) return plan
   if (plan.query === 'stock') return hasStockAnchor ? plan : null
   if (directIntents.has(plan.query)) return plan
 
