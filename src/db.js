@@ -770,6 +770,12 @@ export async function resetStoreData() {
   notifyRefresh()
 }
 
+export async function resetStoreDataKeepStock() {
+  const { error } = await getClient().rpc('reset_store_data_keep_stock')
+  throwIfError(error, 'Gagal menghapus data toko selain stok')
+  notifyRefresh()
+}
+
 export async function uploadProductImage(file) {
   const allowedTypes = {
     'image/jpeg': 'jpg',

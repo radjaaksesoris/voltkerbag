@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { createBackupArchive, getAll, onRefresh, requestPageRefresh, put, remove, resetStoreData, restoreBackupArchive } from '../db'
+import { createBackupArchive, getAll, onRefresh, requestPageRefresh, put, remove, resetStoreData, resetStoreDataKeepStock, restoreBackupArchive } from '../db'
 import Icon from '../components/Icon.jsx'
 
 export default function Settings() {
@@ -32,6 +32,7 @@ export default function Settings() {
   const [restoreStatus, setRestoreStatus] = useState('')
   const [restoreError, setRestoreError] = useState('')
   const [showResetDialog, setShowResetDialog] = useState(false)
+  const [resetMode, setResetMode] = useState('all')
   const [resetConfirmation, setResetConfirmation] = useState('')
   const [resetSaving, setResetSaving] = useState(false)
   const [resetError, setResetError] = useState('')
@@ -339,7 +340,11 @@ export default function Settings() {
     setResetError('')
     setResetStatus('')
     try {
-      await resetStoreData()
+      if (resetMode === 'keep-stock') {
+        await resetStoreDataKeepStock()
+      } else {
+        await resetStoreData()
+      }
       setCustomers([])
       setVendors([])
       setExpeditions([])
@@ -359,7 +364,9 @@ export default function Settings() {
       setActionError('')
       setVendorActionError('')
       setExpeditionActionError('')
-      setResetStatus('Data operasional berhasil dibersihkan. Akun, backup, dan foto produk tetap tersimpan.')
+      setResetStatus(resetMode === 'keep-stock'
+        ? 'Data operasional selain stok berhasil dibersihkan. Produk, stok, kategori, satuan, dan foto tetap tersimpan.'
+        : 'Data operasional berhasil dibersihkan. Akun, backup, dan foto produk tetap tersimpan.')
       setResetConfirmation('')
       setShowResetDialog(false)
     } catch (error) {
@@ -789,22 +796,37 @@ export default function Settings() {
         </summary>
         <div className="settings-section-content">
         <p className="reset-description">
-          Produk dan stok, transaksi, data keuangan dan hutang, daftar pelanggan, kategori, serta satuan akan dihapus.
-          Akun login, file backup, dan foto produk di penyimpanan tetap dipertahankan.
+          Pilih penghapusan seluruh data toko, atau hapus data operasional saja sambil mempertahankan produk, stok, kategori, satuan, dan foto.
+          Akun login dan file backup tetap dipertahankan.
         </p>
         {resetError && !showResetDialog && <p className="form-error" role="alert">{resetError}</p>}
         {resetStatus && <p className="backup-success" role="status">{resetStatus}</p>}
-        <button
-          className="btn btn-danger"
-          type="button"
-          disabled={saving || backupSaving || restoreSaving || resetSaving}
-          onClick={() => {
-            setResetError('')
-            setResetConfirmation('')
-            setShowResetDialog(true)
-          }}>
-          <Icon name="trash" size={15} /> Reset semua data toko
-        </button>
+        <div className="reset-actions">
+          <button
+            className="btn"
+            type="button"
+            disabled={saving || backupSaving || restoreSaving || resetSaving}
+            onClick={() => {
+              setResetMode('keep-stock')
+              setResetError('')
+              setResetConfirmation('')
+              setShowResetDialog(true)
+            }}>
+            <Icon name="trash" size={15} /> Hapus data selain stok
+          </button>
+          <button
+            className="btn btn-danger"
+            type="button"
+            disabled={saving || backupSaving || restoreSaving || resetSaving}
+            onClick={() => {
+              setResetMode('all')
+              setResetError('')
+              setResetConfirmation('')
+              setShowResetDialog(true)
+            }}>
+            <Icon name="trash" size={15} /> Reset semua data toko
+          </button>
+        </div>
         </div>
       </details>
 
@@ -817,10 +839,14 @@ export default function Settings() {
             aria-labelledby="reset-dialog-title"
             aria-describedby="reset-dialog-description"
             onClick={(event) => event.stopPropagation()}>
-            <h3 id="reset-dialog-title">Hapus semua data toko?</h3>
+            <h3 id="reset-dialog-title">
+              {resetMode === 'keep-stock' ? 'Hapus data selain stok?' : 'Hapus semua data toko?'}
+            </h3>
             <p id="reset-dialog-description" className="muted">
-              Tindakan ini permanen untuk data operasional akun ini. Akun login, backup, dan foto produk tidak akan dihapus.
-              Buat backup terlebih dahulu jika data ini mungkin diperlukan lagi.
+              {resetMode === 'keep-stock'
+                ? 'Transaksi, keuangan, hutang, pelanggan, vendor, ekspedisi, dan riwayat penyesuaian stok akan dihapus permanen. Produk beserta jumlah stok, kategori, satuan, dan foto akan dipertahankan.'
+                : 'Seluruh data operasional akun ini akan dihapus permanen, termasuk produk dan stok. Akun login, backup, dan foto produk tidak akan dihapus.'}
+              {' '}Buat backup terlebih dahulu jika data ini mungkin diperlukan lagi.
             </p>
             <label htmlFor="reset-confirmation">Ketik <strong>HAPUS DATA</strong> untuk melanjutkan</label>
             <input

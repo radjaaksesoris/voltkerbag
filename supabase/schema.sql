@@ -2277,6 +2277,31 @@ begin
 end;
 $$;
 
+create or replace function public.reset_store_data_keep_stock()
+returns void
+language plpgsql
+security definer
+set search_path = public, pg_temp
+as $$
+declare
+  current_user_id uuid := auth.uid();
+begin
+  if current_user_id is null then raise exception 'Login diperlukan.'; end if;
+
+  perform pg_advisory_xact_lock(hashtextextended(current_user_id::text, 0));
+
+  delete from public.finance_entries where owner_id = current_user_id;
+  delete from public.transaction_payments where owner_id = current_user_id;
+  delete from public.manual_customer_credit_payments where owner_id = current_user_id;
+  delete from public.transactions where owner_id = current_user_id;
+  delete from public.manual_customer_credits where owner_id = current_user_id;
+  delete from public.product_stock_adjustments where owner_id = current_user_id;
+  delete from public.customer_names where owner_id = current_user_id;
+  delete from public.vendor_names where owner_id = current_user_id;
+  delete from public.expedition_names where owner_id = current_user_id;
+end;
+$$;
+
 create or replace function public.get_transaction_summary(
   p_from timestamptz,
   p_to timestamptz
@@ -2605,6 +2630,7 @@ revoke all on function public.record_customer_credit_payment(text, double precis
 revoke all on function public.delete_manual_finance_entry(bigint) from public, anon;
 revoke all on function public.delete_purchase_entry(bigint) from public, anon;
 revoke all on function public.reset_store_data() from public, anon;
+revoke all on function public.reset_store_data_keep_stock() from public, anon;
 revoke all on function public.get_transaction_summary(timestamptz, timestamptz) from public, anon;
 revoke all on function public.get_dashboard_data(timestamptz, timestamptz, timestamptz, timestamptz, integer, integer, boolean, text) from public, anon;
 revoke all on function public.get_finance_data(timestamptz, timestamptz, integer, integer) from public, anon;
@@ -2617,6 +2643,7 @@ grant execute on function public.record_customer_credit_payment(text, double pre
 grant execute on function public.delete_manual_finance_entry(bigint) to authenticated;
 grant execute on function public.delete_purchase_entry(bigint) to authenticated;
 grant execute on function public.reset_store_data() to authenticated;
+grant execute on function public.reset_store_data_keep_stock() to authenticated;
 grant execute on function public.get_transaction_summary(timestamptz, timestamptz) to authenticated;
 grant execute on function public.get_dashboard_data(timestamptz, timestamptz, timestamptz, timestamptz, integer, integer, boolean, text) to authenticated;
 grant execute on function public.get_finance_data(timestamptz, timestamptz, integer, integer) to authenticated;
