@@ -2845,11 +2845,14 @@ label { display: block; margin-bottom: 6px; color: var(--muted); font-size: 11px
   .debts-customer-details-heading h3 { font-size: 15px; }
   .debts-customer-details-modal .debts-invoice-customer-details { padding: 7px; }
   .debts-detail-table thead { display: none; }
-  .debts-detail-table tbody tr { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: center; gap: 3px 6px; padding: 5px 0; border-top: 1px solid var(--border); }
-  .debts-detail-table tbody td { min-width: 0; padding: 2px 1px; border: 0; font-size: 9px; }
-  .debts-detail-table tbody td:first-child { grid-column: 1 / -1; overflow-wrap: anywhere; font-size: 10px; }
-  .debts-detail-table tbody td[data-label]::before { display: block; margin-bottom: 1px; color: var(--muted); content: attr(data-label); font-size: 8px; text-align: left; }
-  .debts-detail-table .debts-invoice-detail-action { justify-self: end; text-align: center; }
+  .debts-detail-table tbody tr { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: end; gap: 7px 10px; padding: 8px 0; border-top: 1px solid var(--border); }
+  .debts-detail-table tbody td { min-width: 0; padding: 1px; border: 0; font-size: 10px; text-align: left; }
+  .debts-detail-table tbody td:first-child { grid-column: 1 / -1; overflow-wrap: anywhere; font-size: 11px; }
+  .debts-detail-table tbody td[data-label] { display: flex; flex-direction: column; align-items: flex-start; gap: 3px; }
+  .debts-detail-table tbody td[data-label]::before { display: block; color: var(--muted); content: attr(data-label); font-size: 9px; text-align: inherit; }
+  .debts-detail-table tbody td[data-label="Total"] { align-items: flex-end; text-align: right; }
+  .debts-detail-table tbody td[data-label="Sisa"] { text-align: left; }
+  .debts-detail-table .debts-invoice-detail-action { align-self: end; justify-self: end; text-align: center; }
   .debts-detail-table .debts-invoice-detail-action .btn { min-height: 27px; padding: 3px 6px; font-size: 9px; }
   .debts-customer-total { font-size: 10px; }
   .debts-customer-total .debts-customer-pay-button { flex: 0 0 auto; min-height: 40px; padding: 8px 18px; font-size: 12px; }
