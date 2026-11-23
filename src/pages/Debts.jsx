@@ -363,47 +363,37 @@ export default function Debts() {
               <Icon name="plus" size={15} /> Catat piutang lama
             </button>
           </div>
-          <h4 className="debts-subheading">Sisa piutang per pelanggan</h4>
-          {customerBalances.length === 0 ? (
-            <p className="debts-empty muted">Tidak ada piutang pelanggan yang belum lunas.</p>
-          ) : (
-            <div className="debts-customer-list">
-              {customerBalances.map((debt) => (
-                <div className="debts-customer-row" key={debt.customer_name}>
-                  <CustomerIdentity
-                    name={debt.customer_name}
-                    customer={customers.find((customer) => customer.name === debt.customer_name)}
-                  />
-                  <strong>{rupiah(Number(debt.balance_due))}</strong>
-                  <button className="btn btn-sm btn-primary" type="button" onClick={() => openCustomerPayment(debt)}>
-                    Bayar
-                  </button>
-                </div>
-              ))}
-            </div>
-          )}
-
           <h4 className="debts-subheading">Daftar faktur kredit</h4>
           {customerBalances.length === 0 ? (
             <p className="debts-empty muted">Tidak ada faktur kredit yang belum lunas.</p>
           ) : (
             <div className="debts-invoice-customer-list">
-              {customerBalances.map((debt) => {
+              {customerBalances.map((debt, index) => {
                 const customerKey = debt.customer_name.trim().toLocaleLowerCase('id-ID')
                 const isExpanded = expandedCustomer === customerKey
                 const details = customerDetails[customerKey]
                 return (
                   <section className="debts-invoice-customer" key={customerKey}>
                     <div className="debts-invoice-customer-row">
-                      <strong>{debt.customer_name}</strong>
+                      <span className="debts-invoice-customer-number">{index + 1}.</span>
+                      <CustomerIdentity
+                        name={debt.customer_name}
+                        customer={customers.find((customer) => customer.name === debt.customer_name)}
+                        className="debts-invoice-customer-identity"
+                      />
                       <strong className="danger">{rupiah(Number(debt.balance_due))}</strong>
-                      <button
-                        className="btn btn-sm"
-                        type="button"
-                        aria-expanded={isExpanded}
-                        onClick={() => toggleCustomerDetails(debt)}>
-                        {isExpanded ? 'Tutup detail' : 'Detail faktur'}
-                      </button>
+                      <div className="debts-invoice-customer-actions">
+                        <button
+                          className="btn btn-sm"
+                          type="button"
+                          aria-expanded={isExpanded}
+                          onClick={() => toggleCustomerDetails(debt)}>
+                          {isExpanded ? 'Tutup detail' : 'Detail faktur'}
+                        </button>
+                        <button className="btn btn-sm btn-primary" type="button" onClick={() => openCustomerPayment(debt)}>
+                          Bayar
+                        </button>
+                      </div>
                     </div>
                     {isExpanded && (
                       <div className="debts-invoice-customer-details">
@@ -415,9 +405,12 @@ export default function Debts() {
                           <>
                             <div className="debts-customer-total">
                               <strong>Sisa piutang gabungan: {rupiah(Number(debt.balance_due))}</strong>
-                              <p className="muted small">
-                                Pembayaran mengurangi saldo keseluruhan pelanggan dan tidak dialokasikan ke faktur tertentu. Saldo per faktur di bawah belum dikurangi pembayaran umum.
-                              </p>
+                              <button
+                                className="btn btn-sm btn-primary"
+                                type="button"
+                                onClick={() => openCustomerPayment(debt)}>
+                                Bayar
+                              </button>
                             </div>
                             {details.customerPayments.length > 0 && (
                               <>
@@ -658,7 +651,6 @@ export default function Debts() {
               placeholder="Masukkan nominal"
               required
             />
-            <p className="muted small">Pembayaran mengurangi saldo keseluruhan pelanggan, tidak dialokasikan ke satu faktur tertentu.</p>
             {customerPaymentError && <p className="form-error" role="alert">{customerPaymentError}</p>}
             <div className="modal-actions">
               <button className="btn" type="button" disabled={savingCustomerPayment} onClick={() => setSelectedCustomerDebt(null)}>Batal</button>

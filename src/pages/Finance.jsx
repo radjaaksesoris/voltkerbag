@@ -983,7 +983,6 @@ export default function Finance() {
             <p className="muted">
               {selectedDebt.customer_name} · Sisa hutang {rupiah(Number(selectedDebt.balance_due))}
             </p>
-            <p className="muted small">Pembayaran mengurangi saldo keseluruhan pelanggan, tidak dialokasikan ke faktur tertentu.</p>
             <div className="credit-payment-modes" role="group" aria-label="Jenis pembayaran">
               <button
                 className={'btn ' + (creditPaymentMode === 'full' ? 'btn-primary' : '')}
