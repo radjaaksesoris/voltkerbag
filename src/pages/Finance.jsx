@@ -11,6 +11,7 @@ import { isSafeRupiahAmount } from '../money'
 import LoadingNumber from '../components/LoadingNumber.jsx'
 import { getInvoiceNumber } from '../invoice.js'
 import { downloadInvoiceJpeg } from '../invoiceJpeg.js'
+import { getFinanceEntryCustomerName } from '../financeEntryPresentation.js'
 
 const TYPES = {
   income: { label: 'Pemasukan', cls: 'badge-ok' },
@@ -834,23 +835,4 @@ function isAutomaticEntry(entry) {
     || ['penjualan', 'dp kredit', 'cicilan kredit', 'pembelian bahan produksi'].includes(category)
     || note.startsWith('Penjualan ·')
     || note.startsWith('Cicilan transaksi ')
-}
-
-function getFinanceEntryCustomerName(entry) {
-  if (entry.type !== 'income') return ''
-
-  const note = String(entry.note || '').trim()
-  const prefixes = [
-    'Penjualan · ',
-    'Cicilan kredit pelanggan · ',
-    'Pembayaran umum piutang pelanggan · '
-  ]
-  const prefix = prefixes.find((value) => note.startsWith(value))
-  if (prefix) return note.slice(prefix.length).trim()
-
-  if (note.startsWith('Cicilan transaksi ')) {
-    const separatorIndex = note.lastIndexOf(' · ')
-    if (separatorIndex !== -1) return note.slice(separatorIndex + 3).trim()
-  }
-  return ''
 }
