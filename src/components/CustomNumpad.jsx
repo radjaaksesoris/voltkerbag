@@ -16,8 +16,11 @@ export default function CustomNumpad() {
   const [activeInput, setActiveInput] = useState(null)
   const activeInputRef = useRef(null)
   const keypadRef = useRef(null)
+  const doneButtonRef = useRef(null)
+  const shakeTimeoutRef = useRef(null)
   const scrollHostRef = useRef(null)
   const [pasteError, setPasteError] = useState('')
+  const [shakeDone, setShakeDone] = useState(false)
 
   useLayoutEffect(() => {
     function syncInputReadOnly() {
@@ -65,6 +68,8 @@ export default function CustomNumpad() {
       activeInputRef.current = shouldShow ? input : null
       setActiveInput(shouldShow ? input : null)
       setPasteError('')
+      setShakeDone(false)
+      if (shakeTimeoutRef.current) clearTimeout(shakeTimeoutRef.current)
     }
 
     function handlePointerDown(event) {
@@ -73,6 +78,11 @@ export default function CustomNumpad() {
           event.target === activeInputRef.current) return
       event.preventDefault()
       event.stopImmediatePropagation()
+      setShakeDone(true)
+      if (shakeTimeoutRef.current) clearTimeout(shakeTimeoutRef.current)
+      shakeTimeoutRef.current = setTimeout(() => setShakeDone(false), 650)
+      doneButtonRef.current?.focus({ preventScroll: true })
+      doneButtonRef.current?.blur()
     }
 
     function handleClick(event) {
@@ -124,6 +134,7 @@ export default function CustomNumpad() {
       document.removeEventListener('keydown', handleKeyDown)
       window.removeEventListener('resize', handleResize)
       observer.disconnect()
+      if (shakeTimeoutRef.current) clearTimeout(shakeTimeoutRef.current)
     }
   }, [])
 
@@ -366,8 +377,9 @@ export default function CustomNumpad() {
         </button>
         <button type="button" onPointerDown={handlePointerKey('0')} onClick={handleKeyboardClick('0')}>0</button>
         <button
+          ref={doneButtonRef}
           type="button"
-          className="custom-numpad-done"
+          className={'custom-numpad-done' + (shakeDone ? ' is-shaking' : '')}
           onClick={closeNumpad}>
           Selesai
         </button>

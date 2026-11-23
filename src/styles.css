@@ -3043,6 +3043,12 @@ label { display: block; margin-bottom: 6px; color: var(--muted); font-size: 11px
   .custom-numpad-keys button { min-height: 51px; border: 1px solid var(--border); border-radius: 8px; background: #fffefa; color: var(--ink); font-size: 19px; font-weight: 700; touch-action: manipulation; }
   .custom-numpad-keys button:active { background: var(--accent-soft); }
   .custom-numpad-keys .custom-numpad-done { border-color: var(--accent); background: var(--accent); color: #fffaf3; font-size: 11px; }
+  .custom-numpad-keys .custom-numpad-done.is-shaking { animation: custom-numpad-done-shake .58s ease-in-out; }
+  @keyframes custom-numpad-done-shake {
+    0%, 100% { transform: translateX(0); }
+    15%, 45%, 75% { transform: translateX(-6px); }
+    30%, 60%, 90% { transform: translateX(6px); }
+  }
   .custom-numpad-keys .custom-numpad-backspace { color: var(--accent-dark); }
   .product-form-overlay { align-items: center; justify-content: center; padding: 12px; }
   .product-modal { height: auto; max-height: 90dvh; border-radius: 17px; }
@@ -3465,6 +3471,9 @@ label { display: block; margin-bottom: 6px; color: var(--muted); font-size: 11px
 }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .custom-numpad-keys .custom-numpad-done.is-shaking { animation: none; }
 }
 
 @page {
