@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom'
 import {
   createVendorPayable,
   getAll,
+  getLatestStockPurchaseUnitCost,
   getPurchaseEntries,
   onRefresh,
   put,
@@ -18,7 +19,7 @@ import VendorSelect from '../components/VendorSelect.jsx'
 import Icon from '../components/Icon.jsx'
 import { formatPurchaseNote, parsePurchaseNote } from '../purchaseNote.js'
 import { isSafeRupiahAmount } from '../money.js'
-import { purchaseCostUnit, purchaseCostPerPiece, quantityToPcs } from '../productUnits.js'
+import { purchaseCostFactor, purchaseCostUnit, purchaseCostPerPiece, quantityToPcs } from '../productUnits.js'
 
 const PURCHASE_CATEGORY = 'Pembelian bahan produksi'
 const PURCHASE_PAGE_SIZE = 20
@@ -39,6 +40,9 @@ export default function Purchases() {
   const [productId, setProductId] = useState('')
   const [quantity, setQuantity] = useState('')
   const [unitCost, setUnitCost] = useState('')
+  const [previousUnitCost, setPreviousUnitCost] = useState(null)
+  const [previousUnitCostLoading, setPreviousUnitCostLoading] = useState(false)
+  const [previousUnitCostError, setPreviousUnitCostError] = useState('')
   const [materialName, setMaterialName] = useState('')
   const [supplier, setSupplier] = useState('')
   const [vendors, setVendors] = useState([])
@@ -120,6 +124,37 @@ export default function Purchases() {
   useEffect(() => {
     if (productId && !products.some((product) => String(product.id) === productId)) {
       setProductId('')
+    }
+  }, [productId, products])
+
+  useEffect(() => {
+    const selectedProduct = products.find((product) => String(product.id) === productId)
+    if (!selectedProduct) {
+      setPreviousUnitCost(null)
+      setPreviousUnitCostError('')
+      setPreviousUnitCostLoading(false)
+      return undefined
+    }
+
+    let active = true
+    setPreviousUnitCost(null)
+    setPreviousUnitCostError('')
+    setPreviousUnitCostLoading(true)
+    getLatestStockPurchaseUnitCost(selectedProduct.id)
+      .then((latestCost) => {
+        if (!active) return
+        const costPerPiece = latestCost ?? Number(selectedProduct.cost)
+        setPreviousUnitCost(Number.isFinite(costPerPiece) && costPerPiece > 0 ? costPerPiece : null)
+      })
+      .catch((error) => {
+        if (active) setPreviousUnitCostError(error.message || 'Gagal memuat harga beli sebelumnya.')
+      })
+      .finally(() => {
+        if (active) setPreviousUnitCostLoading(false)
+      })
+
+    return () => {
+      active = false
     }
   }, [productId, products])
 
@@ -388,6 +423,20 @@ export default function Purchases() {
                     required
                     disabled={saving || !selectedProduct}
                   />
+                  {previousUnitCostLoading ? (
+                    <p className="muted small purchase-previous-cost">Memuat harga beli sebelumnya...</p>
+                  ) : previousUnitCostError ? (
+                    <p className="form-error small purchase-previous-cost" role="alert">{previousUnitCostError}</p>
+                  ) : (
+                    <p className="muted small purchase-previous-cost">
+                      Harga beli sebelumnya:{' '}
+                      <strong>
+                        {previousUnitCost == null || !selectedProduct
+                          ? 'Belum ada riwayat'
+                          : `${rupiah(previousUnitCost * purchaseCostFactor(selectedProduct.unit))} / ${purchaseCostUnit(selectedProduct.unit)}`}
+                      </strong>
+                    </p>
+                  )}
                 </div>
                 <div className="purchase-field">
                   <label>{paymentType === 'credit' ? 'Total tagihan' : 'Total pembelian'}</label>

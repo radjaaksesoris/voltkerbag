@@ -663,6 +663,20 @@ export async function getPurchaseEntries(page, pageSize) {
   return { entries: data || [], totalCount: count || 0 }
 }
 
+export async function getLatestStockPurchaseUnitCost(productId) {
+  const { data, error } = await getClient()
+    .from(tableFor('stockAdjustments'))
+    .select('unit_cost')
+    .eq('product_id', productId)
+    .not('unit_cost', 'is', null)
+    .order('createdAt', { ascending: false })
+    .order('id', { ascending: false })
+    .limit(1)
+    .maybeSingle()
+  throwIfError(error, 'Gagal memuat harga beli sebelumnya')
+  return data ? Number(data.unit_cost) : null
+}
+
 export async function removePurchaseEntry(id) {
   const { error } = await getClient().rpc('delete_purchase_entry', {
     p_entry_id: id
