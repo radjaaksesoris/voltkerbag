@@ -662,7 +662,7 @@ export async function getPurchaseEntries(page, pageSize) {
       .order('id', { ascending: false })
       .range(0, to),
     client
-      .from(tableFor('vendorPayables'))
+      .from('vendor_payables')
       .select('id,vendor_name,description,original_amount,balance_due,date,request_id,createdAt', { count: 'exact' })
       .order('date', { ascending: false, nullsFirst: false })
       .order('id', { ascending: false })
