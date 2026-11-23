@@ -667,7 +667,11 @@ export default function Finance() {
                               />
                             </td>
                             <td data-label="Tanggal">{formatInvoiceListDate(invoice.createdAt)}</td>
-                            <td className="right" data-label="Total">{rupiah(invoice.total)}</td>
+                            <td
+                              className={'right finance-invoice-total ' + (invoice.paymentType === 'credit' ? 'is-credit' : 'is-cash')}
+                              data-label="Total">
+                              {rupiah(invoice.total)}
+                            </td>
                             <td className="right" data-label="Dibayar">
                               <strong>{rupiah(paidAmount)}</strong>
                               {invoice.payments.length > 0 && (

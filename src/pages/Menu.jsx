@@ -365,6 +365,7 @@ export default function Menu({
                 key={item.id}
                 className={
                   'menu-shortcut menu-shortcut-' + (index % 4)
+                  + (item.id === 'finance' ? ' menu-shortcut-finance' : '')
                   + (item.id === 'refresh' && updateAvailable ? ' menu-shortcut-update-available' : '')
                   + (item.id === 'refresh' && applyingUpdate ? ' menu-shortcut-update-applying' : '')
                 }
