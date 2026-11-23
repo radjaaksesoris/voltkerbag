@@ -444,7 +444,7 @@ export default function Finance() {
           <div className="stat-card dashboard-stat-card debt-stat-card finance-debt-card">
             <span className="dashboard-stat-icon"><Icon name="tag" size={27} /></span>
             <span className="dashboard-stat-content">
-              <span>Total Hutang</span>
+              <span>Hutang Pelanggan</span>
               <strong><LoadingNumber label="total hutang" /></strong>
               <span className="debt-stat-hint">Memuat data...</span>
             </span>
@@ -556,7 +556,7 @@ export default function Finance() {
             onClick={() => setShowCreditBalances(true)}>
             <span className="dashboard-stat-icon"><Icon name="tag" size={27} /></span>
             <span className="dashboard-stat-content">
-              <span>Total Hutang</span>
+              <span>Hutang Pelanggan</span>
               <strong>{rupiah(totalCredit)}</strong>
               <span className="debt-stat-hint">
                 Nama pelanggan <Icon name="arrowRight" size={14} />

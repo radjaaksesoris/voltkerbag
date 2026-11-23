@@ -316,17 +316,17 @@ export default function Menu({
         )}
       </section>
 
-      <section className="menu-finance-strip" aria-label="Ringkasan kas dan hutang">
+      <section className="menu-finance-strip" aria-label="Ringkasan omzet dan hutang">
         <div className="menu-finance-metric">
-          <span className="menu-finance-icon cash"><Icon name="wallet" size={24} /></span>
+          <span className="menu-finance-icon cash"><Icon name="bag" size={24} /></span>
           <span className="menu-finance-copy">
-            <span>Saldo kas</span>
+            <span>Omzet Periode</span>
             <strong>
               {summary
-                ? rupiah(summary.cashBalance)
+                ? rupiah(summary.revenue)
                 : loaded && loadError
                   ? '—'
-                  : <LoadingNumber label="saldo kas" />}
+                  : <LoadingNumber label="omzet periode" />}
             </strong>
           </span>
         </div>
