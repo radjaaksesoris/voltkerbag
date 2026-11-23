@@ -2186,6 +2186,81 @@ begin
 end;
 $$;
 
+create or replace function public.record_credit_stock_purchase(
+  p_product_id bigint,
+  p_quantity_pcs integer,
+  p_unit_cost double precision,
+  p_vendor text,
+  p_description text,
+  p_amount double precision,
+  p_date timestamptz,
+  p_request_id uuid
+)
+returns bigint
+language plpgsql
+security definer
+set search_path = public, pg_temp
+as $$
+declare
+  current_user_id uuid := auth.uid();
+  clean_vendor_name text := btrim(coalesce(p_vendor, ''));
+  clean_description text := btrim(coalesce(p_description, ''));
+  product_row public.products%rowtype;
+  existing_payable public.vendor_payables%rowtype;
+  payable_id bigint;
+  calculated_amount double precision;
+begin
+  if current_user_id is null then raise exception 'Login diperlukan.'; end if;
+  if p_request_id is null then raise exception 'ID permintaan pembelian kredit wajib diisi.'; end if;
+  if p_product_id is null then raise exception 'Produk tidak valid.'; end if;
+  if p_quantity_pcs is null or p_quantity_pcs <= 0 then
+    raise exception 'Jumlah stok harus lebih dari nol.';
+  end if;
+  if p_unit_cost is null or p_unit_cost < 0
+     or p_unit_cost::text in ('NaN', 'Infinity', '-Infinity') then
+    raise exception 'Harga modal stok tidak valid.';
+  end if;
+  if p_date is null then raise exception 'Tanggal pembelian wajib diisi.'; end if;
+
+  select * into product_row
+  from public.products
+  where id = p_product_id and owner_id = current_user_id;
+  if not found then raise exception 'Produk tidak ditemukan atau tidak dapat diakses.'; end if;
+
+  calculated_amount := round(p_quantity_pcs::double precision * p_unit_cost);
+  if p_amount is null or p_amount is distinct from calculated_amount then
+    raise exception 'Total pembelian tidak sesuai dengan jumlah dan harga beli.';
+  end if;
+  if clean_description = '' or length(clean_description) > 200 then
+    raise exception 'Keterangan pembelian wajib diisi dan maksimal 200 karakter.';
+  end if;
+
+  perform pg_advisory_xact_lock(hashtextextended(current_user_id::text || p_request_id::text, 0));
+  select * into existing_payable
+  from public.vendor_payables
+  where owner_id = current_user_id and request_id = p_request_id;
+  if found then
+    if existing_payable.vendor_name is distinct from clean_vendor_name
+       or existing_payable.description is distinct from clean_description
+       or existing_payable.original_amount is distinct from p_amount
+       or existing_payable.date is distinct from p_date then
+      raise exception 'ID permintaan pembelian kredit sudah digunakan.';
+    end if;
+    return existing_payable.id;
+  end if;
+
+  perform public.add_product_stock(p_product_id, p_quantity_pcs, p_unit_cost, p_request_id);
+  payable_id := public.create_vendor_payable(
+    clean_vendor_name,
+    clean_description,
+    p_amount,
+    p_date,
+    p_request_id
+  );
+  return payable_id;
+end;
+$$;
+
 create or replace function public.record_vendor_payable_payment(
   p_payable_id bigint,
   p_amount double precision,
@@ -2458,6 +2533,91 @@ begin
 end;
 $$;
 
+create or replace function public.record_stock_purchase(
+  p_product_id bigint,
+  p_quantity_pcs integer,
+  p_unit_cost double precision,
+  p_vendor text,
+  p_date timestamptz,
+  p_request_id uuid
+)
+returns bigint
+language plpgsql
+security definer
+set search_path = public, pg_temp
+as $$
+declare
+  current_user_id uuid := auth.uid();
+  product_row public.products%rowtype;
+  existing_entry public.finance_entries%rowtype;
+  operation_time timestamptz := coalesce(p_date, clock_timestamp());
+  expense_amount double precision;
+  entry_id bigint;
+  entry_note text;
+  stock_details jsonb;
+begin
+  if current_user_id is null then raise exception 'Login diperlukan.'; end if;
+  if p_product_id is null then raise exception 'Produk tidak valid.'; end if;
+  if p_quantity_pcs is null or p_quantity_pcs <= 0 then
+    raise exception 'Jumlah stok harus lebih dari nol.';
+  end if;
+  if p_unit_cost is null or p_unit_cost < 0 or p_unit_cost::text in ('NaN', 'Infinity', '-Infinity') then
+    raise exception 'Harga modal stok tidak valid.';
+  end if;
+  if nullif(trim(coalesce(p_vendor, '')), '') is null then
+    raise exception 'Vendor wajib dipilih.';
+  end if;
+  if p_request_id is null then raise exception 'ID permintaan pembelian wajib diisi.'; end if;
+
+  select * into product_row
+  from public.products
+  where id = p_product_id and owner_id = current_user_id
+  for update;
+  if not found then raise exception 'Produk tidak ditemukan atau tidak dapat diakses.'; end if;
+
+  expense_amount := round(p_quantity_pcs::double precision * p_unit_cost);
+  if expense_amount <= 0
+     or expense_amount > 9007199254740991
+     or expense_amount::text in ('NaN', 'Infinity', '-Infinity') then
+    raise exception 'Total pembelian harus lebih dari Rp0 dan dapat disimpan.';
+  end if;
+  stock_details := jsonb_build_object(
+    'productId', product_row.id,
+    'quantityPcs', p_quantity_pcs,
+    'unitCostPerPiece', p_unit_cost,
+    'unit', product_row.unit
+  );
+  entry_note := product_row.name || E'\n' || trim(p_vendor) || E'\n' || chr(30) ||
+    'inventory-purchase:' || stock_details::text;
+
+  select * into existing_entry
+  from public.finance_entries
+  where owner_id = current_user_id and "requestId" = p_request_id;
+  if found then
+    if existing_entry.type <> 'expense'
+       or lower(trim(coalesce(existing_entry.category, ''))) <> 'pembelian bahan produksi'
+       or existing_entry.note is distinct from entry_note
+       or existing_entry.amount is distinct from expense_amount
+       or existing_entry.date is distinct from operation_time then
+      raise exception 'ID permintaan pembelian sudah digunakan.';
+    end if;
+    return existing_entry.id;
+  end if;
+
+  perform public.add_product_stock(p_product_id, p_quantity_pcs, p_unit_cost, p_request_id);
+
+  insert into public.finance_entries (
+    owner_id, type, category, note, amount, pending, "refId", "requestId", date, "createdAt", "updatedAt"
+  ) values (
+    current_user_id, 'expense', 'Pembelian bahan produksi', entry_note, expense_amount, false,
+    null, p_request_id, operation_time, operation_time, operation_time
+  )
+  returning id into entry_id;
+
+  return entry_id;
+end;
+$$;
+
 create or replace function public.delete_purchase_entry(p_entry_id bigint)
 returns void
 language plpgsql
@@ -2467,6 +2627,11 @@ as $$
 declare
   current_user_id uuid := auth.uid();
   entry_row public.finance_entries%rowtype;
+  adjustment_row public.product_stock_adjustments%rowtype;
+  product_row public.products%rowtype;
+  next_stock_pcs integer;
+  current_average_cost double precision;
+  next_stock_cost_value double precision;
 begin
   if current_user_id is null then raise exception 'Login diperlukan.'; end if;
 
@@ -2478,9 +2643,62 @@ begin
 
   if coalesce(entry_row.type, '') <> 'expense'
      or lower(trim(coalesce(entry_row.category, ''))) <> 'pembelian bahan produksi'
-     or entry_row."refId" is not null
-     or entry_row."requestId" is not null then
+     or entry_row."refId" is not null then
     raise exception 'Catatan ini bukan pembelian yang dapat dihapus.';
+  end if;
+
+  if entry_row."requestId" is not null then
+    select * into adjustment_row
+    from public.product_stock_adjustments
+    where owner_id = current_user_id and request_id = entry_row."requestId"
+    for update;
+    if not found then raise exception 'Data penambahan stok pembelian tidak ditemukan.'; end if;
+
+    select * into product_row
+    from public.products
+    where id = adjustment_row.product_id and owner_id = current_user_id
+    for update;
+    if not found then raise exception 'Produk pembelian tidak ditemukan.'; end if;
+    if product_row.stock_pcs < adjustment_row.quantity_pcs then
+      raise exception 'Stok saat ini tidak cukup untuk menghapus pembelian ini.';
+    end if;
+
+    current_average_cost := case
+      when product_row.stock_pcs > 0
+        then coalesce(product_row.stock_cost_value, product_row.cost * product_row.stock_pcs) / product_row.stock_pcs
+      else coalesce(product_row.cost, 0)
+    end;
+    next_stock_pcs := product_row.stock_pcs - adjustment_row.quantity_pcs;
+    next_stock_cost_value := current_average_cost * next_stock_pcs;
+    if next_stock_cost_value::text in ('NaN', 'Infinity', '-Infinity') then
+      raise exception 'Nilai modal stok tidak valid.';
+    end if;
+
+    update public.products
+    set stock_pcs = next_stock_pcs,
+        stock = next_stock_pcs::double precision / public.product_unit_factor(product_row.unit),
+        stock_cost_value = next_stock_cost_value,
+        cost = case when next_stock_pcs > 0 then next_stock_cost_value / next_stock_pcs else product_row.cost end,
+        price_pcs = case
+          when product_row.sale_markup_pcs_pct is not null
+            then round((current_average_cost * (100 + product_row.sale_markup_pcs_pct) / 100)::numeric)::double precision
+          else product_row.price_pcs
+        end,
+        price_lusin = case
+          when product_row.sale_markup_lusin_pct is not null
+            then round((current_average_cost * 12 * (100 + product_row.sale_markup_lusin_pct) / 100)::numeric)::double precision
+          else product_row.price_lusin
+        end,
+        price = case
+          when lower(trim(product_row.unit)) in ('pcs', 'lusin') and product_row.sale_markup_pcs_pct is not null
+            then round((current_average_cost * (100 + product_row.sale_markup_pcs_pct) / 100)::numeric)::double precision
+          else product_row.price
+        end,
+        "updatedAt" = clock_timestamp()
+    where id = product_row.id and owner_id = current_user_id;
+
+    delete from public.product_stock_adjustments
+    where id = adjustment_row.id and owner_id = current_user_id;
   end if;
 
   delete from public.finance_entries
@@ -2881,6 +3099,8 @@ revoke all on function public.record_vendor_payable_payment(bigint, double preci
 revoke all on function public.return_transaction_items(bigint, jsonb, uuid) from public, anon;
 revoke all on function public.record_customer_credit_payment(text, double precision, uuid) from public, anon;
 revoke all on function public.delete_manual_finance_entry(bigint) from public, anon;
+revoke all on function public.record_stock_purchase(bigint, integer, double precision, text, timestamptz, uuid) from public, anon;
+revoke all on function public.record_credit_stock_purchase(bigint, integer, double precision, text, text, double precision, timestamptz, uuid) from public, anon;
 revoke all on function public.delete_purchase_entry(bigint) from public, anon;
 revoke all on function public.reset_store_data() from public, anon;
 revoke all on function public.reset_store_data_keep_stock() from public, anon;
@@ -2896,6 +3116,8 @@ grant execute on function public.record_vendor_payable_payment(bigint, double pr
 grant execute on function public.return_transaction_items(bigint, jsonb, uuid) to authenticated;
 grant execute on function public.record_customer_credit_payment(text, double precision, uuid) to authenticated;
 grant execute on function public.delete_manual_finance_entry(bigint) to authenticated;
+grant execute on function public.record_stock_purchase(bigint, integer, double precision, text, timestamptz, uuid) to authenticated;
+grant execute on function public.record_credit_stock_purchase(bigint, integer, double precision, text, text, double precision, timestamptz, uuid) to authenticated;
 grant execute on function public.delete_purchase_entry(bigint) to authenticated;
 grant execute on function public.reset_store_data() to authenticated;
 grant execute on function public.reset_store_data_keep_stock() to authenticated;

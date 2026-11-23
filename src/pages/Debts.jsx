@@ -2,7 +2,6 @@ import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import {
   addManualCustomerCredit,
-  createVendorPayable,
   getAll,
   getCustomerReceivableDetails,
   getFinanceData,
@@ -13,13 +12,11 @@ import {
   requestPageRefresh
 } from '../db'
 import { rupiah, dateOnly, dateTime } from '../format'
-import { localDateValue, dateRangeTimestamps } from '../dateFilter'
 import { getInvoiceNumber, invoiceDueDate } from '../invoice'
 import { isSafeRupiahAmount } from '../money'
 import CustomerIdentity from '../components/CustomerIdentity.jsx'
 import MoneyInput from '../components/MoneyInput.jsx'
 import SelectInput from '../components/SelectInput.jsx'
-import VendorSelect from '../components/VendorSelect.jsx'
 import TransactionDetails from '../components/TransactionDetails.jsx'
 import Icon from '../components/Icon.jsx'
 
@@ -35,17 +32,9 @@ export default function Debts() {
   const [payables, setPayables] = useState([])
   const [payableCount, setPayableCount] = useState(0)
   const [payablePage, setPayablePage] = useState(1)
-  const [vendors, setVendors] = useState([])
   const [customers, setCustomers] = useState([])
+  const [customerLoadError, setCustomerLoadError] = useState('')
   const [loadError, setLoadError] = useState('')
-  const [vendorError, setVendorError] = useState('')
-  const [savingDebt, setSavingDebt] = useState(false)
-  const [debtError, setDebtError] = useState('')
-  const [debtStatus, setDebtStatus] = useState('')
-  const [vendorName, setVendorName] = useState('')
-  const [description, setDescription] = useState('')
-  const [debtAmount, setDebtAmount] = useState('')
-  const [debtDate, setDebtDate] = useState(() => localDateValue(new Date()))
   const [selectedPayable, setSelectedPayable] = useState(null)
   const [paymentAmount, setPaymentAmount] = useState('')
   const [paymentError, setPaymentError] = useState('')
@@ -60,7 +49,6 @@ export default function Debts() {
   const [manualDebtCustomer, setManualDebtCustomer] = useState('')
   const [manualDebtAmount, setManualDebtAmount] = useState('')
   const [manualDebtError, setManualDebtError] = useState('')
-  const [selectedDebt, setSelectedDebt] = useState(null)
   const requestId = useRef(0)
   const paymentRequest = useRef(null)
   const customerPaymentRequest = useRef(null)
@@ -71,13 +59,12 @@ export default function Debts() {
     let active = true
     async function loadMasters() {
       try {
-        const [customerRows, vendorRows] = await Promise.all([getAll('customers'), getAll('vendors')])
+        const customerRows = await getAll('customers')
         if (!active) return
         setCustomers(customerRows)
-        setVendors(vendorRows)
-        setVendorError('')
+        setCustomerLoadError('')
       } catch (error) {
-        if (active) setVendorError(error.message || 'Gagal memuat data pelanggan dan vendor.')
+        if (active) setCustomerLoadError(error.message || 'Gagal memuat data pelanggan.')
       }
     }
     loadMasters()
@@ -117,60 +104,6 @@ export default function Debts() {
       unsubscribe()
     }
   }, [activeTab, payablePage])
-
-  async function submitVendorDebt(event) {
-    event.preventDefault()
-    if (savingLock.current) return
-    setDebtError('')
-    setDebtStatus('')
-    const amount = Number(debtAmount)
-    if (!vendors.some((vendor) => vendor.name === vendorName)) {
-      setDebtError('Pilih vendor yang tersedia dari tab Setting.')
-      return
-    }
-    if (!description.trim()) {
-      setDebtError('Keterangan pembelian wajib diisi.')
-      return
-    }
-    if (!isSafeRupiahAmount(amount)) {
-      setDebtError('Nominal utang harus rupiah utuh lebih dari Rp0 dan tidak melebihi batas aman.')
-      return
-    }
-    let date
-    try {
-      date = dateRangeTimestamps({ from: debtDate, to: debtDate }).from
-    } catch (error) {
-      setDebtError(error.message || 'Pilih tanggal pembelian yang valid.')
-      return
-    }
-    const fingerprint = JSON.stringify([vendorName, description.trim(), amount, date])
-    if (paymentRequest.current?.fingerprint !== fingerprint) {
-      paymentRequest.current = { fingerprint, id: crypto.randomUUID() }
-    }
-    savingLock.current = true
-    setSavingDebt(true)
-    try {
-      await createVendorPayable({
-        vendorName,
-        description: description.trim(),
-        amount,
-        date,
-        requestId: paymentRequest.current.id
-      })
-      paymentRequest.current = null
-      setVendorName('')
-      setDescription('')
-      setDebtAmount('')
-      setDebtDate(localDateValue(new Date()))
-      setPayablePage(1)
-      setDebtStatus('Utang pembelian berhasil dicatat.')
-    } catch (error) {
-      setDebtError(error.message || 'Gagal mencatat utang pembelian.')
-    } finally {
-      savingLock.current = false
-      setSavingDebt(false)
-    }
-  }
 
   async function submitVendorPayment(event) {
     event.preventDefault()
@@ -357,10 +290,9 @@ export default function Debts() {
         </button>
       </div>
 
-      {vendorError && <p className="form-error" role="alert">{vendorError}</p>}
-      {loadError && (
+      {(loadError || (activeTab === 'receivables' && customerLoadError)) && (
         <div className="debts-load-error">
-          <p className="form-error" role="alert">{loadError}</p>
+          <p className="form-error" role="alert">{loadError || customerLoadError}</p>
           <button className="btn" type="button" onClick={() => requestPageRefresh('debts')}>Coba lagi</button>
         </div>
       )}
@@ -413,64 +345,11 @@ export default function Debts() {
           )}
         </section>
       ) : (
-        <>
-          <section className="card debts-form-card">
-            <div className="debts-section-heading">
-              <div>
-                <h3>Catat utang pembelian</h3>
-                <p className="muted small">Pembayaran baru masuk ke Buku Kas sebagai pengeluaran saat dibayar.</p>
-              </div>
-            </div>
-            <form className="debts-form" onSubmit={submitVendorDebt}>
-              <label>
-                Vendor
-                <VendorSelect
-                  value={vendorName}
-                  onChange={setVendorName}
-                  vendors={vendors}
-                  fieldName="Vendor"
-                  placeholder="Pilih vendor"
-                  disabled={savingDebt || vendors.length === 0}
-                />
-              </label>
-              <label>
-                Keterangan pembelian
-                <input
-                  className="input"
-                  value={description}
-                  onChange={(event) => setDescription(event.target.value)}
-                  maxLength={200}
-                  placeholder="Contoh: Bahan kulit"
-                  required
-                />
-              </label>
-              <label>
-                Total utang
-                <MoneyInput value={debtAmount} onChange={setDebtAmount} placeholder="Masukkan nominal" required />
-              </label>
-              <label>
-                Tanggal
-                <input
-                  className="input"
-                  type="date"
-                  value={debtDate}
-                  onChange={(event) => setDebtDate(event.target.value)}
-                  required
-                />
-              </label>
-              {debtError && <p className="form-error debts-form-message" role="alert">{debtError}</p>}
-              {debtStatus && <p className="backup-success debts-form-message" role="status">{debtStatus}</p>}
-              <button className="btn btn-primary debts-form-submit" type="submit" disabled={savingDebt || vendors.length === 0}>
-                {savingDebt ? 'Menyimpan...' : 'Simpan utang'}
-              </button>
-            </form>
-          </section>
-
-          <section className="card table-card debts-card">
+        <section className="card table-card debts-card">
             <div className="debts-section-heading">
               <div>
                 <h3>Daftar utang pembelian</h3>
-                <p className="muted small">Catat pembayaran sebagian atau lunasi utang vendor.</p>
+                <p className="muted small">Utang muncul dari pembelian yang dicatat secara kredit. Pembayaran sebagian atau pelunasan dicatat di sini.</p>
               </div>
             </div>
             <div className="debts-table-wrap">
@@ -537,7 +416,6 @@ export default function Debts() {
               onChange={setPayablePage}
             />
           </section>
-        </>
       )}
 
       {activeTab === 'receivables' && activeCustomerDebt && createPortal(

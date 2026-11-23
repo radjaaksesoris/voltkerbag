@@ -233,7 +233,7 @@ const NAV = [
   { id: 'dashboard', label: 'Rekap Harian', description: 'Ringkasan performa tokomu hari ini.', icon: 'dashboard' },
   { id: 'pos', label: 'Transaksi', description: 'Pilih produk, atur pembayaran, dan simpan transaksi.', icon: 'cart' },
   { id: 'menu', label: 'Menu', description: 'Pilih fitur yang ingin dibuka.', icon: 'more' },
-  { id: 'purchases', label: 'Pembelian', description: 'Catat pembelian bahan untuk kebutuhan produksi.', icon: 'purchase' },
+  { id: 'purchases', label: 'Pembelian', description: 'Catat barang masuk stok atau bahan non-stok.', icon: 'purchase' },
   { id: 'debts', label: 'Utang/Piutang', description: 'Kelola piutang pelanggan dan utang pembelian vendor.', icon: 'coins' },
   { id: 'stok', label: 'Stok Barang', description: 'Kelola katalog produk, harga, dan ketersediaan stok.', icon: 'bag' },
   { id: 'finance', label: 'Keuangan', description: 'Pantau pemasukan, pengeluaran, dan saldo kas toko.', icon: 'wallet' },

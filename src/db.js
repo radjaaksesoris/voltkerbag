@@ -671,6 +671,36 @@ export async function removePurchaseEntry(id) {
   notifyRefresh()
 }
 
+export async function recordStockPurchase({ productId, quantityPcs, unitCost, vendor, date, requestId }) {
+  const { data, error } = await getClient().rpc('record_stock_purchase', {
+    p_product_id: productId,
+    p_quantity_pcs: quantityPcs,
+    p_unit_cost: unitCost,
+    p_vendor: vendor,
+    p_date: date,
+    p_request_id: requestId || crypto.randomUUID()
+  })
+  throwIfError(error, 'Gagal mencatat pembelian dan menambahkan stok')
+  notifyRefresh()
+  return data
+}
+
+export async function recordCreditStockPurchase({ productId, quantityPcs, unitCost, vendor, description, amount, date, requestId }) {
+  const { data, error } = await getClient().rpc('record_credit_stock_purchase', {
+    p_product_id: productId,
+    p_quantity_pcs: quantityPcs,
+    p_unit_cost: unitCost,
+    p_vendor: vendor,
+    p_description: description,
+    p_amount: amount,
+    p_date: date,
+    p_request_id: requestId || crypto.randomUUID()
+  })
+  throwIfError(error, 'Gagal mencatat pembelian kredit dan menambahkan stok')
+  notifyRefresh()
+  return data
+}
+
 export async function getTransactionSummary({ from, to }) {
   const { data, error } = await getClient().rpc('get_transaction_summary', {
     p_from: from,

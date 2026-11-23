@@ -1423,6 +1423,8 @@ h3 { margin-bottom: 16px; color: var(--ink); font-size: 15px; font-weight: 700; 
 .purchase-field .input { width: 100%; min-width: 0; min-height: 42px; margin: 0 0 9px; border-color: transparent; border-radius: 5px 12px 5px 12px; background: #fffdfa; box-shadow: inset 0 0 0 1px rgba(234, 216, 209, .75); }
 .purchase-field .input:focus { border-color: rgba(181, 40, 46, .6); box-shadow: 0 0 0 3px rgba(181, 40, 46, .1); }
 .purchase-field .money-input-wrap .input { padding-left: 40px; }
+.purchase-calculated-total { min-height: 42px; margin: 0 0 9px; padding: 11px 10px; border-radius: 5px 12px 5px 12px; background: #fffdfa; color: var(--accent-dark); font-size: 13px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.purchase-stock-cost-hint { margin: -4px 0 8px; font-size: 9px; line-height: 1.4; }
 .purchase-field .category-select { margin-bottom: 9px; }
 .purchase-field .category-select-trigger { min-height: 42px; border-color: rgba(234, 216, 209, .75); border-radius: 5px 12px 5px 12px; background: #fffdfa; }
 .purchase-field .purchase-vendor-hint { margin: -3px 0 9px; font-size: 10px; }
@@ -4513,6 +4515,7 @@ body:has(.app) {
 .app:not(.menu-landing) .purchase-table tbody td:last-child { border-right: 1px solid #eaded8; border-radius: 0 5px 14px 0; }
 .app:not(.menu-landing) .purchase-item-heading { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
 .app:not(.menu-landing) .purchase-item-type { display: none; }
+.app:not(.menu-landing) .purchase-item-stock-meta { display: block; color: var(--muted); font-size: 10px; font-weight: 500; }
 .app:not(.menu-landing) .purchase-table tbody tr:hover td { background: #fff8f4; }
 .app:not(.menu-landing) .purchase-table td.danger { color: var(--accent-dark); font-variant-numeric: tabular-nums; font-weight: 700; white-space: nowrap; }
 .app:not(.menu-landing) .purchase-table td[colspan] { border: 1px solid #eaded8; border-radius: 14px 5px 14px 5px; text-align: center; }
@@ -4615,6 +4618,13 @@ body:has(.app) {
     font-weight: 700;
     letter-spacing: .7px;
     text-transform: uppercase;
+  }
+  .app:not(.menu-landing) .purchase-item-stock-meta {
+    flex-basis: 100%;
+    order: 4;
+    color: rgba(255, 250, 243, .82);
+    font-size: 9px;
+    font-weight: 500;
   }
   .app:not(.menu-landing) .purchase-table tbody td:nth-child(4) { text-align: left; }
   .app:not(.menu-landing) .purchase-table tbody td:nth-child(3) { white-space: nowrap; }

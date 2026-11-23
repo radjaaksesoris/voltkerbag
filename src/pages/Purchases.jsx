@@ -1,12 +1,24 @@
 import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
-import { getAll, getPurchaseEntries, onRefresh, requestPageRefresh, put, removePurchaseEntry } from '../db'
+import {
+  createVendorPayable,
+  getAll,
+  getPurchaseEntries,
+  onRefresh,
+  put,
+  recordCreditStockPurchase,
+  recordStockPurchase,
+  removePurchaseEntry,
+  requestPageRefresh
+} from '../db'
 import { dateOnly, rupiah } from '../format'
 import { dateRangeTimestamps, localDateValue } from '../dateFilter'
 import MoneyInput from '../components/MoneyInput.jsx'
 import VendorSelect from '../components/VendorSelect.jsx'
 import Icon from '../components/Icon.jsx'
 import { formatPurchaseNote, parsePurchaseNote } from '../purchaseNote.js'
+import { isSafeRupiahAmount } from '../money.js'
+import { purchaseCostUnit, purchaseCostPerPiece, quantityToPcs } from '../productUnits.js'
 
 const PURCHASE_CATEGORY = 'Pembelian bahan produksi'
 const PURCHASE_PAGE_SIZE = 20
@@ -20,6 +32,13 @@ export default function Purchases() {
   const [vendorLoadError, setVendorLoadError] = useState('')
   const [actionError, setActionError] = useState('')
   const [status, setStatus] = useState('')
+  const [purchaseType, setPurchaseType] = useState('stock')
+  const [paymentType, setPaymentType] = useState('cash')
+  const [products, setProducts] = useState([])
+  const [productLoadError, setProductLoadError] = useState('')
+  const [productId, setProductId] = useState('')
+  const [quantity, setQuantity] = useState('')
+  const [unitCost, setUnitCost] = useState('')
   const [materialName, setMaterialName] = useState('')
   const [supplier, setSupplier] = useState('')
   const [vendors, setVendors] = useState([])
@@ -31,6 +50,7 @@ export default function Purchases() {
   const vendorRequestId = useRef(0)
   const savingLock = useRef(false)
   const deletingLock = useRef(false)
+  const purchaseRequest = useRef(null)
 
   useEffect(() => {
     if (!status) return undefined
@@ -63,25 +83,29 @@ export default function Purchases() {
       }
     }
 
-    async function loadVendors() {
+    async function loadMasters() {
       const request = ++vendorRequestId.current
-      try {
-        const rows = await getAll('vendors')
-        if (!active || request !== vendorRequestId.current) return
-        setVendors(rows)
+      const [vendorResult, productResult] = await Promise.allSettled([getAll('vendors'), getAll('products')])
+      if (!active || request !== vendorRequestId.current) return
+      if (vendorResult.status === 'fulfilled') {
+        setVendors(vendorResult.value)
         setVendorLoadError('')
-      } catch (error) {
-        if (active && request === vendorRequestId.current) {
-          setVendorLoadError(error.message || 'Gagal memuat daftar vendor.')
-        }
+      } else {
+        setVendorLoadError(vendorResult.reason?.message || 'Gagal memuat daftar vendor.')
+      }
+      if (productResult.status === 'fulfilled') {
+        setProducts(productResult.value)
+        setProductLoadError('')
+      } else {
+        setProductLoadError(productResult.reason?.message || 'Gagal memuat daftar barang.')
       }
     }
 
     load()
-    loadVendors()
+    loadMasters()
     const unsubscribe = onRefresh(() => {
       load()
-      loadVendors()
+      loadMasters()
     }, 'purchases')
     return () => {
       active = false
@@ -93,30 +117,27 @@ export default function Purchases() {
     if (supplier && !vendors.some((vendor) => vendor.name === supplier)) setSupplier('')
   }, [supplier, vendors])
 
+  useEffect(() => {
+    if (productId && !products.some((product) => String(product.id) === productId)) {
+      setProductId('')
+    }
+  }, [productId, products])
+
   async function savePurchase(event) {
     event.preventDefault()
     if (savingLock.current) return
     setActionError('')
     setStatus('')
 
-    const cleanMaterialName = materialName.trim()
     const cleanSupplier = supplier.trim()
     const numericAmount = Number(amount)
 
-    if (!cleanMaterialName) {
-      setActionError('Nama pembelian wajib diisi.')
-      return
-    }
     if (vendorLoadError) {
       setActionError('Daftar vendor gagal dimuat. Muat ulang halaman sebelum menyimpan.')
       return
     }
     if (!vendors.some((vendor) => vendor.name === cleanSupplier)) {
       setActionError('Pilih vendor dari master vendor di tab Setting.')
-      return
-    }
-    if (!Number.isFinite(numericAmount) || numericAmount <= 0) {
-      setActionError('Total pembelian harus lebih dari Rp0.')
       return
     }
     try {
@@ -129,19 +150,96 @@ export default function Purchases() {
     savingLock.current = true
     setSaving(true)
     try {
-      await put('finance', {
-        type: 'expense',
-        category: PURCHASE_CATEGORY,
-        note: formatPurchaseNote(cleanMaterialName, cleanSupplier),
-        amount: numericAmount,
-        date: new Date(purchaseDate + 'T12:00:00').toISOString(),
-        refId: null,
-        requestId: null
-      })
+      if (purchaseType === 'stock') {
+        const selectedProduct = products.find((product) => String(product.id) === productId)
+        const numericQuantity = Number(quantity)
+        const enteredUnitCost = Number(unitCost)
+        if (!selectedProduct) throw new Error('Pilih barang yang tersedia di daftar produk.')
+        if (!Number.isInteger(numericQuantity) || numericQuantity <= 0) {
+          throw new Error('Jumlah barang harus berupa bilangan bulat lebih dari nol.')
+        }
+        if (!isSafeRupiahAmount(enteredUnitCost, true)) {
+          throw new Error('Harga beli per unit harus berupa rupiah utuh yang valid.')
+        }
+        const stockQuantity = quantityToPcs(numericQuantity, selectedProduct.unit || 'pcs')
+        const unitCostPerPiece = purchaseCostPerPiece(selectedProduct.unit, enteredUnitCost)
+        const expenseAmount = Math.round(stockQuantity * unitCostPerPiece)
+        if (!Number.isSafeInteger(stockQuantity) || stockQuantity <= 0 || stockQuantity > 2147483647) {
+          throw new Error('Jumlah barang melebihi batas stok yang dapat disimpan.')
+        }
+        if (!isSafeRupiahAmount(expenseAmount)) {
+          throw new Error('Total pembelian harus berupa rupiah utuh lebih dari Rp0.')
+        }
+        const fingerprint = JSON.stringify([
+          purchaseType, paymentType, selectedProduct.id, stockQuantity,
+          unitCostPerPiece, cleanSupplier, purchaseDate
+        ])
+        if (purchaseRequest.current?.fingerprint !== fingerprint) {
+          purchaseRequest.current = { fingerprint, id: crypto.randomUUID() }
+        }
+        if (paymentType === 'credit') {
+          await recordCreditStockPurchase({
+            productId: selectedProduct.id,
+            quantityPcs: stockQuantity,
+            unitCost: unitCostPerPiece,
+            vendor: cleanSupplier,
+            description: `${selectedProduct.name} · ${numericQuantity} ${selectedProduct.unit || 'pcs'}`,
+            amount: expenseAmount,
+            date: new Date(purchaseDate + 'T12:00:00').toISOString(),
+            requestId: purchaseRequest.current.id
+          })
+        } else {
+          await recordStockPurchase({
+            productId: selectedProduct.id,
+            quantityPcs: stockQuantity,
+            unitCost: unitCostPerPiece,
+            vendor: cleanSupplier,
+            date: new Date(purchaseDate + 'T12:00:00').toISOString(),
+            requestId: purchaseRequest.current.id
+          })
+        }
+        purchaseRequest.current = null
+      } else {
+        const cleanMaterialName = materialName.trim()
+        if (!cleanMaterialName) throw new Error('Nama pembelian wajib diisi.')
+        if (!isSafeRupiahAmount(numericAmount)) {
+          throw new Error('Total pembelian harus berupa rupiah utuh lebih dari Rp0.')
+        }
+        const fingerprint = JSON.stringify([
+          purchaseType, paymentType, cleanMaterialName, cleanSupplier, numericAmount, purchaseDate
+        ])
+        if (purchaseRequest.current?.fingerprint !== fingerprint) {
+          purchaseRequest.current = { fingerprint, id: crypto.randomUUID() }
+        }
+        if (paymentType === 'credit') {
+          await createVendorPayable({
+            vendorName: cleanSupplier,
+            description: cleanMaterialName,
+            amount: numericAmount,
+            date: new Date(purchaseDate + 'T12:00:00').toISOString(),
+            requestId: purchaseRequest.current.id
+          })
+        } else {
+          await put('finance', {
+            type: 'expense',
+            category: PURCHASE_CATEGORY,
+            note: formatPurchaseNote(cleanMaterialName, cleanSupplier),
+            amount: numericAmount,
+            date: new Date(purchaseDate + 'T12:00:00').toISOString(),
+            refId: null,
+            requestId: null
+          })
+        }
+        purchaseRequest.current = null
+      }
+      setProductId('')
+      setQuantity('')
+      setUnitCost('')
       setMaterialName('')
       setSupplier('')
       setAmount('')
       setPurchaseDate(localDateValue(new Date()))
+      setPaymentType('cash')
       setPage(1)
       setStatus('Berhasil disimpan')
     } catch (error) {
@@ -155,9 +253,13 @@ export default function Purchases() {
   async function deletePurchase(entry) {
     if (deletingLock.current) return
     const purchase = parsePurchaseNote(entry.note)
+    const stockEntry = Boolean(entry.requestId)
     if (!confirm(
-      'Hapus riwayat pembelian "' + purchase.purchase + '"?\n\n' +
-      'Catatan pengeluaran terkait juga akan dihapus dari Keuangan. Tindakan ini tidak dapat dibatalkan.'
+      'Hapus riwayat pembelian "' + purchase.purchase + '"?' +
+      (stockEntry
+        ? '\n\nStok dan nilai modal akan dikurangi sesuai stok yang masih tersedia. Jika stok tidak cukup, penghapusan ditolak.'
+        : '\n\nCatatan pengeluaran terkait juga akan dihapus dari Keuangan.') +
+      '\n\nTindakan ini tidak dapat dibatalkan.'
     )) return
 
     deletingLock.current = true
@@ -189,6 +291,13 @@ export default function Purchases() {
 
   const pageCount = Math.max(1, Math.ceil(totalCount / PURCHASE_PAGE_SIZE))
   const pageStart = (page - 1) * PURCHASE_PAGE_SIZE
+  const selectedProduct = products.find((product) => String(product.id) === productId)
+  const estimatedStockPurchaseTotal = selectedProduct && Number.isInteger(Number(quantity)) && Number(quantity) > 0
+    ? Math.round(
+      quantityToPcs(Number(quantity), selectedProduct.unit || 'pcs') *
+      purchaseCostPerPiece(selectedProduct.unit, Number(unitCost))
+    )
+    : 0
 
   return (
     <div className="page purchase-page">
@@ -196,23 +305,126 @@ export default function Purchases() {
         <div className="purchase-heading">
           <div>
             <h2>Pembelian</h2>
-            <p className="muted">Catat pembelian bahan produksi sebagai pengeluaran keuangan.</p>
+            <p className="muted">Pilih tunai untuk pembelian lunas atau kredit untuk mencatat utang vendor.</p>
           </div>
         </div>
         <form className="purchase-form" onSubmit={savePurchase}>
           <div className="purchase-form-grid">
             <div className="purchase-field">
-              <label htmlFor="purchase-material">Pembelian *</label>
-              <input
-                id="purchase-material"
+              <label htmlFor="purchase-type">Jenis pembelian *</label>
+              <select
+                id="purchase-type"
                 className="input"
-                value={materialName}
-                onChange={(event) => setMaterialName(event.target.value)}
-                maxLength={200}
-                placeholder="Nama barang"
-                required
-              />
+                value={purchaseType}
+                onChange={(event) => setPurchaseType(event.target.value)}
+                disabled={saving}>
+                <option value="stock">Barang masuk stok</option>
+                <option value="non-stock">Bahan / pengeluaran non-stok</option>
+              </select>
             </div>
+            <div className="purchase-field">
+              <label htmlFor="purchase-payment-type">Pembayaran *</label>
+              <select
+                id="purchase-payment-type"
+                className="input"
+                value={paymentType}
+                onChange={(event) => setPaymentType(event.target.value)}
+                disabled={saving}>
+                <option value="cash">Tunai / sudah dibayar</option>
+                <option value="credit">Kredit / belum dibayar</option>
+              </select>
+            </div>
+            {purchaseType === 'stock' ? (
+              <>
+                <div className="purchase-field">
+                  <label htmlFor="purchase-product">Barang *</label>
+                  {productLoadError ? (
+                    <p className="form-error" role="alert">{productLoadError}</p>
+                  ) : (
+                    <select
+                      id="purchase-product"
+                      className="input"
+                      value={productId}
+                      onChange={(event) => {
+                        setProductId(event.target.value)
+                        setQuantity('')
+                        setUnitCost('')
+                      }}
+                      disabled={saving || products.length === 0}
+                      required>
+                      <option value="">Pilih barang</option>
+                      {products.map((product) => (
+                        <option key={product.id} value={product.id}>{product.name}</option>
+                      ))}
+                    </select>
+                  )}
+                  {products.length === 0 && !productLoadError && (
+                    <p className="muted small purchase-vendor-hint">Tambahkan barang terlebih dahulu di menu Produk.</p>
+                  )}
+                </div>
+                <div className="purchase-field">
+                  <label htmlFor="purchase-quantity">Jumlah {selectedProduct ? `(${selectedProduct.unit || 'pcs'})` : ''} *</label>
+                  <input
+                    id="purchase-quantity"
+                    className="input"
+                    type="number"
+                    inputMode="numeric"
+                    min="1"
+                    step="1"
+                    value={quantity}
+                    onChange={(event) => setQuantity(event.target.value)}
+                    placeholder="Masukkan jumlah"
+                    required
+                    disabled={saving || !selectedProduct}
+                  />
+                </div>
+                <div className="purchase-field">
+                  <label htmlFor="purchase-unit-cost">Harga beli per {selectedProduct ? purchaseCostUnit(selectedProduct.unit) : 'unit'} *</label>
+                  <MoneyInput
+                    id="purchase-unit-cost"
+                    value={unitCost}
+                    onChange={setUnitCost}
+                    placeholder="Masukkan harga beli"
+                    required
+                    disabled={saving || !selectedProduct}
+                  />
+                </div>
+                <div className="purchase-field">
+                  <label>{paymentType === 'credit' ? 'Total tagihan' : 'Total pembelian'}</label>
+                  <p className="purchase-calculated-total">{rupiah(estimatedStockPurchaseTotal)}</p>
+                  <p className="muted small purchase-stock-cost-hint">
+                    Harga modal rata-rata dan harga jual berbasis markup diperbarui otomatis.
+                  </p>
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="purchase-field">
+                  <label htmlFor="purchase-material">Pembelian *</label>
+                  <input
+                    id="purchase-material"
+                    className="input"
+                    value={materialName}
+                    onChange={(event) => setMaterialName(event.target.value)}
+                    maxLength={200}
+                    placeholder="Contoh: kain, bahan mentah"
+                    required
+                    disabled={saving}
+                  />
+                </div>
+                <div className="purchase-field">
+                  <label htmlFor="purchase-amount">Nominal *</label>
+                  <MoneyInput
+                    id="purchase-amount"
+                    value={amount}
+                    onChange={setAmount}
+                    placeholder="Masukan nominal"
+                    required
+                    disabled={saving}
+                  />
+                </div>
+              </>
+            )}
             <div className="purchase-field">
               <label htmlFor="purchase-vendor">Vendor *</label>
               {vendorLoadError ? (
@@ -233,16 +445,6 @@ export default function Purchases() {
               )}
             </div>
             <div className="purchase-field">
-              <label htmlFor="purchase-amount">Nominal *</label>
-              <MoneyInput
-                id="purchase-amount"
-                value={amount}
-                onChange={setAmount}
-                placeholder="Masukan nominal"
-                required
-              />
-            </div>
-            <div className="purchase-field">
               <label htmlFor="purchase-date">Tanggal *</label>
               <input
                 id="purchase-date"
@@ -255,7 +457,10 @@ export default function Purchases() {
             </div>
           </div>
           {actionError && <p className="form-error" role="alert">{actionError}</p>}
-          <button className="btn btn-primary purchase-submit" type="submit" disabled={saving}>
+          <button
+            className="btn btn-primary purchase-submit"
+            type="submit"
+            disabled={saving || (purchaseType === 'stock' && (products.length === 0 || Boolean(productLoadError)))}>
             {saving ? 'Menyimpan...' : 'Simpan pembelian'}
           </button>
         </form>
@@ -290,7 +495,12 @@ export default function Purchases() {
                   <td className="purchase-details" data-label="Pembelian">
                     <div className="purchase-item-heading">
                       <span className="purchase-item-title">{purchase.purchase}</span>
-                      <span className="purchase-item-type">Pembelian</span>
+                      <span className="purchase-item-type">{entry.requestId ? 'Masuk stok' : 'Non-stok'}</span>
+                      {purchase.stockPurchase && (
+                        <span className="purchase-item-stock-meta">
+                          {purchase.stockPurchase.quantityPcs} pcs · {rupiah(purchase.stockPurchase.unitCostPerPiece)}/pcs
+                        </span>
+                      )}
                       <button
                         className="btn btn-sm btn-danger purchase-delete-button"
                         type="button"

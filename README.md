@@ -10,9 +10,9 @@ VOLTKER adalah aplikasi kasir React + Vite dengan Supabase sebagai sumber data u
 - Foto produk yang diunggah dari form Tambah/Edit Produk dan disimpan di Supabase Storage.
 - Backup manual seluruh data toko, termasuk saldo hutang lama, dan foto produk ke file ZIP privat di Supabase Storage.
 - Kasir tunai/kredit dengan nama pelanggan wajib; checkout dan pengurangan stok diproses atomik di database.
-- Tab Pembelian untuk mencatat nama pembelian, vendor, nominal, dan tanggal sebagai pengeluaran di buku kas. Catatan pembelian tidak mengubah stok produk dan vendor dibayar lunas.
+- Tab Pembelian mencatat barang jadi yang dibeli sebagai stok masuk sekaligus pengeluaran, termasuk jumlah dan harga beli. Harga modal persediaan diperbarui dengan rata-rata tertimbang dan harga jual berbasis markup ikut menyesuaikan; bahan mentah seperti kain tetap dapat dicatat sebagai pengeluaran non-stok.
 - Kartu **Utang/Piutang** di Menu merangkum piutang per pelanggan dan faktur kredit, termasuk total, pembayaran, sisa tagihan, serta jatuh tempo 30 hari dari tanggal transaksi; tanggal jatuh tempo juga tercetak pada faktur kredit.
-- Kartu **Utang/Piutang** juga mencatat utang pembelian vendor secara terpisah dari stok. Pembayaran sebagian/pelunasan otomatis menjadi pengeluaran di Buku Kas saat dibayar.
+- Utang pembelian vendor hanya dibuat dari tab **Pembelian** saat metode pembayaran dipilih **Kredit / belum dibayar**; pembelian tunai tidak masuk daftar utang. Pembayaran sebagian/pelunasan menjadi pengeluaran di Buku Kas saat dibayar.
 - Saldo hutang pelanggan lama sebelum aplikasi digunakan dapat ditambahkan manual dari kartu **Utang/Piutang**; saldo ini bukan penjualan dan pembayarannya dicatat sebagai pemasukan.
 - Penambahan stok dikunci dan dicatat atomik di database, termasuk harga modal per batch. Nilai aset stok menghitung setiap batch; penjualan mengurangi nilai modal berdasarkan rata-rata tertimbang, bukan FIFO.
 - Pelunasan hutang pelanggan secara penuh atau sebagian tersedia dari kartu **Utang/Piutang** dan tab Keuangan; pembayaran mengurangi saldo gabungan pelanggan tanpa dialokasikan ke faktur tertentu, dan dicatat di buku kas.
@@ -108,7 +108,7 @@ Workflow `.github/workflows/deploy.yml` membangun dan menerbitkan folder `dist` 
 - Jika secret diubah, jalankan ulang build/deploy karena Vite memasukkan nilainya ke bundle pada waktu build.
 - Jika server tidak dapat dijangkau, aplikasi menampilkan kegagalan secara eksplisit dan operasi tidak disimpan secara lokal.
 - Dashboard dan buku kas mengambil maksimal 15/20 baris per halaman; ringkasan dan agregat laporan dihitung di database. Jalankan `supabase/schema.sql` sebelum deploy versi yang memakai RPC laporan ini.
-- Jalankan ulang `supabase/schema.sql` untuk memasang RPC penambahan stok atomik dan ringkasan stok Dashboard. Saat mengedit produk yang sudah ada, stok ditampilkan sebagai informasi dan hanya dapat diubah lewat **Tambah Stok** atau transaksi kasir.
+- Jalankan ulang `supabase/schema.sql` untuk memasang RPC penambahan stok/pembelian stok atomik, penghapusan pembelian stok yang membalik stok bila jumlahnya masih cukup, dan ringkasan stok Dashboard. Saat mengedit produk yang sudah ada, stok ditampilkan sebagai informasi dan hanya dapat diubah lewat **Tambah Stok**, **Pembelian**, atau transaksi kasir.
 
 ## Printer struk
 Pilih ukuran kertas khusus **240 × 140 mm**, continuous form/tractor feed, orientasi landscape, skala 100%, dan matikan header/footer browser. Simpan ukuran tersebut di driver printer.
