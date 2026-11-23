@@ -52,6 +52,7 @@ export default function Finance() {
     capital: 0,
     pending_expedition_count: 0,
     total_credit: 0,
+    total_vendor_debt: 0,
     gross_profit: 0,
     profit_expense: 0
   })
@@ -353,6 +354,14 @@ export default function Finance() {
               <span className="debt-stat-hint">Memuat data...</span>
             </span>
           </div>
+          <div className="stat-card dashboard-stat-card debt-stat-card finance-debt-card">
+            <span className="dashboard-stat-icon"><Icon name="bag" size={27} /></span>
+            <span className="dashboard-stat-content">
+              <span>Hutang Vendor</span>
+              <strong><LoadingNumber label="total hutang vendor" /></strong>
+              <span className="debt-stat-hint">Memuat data...</span>
+            </span>
+          </div>
           <div className="stat-card dashboard-stat-card finance-cash-card">
             <span className="dashboard-stat-icon"><Icon name="wallet" size={27} /></span>
             <div className="dashboard-stat-content">
@@ -456,6 +465,13 @@ export default function Finance() {
             <span className="dashboard-stat-content">
               <span>Hutang Pelanggan</span>
               <strong>{rupiah(totalCredit)}</strong>
+            </span>
+          </div>
+          <div className="stat-card dashboard-stat-card debt-stat-card finance-debt-card">
+            <span className="dashboard-stat-icon"><Icon name="bag" size={27} /></span>
+            <span className="dashboard-stat-content">
+              <span>Hutang Vendor</span>
+              <strong>{rupiah(Number(report.total_vendor_debt))}</strong>
             </span>
           </div>
           <div className="stat-card dashboard-stat-card finance-cash-card">

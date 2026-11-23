@@ -12,6 +12,7 @@ import { clearRequestedAppMode } from './appMode.js'
 const CHUNK_RELOAD_KEY = 'voltker:chunk-reload-attempted'
 const MENU_TRANSITION_DURATION_MS = 600
 const MENU_TRANSITION_FALLBACK_DELAY_MS = MENU_TRANSITION_DURATION_MS + 150
+const ANDROID_BACK_GUARD_STATE = '__voltkerAndroidBackGuard'
 
 function getMenuTransitionSwitchDelay() {
   return MENU_TRANSITION_DURATION_MS * 0.35
@@ -284,6 +285,34 @@ function ActiveApp() {
   useEffect(() => () => {
     window.clearTimeout(returnTransitionTimer.current)
     window.clearTimeout(menuNavigationTimer.current)
+  }, [])
+
+  useEffect(() => {
+    if (!/Android/i.test(window.navigator.userAgent)) return undefined
+
+    function pushBackGuard() {
+      const currentState = window.history.state
+      const state = currentState && typeof currentState === 'object'
+        ? currentState
+        : {}
+      window.history.pushState(
+        { ...state, [ANDROID_BACK_GUARD_STATE]: true },
+        '',
+        window.location.href
+      )
+    }
+
+    if (!window.history.state?.[ANDROID_BACK_GUARD_STATE]) {
+      pushBackGuard()
+    }
+
+    function preventAndroidBack(event) {
+      event.stopImmediatePropagation()
+      pushBackGuard()
+    }
+
+    window.addEventListener('popstate', preventAndroidBack, true)
+    return () => window.removeEventListener('popstate', preventAndroidBack, true)
   }, [])
 
   const navigateToPage = useCallback((nextPage) => {

@@ -573,6 +573,19 @@ export async function getFinanceData({ from, to, page, pageSize }) {
   })
   throwIfError(error, 'Gagal memuat ringkasan keuangan')
 
+  let totalVendorDebt = 0
+  for (let offset = 0; ; offset += 1000) {
+    const { data: payables, error: payableError } = await client
+      .from('vendor_payables')
+      .select('balance_due')
+      .gt('balance_due', 0)
+      .order('id', { ascending: true })
+      .range(offset, offset + 999)
+    throwIfError(payableError, 'Gagal memuat total utang vendor')
+    totalVendorDebt += (payables || []).reduce((total, payable) => total + Number(payable.balance_due), 0)
+    if (!payables || payables.length < 1000) break
+  }
+
   const expeditionEntries = (data?.entries || []).filter((entry) =>
     entry.refId != null
     && String(entry.category || '').trim().toLocaleLowerCase('id-ID') === 'biaya ekspedisi'
@@ -600,7 +613,7 @@ export async function getFinanceData({ from, to, page, pageSize }) {
     })
   }
 
-  return data
+  return { ...data, total_vendor_debt: totalVendorDebt }
 }
 
 export async function getFinanceInvoices({ from, to, page, pageSize }) {
