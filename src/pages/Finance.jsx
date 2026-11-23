@@ -1,13 +1,16 @@
 import { useEffect, useRef, useState } from 'react'
-import { getAll, getFinanceData, put, remove, onRefresh, requestPageRefresh, recordCustomerCreditPayment, addManualCustomerCredit, recordExpeditionCost } from '../db'
-import { rupiah, dateOnly } from '../format'
+import { getAll, getFinanceData, getFinanceInvoices, put, remove, onRefresh, requestPageRefresh, recordCustomerCreditPayment, addManualCustomerCredit, recordExpeditionCost } from '../db'
+import { rupiah, dateOnly, dateTime } from '../format'
 import { dateRangeTimestamps, hasDateRange, localDateValue } from '../dateFilter'
 import MoneyInput from '../components/MoneyInput.jsx'
 import CustomerIdentity from '../components/CustomerIdentity.jsx'
 import SelectInput from '../components/SelectInput.jsx'
 import Icon from '../components/Icon.jsx'
+import ReceiptPreview from '../components/ReceiptPreview.jsx'
 import { isSafeRupiahAmount } from '../money'
 import LoadingNumber from '../components/LoadingNumber.jsx'
+import { getInvoiceNumber } from '../invoice.js'
+import { downloadInvoiceJpeg } from '../invoiceJpeg.js'
 
 const TYPES = {
   income: { label: 'Pemasukan', cls: 'badge-ok' },
@@ -15,6 +18,7 @@ const TYPES = {
   capital: { label: 'Modal', cls: 'badge-neutral' }
 }
 const FINANCE_PAGE_SIZE = 20
+const FINANCE_INVOICE_PAGE_SIZE = 20
 
 function getTodayDateRange() {
   const today = localDateValue(new Date())
@@ -49,6 +53,16 @@ export default function Finance() {
   const [actionError, setActionError] = useState('')
   const [loaded, setLoaded] = useState(false)
   const [showCreditBalances, setShowCreditBalances] = useState(false)
+  const [showSalesInvoices, setShowSalesInvoices] = useState(false)
+  const [salesInvoices, setSalesInvoices] = useState([])
+  const [salesInvoiceCount, setSalesInvoiceCount] = useState(0)
+  const [salesInvoicePage, setSalesInvoicePage] = useState(1)
+  const [salesInvoicesLoading, setSalesInvoicesLoading] = useState(false)
+  const [salesInvoicesError, setSalesInvoicesError] = useState('')
+  const [selectedInvoice, setSelectedInvoice] = useState(null)
+  const [invoiceDownloadingId, setInvoiceDownloadingId] = useState(null)
+  const [invoiceDownloadError, setInvoiceDownloadError] = useState('')
+  const [invoiceDownloadStatus, setInvoiceDownloadStatus] = useState('')
   const [showEntryForm, setShowEntryForm] = useState(false)
   const [editingEntry, setEditingEntry] = useState(null)
   const [entryType, setEntryType] = useState('expense')
@@ -70,7 +84,9 @@ export default function Finance() {
   const creditPaymentRequest = useRef(null)
   const manualDebtRequest = useRef(null)
   const requestId = useRef(0)
+  const salesInvoiceRequestId = useRef(0)
   const creditBalancesTriggerRef = useRef(null)
+  const salesInvoicesTriggerRef = useRef(null)
 
   useEffect(() => {
     let active = true
@@ -131,6 +147,40 @@ export default function Finance() {
     }
   }, [dateRange, page])
 
+  useEffect(() => {
+    if (!showSalesInvoices) return undefined
+    let active = true
+
+    async function loadInvoices() {
+      const currentRequest = ++salesInvoiceRequestId.current
+      setSalesInvoicesLoading(true)
+      setSalesInvoicesError('')
+      try {
+        const result = await getFinanceInvoices({
+          ...dateRangeTimestamps(dateRange),
+          page: salesInvoicePage,
+          pageSize: FINANCE_INVOICE_PAGE_SIZE
+        })
+        if (!active || currentRequest !== salesInvoiceRequestId.current) return
+        setSalesInvoices(result.invoices)
+        setSalesInvoiceCount(result.totalCount)
+      } catch (error) {
+        if (active && currentRequest === salesInvoiceRequestId.current) {
+          setSalesInvoicesError(error.message || 'Gagal memuat daftar faktur.')
+        }
+      } finally {
+        if (active && currentRequest === salesInvoiceRequestId.current) setSalesInvoicesLoading(false)
+      }
+    }
+
+    loadInvoices()
+    const unsubscribe = onRefresh(loadInvoices, 'finance')
+    return () => {
+      active = false
+      unsubscribe()
+    }
+  }, [showSalesInvoices, dateRange, salesInvoicePage])
+
   const income = Number(report.income)
   const expense = Number(report.expense)
   const capital = Number(report.capital)
@@ -143,6 +193,7 @@ export default function Finance() {
   const hasFilter = hasDateRange(dateRange)
   const todayDateRange = getTodayDateRange()
   const currentMonthDateRange = getCurrentMonthDateRange()
+  const salesInvoicePageCount = Math.max(1, Math.ceil(salesInvoiceCount / FINANCE_INVOICE_PAGE_SIZE))
 
   function openNewEntry() {
     setEditingEntry(null)
@@ -185,6 +236,41 @@ export default function Finance() {
   function closeCreditBalances() {
     setShowCreditBalances(false)
     requestAnimationFrame(() => creditBalancesTriggerRef.current?.focus())
+  }
+
+  function openSalesInvoices() {
+    setSalesInvoicePage(1)
+    setShowSalesInvoices(true)
+    setInvoiceDownloadError('')
+    setInvoiceDownloadStatus('')
+  }
+
+  function closeSalesInvoices() {
+    setShowSalesInvoices(false)
+    requestAnimationFrame(() => salesInvoicesTriggerRef.current?.focus())
+  }
+
+  function invoiceWithCustomerDetails(invoice) {
+    const customer = customers.find((row) => row.name === invoice.customerName)
+    return {
+      ...invoice,
+      customerPhone: customer?.phone || '',
+      customerAddress: customer?.address || ''
+    }
+  }
+
+  async function downloadSalesInvoice(invoice) {
+    setInvoiceDownloadingId(invoice.id)
+    setInvoiceDownloadError('')
+    setInvoiceDownloadStatus('')
+    try {
+      await downloadInvoiceJpeg(invoiceWithCustomerDetails(invoice))
+      setInvoiceDownloadStatus('Faktur ' + getInvoiceNumber(invoice) + ' berhasil diunduh.')
+    } catch (error) {
+      setInvoiceDownloadError(error.message || 'Gagal mengunduh faktur.')
+    } finally {
+      setInvoiceDownloadingId(null)
+    }
   }
 
   async function saveManualDebt(event) {
@@ -445,13 +531,20 @@ export default function Finance() {
           </div>
         </div>
         <div className="stats-grid dashboard-stats-grid finance-summary-grid">
-          <div className="stat-card dashboard-stat-card finance-income-card">
+          <button
+            className="stat-card dashboard-stat-card finance-income-card finance-income-card-trigger"
+            type="button"
+            ref={salesInvoicesTriggerRef}
+            aria-haspopup="dialog"
+            aria-expanded={showSalesInvoices}
+            onClick={openSalesInvoices}>
             <span className="dashboard-stat-icon"><Icon name="trend" size={27} /></span>
             <div className="dashboard-stat-content">
               <span>Pemasukan Penjualan</span>
               <strong>+{rupiah(income)}</strong>
+              <span className="finance-income-hint">Daftar faktur <Icon name="arrowRight" size={14} /></span>
             </div>
-          </div>
+          </button>
           <button
             className="stat-card dashboard-stat-card debt-stat-card finance-debt-card"
             type="button"
@@ -484,6 +577,133 @@ export default function Finance() {
           </div>
         </div>
       </div>
+
+      {showSalesInvoices && (
+        <div className="overlay finance-invoices-overlay" onClick={closeSalesInvoices}>
+          <section
+            className="modal finance-invoices-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="finance-invoices-title"
+            onClick={(event) => event.stopPropagation()}
+            onKeyDown={(event) => {
+              if (event.key === 'Escape') closeSalesInvoices()
+            }}>
+            <div className="finance-invoices-heading">
+              <div>
+                <h3 id="finance-invoices-title">Faktur penjualan</h3>
+                <p className="muted small">Daftar faktur pada periode Buku Kas yang dipilih.</p>
+              </div>
+              <button
+                className="btn finance-invoices-close"
+                type="button"
+                aria-label="Tutup daftar faktur"
+                autoFocus
+                onClick={closeSalesInvoices}>
+                <Icon name="close" size={18} />
+              </button>
+            </div>
+            {invoiceDownloadError && <p className="form-error" role="alert">{invoiceDownloadError}</p>}
+            {invoiceDownloadStatus && <p className="backup-success" role="status">{invoiceDownloadStatus}</p>}
+            {salesInvoicesError && <p className="form-error" role="alert">{salesInvoicesError}</p>}
+            {salesInvoicesLoading ? (
+              <p className="muted small">Memuat daftar faktur...</p>
+            ) : salesInvoices.length === 0 ? (
+              <p className="credit-balances-empty muted">Tidak ada faktur pada periode ini.</p>
+            ) : (
+              <>
+                <div className="finance-invoices-table-wrap">
+                  <table className="finance-invoices-table">
+                    <thead>
+                      <tr>
+                        <th>No. faktur</th>
+                        <th>Pelanggan</th>
+                        <th>Tanggal</th>
+                        <th className="right">Total</th>
+                        <th className="right">Dibayar</th>
+                        <th className="right">Sisa tagihan</th>
+                        <th>Faktur</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {salesInvoices.map((invoice) => {
+                        const paidAmount = getInvoicePaidAmount(invoice)
+                        const balanceDue = getInvoiceBalanceDue(invoice, paidAmount)
+                        return (
+                          <tr key={invoice.id}>
+                            <td>
+                              <button
+                                className="finance-invoice-number"
+                                type="button"
+                                onClick={() => setSelectedInvoice(invoiceWithCustomerDetails(invoice))}>
+                                {getInvoiceNumber(invoice)}
+                              </button>
+                            </td>
+                            <td>
+                              <CustomerIdentity
+                                name={invoice.customerName || 'Pelanggan'}
+                                customer={customers.find((customer) => customer.name === invoice.customerName)}
+                              />
+                            </td>
+                            <td>{dateOnly(invoice.createdAt)}</td>
+                            <td className="right">{rupiah(invoice.total)}</td>
+                            <td className="right">
+                              <strong>{rupiah(paidAmount)}</strong>
+                              {invoice.payments.length > 0 && (
+                                <span className="finance-invoice-payment-history">
+                                  {invoice.payments.map((payment, index) => (
+                                    <span key={index}>{dateTime(payment.date)} · {rupiah(payment.amount)}</span>
+                                  ))}
+                                </span>
+                              )}
+                            </td>
+                            <td className="right">
+                              <strong className={balanceDue > 0 ? 'danger' : 'ok'}>{rupiah(balanceDue)}</strong>
+                            </td>
+                            <td>
+                              <div className="finance-invoice-actions">
+                                <button
+                                  className="btn btn-sm"
+                                  type="button"
+                                  aria-label={'Cetak faktur ' + getInvoiceNumber(invoice)}
+                                  title="Lihat / cetak faktur"
+                                  onClick={() => setSelectedInvoice(invoiceWithCustomerDetails(invoice))}>
+                                  <Icon name="print" size={14} />
+                                </button>
+                                <button
+                                  className="btn btn-sm"
+                                  type="button"
+                                  aria-label={'Download faktur ' + getInvoiceNumber(invoice)}
+                                  title="Download faktur"
+                                  disabled={invoiceDownloadingId === invoice.id}
+                                  onClick={() => downloadSalesInvoice(invoice)}>
+                                  <Icon name="download" size={14} />
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        )
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+                <div className="dashboard-pagination">
+                  <span className="muted small">
+                    Menampilkan {(salesInvoicePage - 1) * FINANCE_INVOICE_PAGE_SIZE + 1}–{Math.min(salesInvoicePage * FINANCE_INVOICE_PAGE_SIZE, salesInvoiceCount)} dari {salesInvoiceCount} faktur
+                  </span>
+                  {salesInvoicePageCount > 1 && (
+                    <div className="dashboard-pagination-controls" aria-label="Navigasi daftar faktur">
+                      <button className="btn btn-sm" type="button" disabled={salesInvoicePage === 1} onClick={() => setSalesInvoicePage(salesInvoicePage - 1)}>Sebelumnya</button>
+                      <span className="small">Halaman {salesInvoicePage} dari {salesInvoicePageCount}</span>
+                      <button className="btn btn-sm" type="button" disabled={salesInvoicePage === salesInvoicePageCount} onClick={() => setSalesInvoicePage(salesInvoicePage + 1)}>Berikutnya</button>
+                    </div>
+                  )}
+                </div>
+              </>
+            )}
+          </section>
+        </div>
+      )}
 
       {showCreditBalances && (
         <div className="overlay credit-balances-overlay" onClick={closeCreditBalances}>
@@ -801,8 +1021,30 @@ export default function Finance() {
           </form>
         </div>
       )}
+      {selectedInvoice && (
+        <ReceiptPreview
+          transaction={selectedInvoice}
+          onClose={() => setSelectedInvoice(null)}
+        />
+      )}
     </div>
   )
+}
+
+function getInvoicePaidAmount(invoice) {
+  if (invoice.paidAmount != null && Number.isFinite(Number(invoice.paidAmount))) {
+    return Number(invoice.paidAmount)
+  }
+  return invoice.paymentType === 'credit'
+    ? Math.min(Number(invoice.total) || 0, Number(invoice.payment) || 0)
+    : Number(invoice.total) || 0
+}
+
+function getInvoiceBalanceDue(invoice, paidAmount) {
+  if (invoice.balanceDue != null && Number.isFinite(Number(invoice.balanceDue))) {
+    return Math.max(0, Number(invoice.balanceDue))
+  }
+  return Math.max(0, (Number(invoice.total) || 0) - paidAmount)
 }
 
 function isAutomaticEntry(entry) {

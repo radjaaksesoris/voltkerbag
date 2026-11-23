@@ -1560,6 +1560,10 @@ h3 { margin-bottom: 16px; color: var(--ink); font-size: 15px; font-weight: 700; 
 }
 .debt-stat-card:hover { border-color: var(--accent); }
 .debt-stat-card:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+.finance-income-card-trigger { width: 100%; color: inherit; font: inherit; text-align: left; cursor: pointer; }
+.finance-income-card-trigger:hover { border-color: var(--accent); }
+.finance-income-card-trigger:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+.finance-income-card-trigger .finance-income-hint { display: flex; align-items: center; gap: 4px; color: var(--muted); font-size: 10px; letter-spacing: 0; text-transform: none; }
 .debt-stat-card .debt-stat-hint {
   color: var(--muted);
   font-size: 10px;
@@ -2329,6 +2333,56 @@ label { display: block; margin-bottom: 6px; color: var(--muted); font-size: 11px
 .credit-payment-modes { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin: 8px 0; }
 .credit-payment-modes .btn { padding-inline: 8px; }
 .credit-balances-empty { padding: 10px 0 2px; font-size: 12px; }
+.debts-page { width: min(100%, 1240px); gap: 16px; }
+.debts-page-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+.debts-page-heading h2 { margin: 3px 0 4px; color: var(--ink); font-size: 22px; }
+.debts-page-heading p { margin: 0; }
+.debts-page-kicker { color: var(--accent-dark); font-size: 9px; font-weight: 800; letter-spacing: 1px; }
+.debts-tabs { display: flex; gap: 8px; padding: 5px; border: 1px solid var(--border); border-radius: 12px; background: var(--card); }
+.debts-tabs button { flex: 1 1 0; min-height: 40px; padding: 8px 12px; border: 0; border-radius: 8px; background: transparent; color: var(--muted); font: inherit; font-size: 12px; font-weight: 700; cursor: pointer; }
+.debts-tabs button.active { background: var(--accent); color: #fffaf3; box-shadow: 0 4px 10px rgba(99, 34, 30, .14); }
+.debts-tabs button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.debts-load-error { display: grid; justify-items: start; gap: 8px; }
+.debts-card, .debts-form-card { min-width: 0; padding: 16px; }
+.debts-section-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 12px; }
+.debts-section-heading h3 { margin: 0 0 4px; color: var(--ink); }
+.debts-section-heading p { margin: 0; }
+.debts-section-heading .btn { display: inline-flex; flex: 0 0 auto; align-items: center; gap: 5px; }
+.debts-subheading { margin: 16px 0 7px; color: var(--ink); font-size: 12px; }
+.debts-customer-list { display: grid; margin-bottom: 14px; }
+.debts-customer-row { display: flex; align-items: center; gap: 10px; min-height: 47px; padding: 7px 4px; border-top: 1px solid var(--border); }
+.debts-customer-row > .customer-identity { flex: 1 1 auto; min-width: 0; }
+.debts-customer-row > strong { color: var(--danger); font-variant-numeric: tabular-nums; }
+.debts-empty { padding: 10px 0; font-size: 12px; }
+.debts-table-wrap { width: 100%; overflow-x: auto; overscroll-behavior-x: contain; }
+.debts-table { width: 100%; min-width: 850px; table-layout: auto; }
+.debts-table th { background: var(--accent); color: #fffaf3; }
+.debts-table th, .debts-table td { padding: 9px 8px; vertical-align: middle; }
+.debts-payment-history { display: grid; gap: 2px; margin-top: 3px; color: var(--muted); font-size: 9px; line-height: 1.3; text-align: right; }
+.debts-form { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px 14px; align-items: end; }
+.debts-form label { min-width: 0; margin: 0; color: var(--muted); font-size: 11px; }
+.debts-form label > .input,
+.debts-form label > .money-input-wrap,
+.debts-form label > .vendor-select { margin-top: 5px; }
+.debts-form-message { grid-column: 1 / -1; margin: 0; }
+.debts-form-submit { justify-self: start; }
+.debts-payment-modes { display: flex; gap: 8px; margin: 8px 0; }
+.debts-payment-modes .btn { flex: 1 1 0; }
+.finance-invoices-modal { position: relative; width: min(1120px, calc(100vw - 32px)); max-width: 1120px; }
+.finance-invoices-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 14px; margin-bottom: 14px; padding-right: 36px; }
+.finance-invoices-heading h3 { margin: 0 0 4px; color: var(--ink); }
+.finance-invoices-heading p { margin: 0; }
+.finance-invoices-close { position: absolute; top: 16px; right: 16px; display: grid; width: 34px; min-height: 34px; place-items: center; padding: 0; }
+.finance-invoices-table-wrap { max-height: min(58dvh, 560px); overflow: auto; overscroll-behavior: contain; }
+.finance-invoices-table { min-width: 850px; }
+.finance-invoices-table th { background: var(--accent); color: #fffaf3; }
+.finance-invoices-table th,
+.finance-invoices-table td { padding: 9px 8px; vertical-align: middle; }
+.finance-invoice-number { padding: 0; border: 0; background: transparent; color: var(--accent-dark); font: inherit; font-weight: 700; text-decoration: underline; text-underline-offset: 2px; cursor: pointer; }
+.finance-invoice-number:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+.finance-invoice-payment-history { display: grid; gap: 2px; margin-top: 3px; color: var(--muted); font-size: 9px; line-height: 1.3; text-align: right; }
+.finance-invoice-actions { display: flex; justify-content: center; gap: 5px; }
+.finance-invoice-actions .btn { display: inline-flex; min-width: 30px; align-items: center; justify-content: center; padding: 4px; }
 .print-receipt { display: none; }
 .receipt-preview-overlay { z-index: 70; }
 .receipt-preview-modal {
@@ -2743,6 +2797,19 @@ label { display: block; margin-bottom: 6px; color: var(--muted); font-size: 11px
 }
 @media (max-width: 640px) {
   .credit-balances-list.is-scrollable { max-height: 200px; }
+  .debts-page { gap: 12px; }
+  .debts-page-heading h2 { font-size: 19px; }
+  .debts-tabs button { min-height: 38px; padding: 7px 5px; font-size: 11px; }
+  .debts-card, .debts-form-card { padding: 11px 9px; }
+  .debts-section-heading { align-items: flex-start; gap: 8px; }
+  .debts-section-heading h3 { font-size: 13px; }
+  .debts-section-heading > .btn { padding: 7px 8px; font-size: 10px; }
+  .debts-table { min-width: 760px; }
+  .debts-table th, .debts-table td { padding: 7px 5px; font-size: 10px; }
+  .debts-form { grid-template-columns: minmax(0, 1fr); gap: 7px; }
+  .debts-form-message { grid-column: 1; }
+  .debts-customer-row { gap: 6px; font-size: 11px; }
+  .debts-customer-row .btn { min-height: 30px; }
   .custom-numpad {
     position: fixed;
     z-index: 80;

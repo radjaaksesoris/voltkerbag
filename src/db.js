@@ -27,6 +27,8 @@ const BACKUP_TABLES = {
   transactions: 'transactions',
   transactionPayments: 'transaction_payments',
   manualCreditPayments: 'manual_customer_credit_payments',
+  vendorPayables: 'vendor_payables',
+  vendorPayablePayments: 'vendor_payable_payments',
   finance: 'finance_entries',
   manualCredits: 'manual_customer_credits',
   stockAdjustments: 'product_stock_adjustments'
@@ -597,6 +599,52 @@ export async function getFinanceData({ from, to, page, pageSize }) {
   return data
 }
 
+export async function getFinanceInvoices({ from, to, page, pageSize }) {
+  const client = getClient()
+  let query = client
+    .from(tableFor('transactions'))
+    .select('id,createdAt,invoiceNo,total,payment,paymentType,paidAmount,balanceDue,customerName,items,returns,change', { count: 'exact' })
+    .order('createdAt', { ascending: false, nullsFirst: false })
+    .order('id', { ascending: false })
+    .range((page - 1) * pageSize, page * pageSize - 1)
+  if (from) query = query.gte('createdAt', from)
+  if (to) query = query.lt('createdAt', to)
+
+  const { data: transactions, count, error } = await query
+  throwIfError(error, 'Gagal memuat daftar faktur Buku Kas')
+
+  const transactionIds = (transactions || [])
+    .filter((transaction) => transaction.paymentType === 'credit')
+    .map((transaction) => transaction.id)
+  let paymentRows = []
+  if (transactionIds.length) {
+    const { data, error: paymentError } = await client
+      .from('transaction_payments')
+      .select('id,transaction_id,amount,date')
+      .in('transaction_id', transactionIds)
+      .order('date', { ascending: true })
+      .order('id', { ascending: true })
+    throwIfError(paymentError, 'Gagal memuat riwayat pembayaran faktur')
+    paymentRows = data || []
+  }
+
+  const paymentsByTransaction = new Map()
+  for (const payment of paymentRows) {
+    const key = String(payment.transaction_id)
+    const payments = paymentsByTransaction.get(key) || []
+    payments.push({ amount: payment.amount, date: payment.date })
+    paymentsByTransaction.set(key, payments)
+  }
+
+  return {
+    invoices: (transactions || []).map((transaction) => ({
+      ...transaction,
+      payments: paymentsByTransaction.get(String(transaction.id)) || []
+    })),
+    totalCount: count || 0
+  }
+}
+
 export async function getPurchaseEntries(page, pageSize) {
   const from = (page - 1) * pageSize
   const to = from + pageSize - 1
@@ -638,6 +686,111 @@ export async function getTransactionPayments(transactionId) {
     .order('id', { ascending: true })
   throwIfError(error, 'Gagal memuat riwayat pembayaran transaksi')
   return data || []
+}
+
+export async function getReceivableInvoices(page, pageSize) {
+  const client = getClient()
+  const { data: transactions, count, error } = await client
+    .from(tableFor('transactions'))
+    .select('id,createdAt,invoiceNo,total,payment,paymentType,paidAmount,balanceDue,customerName,items,returns,change', { count: 'exact' })
+    .eq('paymentType', 'credit')
+    .order('createdAt', { ascending: false, nullsFirst: false })
+    .order('id', { ascending: false })
+    .range((page - 1) * pageSize, page * pageSize - 1)
+  throwIfError(error, 'Gagal memuat daftar piutang pelanggan')
+
+  const transactionIds = (transactions || []).map((transaction) => transaction.id)
+  let paymentRows = []
+  if (transactionIds.length) {
+    const { data, error: paymentError } = await client
+      .from('transaction_payments')
+      .select('id,transaction_id,amount,date')
+      .in('transaction_id', transactionIds)
+      .order('date', { ascending: true })
+      .order('id', { ascending: true })
+    throwIfError(paymentError, 'Gagal memuat riwayat pembayaran piutang')
+    paymentRows = data || []
+  }
+
+  const paymentsByTransaction = new Map()
+  for (const payment of paymentRows) {
+    const key = String(payment.transaction_id)
+    const payments = paymentsByTransaction.get(key) || []
+    payments.push({ amount: payment.amount, date: payment.date })
+    paymentsByTransaction.set(key, payments)
+  }
+
+  return {
+    invoices: (transactions || []).map((transaction) => ({
+      ...transaction,
+      payments: paymentsByTransaction.get(String(transaction.id)) || []
+    })),
+    totalCount: count || 0
+  }
+}
+
+export async function getVendorPayables(page, pageSize) {
+  const client = getClient()
+  const { data: payables, count, error } = await client
+    .from('vendor_payables')
+    .select('id,vendor_name,description,original_amount,balance_due,date,createdAt', { count: 'exact' })
+    .order('date', { ascending: false })
+    .order('id', { ascending: false })
+    .range((page - 1) * pageSize, page * pageSize - 1)
+  throwIfError(error, 'Gagal memuat daftar utang pembelian')
+
+  const payableIds = (payables || []).map((payable) => payable.id)
+  let paymentRows = []
+  if (payableIds.length) {
+    const { data, error: paymentError } = await client
+      .from('vendor_payable_payments')
+      .select('id,payable_id,amount,date')
+      .in('payable_id', payableIds)
+      .order('date', { ascending: true })
+      .order('id', { ascending: true })
+    throwIfError(paymentError, 'Gagal memuat riwayat pembayaran utang pembelian')
+    paymentRows = data || []
+  }
+
+  const paymentsByPayable = new Map()
+  for (const payment of paymentRows) {
+    const key = String(payment.payable_id)
+    const payments = paymentsByPayable.get(key) || []
+    payments.push({ amount: payment.amount, date: payment.date })
+    paymentsByPayable.set(key, payments)
+  }
+
+  return {
+    payables: (payables || []).map((payable) => ({
+      ...payable,
+      payments: paymentsByPayable.get(String(payable.id)) || []
+    })),
+    totalCount: count || 0
+  }
+}
+
+export async function createVendorPayable({ vendorName, description, amount, date, requestId }) {
+  const { data, error } = await getClient().rpc('create_vendor_payable', {
+    p_vendor_name: vendorName,
+    p_description: description,
+    p_amount: amount,
+    p_date: date,
+    p_request_id: requestId || crypto.randomUUID()
+  })
+  throwIfError(error, 'Gagal mencatat utang pembelian')
+  notifyRefresh()
+  return data
+}
+
+export async function recordVendorPayablePayment(payableId, amount, requestId) {
+  const { data, error } = await getClient().rpc('record_vendor_payable_payment', {
+    p_payable_id: payableId,
+    p_amount: amount,
+    p_request_id: requestId || crypto.randomUUID()
+  })
+  throwIfError(error, 'Gagal menyimpan pembayaran utang pembelian')
+  notifyRefresh()
+  return data
 }
 
 export async function put(store, value) {

@@ -213,6 +213,7 @@ const Menu = memo(lazyPage(() => import('./pages/Menu.jsx'), true))
 const Dashboard = memo(lazyPage(() => import('./pages/Dashboard.jsx')))
 const Transactions = memo(lazyPage(() => import('./pages/Transactions.jsx')))
 const Purchases = memo(lazyPage(() => import('./pages/Purchases.jsx')))
+const Debts = memo(lazyPage(() => import('./pages/Debts.jsx')))
 const Products = memo(lazyPage(() => import('./pages/Products.jsx')))
 const Finance = memo(lazyPage(() => import('./pages/Finance.jsx')))
 const Settings = memo(lazyPage(() => import('./pages/Settings.jsx')))
@@ -222,6 +223,7 @@ const PAGES = {
   pos: Transactions,
   menu: Menu,
   purchases: Purchases,
+  debts: Debts,
   stok: Products,
   finance: Finance,
   settings: Settings
@@ -232,6 +234,7 @@ const NAV = [
   { id: 'pos', label: 'Transaksi', description: 'Pilih produk, atur pembayaran, dan simpan transaksi.', icon: 'cart' },
   { id: 'menu', label: 'Menu', description: 'Pilih fitur yang ingin dibuka.', icon: 'more' },
   { id: 'purchases', label: 'Pembelian', description: 'Catat pembelian bahan untuk kebutuhan produksi.', icon: 'purchase' },
+  { id: 'debts', label: 'Utang/Piutang', description: 'Kelola piutang pelanggan dan utang pembelian vendor.', icon: 'coins' },
   { id: 'stok', label: 'Stok Barang', description: 'Kelola katalog produk, harga, dan ketersediaan stok.', icon: 'bag' },
   { id: 'finance', label: 'Keuangan', description: 'Pantau pemasukan, pengeluaran, dan saldo kas toko.', icon: 'wallet' },
   { id: 'settings', label: 'Setting', description: 'Kelola nama pelanggan dan gambar produk.', icon: 'settings' }
