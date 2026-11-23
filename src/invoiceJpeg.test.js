@@ -21,6 +21,7 @@ test('creates a branded JPEG source with invoice and sale details', () => {
   assert.match(svg, /<svg[^>]+width="1240"/)
   assert.match(svg, /FAKTUR PENJUALAN/)
   assert.match(svg, /INV-20261026-14/)
+  assert.match(svg, new RegExp(`<text x="1164" y="171"[^>]*>${dateOnly('2026-10-26T12:00:00.000Z')}</text>`))
   assert.doesNotMatch(svg, /Ekspedisi|JNE/)
   assert.match(svg, /Tas Slingbag Tactical/)
   assert.match(svg, /Tunai diterima/)
@@ -84,6 +85,7 @@ test('shows a 30-day due date on credit invoices', () => {
   })
 
   assert.match(svg, new RegExp('Jatuh tempo</text>[\\s\\S]*?' + dateOnly(invoiceDueDate(createdAt))))
+  assert.match(svg, /<rect x="642" y="472" width="522" height="44" rx="8" fill="url\(#mustardDueDate\)"/)
   assert.match(svg, /<text x="660" y="500"[^>]*>Jatuh tempo<\/text>/)
   assert.match(svg, new RegExp('<text x="1132" y="500"[^>]*>' + dateOnly(invoiceDueDate(createdAt)) + '</text>'))
 })

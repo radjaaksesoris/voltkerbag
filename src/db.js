@@ -998,8 +998,19 @@ export async function completeSale(transaction, cart, requestId) {
     p_request_id: requestId || crypto.randomUUID()
   })
   throwIfError(error, 'Gagal menyimpan transaksi')
+
+  const { data: savedTransaction, error: transactionError } = await getClient()
+    .from(tableFor('transactions'))
+    .select('id,invoiceNo,createdAt')
+    .eq('id', data)
+    .single()
+  throwIfError(transactionError, 'Transaksi tersimpan, tetapi nomor faktur resmi gagal dimuat')
+  if (!savedTransaction.invoiceNo) {
+    throw new Error('Transaksi tersimpan, tetapi nomor faktur resmi tidak ditemukan')
+  }
+
   notifyRefresh()
-  return data
+  return savedTransaction
 }
 
 export async function addProductStock(productId, quantityPcs, unitCost, requestId, pricing = {}) {

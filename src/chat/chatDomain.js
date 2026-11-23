@@ -1417,13 +1417,18 @@ export async function executeAction(draft) {
         ? [{ amount: draft.payload.paidAmount, date: now }]
         : []
     }
-    const transactionId = await completeSale(transaction, draft.payload.items, id)
+    const savedTransaction = await completeSale(transaction, draft.payload.items, id)
     return {
-      text: 'Transaksi #' + transactionId + ' berhasil disimpan. Total Rp' +
+      text: 'Transaksi #' + savedTransaction.id + ' berhasil disimpan. Total Rp' +
         draft.payload.total.toLocaleString('id-ID') + (draft.payload.paymentType === 'credit'
           ? ' · sisa hutang Rp' + (draft.payload.total - draft.payload.paidAmount).toLocaleString('id-ID')
           : ' · tunai'),
-      transaction: { ...transaction, id: transactionId, createdAt: now }
+      transaction: {
+        ...transaction,
+        id: savedTransaction.id,
+        invoiceNo: savedTransaction.invoiceNo,
+        createdAt: savedTransaction.createdAt
+      }
     }
   }
 

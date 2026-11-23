@@ -5,7 +5,6 @@ import { rupiah } from '../format'
 import ReceiptPreview from '../components/ReceiptPreview'
 import Icon from '../components/Icon.jsx'
 import TransactionDetails from '../components/TransactionDetails'
-import { getInvoiceNumber } from '../invoice'
 import MoneyInput from '../components/MoneyInput.jsx'
 import CustomerSelect from '../components/CustomerSelect.jsx'
 import SelectInput from '../components/SelectInput.jsx'
@@ -361,13 +360,14 @@ export default function Transactions() {
     operationLock.current = true
     setSaving(true)
     try {
-      const txId = await completeSale(sale, cart, saleRequest.current.id)
+      const savedTransaction = await completeSale(sale, cart, saleRequest.current.id)
+      const txId = savedTransaction.id
       saleRequest.current = null
       const completedTransaction = {
         ...sale,
         id: txId,
-        invoiceNo: getInvoiceNumber({ ...sale, id: txId, createdAt: now }),
-        createdAt: now
+        invoiceNo: savedTransaction.invoiceNo,
+        createdAt: savedTransaction.createdAt
       }
       setDone({
         id: txId,

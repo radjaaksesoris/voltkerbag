@@ -11,6 +11,11 @@ const COLORS = {
   muted: '#706359',
   border: '#e8ddd1',
   panel: '#faf7f2',
+  mustardBorder: '#c4a22b',
+  mustardLight: '#e9cf58',
+  mustardMid: '#d8b83e',
+  mustardDark: '#c9a52d',
+  mustardInk: '#382d0d',
   white: '#ffffff'
 }
 
@@ -106,13 +111,14 @@ export function createInvoiceSvg(transaction) {
 
   const svg = [
     `<svg xmlns="http://www.w3.org/2000/svg" width="${WIDTH}" height="${height}" viewBox="0 0 ${WIDTH} ${height}">`,
+    '<defs><linearGradient id="mustardDueDate" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="' + COLORS.mustardLight + '"/><stop offset="58%" stop-color="' + COLORS.mustardMid + '"/><stop offset="100%" stop-color="' + COLORS.mustardDark + '"/></linearGradient></defs>',
     `<rect width="${WIDTH}" height="${height}" fill="${COLORS.white}"/>`,
     `<path d="M0 0h${WIDTH}v226H0z" fill="${COLORS.darkRed}"/>`,
     `<circle cx="1160" cy="-55" r="230" fill="none" stroke="#ffffff" stroke-opacity=".08" stroke-width="34"/>`,
     `<circle cx="1160" cy="-55" r="180" fill="none" stroke="#ffffff" stroke-opacity=".06" stroke-width="2"/>`,
     text(WIDTH - MARGIN, 87, 'FAKTUR PENJUALAN', { size: 34, color: COLORS.white, weight: 700, anchor: 'end' }),
     text(WIDTH - MARGIN, 133, invoiceNumber, { size: 24, color: '#ffdfd6', anchor: 'end' }),
-    text(WIDTH - MARGIN, 171, dateTime(transaction.createdAt), { size: 21, color: '#ffdfd6', anchor: 'end' }),
+    text(WIDTH - MARGIN, 171, dateOnly(transaction.createdAt), { size: 21, color: '#ffdfd6', anchor: 'end' }),
     `<path d="M${MARGIN} 194H${WIDTH - MARGIN}" stroke="#ffffff" stroke-opacity=".4" stroke-width="2"/>`,
     text(MARGIN, 216, 'VOLTKER  ·  TOKO TAS', { size: 16, color: COLORS.white, weight: 700 }),
     `<rect x="${MARGIN}" y="266" width="${WIDTH - MARGIN * 2}" height="258" rx="20" fill="${COLORS.panel}" stroke="${COLORS.border}" stroke-width="2"/>`,
@@ -133,8 +139,9 @@ export function createInvoiceSvg(transaction) {
     text(WIDTH - MARGIN - 32, 454, isCredit ? 'Kredit' : 'Tunai', { size: 19, weight: 700, anchor: 'end' }),
     ...(isCredit
       ? [
-          text(660, 500, 'Jatuh tempo', { size: 19, color: COLORS.muted }),
-          text(WIDTH - MARGIN - 32, 500, dateOnly(invoiceDueDate(transaction.createdAt)), { size: 19, weight: 700, anchor: 'end' })
+          `<rect x="642" y="472" width="522" height="44" rx="8" fill="url(#mustardDueDate)" stroke="${COLORS.mustardBorder}" stroke-width="2"/>`,
+          text(660, 500, 'Jatuh tempo', { size: 19, color: COLORS.mustardInk, weight: 600 }),
+          text(WIDTH - MARGIN - 32, 500, dateOnly(invoiceDueDate(transaction.createdAt)), { size: 19, color: COLORS.mustardInk, weight: 700, anchor: 'end' })
         ]
       : []),
     text(MARGIN, 558, 'RINCIAN PEMBELIAN', { size: 22, weight: 700 }),
