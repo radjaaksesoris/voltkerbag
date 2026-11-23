@@ -603,7 +603,6 @@ export default function Finance() {
             <div className="finance-invoices-heading">
               <div>
                 <h3 id="finance-invoices-title">Faktur penjualan</h3>
-                <p className="muted small">Daftar faktur pada periode Buku Kas yang dipilih.</p>
               </div>
               <button
                 className="btn finance-invoices-close"
