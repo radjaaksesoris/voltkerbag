@@ -1,6 +1,8 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import { createInvoiceSvg } from './invoiceJpeg.js'
+import { dateOnly } from './format.js'
+import { invoiceDueDate } from './invoice.js'
 
 test('creates a branded JPEG source with invoice and sale details', () => {
   const svg = createInvoiceSvg({
@@ -66,6 +68,22 @@ test('includes partial payment history and the current outstanding balance', () 
   assert.match(svg, /RIWAYAT PEMBAYARAN/)
   assert.match(svg, /Rp\s?10\.000/)
   assert.match(svg, /Rp\s?30\.000/)
+})
+
+test('shows a 30-day due date on credit invoices', () => {
+  const createdAt = '2026-11-17T10:00:00.000Z'
+  const svg = createInvoiceSvg({
+    id: 22,
+    createdAt,
+    customerName: 'Pelanggan',
+    paymentType: 'credit',
+    items: [{ name: 'Tas', qty: 1, unit: 'pcs', price: 100000 }],
+    total: 100000,
+    paidAmount: 0,
+    balanceDue: 100000
+  })
+
+  assert.match(svg, new RegExp('Jatuh tempo</text>[\\s\\S]*?' + dateOnly(invoiceDueDate(createdAt))))
 })
 
 test('omits fully returned product lines but preserves return history, reduced total, and refund', () => {

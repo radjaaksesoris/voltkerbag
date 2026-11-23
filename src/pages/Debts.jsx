@@ -13,7 +13,7 @@ import {
 } from '../db'
 import { rupiah, dateOnly, dateTime } from '../format'
 import { localDateValue, dateRangeTimestamps } from '../dateFilter'
-import { getInvoiceNumber } from '../invoice'
+import { getInvoiceNumber, invoiceDueDate } from '../invoice'
 import { isSafeRupiahAmount } from '../money'
 import CustomerIdentity from '../components/CustomerIdentity.jsx'
 import MoneyInput from '../components/MoneyInput.jsx'
@@ -436,6 +436,7 @@ export default function Debts() {
                                   <thead>
                                     <tr>
                                       <th>No. faktur</th>
+                                      <th>Jatuh tempo</th>
                                       <th className="right">Total faktur</th>
                                       <th className="right">Saldo per faktur</th>
                                       <th>Detail</th>
@@ -448,6 +449,7 @@ export default function Debts() {
                                           <strong>{getInvoiceNumber(invoice)}</strong>
                                           <span className="debts-invoice-date">{dateOnly(invoice.createdAt)}</span>
                                         </td>
+                                        <td data-label="Jatuh tempo">{dateOnly(invoiceDueDate(invoice.createdAt))}</td>
                                         <td className="right" data-label="Total">{rupiah(invoice.total)}</td>
                                         <td className="right" data-label="Sisa"><strong>{rupiah(invoice.balanceDue)}</strong></td>
                                         <td className="debts-invoice-detail-action">
@@ -464,13 +466,25 @@ export default function Debts() {
                             {details.manualCredits.length > 0 && (
                               <>
                                 <h5>Piutang lama</h5>
-                                <div className="debts-customer-payment-history">
-                                  {details.manualCredits.map((credit) => (
-                                    <div key={credit.id}>
-                                      <span>{dateOnly(credit.createdAt)}</span>
-                                      <strong>{rupiah(credit.balance_due)}</strong>
-                                    </div>
-                                  ))}
+                                <div className="debts-table-wrap">
+                                  <table className="debts-table debts-detail-table">
+                                    <thead>
+                                      <tr>
+                                        <th>Tanggal dicatat</th>
+                                        <th>Jatuh tempo</th>
+                                        <th className="right">Sisa piutang</th>
+                                      </tr>
+                                    </thead>
+                                    <tbody>
+                                      {details.manualCredits.map((credit) => (
+                                        <tr key={credit.id}>
+                                          <td data-label="Dicatat">{dateOnly(credit.createdAt)}</td>
+                                          <td data-label="Jatuh tempo">{dateOnly(invoiceDueDate(credit.createdAt))}</td>
+                                          <td className="right" data-label="Sisa"><strong>{rupiah(credit.balance_due)}</strong></td>
+                                        </tr>
+                                      ))}
+                                    </tbody>
+                                  </table>
                                 </div>
                               </>
                             )}

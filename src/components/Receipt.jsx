@@ -1,5 +1,5 @@
-import { rupiah, dateTime } from '../format'
-import { getInvoiceNumber } from '../invoice'
+import { rupiah, dateOnly, dateTime } from '../format'
+import { getInvoiceNumber, invoiceDueDate } from '../invoice'
 import CustomerIdentity from './CustomerIdentity.jsx'
 import { returnedQuantity, transactionRefundTotal } from '../transactionReturns.js'
 
@@ -39,6 +39,7 @@ export default function Receipt({ transaction }) {
           className="receipt-customer-identity"
         /></div>
         <div><span>Pembayaran</span><strong>{isCredit ? 'Kredit' : 'Tunai'}</strong></div>
+        {isCredit && <div><span>Jatuh tempo</span><strong>{dateOnly(invoiceDueDate(transaction.createdAt))}</strong></div>}
       </section>
 
       <table className="receipt-items">

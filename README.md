@@ -11,7 +11,7 @@ VOLTKER adalah aplikasi kasir React + Vite dengan Supabase sebagai sumber data u
 - Backup manual seluruh data toko, termasuk saldo hutang lama, dan foto produk ke file ZIP privat di Supabase Storage.
 - Kasir tunai/kredit dengan nama pelanggan wajib; checkout dan pengurangan stok diproses atomik di database.
 - Tab Pembelian untuk mencatat nama pembelian, vendor, nominal, dan tanggal sebagai pengeluaran di buku kas. Catatan pembelian tidak mengubah stok produk dan vendor dibayar lunas.
-- Kartu **Utang/Piutang** di Menu merangkum piutang per pelanggan dan faktur kredit, termasuk total, pembayaran, dan sisa tagihan; pembayaran dapat dilakukan sebagian atau dilunasi.
+- Kartu **Utang/Piutang** di Menu merangkum piutang per pelanggan dan faktur kredit, termasuk total, pembayaran, sisa tagihan, serta jatuh tempo 30 hari dari tanggal transaksi; tanggal jatuh tempo juga tercetak pada faktur kredit.
 - Kartu **Utang/Piutang** juga mencatat utang pembelian vendor secara terpisah dari stok. Pembayaran sebagian/pelunasan otomatis menjadi pengeluaran di Buku Kas saat dibayar.
 - Saldo hutang pelanggan lama sebelum aplikasi digunakan dapat ditambahkan manual dari kartu **Utang/Piutang**; saldo ini bukan penjualan dan pembayarannya dicatat sebagai pemasukan.
 - Penambahan stok dikunci dan dicatat atomik di database, termasuk harga modal per batch. Nilai aset stok menghitung setiap batch; penjualan mengurangi nilai modal berdasarkan rata-rata tertimbang, bukan FIFO.

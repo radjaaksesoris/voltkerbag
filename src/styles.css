@@ -2836,11 +2836,11 @@ label { display: block; margin-bottom: 6px; color: var(--muted); font-size: 11px
   .debts-invoice-customer-actions .btn { min-height: 30px; padding: 5px 6px; font-size: 9px; }
   .debts-invoice-customer-details { gap: 4px; padding: 7px; }
   .debts-detail-table thead { display: none; }
-  .debts-detail-table tbody tr { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto; align-items: center; gap: 3px 6px; padding: 5px 0; border-top: 1px solid var(--border); }
+  .debts-detail-table tbody tr { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: center; gap: 3px 6px; padding: 5px 0; border-top: 1px solid var(--border); }
   .debts-detail-table tbody td { min-width: 0; padding: 2px 1px; border: 0; font-size: 9px; }
   .debts-detail-table tbody td:first-child { grid-column: 1 / -1; overflow-wrap: anywhere; font-size: 10px; }
   .debts-detail-table tbody td[data-label]::before { display: block; margin-bottom: 1px; color: var(--muted); content: attr(data-label); font-size: 8px; text-align: left; }
-  .debts-detail-table .debts-invoice-detail-action { text-align: center; }
+  .debts-detail-table .debts-invoice-detail-action { justify-self: end; text-align: center; }
   .debts-detail-table .debts-invoice-detail-action .btn { min-height: 27px; padding: 3px 6px; font-size: 9px; }
   .debts-customer-total { font-size: 10px; }
   .debts-customer-total .debts-customer-pay-button { flex: 0 0 auto; min-height: 40px; padding: 8px 18px; font-size: 12px; }

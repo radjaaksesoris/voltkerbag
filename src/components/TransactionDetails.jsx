@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { getTransactionPayments, recordTransactionPayment, returnTransactionItems } from '../db'
 import { rupiah, dateTime, dateOnly } from '../format'
-import { getInvoiceNumber } from '../invoice'
+import { getInvoiceNumber, invoiceDueDate } from '../invoice'
 import MoneyInput from './MoneyInput'
 import ReceiptPreview from './ReceiptPreview'
 import Icon from './Icon.jsx'
@@ -244,6 +244,9 @@ export default function TransactionDetails({ transaction, onClose, onTransaction
           {currentTransaction.expedition && <div><dt>Ekspedisi</dt><dd>{currentTransaction.expedition}</dd></div>}
           <div><dt>Tanggal transaksi</dt><dd>{dateOnly(currentTransaction.createdAt)}</dd></div>
           <div><dt>Metode pembayaran</dt><dd>{currentTransaction.paymentType === 'credit' ? 'Kredit' : 'Tunai'}</dd></div>
+          {currentTransaction.paymentType === 'credit' && (
+            <div><dt>Jatuh tempo</dt><dd>{dateOnly(invoiceDueDate(currentTransaction.createdAt))}</dd></div>
+          )}
         </dl>
 
         <div className="table-card transaction-details-items">

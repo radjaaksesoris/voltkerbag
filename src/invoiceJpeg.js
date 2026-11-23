@@ -1,5 +1,5 @@
-import { dateTime, rupiah } from './format.js'
-import { getInvoiceNumber } from './invoice.js'
+import { dateOnly, dateTime, rupiah } from './format.js'
+import { getInvoiceNumber, invoiceDueDate } from './invoice.js'
 import { returnedAmount, returnedQuantity, transactionRefundTotal } from './transactionReturns.js'
 
 const WIDTH = 1240
@@ -131,6 +131,12 @@ export function createInvoiceSvg(transaction) {
     text(WIDTH - MARGIN - 32, 408, dateTime(transaction.createdAt), { size: 19, weight: 700, anchor: 'end' }),
     text(660, 454, 'Pembayaran', { size: 19, color: COLORS.muted }),
     text(WIDTH - MARGIN - 32, 454, isCredit ? 'Kredit' : 'Tunai', { size: 19, weight: 700, anchor: 'end' }),
+    ...(isCredit
+      ? [
+          text(660, 488, 'Jatuh tempo', { size: 19, color: COLORS.muted }),
+          text(WIDTH - MARGIN - 32, 488, dateOnly(invoiceDueDate(transaction.createdAt)), { size: 19, weight: 700, anchor: 'end' })
+        ]
+      : []),
     text(MARGIN, 558, 'RINCIAN PEMBELIAN', { size: 22, weight: 700 }),
     `<rect x="${MARGIN}" y="${tableTop}" width="${WIDTH - MARGIN * 2}" height="58" rx="12" fill="${COLORS.darkRed}"/>`,
     text(MARGIN + 25, tableTop + 37, 'BARANG', { size: 16, color: COLORS.white, weight: 700 }),

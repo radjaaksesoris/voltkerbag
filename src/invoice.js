@@ -1,3 +1,11 @@
+export function invoiceDueDate(createdAt) {
+  if (!createdAt) return null
+  const date = new Date(createdAt)
+  if (Number.isNaN(date.getTime())) return null
+  date.setDate(date.getDate() + 30)
+  return date
+}
+
 export function invoiceNumber(createdAt, id) {
   const date = new Date(createdAt || Date.now())
   const datePart = [
