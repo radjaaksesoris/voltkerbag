@@ -2466,48 +2466,36 @@ label { display: block; margin-bottom: 6px; color: var(--muted); font-size: 11px
 .finance-invoice-actions .btn { display: inline-flex; min-width: 30px; align-items: center; justify-content: center; padding: 4px; }
 @media (max-width: 640px) {
   .finance-invoices-modal { width: calc(100vw - 32px); max-width: 460px; padding: 18px 14px; }
-  .finance-invoices-table-wrap { max-height: none; overflow: visible; }
+  .finance-invoices-table-wrap { max-height: min(58dvh, 560px); overflow: auto; }
   .finance-invoices-table { display: block; width: 100%; min-width: 0; table-layout: fixed; }
-  .finance-invoices-table thead { display: none; }
-  .finance-invoices-table tbody { display: grid; gap: 8px; width: 100%; }
-  .finance-invoices-table tbody tr {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 0 10px;
-    padding: 7px 10px;
-    border: 1px solid #eaded8;
-    border-radius: 12px 5px 12px 5px;
-    background: #fffdfa;
+  .finance-invoices-table thead { display: table-header-group; }
+  .finance-invoices-table tbody { display: table-row-group; }
+  .finance-invoices-table tr { display: table-row; }
+  .finance-invoices-table th,
+  .finance-invoices-table td {
+    display: table-cell;
+    padding: 8px 4px;
+    font-size: 9px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
-  .finance-invoices-table tbody td {
-    display: grid;
-    min-width: 0;
-    gap: 3px;
-    padding: 7px 0;
-    border: 0;
-    font-size: 11px;
-    overflow-wrap: anywhere;
-    text-align: left;
-  }
-  .finance-invoices-table tbody td::before {
-    color: #816c66;
-    content: attr(data-label);
-    font-size: 8px;
-    font-weight: 700;
-    letter-spacing: .45px;
-    text-transform: uppercase;
-  }
-  .finance-invoices-table tbody td:nth-child(1),
-  .finance-invoices-table tbody td:nth-child(2),
-  .finance-invoices-table tbody td:nth-child(7) { grid-column: 1 / -1; }
-  .finance-invoices-table tbody td:nth-child(1) { padding-top: 5px; }
-  .finance-invoices-table tbody td:nth-child(2) { border-top: 1px solid #efe5df; }
-  .finance-invoices-table tbody td:nth-child(3) { white-space: nowrap; }
-  .finance-invoices-table tbody td:nth-child(4),
-  .finance-invoices-table tbody td:nth-child(5),
-  .finance-invoices-table tbody td:nth-child(6) { justify-items: start; }
-  .finance-invoices-table tbody td:nth-child(7) { border-top: 1px solid #efe5df; }
-  .finance-invoice-actions { justify-content: flex-start; }
+  .finance-invoices-table th:nth-child(1),
+  .finance-invoices-table td:nth-child(1) { width: 34%; }
+  .finance-invoices-table th:nth-child(2),
+  .finance-invoices-table td:nth-child(2) { width: 27%; }
+  .finance-invoices-table th:nth-child(3),
+  .finance-invoices-table td:nth-child(3) { width: 18%; }
+  .finance-invoices-table th:nth-child(4),
+  .finance-invoices-table td:nth-child(4),
+  .finance-invoices-table th:nth-child(5),
+  .finance-invoices-table td:nth-child(5),
+  .finance-invoices-table th:nth-child(6),
+  .finance-invoices-table td:nth-child(6) { display: none; }
+  .finance-invoices-table th:nth-child(7),
+  .finance-invoices-table td:nth-child(7) { width: 21%; }
+  .finance-invoice-actions { justify-content: flex-start; gap: 2px; }
+  .finance-invoice-actions .btn { min-width: 26px; min-height: 28px; }
 }
 .print-receipt { display: none; }
 .receipt-preview-overlay { z-index: 70; }
