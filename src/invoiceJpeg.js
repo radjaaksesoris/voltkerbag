@@ -115,7 +115,7 @@ export function createInvoiceSvg(transaction) {
     text(WIDTH - MARGIN, 171, dateTime(transaction.createdAt), { size: 21, color: '#ffdfd6', anchor: 'end' }),
     `<path d="M${MARGIN} 194H${WIDTH - MARGIN}" stroke="#ffffff" stroke-opacity=".4" stroke-width="2"/>`,
     text(MARGIN, 216, 'VOLTKER  ·  TOKO TAS', { size: 16, color: COLORS.white, weight: 700 }),
-    `<rect x="${MARGIN}" y="266" width="${WIDTH - MARGIN * 2}" height="244" rx="20" fill="${COLORS.panel}" stroke="${COLORS.border}" stroke-width="2"/>`,
+    `<rect x="${MARGIN}" y="266" width="${WIDTH - MARGIN * 2}" height="258" rx="20" fill="${COLORS.panel}" stroke="${COLORS.border}" stroke-width="2"/>`,
     text(MARGIN + 32, 312, 'TAGIHAN KEPADA', { size: 17, color: COLORS.red, weight: 700 }),
     text(660, 312, 'DETAIL FAKTUR', { size: 17, color: COLORS.red, weight: 700 }),
     multilineText(MARGIN + 32, 362, wrapText(transaction.customerName || 'Pelanggan', 38), { size: 28, weight: 700, lineHeight: 34 }),
@@ -133,8 +133,8 @@ export function createInvoiceSvg(transaction) {
     text(WIDTH - MARGIN - 32, 454, isCredit ? 'Kredit' : 'Tunai', { size: 19, weight: 700, anchor: 'end' }),
     ...(isCredit
       ? [
-          text(660, 488, 'Jatuh tempo', { size: 19, color: COLORS.muted }),
-          text(WIDTH - MARGIN - 32, 488, dateOnly(invoiceDueDate(transaction.createdAt)), { size: 19, weight: 700, anchor: 'end' })
+          text(660, 500, 'Jatuh tempo', { size: 19, color: COLORS.muted }),
+          text(WIDTH - MARGIN - 32, 500, dateOnly(invoiceDueDate(transaction.createdAt)), { size: 19, weight: 700, anchor: 'end' })
         ]
       : []),
     text(MARGIN, 558, 'RINCIAN PEMBELIAN', { size: 22, weight: 700 }),

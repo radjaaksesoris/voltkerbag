@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import {
   addManualCustomerCredit,
   createVendorPayable,
@@ -318,6 +319,9 @@ export default function Debts() {
   }
 
   const payablePageCount = Math.max(1, Math.ceil(payableCount / PAGE_SIZE))
+  const activeCustomerDebt = customerBalances.find(
+    (debt) => debt.customer_name.trim().toLocaleLowerCase('id-ID') === expandedCustomer
+  )
 
   return (
     <div className="page debts-page">
@@ -334,7 +338,10 @@ export default function Debts() {
           type="button"
           role="tab"
           aria-selected={activeTab === 'receivables'}
-          onClick={() => setActiveTab('receivables')}>
+          onClick={() => {
+            setExpandedCustomer('')
+            setActiveTab('receivables')
+          }}>
           Piutang pelanggan
         </button>
         <button
@@ -342,7 +349,10 @@ export default function Debts() {
           type="button"
           role="tab"
           aria-selected={activeTab === 'payables'}
-          onClick={() => setActiveTab('payables')}>
+          onClick={() => {
+            setExpandedCustomer('')
+            setActiveTab('payables')
+          }}>
           Utang pembelian
         </button>
       </div>
@@ -376,7 +386,6 @@ export default function Debts() {
               {customerBalances.map((debt, index) => {
                 const customerKey = debt.customer_name.trim().toLocaleLowerCase('id-ID')
                 const isExpanded = expandedCustomer === customerKey
-                const details = customerDetails[customerKey]
                 return (
                   <section className="debts-invoice-customer" key={customerKey}>
                     <div className="debts-invoice-customer-row">
@@ -393,105 +402,10 @@ export default function Debts() {
                           type="button"
                           aria-expanded={isExpanded}
                           onClick={() => toggleCustomerDetails(debt)}>
-                          {isExpanded ? 'Tutup detail' : 'Detail faktur'}
+                          Detail faktur
                         </button>
                       </div>
                     </div>
-                    {isExpanded && (
-                      <div className="debts-invoice-customer-details">
-                        <div className="debts-customer-total">
-                          <strong>Sisa piutang gabungan: {rupiah(Number(debt.balance_due))}</strong>
-                          <button
-                            className="btn btn-primary debts-customer-pay-button"
-                            type="button"
-                            onClick={() => openCustomerPayment(debt)}>
-                            Bayar
-                          </button>
-                        </div>
-                        {loadingCustomerDetails === customerKey ? (
-                          <p className="muted small">Memuat detail piutang...</p>
-                        ) : customerDetailsError ? (
-                          <p className="form-error" role="alert">{customerDetailsError}</p>
-                        ) : details && (
-                          <>
-                            {details.customerPayments.length > 0 && (
-                              <>
-                                <h5>Pembayaran umum pelanggan</h5>
-                                <div className="debts-customer-payment-history">
-                                  {details.customerPayments.map((payment) => (
-                                    <div key={payment.id}>
-                                      <span>{dateTime(payment.date)}</span>
-                                      <strong>{rupiah(payment.amount)}</strong>
-                                    </div>
-                                  ))}
-                                </div>
-                              </>
-                            )}
-                            <h5>Faktur yang belum lunas</h5>
-                            {details.invoices.length === 0 ? (
-                              <p className="muted small">Tidak ada faktur transaksi yang belum lunas.</p>
-                            ) : (
-                              <div className="debts-table-wrap">
-                                <table className="debts-table debts-detail-table">
-                                  <thead>
-                                    <tr>
-                                      <th>No. faktur</th>
-                                      <th>Jatuh tempo</th>
-                                      <th className="right">Total faktur</th>
-                                      <th className="right">Saldo per faktur</th>
-                                      <th>Detail</th>
-                                    </tr>
-                                  </thead>
-                                  <tbody>
-                                    {details.invoices.map((invoice) => (
-                                      <tr key={invoice.id}>
-                                        <td>
-                                          <strong>{getInvoiceNumber(invoice)}</strong>
-                                          <span className="debts-invoice-date">{dateOnly(invoice.createdAt)}</span>
-                                        </td>
-                                        <td data-label="Jatuh tempo">{dateOnly(invoiceDueDate(invoice.createdAt))}</td>
-                                        <td className="right" data-label="Total">{rupiah(invoice.total)}</td>
-                                        <td className="right" data-label="Sisa"><strong>{rupiah(invoice.balanceDue)}</strong></td>
-                                        <td className="debts-invoice-detail-action">
-                                          <button className="btn btn-sm" type="button" onClick={() => setSelectedInvoice(invoice)}>
-                                            Lihat
-                                          </button>
-                                        </td>
-                                      </tr>
-                                    ))}
-                                  </tbody>
-                                </table>
-                              </div>
-                            )}
-                            {details.manualCredits.length > 0 && (
-                              <>
-                                <h5>Piutang lama</h5>
-                                <div className="debts-table-wrap">
-                                  <table className="debts-table debts-detail-table">
-                                    <thead>
-                                      <tr>
-                                        <th>Tanggal dicatat</th>
-                                        <th>Jatuh tempo</th>
-                                        <th className="right">Sisa piutang</th>
-                                      </tr>
-                                    </thead>
-                                    <tbody>
-                                      {details.manualCredits.map((credit) => (
-                                        <tr key={credit.id}>
-                                          <td data-label="Dicatat">{dateOnly(credit.createdAt)}</td>
-                                          <td data-label="Jatuh tempo">{dateOnly(invoiceDueDate(credit.createdAt))}</td>
-                                          <td className="right" data-label="Sisa"><strong>{rupiah(credit.balance_due)}</strong></td>
-                                        </tr>
-                                      ))}
-                                    </tbody>
-                                  </table>
-                                </div>
-                              </>
-                            )}
-                          </>
-                        )}
-                      </div>
-                    )}
                   </section>
                 )
               })}
@@ -624,6 +538,122 @@ export default function Debts() {
             />
           </section>
         </>
+      )}
+
+      {activeTab === 'receivables' && activeCustomerDebt && createPortal(
+        <div className="overlay debts-customer-details-overlay" onClick={() => setExpandedCustomer('')}>
+          <section
+            className="modal debts-customer-details-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="debts-customer-details-title"
+            onClick={(event) => event.stopPropagation()}>
+            <header className="debts-customer-details-heading">
+              <div>
+                <h3 id="debts-customer-details-title">Detail faktur</h3>
+                <CustomerIdentity
+                  name={activeCustomerDebt.customer_name}
+                  customer={customers.find((customer) => customer.name === activeCustomerDebt.customer_name)}
+                />
+              </div>
+              <button className="btn" type="button" onClick={() => setExpandedCustomer('')}>Tutup</button>
+            </header>
+            <div className="debts-invoice-customer-details">
+              <div className="debts-customer-total">
+                <strong>Sisa piutang gabungan: {rupiah(Number(activeCustomerDebt.balance_due))}</strong>
+                <button
+                  className="btn btn-primary debts-customer-pay-button"
+                  type="button"
+                  onClick={() => openCustomerPayment(activeCustomerDebt)}>
+                  Bayar
+                </button>
+              </div>
+              {loadingCustomerDetails === expandedCustomer ? (
+                <p className="muted small">Memuat detail piutang...</p>
+              ) : customerDetailsError ? (
+                <p className="form-error" role="alert">{customerDetailsError}</p>
+              ) : customerDetails[expandedCustomer] && (
+                <>
+                  {customerDetails[expandedCustomer].customerPayments.length > 0 && (
+                    <>
+                      <h5>Pembayaran umum pelanggan</h5>
+                      <div className="debts-customer-payment-history">
+                        {customerDetails[expandedCustomer].customerPayments.map((payment) => (
+                          <div key={payment.id}>
+                            <span>{dateTime(payment.date)}</span>
+                            <strong>{rupiah(payment.amount)}</strong>
+                          </div>
+                        ))}
+                      </div>
+                    </>
+                  )}
+                  <h5>Faktur yang belum lunas</h5>
+                  {customerDetails[expandedCustomer].invoices.length === 0 ? (
+                    <p className="muted small">Tidak ada faktur transaksi yang belum lunas.</p>
+                  ) : (
+                    <div className="debts-table-wrap">
+                      <table className="debts-table debts-detail-table">
+                        <thead>
+                          <tr>
+                            <th>No. faktur</th>
+                            <th>Jatuh tempo</th>
+                            <th className="right">Total faktur</th>
+                            <th className="right">Saldo per faktur</th>
+                            <th>Detail</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {customerDetails[expandedCustomer].invoices.map((invoice) => (
+                            <tr key={invoice.id}>
+                              <td>
+                                <strong>{getInvoiceNumber(invoice)}</strong>
+                                <span className="debts-invoice-date">{dateOnly(invoice.createdAt)}</span>
+                              </td>
+                              <td data-label="Jatuh tempo">{dateOnly(invoiceDueDate(invoice.createdAt))}</td>
+                              <td className="right" data-label="Total">{rupiah(invoice.total)}</td>
+                              <td className="right" data-label="Sisa"><strong>{rupiah(invoice.balanceDue)}</strong></td>
+                              <td className="debts-invoice-detail-action">
+                                <button className="btn btn-sm" type="button" onClick={() => setSelectedInvoice(invoice)}>
+                                  Lihat
+                                </button>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                  {customerDetails[expandedCustomer].manualCredits.length > 0 && (
+                    <>
+                      <h5>Piutang lama</h5>
+                      <div className="debts-table-wrap">
+                        <table className="debts-table debts-detail-table">
+                          <thead>
+                            <tr>
+                              <th>Tanggal dicatat</th>
+                              <th>Jatuh tempo</th>
+                              <th className="right">Sisa piutang</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {customerDetails[expandedCustomer].manualCredits.map((credit) => (
+                              <tr key={credit.id}>
+                                <td data-label="Dicatat">{dateOnly(credit.createdAt)}</td>
+                                <td data-label="Jatuh tempo">{dateOnly(invoiceDueDate(credit.createdAt))}</td>
+                                <td className="right" data-label="Sisa"><strong>{rupiah(credit.balance_due)}</strong></td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </>
+                  )}
+                </>
+              )}
+            </div>
+          </section>
+        </div>,
+        document.body
       )}
 
       {selectedPayable && (

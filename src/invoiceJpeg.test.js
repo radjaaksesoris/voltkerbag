@@ -84,6 +84,8 @@ test('shows a 30-day due date on credit invoices', () => {
   })
 
   assert.match(svg, new RegExp('Jatuh tempo</text>[\\s\\S]*?' + dateOnly(invoiceDueDate(createdAt))))
+  assert.match(svg, /<text x="660" y="500"[^>]*>Jatuh tempo<\/text>/)
+  assert.match(svg, new RegExp('<text x="1132" y="500"[^>]*>' + dateOnly(invoiceDueDate(createdAt)) + '</text>'))
 })
 
 test('omits fully returned product lines but preserves return history, reduced total, and refund', () => {

@@ -5,7 +5,6 @@ import {
   dateRangeTimestamps,
   hasDateRange,
   localDateValue,
-  readDashboardDateRange,
   saveDashboardDateRange
 } from '../dateFilter'
 import TransactionDetails from '../components/TransactionDetails'
@@ -27,8 +26,6 @@ export default function Dashboard({ onOpenLowStockProducts }) {
     inventory: { product_count: 0, low_stock_count: 0, total_asset: 0 }
   })
   const [dateRange, setDateRange] = useState(() => {
-    const savedRange = readDashboardDateRange()
-    if (savedRange) return savedRange
     const today = localDateValue(new Date())
     return { from: today, to: today }
   })
@@ -46,6 +43,11 @@ export default function Dashboard({ onOpenLowStockProducts }) {
   const [loadError, setLoadError] = useState('')
   const [loaded, setLoaded] = useState(false)
   const requestId = useRef(0)
+
+  useEffect(() => {
+    const today = localDateValue(new Date())
+    saveDashboardDateRange({ from: today, to: today })
+  }, [])
 
   useEffect(() => {
     let active = true

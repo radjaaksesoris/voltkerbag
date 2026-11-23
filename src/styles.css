@@ -2371,6 +2371,10 @@ label { display: block; margin-bottom: 6px; color: var(--muted); font-size: 11px
 .debts-invoice-customer-actions .btn { white-space: nowrap; }
 .debts-invoice-customer-details { display: grid; gap: 5px; padding: 8px; border-radius: 8px; background: var(--surface-soft, #faf5ef); }
 .debts-invoice-customer-details h5 { margin: 2px 0 0; color: var(--ink); font-size: 11px; }
+.debts-customer-details-modal { max-width: 760px; padding: 20px; }
+.debts-customer-details-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 14px; }
+.debts-customer-details-heading h3 { margin: 0 0 5px; }
+.debts-customer-details-modal .debts-invoice-customer-details { padding: 10px; }
 .debts-customer-total { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
 .debts-customer-pay-button { min-height: 40px; padding: 9px 20px; font-size: 13px; }
 .debts-customer-total p { margin: 4px 0 0; }
@@ -2835,6 +2839,11 @@ label { display: block; margin-bottom: 6px; color: var(--muted); font-size: 11px
   .debts-invoice-customer-actions { gap: 4px; }
   .debts-invoice-customer-actions .btn { min-height: 30px; padding: 5px 6px; font-size: 9px; }
   .debts-invoice-customer-details { gap: 4px; padding: 7px; }
+  .debts-customer-details-overlay { align-items: center; padding: 10px; }
+  .debts-customer-details-modal { width: 100%; max-width: 100%; max-height: 88vh; padding: 14px 11px; border-radius: 14px; }
+  .debts-customer-details-heading { margin-bottom: 9px; }
+  .debts-customer-details-heading h3 { font-size: 15px; }
+  .debts-customer-details-modal .debts-invoice-customer-details { padding: 7px; }
   .debts-detail-table thead { display: none; }
   .debts-detail-table tbody tr { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: center; gap: 3px 6px; padding: 5px 0; border-top: 1px solid var(--border); }
   .debts-detail-table tbody td { min-width: 0; padding: 2px 1px; border: 0; font-size: 9px; }
