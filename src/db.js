@@ -14,6 +14,9 @@ const TABLES = {
   vendors: 'vendor_names',
   expeditions: 'expedition_names',
   transactions: 'transactions',
+  transactionPayments: 'transaction_payments',
+  manualCredits: 'manual_customer_credits',
+  manualCreditPayments: 'manual_customer_credit_payments',
   finance: 'finance_entries'
 }
 
