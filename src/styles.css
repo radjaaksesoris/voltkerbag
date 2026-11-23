@@ -5498,46 +5498,38 @@ body:has(.app) {
 .app:not(.menu-landing) .finance-overview-sticky .finance-summary-grid .finance-profit-card .dashboard-stat-content > strong.danger {
   color: #a33a3e;
 }
-.app:not(.menu-landing) .finance-overview-sticky .finance-summary-grid .finance-debt-card,
-.app:not(.menu-landing) .finance-overview-sticky .finance-summary-grid .finance-debt-card:hover {
+.app:not(.menu-landing) .finance-overview-sticky .finance-summary-grid .finance-income-card,
+.app:not(.menu-landing) .finance-overview-sticky .finance-summary-grid .finance-income-card:hover {
   border-color: #a1242b;
   background: linear-gradient(135deg, #b5282e, #912027);
   color: #fffaf3;
 }
-.app:not(.menu-landing) .finance-overview-sticky .finance-summary-grid .finance-debt-card::before {
+.app:not(.menu-landing) .finance-overview-sticky .finance-summary-grid .finance-income-card::before {
   background: repeating-linear-gradient(90deg, transparent 0 9px, rgba(255, 250, 243, .16) 9px 18px);
   opacity: .48;
 }
-.app:not(.menu-landing) .finance-overview-sticky .finance-summary-grid .finance-debt-card .dashboard-stat-icon {
+.app:not(.menu-landing) .finance-overview-sticky .finance-summary-grid .finance-income-card .dashboard-stat-icon {
   border-color: rgba(255, 250, 243, .38);
   background: rgba(255, 250, 243, .22);
   color: #fffaf3;
 }
-.app:not(.menu-landing) .finance-overview-sticky .finance-summary-grid .finance-debt-card .dashboard-stat-icon .icon {
+.app:not(.menu-landing) .finance-overview-sticky .finance-summary-grid .finance-income-card .dashboard-stat-icon .icon {
   color: #fffaf3;
   stroke: #fffaf3;
   opacity: 1;
 }
-.app:not(.menu-landing) .finance-overview-sticky .finance-summary-grid .finance-debt-card .dashboard-stat-content > span:first-child,
-.app:not(.menu-landing) .finance-overview-sticky .finance-summary-grid .finance-debt-card .dashboard-stat-content > .debt-stat-hint {
+.app:not(.menu-landing) .finance-overview-sticky .finance-summary-grid .finance-income-card .dashboard-stat-content > span {
   color: rgba(255, 250, 243, .82);
 }
-.app:not(.menu-landing) .finance-overview-sticky .finance-summary-grid .finance-debt-card .debt-stat-hint {
-  display: inline-flex;
-  width: fit-content;
-  align-items: center;
-  gap: 5px;
-}
-.app:not(.menu-landing) .finance-overview-sticky .finance-summary-grid .finance-debt-card .debt-stat-hint .icon {
-  flex: 0 0 auto;
+.app:not(.menu-landing) .finance-overview-sticky .finance-summary-grid .finance-income-card .finance-income-hint .icon {
   color: #fffaf3;
   stroke: #fffaf3;
   opacity: 1;
 }
-.app:not(.menu-landing) .finance-overview-sticky .finance-summary-grid .finance-debt-card .dashboard-stat-content > strong {
+.app:not(.menu-landing) .finance-overview-sticky .finance-summary-grid .finance-income-card .dashboard-stat-content > strong {
   color: #fffaf3;
 }
-.app:not(.menu-landing) .finance-overview-sticky .finance-summary-grid .finance-debt-card:focus-visible {
+.app:not(.menu-landing) .finance-overview-sticky .finance-summary-grid .finance-income-card:focus-visible {
   outline: 3px solid rgba(181, 40, 46, .35);
   outline-offset: 3px;
 }
