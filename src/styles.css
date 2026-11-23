@@ -2854,6 +2854,14 @@ label { display: block; margin-bottom: 6px; color: var(--muted); font-size: 11px
   .debts-detail-table tbody td[data-label="Sisa"] { text-align: left; }
   .debts-detail-table .debts-invoice-detail-action { align-self: end; justify-self: end; text-align: center; }
   .debts-detail-table .debts-invoice-detail-action .btn { min-height: 27px; padding: 3px 6px; font-size: 9px; }
+  .debts-invoice-detail-table tbody tr { grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr) minmax(0, 1fr) 42px; gap: 5px 4px; }
+  .debts-invoice-detail-table tbody td:first-child { grid-column: 1 / -1; }
+  .debts-invoice-detail-table tbody td[data-label]::before { white-space: nowrap; font-size: 8px; }
+  .debts-invoice-detail-table tbody td[data-label="Total"],
+  .debts-invoice-detail-table tbody td[data-label="Sisa"] { min-width: 0; }
+  .debts-invoice-detail-table tbody td[data-label="Total"] { white-space: nowrap; }
+  .debts-invoice-detail-table tbody td[data-label="Sisa"] { white-space: nowrap; }
+  .debts-invoice-detail-table .debts-invoice-detail-action .btn { min-width: 42px; padding-inline: 4px; }
   .debts-customer-total { font-size: 10px; }
   .debts-customer-total .debts-customer-pay-button { flex: 0 0 auto; min-height: 40px; padding: 8px 18px; font-size: 12px; }
   .custom-numpad {

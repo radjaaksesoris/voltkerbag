@@ -592,7 +592,7 @@ export default function Debts() {
                     <p className="muted small">Tidak ada faktur transaksi yang belum lunas.</p>
                   ) : (
                     <div className="debts-table-wrap">
-                      <table className="debts-table debts-detail-table">
+                      <table className="debts-table debts-detail-table debts-invoice-detail-table">
                         <thead>
                           <tr>
                             <th>No. faktur</th>
