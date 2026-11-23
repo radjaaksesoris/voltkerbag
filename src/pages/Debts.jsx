@@ -8,6 +8,7 @@ import {
   getVendorPayables,
   onRefresh,
   recordCustomerCreditPayment,
+  recordCustomerInvoiceCreditPayment,
   recordVendorPayablePayment,
   requestPageRefresh
 } from '../db'
@@ -19,6 +20,7 @@ import MoneyInput from '../components/MoneyInput.jsx'
 import SelectInput from '../components/SelectInput.jsx'
 import TransactionDetails from '../components/TransactionDetails.jsx'
 import Icon from '../components/Icon.jsx'
+import { allocateCustomerPayment } from '../customerPaymentAllocation.js'
 
 const PAGE_SIZE = 20
 
@@ -44,6 +46,8 @@ export default function Debts() {
   const [customerPaymentAmount, setCustomerPaymentAmount] = useState('')
   const [customerPaymentError, setCustomerPaymentError] = useState('')
   const [savingCustomerPayment, setSavingCustomerPayment] = useState(false)
+  const [loadingCustomerPaymentInvoices, setLoadingCustomerPaymentInvoices] = useState(false)
+  const [customerPaymentInvoicesError, setCustomerPaymentInvoicesError] = useState('')
   const [selectedInvoice, setSelectedInvoice] = useState(null)
   const [savingManualDebt, setSavingManualDebt] = useState(false)
   const [manualDebtOpen, setManualDebtOpen] = useState(false)
@@ -138,12 +142,37 @@ export default function Debts() {
     }
   }
 
-  function openCustomerPayment(debt) {
-    setSelectedCustomerDebt(debt)
+  async function openCustomerPayment(debt) {
+    setSelectedCustomerDebt({ ...debt, invoices: [], excludedInvoiceIds: [] })
     setCustomerPaymentAmount('')
     setCustomerPaymentError('')
+    setCustomerPaymentInvoicesError('')
     customerPaymentRequest.current = null
+    setLoadingCustomerPaymentInvoices(true)
+    try {
+      const details = await getCustomerReceivableDetails(debt.customer_name)
+      setSelectedCustomerDebt((current) => current && current.customer_name === debt.customer_name
+        ? {
+            ...current,
+            invoices: details.invoices,
+            manualCredits: details.manualCredits,
+            excludedInvoiceIds: []
+          }
+        : current)
+    } catch (error) {
+      setCustomerPaymentInvoicesError(error.message || 'Gagal memuat daftar faktur untuk pembayaran.')
+    } finally {
+      setLoadingCustomerPaymentInvoices(false)
+    }
   }
+
+  const customerPaymentPlan = selectedCustomerDebt?.invoices
+    ? allocateCustomerPayment(
+      selectedCustomerDebt.invoices,
+      Number(customerPaymentAmount),
+      selectedCustomerDebt.excludedInvoiceIds
+    )
+    : { allocations: [], allocatedAmount: 0, remainingAmount: 0 }
 
   async function toggleCustomerDetails(debt) {
     const customerKey = debt.customer_name.trim().toLocaleLowerCase('id-ID')
@@ -181,18 +210,40 @@ export default function Debts() {
       setCustomerPaymentError('Pembayaran tidak boleh melebihi sisa piutang ' + rupiah(selectedCustomerDebt.balance_due) + '.')
       return
     }
-    const fingerprint = selectedCustomerDebt.customer_name + ':' + amount
+    const allocations = customerPaymentPlan.allocations.map(({ transactionId, amount: allocationAmount }) => ({
+      transactionId,
+      amount: allocationAmount
+    }))
+    const hasInvoices = selectedCustomerDebt.invoices.length > 0
+    if (hasInvoices && customerPaymentPlan.remainingAmount > 0) {
+      setCustomerPaymentError('Nominal pembayaran melebihi saldo faktur yang masih dipilih. Pilih kembali faktur atau kurangi nominal pembayaran.')
+      return
+    }
+    if (hasInvoices && customerPaymentPlan.allocatedAmount !== amount) {
+      setCustomerPaymentError('Pastikan seluruh nominal pembayaran dialokasikan ke faktur.')
+      return
+    }
+    const fingerprint = selectedCustomerDebt.customer_name + ':' + amount + ':' + JSON.stringify(allocations)
     if (customerPaymentRequest.current?.fingerprint !== fingerprint) {
       customerPaymentRequest.current = { fingerprint, id: crypto.randomUUID() }
     }
     savingLock.current = true
     setSavingCustomerPayment(true)
     try {
-      await recordCustomerCreditPayment(
-        selectedCustomerDebt.customer_name,
-        amount,
-        customerPaymentRequest.current.id
-      )
+      if (hasInvoices) {
+        await recordCustomerInvoiceCreditPayment(
+          selectedCustomerDebt.customer_name,
+          amount,
+          allocations,
+          customerPaymentRequest.current.id
+        )
+      } else {
+        await recordCustomerCreditPayment(
+          selectedCustomerDebt.customer_name,
+          amount,
+          customerPaymentRequest.current.id
+        )
+      }
       customerPaymentRequest.current = null
       const customerKey = selectedCustomerDebt.customer_name.trim().toLocaleLowerCase('id-ID')
       setSelectedCustomerDebt(null)
@@ -309,7 +360,7 @@ export default function Debts() {
             <div>
               <h3>Piutang pelanggan</h3>
             </div>
-            <button className="btn btn-primary" type="button" onClick={() => {
+            <button className="btn btn-primary debts-manual-receivable-button" type="button" onClick={() => {
               setManualDebtOpen(true)
               setManualDebtError('')
             }}>
@@ -599,7 +650,7 @@ export default function Debts() {
 
       {selectedCustomerDebt && (
         createPortal(
-          <div className="overlay debts-payment-overlay" onClick={() => !savingCustomerPayment && setSelectedCustomerDebt(null)}>
+          <div className="overlay debts-payment-overlay" onClick={() => !savingCustomerPayment && !loadingCustomerPaymentInvoices && setSelectedCustomerDebt(null)}>
             <form className="modal" onClick={(event) => event.stopPropagation()} onSubmit={submitCustomerPayment}>
               <h3>Pembayaran piutang pelanggan</h3>
               <p className="muted">{selectedCustomerDebt.customer_name} · Sisa piutang {rupiah(selectedCustomerDebt.balance_due)}</p>
@@ -607,14 +658,92 @@ export default function Debts() {
               <MoneyInput
                 id="customer-receivable-payment"
                 value={customerPaymentAmount}
-                onChange={setCustomerPaymentAmount}
+                onChange={(value) => {
+                  setCustomerPaymentAmount(value)
+                  setCustomerPaymentError('')
+                }}
                 placeholder="Masukkan nominal"
                 required
+                disabled={savingCustomerPayment || loadingCustomerPaymentInvoices}
               />
+              {loadingCustomerPaymentInvoices ? (
+                <p className="muted small">Memuat daftar faktur...</p>
+              ) : customerPaymentInvoicesError ? (
+                <p className="form-error" role="alert">{customerPaymentInvoicesError}</p>
+              ) : selectedCustomerDebt.invoices.length > 0 ? (
+                <div className="debts-payment-allocation">
+                  <div className="debts-payment-allocation-heading">
+                    <strong>Alokasi pembayaran</strong>
+                    <span>No faktur · Total · Dialokasikan</span>
+                  </div>
+                  {(() => {
+                    const invoiceBalanceTotal = selectedCustomerDebt.invoices.reduce(
+                      (total, invoice) => total + Number(invoice.balanceDue || 0),
+                      0
+                    )
+                    const allInvoices = allocateCustomerPayment(
+                      selectedCustomerDebt.invoices,
+                      invoiceBalanceTotal,
+                      selectedCustomerDebt.excludedInvoiceIds
+                    ).allocations
+                    const paidByInvoice = new Map(customerPaymentPlan.allocations.map((allocation) => [
+                      String(allocation.transactionId),
+                      allocation.amount
+                    ]))
+                    return allInvoices.map(({ transactionId, invoice }) => {
+                      const allocatedAmount = paidByInvoice.get(String(transactionId)) || 0
+                      const fullyAllocated = allocatedAmount === Number(invoice.balanceDue)
+                      return (
+                        <article
+                          className={'debts-payment-allocation-row' + (fullyAllocated ? ' is-settled' : '')}
+                          key={transactionId}>
+                          <div>
+                            <span className="muted small">No faktur</span>
+                            <strong>{getInvoiceNumber(invoice)}</strong>
+                          </div>
+                          <div>
+                            <span className="muted small">Total</span>
+                            <strong>{rupiah(invoice.balanceDue)}</strong>
+                          </div>
+                          <div>
+                            <span className="muted small">Dialokasikan</span>
+                            <strong>{rupiah(allocatedAmount)}</strong>
+                          </div>
+                          {fullyAllocated && (
+                            <button
+                              className="debts-payment-allocation-remove"
+                              type="button"
+                              aria-label={'Keluarkan faktur ' + getInvoiceNumber(invoice) + ' dari alokasi'}
+                              disabled={savingCustomerPayment}
+                              onClick={() => setSelectedCustomerDebt((current) => ({
+                                ...current,
+                                excludedInvoiceIds: [...current.excludedInvoiceIds, transactionId]
+                              }))}>
+                              ×
+                            </button>
+                          )}
+                        </article>
+                      )
+                    })
+                  })()}
+                  {customerPaymentPlan.remainingAmount > 0 && Number(customerPaymentAmount) > 0 && (
+                    <p className="form-error" role="alert">
+                      Sisa {rupiah(customerPaymentPlan.remainingAmount)} belum dialokasikan ke faktur yang dipilih.
+                    </p>
+                  )}
+                  <div className="debts-payment-allocation-total">
+                    <span>Total pembayaran</span>
+                    <strong>{rupiah(customerPaymentPlan.allocatedAmount)}</strong>
+                  </div>
+                </div>
+              ) : null}
               {customerPaymentError && <p className="form-error" role="alert">{customerPaymentError}</p>}
               <div className="modal-actions">
                 <button className="btn" type="button" disabled={savingCustomerPayment} onClick={() => setSelectedCustomerDebt(null)}>Batal</button>
-                <button className="btn btn-primary" type="submit" disabled={savingCustomerPayment}>
+                <button
+                  className="btn btn-primary"
+                  type="submit"
+                  disabled={savingCustomerPayment || loadingCustomerPaymentInvoices || Boolean(customerPaymentInvoicesError) || (selectedCustomerDebt.invoices.length > 0 && customerPaymentPlan.remainingAmount > 0)}>
                   {savingCustomerPayment ? 'Menyimpan...' : 'Simpan pembayaran'}
                 </button>
               </div>

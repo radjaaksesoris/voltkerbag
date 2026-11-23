@@ -2502,6 +2502,251 @@ begin
 end;
 $$;
 
+create or replace function public.record_customer_invoice_credit_payment(
+  p_customer_name text,
+  p_amount double precision,
+  p_allocations jsonb,
+  p_request_id uuid
+)
+returns bigint
+language plpgsql
+security definer
+set search_path = public, pg_temp
+as $$
+declare
+  current_user_id uuid := auth.uid();
+  existing_entry public.finance_entries%rowtype;
+  transaction_row public.transactions%rowtype;
+  allocation_item record;
+  allocation_transaction_id bigint;
+  allocation_amount numeric;
+  allocation_total numeric := 0;
+  new_paid_amount double precision;
+  allocated_ids bigint[] := '{}';
+  customer_balance double precision;
+  existing_customer_payments double precision;
+  remaining_amount double precision;
+  previous_order_time timestamptz;
+  previous_balance double precision;
+  batch_suffix text;
+  finance_entry_id bigint;
+  batch_entry_count integer;
+  allocation_index integer := 0;
+  operation_time timestamptz := clock_timestamp();
+begin
+  if current_user_id is null then raise exception 'Login diperlukan.'; end if;
+  if p_request_id is null then raise exception 'ID permintaan pembayaran wajib diisi.'; end if;
+  if p_customer_name is null or btrim(p_customer_name) = '' then
+    raise exception 'Nama pelanggan wajib diisi.';
+  end if;
+  if p_amount is null or p_amount <= 0
+     or p_amount > 9007199254740991::double precision
+     or p_amount <> trunc(p_amount)
+     or p_amount::text in ('NaN', 'Infinity', '-Infinity') then
+    raise exception 'Nominal pembayaran harus rupiah utuh dalam batas aman.';
+  end if;
+  if jsonb_typeof(p_allocations) is distinct from 'array' then
+    raise exception 'Daftar alokasi pembayaran faktur tidak valid.';
+  end if;
+  if jsonb_array_length(p_allocations) = 0 then
+    raise exception 'Daftar alokasi pembayaran faktur tidak valid.';
+  end if;
+
+  batch_suffix := ' · batch=' || p_request_id::text;
+  perform pg_advisory_xact_lock(hashtextextended(current_user_id::text || p_request_id::text, 0));
+
+  select * into existing_entry
+  from public.finance_entries
+  where owner_id = current_user_id and "requestId" = p_request_id;
+  if found then
+    if existing_entry.category is distinct from 'Cicilan kredit'
+       or right(coalesce(existing_entry.note, ''), char_length(batch_suffix)) <> batch_suffix
+       or right(coalesce(existing_entry.note, ''), char_length(' · ' || btrim(p_customer_name) || batch_suffix))
+         <> ' · ' || btrim(p_customer_name) || batch_suffix then
+      raise exception 'ID permintaan pembayaran sudah digunakan.';
+    end if;
+    select coalesce(sum(entry.amount), 0), count(distinct entry."refId")
+    into allocation_total, batch_entry_count
+    from public.finance_entries as entry
+    where entry.owner_id = current_user_id
+      and entry.category = 'Cicilan kredit'
+      and right(coalesce(entry.note, ''), char_length(batch_suffix)) = batch_suffix;
+    if allocation_total <> p_amount::numeric
+       or batch_entry_count <> jsonb_array_length(p_allocations) then
+      raise exception 'ID permintaan pembayaran sudah digunakan.';
+    end if;
+    for allocation_item in
+      select value
+      from jsonb_array_elements(p_allocations)
+    loop
+      if not exists (
+        select 1
+        from public.finance_entries as entry
+        where entry.owner_id = current_user_id
+          and entry.category = 'Cicilan kredit'
+          and entry."refId" = (allocation_item.value->>'transactionId')::bigint
+          and entry.amount = (allocation_item.value->>'amount')::double precision
+          and right(coalesce(entry.note, ''), char_length(batch_suffix)) = batch_suffix
+      ) then
+        raise exception 'ID permintaan pembayaran sudah digunakan.';
+      end if;
+    end loop;
+    return existing_entry.id;
+  end if;
+
+  perform pg_advisory_xact_lock(hashtextextended(
+    current_user_id::text || lower(btrim(p_customer_name)),
+    1
+  ));
+
+  perform 1
+  from public.transactions as customer_transaction
+  where customer_transaction.owner_id = current_user_id
+    and customer_transaction."paymentType" = 'credit'
+    and lower(coalesce(nullif(btrim(customer_transaction."customerName"), ''), 'Pelanggan lama'))
+      = lower(btrim(p_customer_name))
+  order by customer_transaction."createdAt" asc nulls last, customer_transaction.id asc
+  for update;
+
+  for allocation_item in
+    select value, ordinality
+    from jsonb_array_elements(p_allocations) with ordinality
+  loop
+    begin
+      allocation_transaction_id := (allocation_item.value->>'transactionId')::bigint;
+      allocation_amount := (allocation_item.value->>'amount')::numeric;
+    exception when others then
+      raise exception 'Data alokasi pembayaran faktur tidak valid.';
+    end;
+    if allocation_transaction_id is null
+       or allocation_amount is null
+       or allocation_amount <= 0
+       or allocation_amount <> trunc(allocation_amount)
+       or allocation_amount > 9007199254740991::numeric then
+      raise exception 'Nominal alokasi pembayaran faktur tidak valid.';
+    end if;
+    if allocation_transaction_id = any(allocated_ids) then
+      raise exception 'Faktur yang sama tidak boleh muncul lebih dari sekali dalam alokasi.';
+    end if;
+
+    select * into transaction_row
+    from public.transactions
+    where id = allocation_transaction_id
+      and owner_id = current_user_id
+      and "paymentType" = 'credit'
+      and lower(coalesce(nullif(btrim("customerName"), ''), 'Pelanggan lama'))
+        = lower(btrim(p_customer_name))
+    for update;
+    if not found then raise exception 'Faktur piutang pelanggan tidak ditemukan.'; end if;
+    if transaction_row."balanceDue" <= 0
+       or allocation_amount > transaction_row."balanceDue"::numeric then
+      raise exception 'Nominal alokasi melebihi sisa faktur.';
+    end if;
+
+    if allocation_index > 0 then
+      if coalesce(transaction_row."createdAt", 'infinity'::timestamptz)
+           < coalesce(previous_order_time, 'infinity'::timestamptz)
+         or (
+           coalesce(transaction_row."createdAt", 'infinity'::timestamptz)
+             = coalesce(previous_order_time, 'infinity'::timestamptz)
+           and transaction_row.id <= allocated_ids[array_length(allocated_ids, 1)]
+         ) then
+        raise exception 'Alokasi harus mengikuti urutan faktur paling awal.';
+      end if;
+      if previous_balance > 0 then
+        raise exception 'Faktur paling awal harus dialokasikan sebelum faktur berikutnya.';
+      end if;
+    end if;
+
+    allocated_ids := array_append(allocated_ids, allocation_transaction_id);
+    previous_order_time := transaction_row."createdAt";
+    previous_balance := transaction_row."balanceDue"::double precision - allocation_amount::double precision;
+    allocation_total := allocation_total + allocation_amount;
+    allocation_index := allocation_index + 1;
+  end loop;
+
+  if allocation_total <> p_amount::numeric then
+    raise exception 'Jumlah alokasi faktur harus sama dengan jumlah pembayaran.';
+  end if;
+
+  select coalesce(sum(outstanding.balance_due), 0)
+  into customer_balance
+  from (
+    select credit.balance_due
+    from public.manual_customer_credits as credit
+    where credit.owner_id = current_user_id
+      and lower(btrim(credit.customer_name)) = lower(btrim(p_customer_name))
+      and credit.balance_due > 0
+    union all
+    select customer_transaction."balanceDue"
+    from public.transactions as customer_transaction
+    where customer_transaction.owner_id = current_user_id
+      and customer_transaction."paymentType" = 'credit'
+      and lower(coalesce(nullif(btrim(customer_transaction."customerName"), ''), 'Pelanggan lama'))
+        = lower(btrim(p_customer_name))
+      and customer_transaction."balanceDue" > 0
+  ) as outstanding;
+
+  select coalesce(sum(entry.amount), 0)
+  into existing_customer_payments
+  from public.finance_entries as entry
+  where entry.owner_id = current_user_id
+    and entry.type = 'income'
+    and entry.category = 'Cicilan kredit'
+    and left(entry.note, char_length('Pembayaran umum piutang pelanggan · '))
+      = 'Pembayaran umum piutang pelanggan · '
+    and lower(btrim(substring(
+      entry.note from char_length('Pembayaran umum piutang pelanggan · ') + 1
+    ))) = lower(btrim(p_customer_name));
+
+  remaining_amount := greatest(0, customer_balance - existing_customer_payments);
+  if p_amount > remaining_amount then
+    raise exception 'Nominal pembayaran melebihi sisa hutang pelanggan.';
+  end if;
+
+  for allocation_item in
+    select value
+    from jsonb_array_elements(p_allocations) with ordinality
+    order by ordinality
+  loop
+    allocation_transaction_id := (allocation_item.value->>'transactionId')::bigint;
+    allocation_amount := (allocation_item.value->>'amount')::numeric;
+    select * into transaction_row
+    from public.transactions
+    where id = allocation_transaction_id and owner_id = current_user_id
+    for update;
+
+    new_paid_amount := transaction_row."paidAmount" + allocation_amount::double precision;
+    update public.transactions
+    set "paidAmount" = new_paid_amount,
+        "balanceDue" = greatest(0, transaction_row.total - new_paid_amount),
+        "updatedAt" = operation_time
+    where id = allocation_transaction_id;
+
+    insert into public.transaction_payments (
+      owner_id, transaction_id, amount, date, source
+    ) values (
+      current_user_id, allocation_transaction_id, allocation_amount::double precision,
+      operation_time, 'installment'
+    );
+
+    insert into public.finance_entries (
+      owner_id, type, category, note, amount, "refId", "requestId", date, "createdAt", "updatedAt"
+    ) values (
+      current_user_id, 'income', 'Cicilan kredit',
+      'Cicilan transaksi ' || coalesce(transaction_row."invoiceNo", '#' || allocation_transaction_id::text)
+        || ' · ' || transaction_row."customerName" || batch_suffix,
+      allocation_amount::double precision, allocation_transaction_id,
+      case when finance_entry_id is null then p_request_id else null end,
+      operation_time, operation_time, operation_time
+    )
+    returning id into finance_entry_id;
+  end loop;
+
+  return finance_entry_id;
+end;
+$$;
+
 create or replace function public.delete_manual_finance_entry(p_entry_id bigint)
 returns void
 language plpgsql
@@ -3149,6 +3394,7 @@ revoke all on function public.create_vendor_payable(text, text, double precision
 revoke all on function public.record_vendor_payable_payment(bigint, double precision, uuid) from public, anon;
 revoke all on function public.return_transaction_items(bigint, jsonb, uuid) from public, anon;
 revoke all on function public.record_customer_credit_payment(text, double precision, uuid) from public, anon;
+revoke all on function public.record_customer_invoice_credit_payment(text, double precision, jsonb, uuid) from public, anon;
 revoke all on function public.delete_manual_finance_entry(bigint) from public, anon;
 revoke all on function public.record_stock_purchase(bigint, integer, double precision, text, timestamptz, uuid) from public, anon;
 revoke all on function public.record_credit_stock_purchase(bigint, integer, double precision, text, text, double precision, timestamptz, uuid) from public, anon;
@@ -3166,6 +3412,7 @@ grant execute on function public.create_vendor_payable(text, text, double precis
 grant execute on function public.record_vendor_payable_payment(bigint, double precision, uuid) to authenticated;
 grant execute on function public.return_transaction_items(bigint, jsonb, uuid) to authenticated;
 grant execute on function public.record_customer_credit_payment(text, double precision, uuid) to authenticated;
+grant execute on function public.record_customer_invoice_credit_payment(text, double precision, jsonb, uuid) to authenticated;
 grant execute on function public.delete_manual_finance_entry(bigint) to authenticated;
 grant execute on function public.record_stock_purchase(bigint, integer, double precision, text, timestamptz, uuid) to authenticated;
 grant execute on function public.record_credit_stock_purchase(bigint, integer, double precision, text, text, double precision, timestamptz, uuid) to authenticated;

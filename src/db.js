@@ -1072,6 +1072,21 @@ export async function recordCustomerCreditPayment(customerName, amount, requestI
   return data
 }
 
+export async function recordCustomerInvoiceCreditPayment(customerName, amount, allocations, requestId) {
+  const { data, error } = await getClient().rpc('record_customer_invoice_credit_payment', {
+    p_customer_name: customerName,
+    p_amount: amount,
+    p_allocations: allocations.map(({ transactionId, amount: allocationAmount }) => ({
+      transactionId,
+      amount: allocationAmount
+    })),
+    p_request_id: requestId || crypto.randomUUID()
+  })
+  throwIfError(error, 'Gagal menyimpan pembayaran faktur piutang pelanggan')
+  notifyRefresh()
+  return data
+}
+
 export async function addManualCustomerCredit(customerName, amount, requestId) {
   const { data, error } = await getClient().rpc('add_manual_customer_credit', {
     p_customer_name: customerName,
