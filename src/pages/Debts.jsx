@@ -289,6 +289,14 @@ export default function Debts() {
 
   const invoicePageCount = Math.max(1, Math.ceil(invoiceCount / PAGE_SIZE))
   const payablePageCount = Math.max(1, Math.ceil(payableCount / PAGE_SIZE))
+  const invoicesByCustomer = [...invoices.reduce((groups, invoice) => {
+    const customerName = invoice.customerName?.trim() || 'Pelanggan'
+    const customerKey = customerName.toLowerCase()
+    const group = groups.get(customerKey) || { customerName, invoices: [] }
+    group.invoices.push(invoice)
+    groups.set(customerKey, group)
+    return groups
+  }, new Map()).values()]
 
   return (
     <div className="page debts-page">
@@ -296,7 +304,6 @@ export default function Debts() {
         <div>
           <span className="debts-page-kicker">KEUANGAN</span>
           <h2>Utang/Piutang</h2>
-          <p className="muted">Kelola tagihan pelanggan dan kewajiban ke vendor dalam satu tempat.</p>
         </div>
       </header>
 
@@ -332,7 +339,6 @@ export default function Debts() {
           <div className="debts-section-heading">
             <div>
               <h3>Piutang pelanggan</h3>
-              <p className="muted small">Pembayaran sebagian dan pelunasan akan dialokasikan ke tagihan pelanggan yang paling lama.</p>
             </div>
             <button className="btn btn-primary" type="button" onClick={() => {
               setManualDebtOpen(true)
@@ -366,8 +372,8 @@ export default function Debts() {
             <table className="debts-table">
               <thead>
                 <tr>
-                  <th>No. faktur</th>
                   <th>Pelanggan</th>
+                  <th>No. faktur</th>
                   <th>Tanggal</th>
                   <th className="right">Total</th>
                   <th className="right">Sudah dibayar</th>
@@ -378,7 +384,7 @@ export default function Debts() {
               <tbody>
                 {!loadError && invoices.length === 0 ? (
                   <tr><td className="muted center" colSpan="7">Belum ada faktur transaksi kredit.</td></tr>
-                ) : invoices.map((invoice) => {
+                ) : invoicesByCustomer.map((group) => group.invoices.map((invoice, index) => {
                   const paidAmount = invoice.paidAmount != null
                     ? Number(invoice.paidAmount)
                     : Math.min(Number(invoice.total) || 0, Number(invoice.payment) || 0)
@@ -387,16 +393,16 @@ export default function Debts() {
                     : Math.max(0, Number(invoice.total) - paidAmount)
                   return (
                     <tr key={invoice.id}>
+                      {index === 0 && <td rowSpan={group.invoices.length}><strong>{group.customerName}</strong></td>}
                       <td><strong>{getInvoiceNumber(invoice)}</strong></td>
-                      <td>{invoice.customerName || 'Pelanggan'}</td>
                       <td>{dateOnly(invoice.createdAt)}</td>
                       <td className="right">{rupiah(invoice.total)}</td>
                       <td className="right">
                         <strong>{rupiah(paidAmount)}</strong>
                         {invoice.payments.length > 0 && (
                           <span className="debts-payment-history">
-                            {invoice.payments.map((payment, index) => (
-                              <span key={index}>{dateTime(payment.date)} · {rupiah(payment.amount)}</span>
+                            {invoice.payments.map((payment, paymentIndex) => (
+                              <span key={paymentIndex}>{dateTime(payment.date)} · {rupiah(payment.amount)}</span>
                             ))}
                           </span>
                         )}
@@ -409,7 +415,7 @@ export default function Debts() {
                       </td>
                     </tr>
                   )
-                })}
+                }))}
               </tbody>
             </table>
           </div>
