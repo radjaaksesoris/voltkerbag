@@ -650,18 +650,73 @@ export async function getFinanceInvoices({ from, to, page, pageSize }) {
 }
 
 export async function getPurchaseEntries(page, pageSize) {
+  const client = getClient()
+  const to = page * pageSize - 1
+  const [{ data: expenses, count: expenseCount, error: expenseError }, { data: payables, count: payableCount, error: payableError }] = await Promise.all([
+    client
+      .from(tableFor('finance'))
+      .select('*', { count: 'exact' })
+      .eq('type', 'expense')
+      .eq('category', 'Pembelian bahan produksi')
+      .order('date', { ascending: false, nullsFirst: false })
+      .order('id', { ascending: false })
+      .range(0, to),
+    client
+      .from(tableFor('vendorPayables'))
+      .select('id,vendor_name,description,original_amount,balance_due,date,request_id,createdAt', { count: 'exact' })
+      .order('date', { ascending: false, nullsFirst: false })
+      .order('id', { ascending: false })
+      .range(0, to)
+  ])
+  throwIfError(expenseError, 'Gagal memuat riwayat pembelian bahan')
+  throwIfError(payableError, 'Gagal memuat riwayat utang pembelian')
+
+  const payableRows = payables || []
+  let stockAdjustmentByRequest = new Map()
+  if (payableRows.length) {
+    const requestIds = [...new Set(payableRows.map((payable) => payable.request_id))]
+    const { data: adjustments, error: adjustmentError } = await client
+      .from(tableFor('stockAdjustments'))
+      .select('request_id,product_name,quantity_pcs,unit_cost')
+      .in('request_id', requestIds)
+    throwIfError(adjustmentError, 'Gagal memuat detail stok pembelian kredit')
+    stockAdjustmentByRequest = new Map((adjustments || []).map((adjustment) => [adjustment.request_id, adjustment]))
+  }
+
+  const purchaseEntries = [
+    ...(expenses || []).map((entry) => ({ ...entry, purchaseSource: 'expense' })),
+    ...payableRows.map((payable) => {
+      const adjustment = stockAdjustmentByRequest.get(payable.request_id)
+      return {
+        id: 'payable-' + payable.id,
+        type: 'expense',
+        category: 'Pembelian bahan produksi',
+        note: String(payable.description || '') + '\n' + String(payable.vendor_name || ''),
+        amount: Number(payable.original_amount),
+        date: payable.date,
+        createdAt: payable.createdAt,
+        requestId: adjustment ? payable.request_id : null,
+        purchaseSource: 'payable',
+        payableBalance: Number(payable.balance_due),
+        stockPurchase: adjustment ? {
+          productName: adjustment.product_name,
+          quantityPcs: Number(adjustment.quantity_pcs),
+          unitCostPerPiece: Number(adjustment.unit_cost)
+        } : null
+      }
+    })
+  ].sort((left, right) => {
+    const leftDate = new Date(left.date || left.createdAt || 0).getTime()
+    const rightDate = new Date(right.date || right.createdAt || 0).getTime()
+    if (leftDate !== rightDate) return rightDate - leftDate
+    return String(right.id).localeCompare(String(left.id))
+  })
+
   const from = (page - 1) * pageSize
-  const to = from + pageSize - 1
-  const { data, count, error } = await getClient()
-    .from(tableFor('finance'))
-    .select('*', { count: 'exact' })
-    .eq('type', 'expense')
-    .eq('category', 'Pembelian bahan produksi')
-    .order('date', { ascending: false, nullsFirst: false })
-    .order('id', { ascending: false })
-    .range(from, to)
-  throwIfError(error, 'Gagal memuat riwayat pembelian bahan')
-  return { entries: data || [], totalCount: count || 0 }
+  return {
+    entries: purchaseEntries.slice(from, from + pageSize),
+    totalCount: (expenseCount || 0) + (payableCount || 0)
+  }
 }
 
 export async function getLatestStockPurchaseUnitCost(productId) {

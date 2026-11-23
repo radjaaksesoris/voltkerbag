@@ -1868,6 +1868,11 @@ h3 { margin-bottom: 16px; color: var(--ink); font-size: 15px; font-weight: 700; 
 .finance-profit-card .dashboard-stat-icon { background: linear-gradient(145deg, #3296f2, #1766c1); }
 .finance-profit-card .dashboard-stat-content > strong.ok { color: #1b62ad; }
 .finance-profit-card .dashboard-stat-content > strong.danger { color: #a51d2a; }
+.finance-profit-breakdown { display: grid; gap: 3px; }
+.finance-profit-line { display: flex; min-width: 0; align-items: baseline; justify-content: space-between; gap: 8px; }
+.finance-profit-line > span { color: #4b4d52; font-size: 11px; font-weight: 500; line-height: 1.3; }
+.finance-profit-line > strong { overflow: hidden; font-size: clamp(14px, 1.35vw, 18px); font-weight: 750; letter-spacing: -.3px; text-overflow: ellipsis; white-space: nowrap; }
+.finance-profit-line > strong:not(.ok):not(.danger) { color: #22252a; }
 .finance-summary-grid .debt-stat-card { text-align: left; }
 .finance-summary-grid .debt-stat-card .dashboard-stat-content { gap: 5px; }
 .finance-summary-grid .debt-stat-card .dashboard-stat-content > span:first-child { color: #4b4d52; font-size: 12px; font-weight: 500; letter-spacing: 0; text-transform: none; }

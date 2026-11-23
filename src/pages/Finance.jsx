@@ -573,8 +573,17 @@ export default function Finance() {
           <div className="stat-card dashboard-stat-card finance-profit-card">
             <span className="dashboard-stat-icon"><Icon name="trend" size={27} /></span>
             <div className="dashboard-stat-content">
-              <span>Laba</span>
-              <strong className={netProfit >= 0 ? 'ok' : 'danger'}>{rupiah(netProfit)}</strong>
+              <span>Ringkasan laba</span>
+              <div className="finance-profit-breakdown">
+                <div className="finance-profit-line">
+                  <span>Laba kotor</span>
+                  <strong>{rupiah(grossProfit)}</strong>
+                </div>
+                <div className="finance-profit-line">
+                  <span>Laba bersih</span>
+                  <strong className={netProfit >= 0 ? 'ok' : 'danger'}>{rupiah(netProfit)}</strong>
+                </div>
+              </div>
             </div>
           </div>
         </div>

@@ -538,27 +538,36 @@ export default function Purchases() {
               <tr><td colSpan="5" className="muted center">Belum ada pembelian bahan yang dicatat.</td></tr>
             ) : entries.map((entry, index) => {
               const purchase = parsePurchaseNote(entry.note)
+              const stockPurchase = purchase.stockPurchase || entry.stockPurchase
+              const purchaseKind = stockPurchase || entry.requestId ? 'Masuk stok' : 'Non-stok'
+              const payableStatus = entry.purchaseSource === 'payable'
+                ? Number(entry.payableBalance) > 0
+                  ? `Kredit · sisa ${rupiah(entry.payableBalance)}`
+                  : 'Lunas'
+                : 'Tunai'
               return (
                 <tr key={entry.id}>
                   <td className="purchase-row-number" data-label="No.">{pageStart + index + 1}</td>
                   <td className="purchase-details" data-label="Pembelian">
                     <div className="purchase-item-heading">
                       <span className="purchase-item-title">{purchase.purchase}</span>
-                      <span className="purchase-item-type">{entry.requestId ? 'Masuk stok' : 'Non-stok'}</span>
-                      {purchase.stockPurchase && (
+                      <span className="purchase-item-type">{purchaseKind} · {payableStatus}</span>
+                      {stockPurchase && (
                         <span className="purchase-item-stock-meta">
-                          {purchase.stockPurchase.quantityPcs} pcs · {rupiah(purchase.stockPurchase.unitCostPerPiece)}/pcs
+                          {stockPurchase.quantityPcs} pcs · {rupiah(stockPurchase.unitCostPerPiece)}/pcs
                         </span>
                       )}
-                      <button
-                        className="btn btn-sm btn-danger purchase-delete-button"
-                        type="button"
-                        aria-label={'Hapus pembelian ' + purchase.purchase}
-                        title="Hapus riwayat pembelian"
-                        disabled={deletingEntryId !== null}
-                        onClick={() => deletePurchase(entry)}>
-                        <Icon name="close" size={16} />
-                      </button>
+                      {entry.purchaseSource !== 'payable' && (
+                        <button
+                          className="btn btn-sm btn-danger purchase-delete-button"
+                          type="button"
+                          aria-label={'Hapus pembelian ' + purchase.purchase}
+                          title="Hapus riwayat pembelian"
+                          disabled={deletingEntryId !== null}
+                          onClick={() => deletePurchase(entry)}>
+                          <Icon name="close" size={16} />
+                        </button>
+                      )}
                     </div>
                   </td>
                   <td data-label="Tanggal">{dateOnly(entry.date || entry.createdAt)}</td>
