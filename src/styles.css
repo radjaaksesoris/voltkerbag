@@ -4638,6 +4638,21 @@ body:has(.app) {
   color: var(--mustard-ink);
 }
 .app:not(.menu-landing) .purchase-submit:active { transform: translateY(1px); }
+.app:not(.menu-landing) .transactions-page .payment-method-option {
+  border-color: #eaded8;
+  background: #fffdfa;
+  color: var(--text);
+}
+.app:not(.menu-landing) .transactions-page .payment-method-option[aria-pressed="true"]:first-child {
+  border-color: #b5282e;
+  background: #b5282e;
+  color: #fffaf3;
+}
+.app:not(.menu-landing) .transactions-page .payment-method-option[aria-pressed="true"]:last-child {
+  border-color: var(--mustard-border);
+  background: var(--mustard-surface);
+  color: var(--mustard-ink);
+}
 .app:not(.menu-landing) .purchase-form > .form-error,
 .app:not(.menu-landing) .purchase-form > .backup-success { margin-top: 12px; }
 .app:not(.menu-landing) .purchase-history-card {
