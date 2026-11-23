@@ -1212,14 +1212,20 @@ h2 {
 .menu-shortcut-2 { background: linear-gradient(145deg, #cf4548, #9b202b); }
 .menu-shortcut-3 { background: linear-gradient(145deg, #b8323d, #871b26); }
 .menu-shortcut-finance {
-  border-color: #d3b742 !important;
-  background: linear-gradient(145deg, #f6e58f, #e8cf58) !important;
+  border-color: #c4a22b !important;
+  background:
+    radial-gradient(ellipse at 88% 8%, rgba(255, 246, 190, .56), transparent 43%),
+    linear-gradient(145deg, #e9cf58 0%, #d8b83e 58%, #c9a52d 100%) !important;
   color: #382d0d !important;
-  box-shadow: 0 9px 20px rgba(112, 88, 14, .2), inset 0 1px 0 rgba(255, 255, 255, .62) !important;
+  box-shadow: 0 9px 20px rgba(112, 88, 14, .24), inset 0 1px 0 rgba(255, 250, 210, .58) !important;
+}
+.menu-shortcut-finance::before {
+  border-color: rgba(106, 79, 10, .2);
+  background: rgba(132, 101, 16, .12);
 }
 .menu-shortcut-finance .menu-shortcut-label { color: #382d0d; text-shadow: none; }
-.menu-shortcut-finance .menu-art-icon { color: #735b13; opacity: .48; }
-.menu-shortcut-finance .menu-shortcut-icon { color: #735b13; }
+.menu-shortcut-finance .menu-art-icon { color: #654d0c; opacity: .56; }
+.menu-shortcut-finance .menu-shortcut-icon { color: #654d0c; }
 .menu-shortcut-label {
   position: relative;
   z-index: 2;
