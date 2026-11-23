@@ -347,18 +347,18 @@ export default function CustomNumpad() {
         ))}
         <button
           type="button"
-          className="custom-numpad-done"
-          onClick={closeNumpad}>
-          Selesai
-        </button>
-        <button type="button" onPointerDown={handlePointerKey('0')} onClick={handleKeyboardClick('0')}>0</button>
-        <button
-          type="button"
           className="custom-numpad-backspace"
           aria-label="Hapus angka terakhir"
           onPointerDown={handlePointerKey('backspace')}
           onClick={handleKeyboardClick('backspace')}>
           ⌫
+        </button>
+        <button type="button" onPointerDown={handlePointerKey('0')} onClick={handleKeyboardClick('0')}>0</button>
+        <button
+          type="button"
+          className="custom-numpad-done"
+          onClick={closeNumpad}>
+          Selesai
         </button>
       </div>
     </div>,
