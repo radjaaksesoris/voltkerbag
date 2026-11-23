@@ -346,21 +346,21 @@ export default function Finance() {
               <strong>+<LoadingNumber label="pemasukan penjualan" /></strong>
             </div>
           </div>
-          <div className="stat-card dashboard-stat-card debt-stat-card finance-debt-card">
-            <span className="dashboard-stat-icon"><Icon name="tag" size={27} /></span>
-            <span className="dashboard-stat-content">
-              <span>Hutang Pelanggan</span>
-              <strong><LoadingNumber label="total hutang" /></strong>
-              <span className="debt-stat-hint">Memuat data...</span>
-            </span>
-          </div>
-          <div className="stat-card dashboard-stat-card debt-stat-card finance-debt-card">
-            <span className="dashboard-stat-icon"><Icon name="bag" size={27} /></span>
-            <span className="dashboard-stat-content">
-              <span>Hutang Vendor</span>
-              <strong><LoadingNumber label="total hutang vendor" /></strong>
-              <span className="debt-stat-hint">Memuat data...</span>
-            </span>
+          <div className="stat-card dashboard-stat-card finance-debt-summary-card">
+            <span className="dashboard-stat-icon"><Icon name="coins" size={27} /></span>
+            <div className="dashboard-stat-content">
+              <span>Ringkasan hutang</span>
+              <div className="finance-debt-breakdown">
+                <div className="finance-debt-line">
+                  <span>Hutang pelanggan</span>
+                  <strong><LoadingNumber label="hutang pelanggan" /></strong>
+                </div>
+                <div className="finance-debt-line">
+                  <span>Hutang vendor</span>
+                  <strong><LoadingNumber label="hutang vendor" /></strong>
+                </div>
+              </div>
+            </div>
           </div>
           <div className="stat-card dashboard-stat-card finance-cash-card">
             <span className="dashboard-stat-icon"><Icon name="wallet" size={27} /></span>
@@ -460,19 +460,21 @@ export default function Finance() {
               <span className="finance-income-hint">Daftar faktur <Icon name="arrowRight" size={14} /></span>
             </div>
           </button>
-          <div className="stat-card dashboard-stat-card debt-stat-card finance-debt-card">
-            <span className="dashboard-stat-icon"><Icon name="tag" size={27} /></span>
-            <span className="dashboard-stat-content">
-              <span>Hutang Pelanggan</span>
-              <strong>{rupiah(totalCredit)}</strong>
-            </span>
-          </div>
-          <div className="stat-card dashboard-stat-card debt-stat-card finance-debt-card">
-            <span className="dashboard-stat-icon"><Icon name="bag" size={27} /></span>
-            <span className="dashboard-stat-content">
-              <span>Hutang Vendor</span>
-              <strong>{rupiah(Number(report.total_vendor_debt))}</strong>
-            </span>
+          <div className="stat-card dashboard-stat-card finance-debt-summary-card">
+            <span className="dashboard-stat-icon"><Icon name="coins" size={27} /></span>
+            <div className="dashboard-stat-content">
+              <span>Ringkasan hutang</span>
+              <div className="finance-debt-breakdown">
+                <div className="finance-debt-line">
+                  <span>Hutang pelanggan</span>
+                  <strong>{rupiah(totalCredit)}</strong>
+                </div>
+                <div className="finance-debt-line">
+                  <span>Hutang vendor</span>
+                  <strong>{rupiah(Number(report.total_vendor_debt))}</strong>
+                </div>
+              </div>
+            </div>
           </div>
           <div className="stat-card dashboard-stat-card finance-cash-card">
             <span className="dashboard-stat-icon"><Icon name="wallet" size={27} /></span>

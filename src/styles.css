@@ -1931,7 +1931,41 @@ h3 { margin-bottom: 16px; color: var(--ink); font-size: 15px; font-weight: 700; 
 }
 .finance-profit-line > strong.ok { color: #24653a; }
 .finance-profit-line > strong.danger { color: #a51d2a; }
+.finance-debt-breakdown { display: grid; width: 100%; gap: 2px; container-type: inline-size; }
+.finance-debt-line {
+  display: grid;
+  min-width: 0;
+  grid-template-columns: minmax(58px, .7fr) minmax(0, 1.3fr);
+  align-items: center;
+  gap: 5px;
+  padding: 3px 0;
+}
+.finance-debt-line + .finance-debt-line { border-top: 1px solid rgba(163, 58, 62, .16); }
+.finance-debt-line > span {
+  color: #766763;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0;
+  line-height: 1.25;
+  text-transform: none;
+}
+.finance-debt-line > strong {
+  min-width: 0;
+  color: #713238;
+  font-size: clamp(12px, 9cqi, 17px);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -.25px;
+  line-height: 1.2;
+  overflow-wrap: anywhere;
+  text-align: right;
+}
 .finance-overview-sticky .finance-profit-line > strong {
+  font-size: clamp(10px, 6.5cqi, 13px);
+  letter-spacing: -.35px;
+  overflow-wrap: normal;
+  white-space: nowrap;
+}
+.finance-overview-sticky .finance-debt-line > strong {
   font-size: clamp(10px, 6.5cqi, 13px);
   letter-spacing: -.35px;
   overflow-wrap: normal;
