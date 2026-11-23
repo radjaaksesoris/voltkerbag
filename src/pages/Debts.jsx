@@ -205,7 +205,7 @@ export default function Debts() {
 
   function openCustomerPayment(debt) {
     setSelectedCustomerDebt(debt)
-    setCustomerPaymentAmount(String(Number(debt.balance_due)))
+    setCustomerPaymentAmount('')
     setCustomerPaymentError('')
     customerPaymentRequest.current = null
   }
@@ -399,21 +399,21 @@ export default function Debts() {
                     </div>
                     {isExpanded && (
                       <div className="debts-invoice-customer-details">
+                        <div className="debts-customer-total">
+                          <strong>Sisa piutang gabungan: {rupiah(Number(debt.balance_due))}</strong>
+                          <button
+                            className="btn btn-primary debts-customer-pay-button"
+                            type="button"
+                            onClick={() => openCustomerPayment(debt)}>
+                            Bayar
+                          </button>
+                        </div>
                         {loadingCustomerDetails === customerKey ? (
                           <p className="muted small">Memuat detail piutang...</p>
                         ) : customerDetailsError ? (
                           <p className="form-error" role="alert">{customerDetailsError}</p>
                         ) : details && (
                           <>
-                            <div className="debts-customer-total">
-                              <strong>Sisa piutang gabungan: {rupiah(Number(debt.balance_due))}</strong>
-                              <button
-                                className="btn btn-primary debts-customer-pay-button"
-                                type="button"
-                                onClick={() => openCustomerPayment(debt)}>
-                                Bayar
-                              </button>
-                            </div>
                             {details.customerPayments.length > 0 && (
                               <>
                                 <h5>Pembayaran umum pelanggan</h5>
@@ -436,7 +436,6 @@ export default function Debts() {
                                   <thead>
                                     <tr>
                                       <th>No. faktur</th>
-                                      <th>Tanggal</th>
                                       <th className="right">Total faktur</th>
                                       <th className="right">Saldo per faktur</th>
                                       <th>Detail</th>
@@ -445,11 +444,13 @@ export default function Debts() {
                                   <tbody>
                                     {details.invoices.map((invoice) => (
                                       <tr key={invoice.id}>
-                                        <td><strong>{getInvoiceNumber(invoice)}</strong></td>
-                                        <td>{dateOnly(invoice.createdAt)}</td>
-                                        <td className="right">{rupiah(invoice.total)}</td>
-                                        <td className="right"><strong>{rupiah(invoice.balanceDue)}</strong></td>
                                         <td>
+                                          <strong>{getInvoiceNumber(invoice)}</strong>
+                                          <span className="debts-invoice-date">{dateOnly(invoice.createdAt)}</span>
+                                        </td>
+                                        <td className="right" data-label="Total">{rupiah(invoice.total)}</td>
+                                        <td className="right" data-label="Sisa"><strong>{rupiah(invoice.balanceDue)}</strong></td>
+                                        <td className="debts-invoice-detail-action">
                                           <button className="btn btn-sm" type="button" onClick={() => setSelectedInvoice(invoice)}>
                                             Lihat
                                           </button>
