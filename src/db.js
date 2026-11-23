@@ -17,7 +17,8 @@ const TABLES = {
   transactionPayments: 'transaction_payments',
   manualCredits: 'manual_customer_credits',
   manualCreditPayments: 'manual_customer_credit_payments',
-  finance: 'finance_entries'
+  finance: 'finance_entries',
+  stockAdjustments: 'product_stock_adjustments'
 }
 
 const BACKUP_TABLES = {
