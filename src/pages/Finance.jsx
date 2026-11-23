@@ -636,6 +636,7 @@ export default function Finance() {
                   <table className="finance-invoices-table">
                     <thead>
                       <tr>
+                        <th>No.</th>
                         <th>No. faktur</th>
                         <th>Pelanggan</th>
                         <th>Tanggal</th>
@@ -646,11 +647,14 @@ export default function Finance() {
                       </tr>
                     </thead>
                     <tbody>
-                      {salesInvoices.map((invoice) => {
+                      {salesInvoices.map((invoice, index) => {
                         const paidAmount = getInvoicePaidAmount(invoice)
                         const balanceDue = getInvoiceBalanceDue(invoice, paidAmount)
                         return (
                           <tr key={invoice.id}>
+                            <td className="finance-invoice-index" data-label="No.">
+                              {(salesInvoicePage - 1) * FINANCE_INVOICE_PAGE_SIZE + index + 1}
+                            </td>
                             <td data-label="No. faktur">
                               <button
                                 className="finance-invoice-number"
