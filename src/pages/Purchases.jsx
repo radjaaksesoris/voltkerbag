@@ -441,9 +441,6 @@ export default function Purchases() {
                 <div className="purchase-field">
                   <label>{paymentType === 'credit' ? 'Total tagihan' : 'Total pembelian'}</label>
                   <p className="purchase-calculated-total">{rupiah(estimatedStockPurchaseTotal)}</p>
-                  <p className="muted small purchase-stock-cost-hint">
-                    Harga modal rata-rata dan harga jual berbasis markup diperbarui otomatis.
-                  </p>
                 </div>
               </>
             ) : (
@@ -550,24 +547,31 @@ export default function Purchases() {
                   <td className="purchase-row-number" data-label="No.">{pageStart + index + 1}</td>
                   <td className="purchase-details" data-label="Pembelian">
                     <div className="purchase-item-heading">
-                      <span className="purchase-item-title">{purchase.purchase}</span>
-                      <span className="purchase-item-type">{purchaseKind} · {payableStatus}</span>
-                      {stockPurchase && (
-                        <span className="purchase-item-stock-meta">
-                          {stockPurchase.quantityPcs} pcs · {rupiah(stockPurchase.unitCostPerPiece)}/pcs
+                      <div className="purchase-item-main">
+                        <span className="purchase-item-title">{purchase.purchase}</span>
+                        {entry.purchaseSource !== 'payable' && (
+                          <button
+                            className="btn btn-sm btn-danger purchase-delete-button"
+                            type="button"
+                            aria-label={'Hapus pembelian ' + purchase.purchase}
+                            title="Hapus riwayat pembelian"
+                            disabled={deletingEntryId !== null}
+                            onClick={() => deletePurchase(entry)}>
+                            <Icon name="close" size={16} />
+                          </button>
+                        )}
+                      </div>
+                      <div className="purchase-item-meta">
+                        <span className="purchase-item-type">{purchaseKind}</span>
+                        <span className={'purchase-payment-status' + (entry.purchaseSource === 'payable' ? ' is-credit' : '')}>
+                          {payableStatus}
                         </span>
-                      )}
-                      {entry.purchaseSource !== 'payable' && (
-                        <button
-                          className="btn btn-sm btn-danger purchase-delete-button"
-                          type="button"
-                          aria-label={'Hapus pembelian ' + purchase.purchase}
-                          title="Hapus riwayat pembelian"
-                          disabled={deletingEntryId !== null}
-                          onClick={() => deletePurchase(entry)}>
-                          <Icon name="close" size={16} />
-                        </button>
-                      )}
+                        {stockPurchase && (
+                          <span className="purchase-item-stock-meta">
+                            {stockPurchase.quantityPcs} pcs · {rupiah(stockPurchase.unitCostPerPiece)}/pcs
+                          </span>
+                        )}
+                      </div>
                     </div>
                   </td>
                   <td data-label="Tanggal">{dateOnly(entry.date || entry.createdAt)}</td>

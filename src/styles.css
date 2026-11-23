@@ -4539,8 +4539,12 @@ body:has(.app) {
 }
 .app:not(.menu-landing) .purchase-table tbody td:first-child { border-left: 1px solid #eaded8; border-radius: 14px 0 0 5px; }
 .app:not(.menu-landing) .purchase-table tbody td:last-child { border-right: 1px solid #eaded8; border-radius: 0 5px 14px 0; }
-.app:not(.menu-landing) .purchase-item-heading { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.app:not(.menu-landing) .purchase-item-heading { display: grid; min-width: 0; gap: 5px; }
+.app:not(.menu-landing) .purchase-item-main { display: flex; min-width: 0; align-items: flex-start; justify-content: space-between; gap: 8px; }
+.app:not(.menu-landing) .purchase-item-title { min-width: 0; overflow-wrap: anywhere; }
+.app:not(.menu-landing) .purchase-item-meta { display: flex; min-width: 0; flex-wrap: wrap; align-items: center; gap: 4px 8px; }
 .app:not(.menu-landing) .purchase-item-type { display: none; }
+.app:not(.menu-landing) .purchase-payment-status { display: none; }
 .app:not(.menu-landing) .purchase-item-stock-meta { display: block; color: var(--muted); font-size: 10px; font-weight: 500; }
 .app:not(.menu-landing) .purchase-table tbody tr:hover td { background: #fff8f4; }
 .app:not(.menu-landing) .purchase-table td.danger { color: var(--accent-dark); font-variant-numeric: tabular-nums; font-weight: 700; white-space: nowrap; }
@@ -4622,32 +4626,55 @@ body:has(.app) {
   }
   .app:not(.menu-landing) .purchase-table tbody td:nth-child(2)::before { content: none; }
   .app:not(.menu-landing) .purchase-item-heading {
+    display: grid;
+    min-width: 0;
+    gap: 6px;
+  }
+  .app:not(.menu-landing) .purchase-item-main {
     display: flex;
     min-width: 0;
-    align-items: center;
+    align-items: flex-start;
     justify-content: space-between;
-    gap: 10px;
+    gap: 8px;
   }
   .app:not(.menu-landing) .purchase-item-title {
     min-width: 0;
+    flex: 1 1 auto;
     color: inherit;
     font-size: 13px;
     font-weight: 700;
     line-height: 1.35;
     overflow-wrap: anywhere;
   }
+  .app:not(.menu-landing) .purchase-item-meta {
+    display: flex;
+    min-width: 0;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 5px 7px;
+  }
   .app:not(.menu-landing) .purchase-item-type {
     display: block;
     flex: 0 0 auto;
+    padding: 3px 6px;
+    border-radius: 4px;
+    background: rgba(255, 250, 243, .16);
     color: rgba(255, 250, 243, .82);
     font-size: 8px;
     font-weight: 700;
-    letter-spacing: .7px;
-    text-transform: uppercase;
+    letter-spacing: .2px;
+  }
+  .app:not(.menu-landing) .purchase-payment-status {
+    display: block;
+    min-width: 0;
+    color: #fffaf3;
+    font-size: 9px;
+    font-weight: 600;
+    line-height: 1.3;
+    overflow-wrap: anywhere;
   }
   .app:not(.menu-landing) .purchase-item-stock-meta {
-    flex-basis: 100%;
-    order: 4;
+    display: block;
     color: rgba(255, 250, 243, .82);
     font-size: 9px;
     font-weight: 500;
