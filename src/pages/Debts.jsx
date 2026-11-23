@@ -260,12 +260,17 @@ export default function Debts() {
       )
       customerPaymentRequest.current = null
       const customerKey = selectedCustomerDebt.customer_name.trim().toLocaleLowerCase('id-ID')
-      setCustomerDetails((current) => {
-        const next = { ...current }
-        delete next[customerKey]
-        return next
-      })
       setSelectedCustomerDebt(null)
+      setLoadingCustomerDetails(customerKey)
+      setCustomerDetailsError('')
+      try {
+        const updatedDetails = await getCustomerReceivableDetails(selectedCustomerDebt.customer_name)
+        setCustomerDetails((current) => ({ ...current, [customerKey]: updatedDetails }))
+      } catch (error) {
+        setCustomerDetailsError(error.message || 'Pembayaran berhasil, tetapi detail piutang gagal diperbarui.')
+      } finally {
+        setLoadingCustomerDetails('')
+      }
     } catch (error) {
       setCustomerPaymentError(error.message || 'Gagal menyimpan pembayaran piutang.')
     } finally {
@@ -390,9 +395,6 @@ export default function Debts() {
                           onClick={() => toggleCustomerDetails(debt)}>
                           {isExpanded ? 'Tutup detail' : 'Detail faktur'}
                         </button>
-                        <button className="btn btn-sm btn-primary" type="button" onClick={() => openCustomerPayment(debt)}>
-                          Bayar
-                        </button>
                       </div>
                     </div>
                     {isExpanded && (
@@ -406,7 +408,7 @@ export default function Debts() {
                             <div className="debts-customer-total">
                               <strong>Sisa piutang gabungan: {rupiah(Number(debt.balance_due))}</strong>
                               <button
-                                className="btn btn-sm btn-primary"
+                                className="btn btn-primary debts-customer-pay-button"
                                 type="button"
                                 onClick={() => openCustomerPayment(debt)}>
                                 Bayar
