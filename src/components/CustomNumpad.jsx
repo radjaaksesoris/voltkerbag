@@ -24,15 +24,6 @@ export default function CustomNumpad() {
     function syncInputReadOnly() {
       const isMobile = window.matchMedia('(max-width: 640px)').matches
       document.querySelectorAll(INPUT_SELECTOR).forEach((input) => {
-        if (input.dataset.customNumpad === 'money') {
-          if (input.dataset.customNumpadManagedReadonly === 'true') {
-            input.readOnly = input.dataset.customNumpadOriginalReadonly === 'true'
-            delete input.dataset.customNumpadOriginalReadonly
-            delete input.dataset.customNumpadManagedReadonly
-          }
-          return
-        }
-
         if (isMobile && !input.disabled) {
           if (input.dataset.customNumpadManagedReadonly !== 'true') {
             if (input.readOnly) return

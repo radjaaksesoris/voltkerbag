@@ -566,56 +566,62 @@ export default function Debts() {
       )}
 
       {selectedPayable && (
-        <div className="overlay" onClick={() => !savingPayment && setSelectedPayable(null)}>
-          <form className="modal" onClick={(event) => event.stopPropagation()} onSubmit={submitVendorPayment}>
-            <h3>Bayar utang pembelian</h3>
-            <p className="muted">{selectedPayable.vendor_name} · {selectedPayable.description}</p>
-            <p className="installment-balance">Sisa utang <strong>{rupiah(selectedPayable.balance_due)}</strong></p>
-            <div className="debts-payment-modes" role="group" aria-label="Jumlah pembayaran">
-              <button className="btn" type="button" onClick={() => setPaymentAmount(String(selectedPayable.balance_due))}>Lunasi penuh</button>
-              <button className="btn" type="button" onClick={() => setPaymentAmount('')}>Bayar sebagian</button>
-            </div>
-            <label htmlFor="vendor-payable-payment">Jumlah pembayaran</label>
-            <MoneyInput
-              id="vendor-payable-payment"
-              value={paymentAmount}
-              onChange={setPaymentAmount}
-              placeholder="Masukkan nominal"
-              required
-            />
-            {paymentError && <p className="form-error" role="alert">{paymentError}</p>}
-            <div className="modal-actions">
-              <button className="btn" type="button" disabled={savingPayment} onClick={() => setSelectedPayable(null)}>Batal</button>
-              <button className="btn btn-primary" type="submit" disabled={savingPayment}>
-                {savingPayment ? 'Menyimpan...' : 'Simpan pembayaran'}
-              </button>
-            </div>
-          </form>
-        </div>
+        createPortal(
+          <div className="overlay debts-payment-overlay" onClick={() => !savingPayment && setSelectedPayable(null)}>
+            <form className="modal" onClick={(event) => event.stopPropagation()} onSubmit={submitVendorPayment}>
+              <h3>Bayar utang pembelian</h3>
+              <p className="muted">{selectedPayable.vendor_name} · {selectedPayable.description}</p>
+              <p className="installment-balance">Sisa utang <strong>{rupiah(selectedPayable.balance_due)}</strong></p>
+              <div className="debts-payment-modes" role="group" aria-label="Jumlah pembayaran">
+                <button className="btn" type="button" onClick={() => setPaymentAmount(String(selectedPayable.balance_due))}>Lunasi penuh</button>
+                <button className="btn" type="button" onClick={() => setPaymentAmount('')}>Bayar sebagian</button>
+              </div>
+              <label htmlFor="vendor-payable-payment">Jumlah pembayaran</label>
+              <MoneyInput
+                id="vendor-payable-payment"
+                value={paymentAmount}
+                onChange={setPaymentAmount}
+                placeholder="Masukkan nominal"
+                required
+              />
+              {paymentError && <p className="form-error" role="alert">{paymentError}</p>}
+              <div className="modal-actions">
+                <button className="btn" type="button" disabled={savingPayment} onClick={() => setSelectedPayable(null)}>Batal</button>
+                <button className="btn btn-primary" type="submit" disabled={savingPayment}>
+                  {savingPayment ? 'Menyimpan...' : 'Simpan pembayaran'}
+                </button>
+              </div>
+            </form>
+          </div>,
+          document.body
+        )
       )}
 
       {selectedCustomerDebt && (
-        <div className="overlay" onClick={() => !savingCustomerPayment && setSelectedCustomerDebt(null)}>
-          <form className="modal" onClick={(event) => event.stopPropagation()} onSubmit={submitCustomerPayment}>
-            <h3>Pembayaran piutang pelanggan</h3>
-            <p className="muted">{selectedCustomerDebt.customer_name} · Sisa piutang {rupiah(selectedCustomerDebt.balance_due)}</p>
-            <label htmlFor="customer-receivable-payment">Jumlah pembayaran</label>
-            <MoneyInput
-              id="customer-receivable-payment"
-              value={customerPaymentAmount}
-              onChange={setCustomerPaymentAmount}
-              placeholder="Masukkan nominal"
-              required
-            />
-            {customerPaymentError && <p className="form-error" role="alert">{customerPaymentError}</p>}
-            <div className="modal-actions">
-              <button className="btn" type="button" disabled={savingCustomerPayment} onClick={() => setSelectedCustomerDebt(null)}>Batal</button>
-              <button className="btn btn-primary" type="submit" disabled={savingCustomerPayment}>
-                {savingCustomerPayment ? 'Menyimpan...' : 'Simpan pembayaran'}
-              </button>
-            </div>
-          </form>
-        </div>
+        createPortal(
+          <div className="overlay debts-payment-overlay" onClick={() => !savingCustomerPayment && setSelectedCustomerDebt(null)}>
+            <form className="modal" onClick={(event) => event.stopPropagation()} onSubmit={submitCustomerPayment}>
+              <h3>Pembayaran piutang pelanggan</h3>
+              <p className="muted">{selectedCustomerDebt.customer_name} · Sisa piutang {rupiah(selectedCustomerDebt.balance_due)}</p>
+              <label htmlFor="customer-receivable-payment">Jumlah pembayaran</label>
+              <MoneyInput
+                id="customer-receivable-payment"
+                value={customerPaymentAmount}
+                onChange={setCustomerPaymentAmount}
+                placeholder="Masukkan nominal"
+                required
+              />
+              {customerPaymentError && <p className="form-error" role="alert">{customerPaymentError}</p>}
+              <div className="modal-actions">
+                <button className="btn" type="button" disabled={savingCustomerPayment} onClick={() => setSelectedCustomerDebt(null)}>Batal</button>
+                <button className="btn btn-primary" type="submit" disabled={savingCustomerPayment}>
+                  {savingCustomerPayment ? 'Menyimpan...' : 'Simpan pembayaran'}
+                </button>
+              </div>
+            </form>
+          </div>,
+          document.body
+        )
       )}
 
       {manualDebtOpen && (

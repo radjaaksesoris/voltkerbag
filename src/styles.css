@@ -2389,6 +2389,7 @@ label { display: block; margin-bottom: 6px; color: var(--muted); font-size: 11px
 .debts-invoice-customer-details { display: grid; gap: 5px; padding: 8px; border-radius: 8px; background: var(--surface-soft, #faf5ef); }
 .debts-invoice-customer-details h5 { margin: 2px 0 0; color: var(--ink); font-size: 11px; }
 .debts-customer-details-modal { max-width: 760px; padding: 20px; }
+.debts-payment-overlay { z-index: 60; }
 .debts-customer-details-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 14px; }
 .debts-customer-details-heading h3 { margin: 0 0 5px; }
 .debts-customer-details-modal .debts-invoice-customer-details { padding: 10px; }

@@ -200,6 +200,14 @@ export default function Products({ lowStockFilterRequest = 0 }) {
     [items]
   )
   const visibleProducts = filtered.slice(0, visibleProductCount)
+
+  useEffect(() => {
+    if (loaded && lowStockOnly && lowStock.length === 0) {
+      setLowStockOnly(false)
+      setVisibleProductCount(PRODUCT_PAGE_SIZE)
+    }
+  }, [loaded, lowStockOnly, lowStock.length])
+
   const stockReceiptPreview = stockProduct && Number(stockAmount) > 0 && stockUnitCost !== '' && Number(stockUnitCost) >= 0
     ? stockReceiptValuation({
         stockPcs: stockInPcs(stockProduct),
@@ -663,7 +671,7 @@ export default function Products({ lowStockFilterRequest = 0 }) {
             <h3>Daftar produk</h3>
             <span>{filtered.length} produk ditemukan</span>
           </div>
-          {lowStock.length > 0 && (
+          {(lowStockOnly || lowStock.length > 0) && (
             <button
               type="button"
               className={'btn products-low-stock-filter' + (lowStockOnly ? ' active' : '')}
