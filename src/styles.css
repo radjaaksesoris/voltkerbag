@@ -2898,6 +2898,12 @@ label { display: block; margin-bottom: 6px; color: var(--muted); font-size: 11px
 .transaction-details-items table { width: 100%; min-width: 0; table-layout: fixed; }
 .transaction-details-items th,
 .transaction-details-items td { padding-inline: 7px; white-space: normal; overflow-wrap: anywhere; }
+.transaction-details-items thead th {
+  border-bottom-color: var(--accent-dark);
+  background: var(--accent);
+  color: #fffaf3;
+  text-align: center;
+}
 .transaction-details-items tbody td:first-child strong { overflow-wrap: anywhere; }
 .transaction-details-items tfoot th, .transaction-details-items tfoot td { padding-top: 9px; padding-bottom: 9px; }
 .transaction-details-items tfoot tr:first-child th { border-top: 2px solid var(--border); color: var(--ink); }
