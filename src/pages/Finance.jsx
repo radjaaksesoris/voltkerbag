@@ -20,6 +20,16 @@ const TYPES = {
 const FINANCE_PAGE_SIZE = 20
 const FINANCE_INVOICE_PAGE_SIZE = 20
 
+function formatInvoiceListDate(value) {
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return '—'
+  return new Intl.DateTimeFormat('id-ID', {
+    day: '2-digit',
+    month: '2-digit',
+    year: '2-digit'
+  }).format(date)
+}
+
 function getTodayDateRange() {
   const today = localDateValue(new Date())
   return { from: today, to: today }
@@ -641,7 +651,7 @@ export default function Finance() {
                         const balanceDue = getInvoiceBalanceDue(invoice, paidAmount)
                         return (
                           <tr key={invoice.id}>
-                            <td>
+                            <td data-label="No. faktur">
                               <button
                                 className="finance-invoice-number"
                                 type="button"
@@ -649,15 +659,16 @@ export default function Finance() {
                                 {getInvoiceNumber(invoice)}
                               </button>
                             </td>
-                            <td>
+                            <td data-label="Pelanggan">
                               <CustomerIdentity
                                 name={invoice.customerName || 'Pelanggan'}
                                 customer={customers.find((customer) => customer.name === invoice.customerName)}
+                                className="finance-invoice-customer"
                               />
                             </td>
-                            <td>{dateOnly(invoice.createdAt)}</td>
-                            <td className="right">{rupiah(invoice.total)}</td>
-                            <td className="right">
+                            <td data-label="Tanggal">{formatInvoiceListDate(invoice.createdAt)}</td>
+                            <td className="right" data-label="Total">{rupiah(invoice.total)}</td>
+                            <td className="right" data-label="Dibayar">
                               <strong>{rupiah(paidAmount)}</strong>
                               {invoice.payments.length > 0 && (
                                 <span className="finance-invoice-payment-history">
@@ -667,10 +678,10 @@ export default function Finance() {
                                 </span>
                               )}
                             </td>
-                            <td className="right">
+                            <td className="right" data-label="Sisa tagihan">
                               <strong className={balanceDue > 0 ? 'danger' : 'ok'}>{rupiah(balanceDue)}</strong>
                             </td>
-                            <td>
+                            <td data-label="Aksi">
                               <div className="finance-invoice-actions">
                                 <button
                                   className="btn btn-sm"
