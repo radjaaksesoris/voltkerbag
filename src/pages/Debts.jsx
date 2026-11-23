@@ -32,6 +32,7 @@ export default function Debts() {
   const [loadingCustomerDetails, setLoadingCustomerDetails] = useState('')
   const [customerDetailsError, setCustomerDetailsError] = useState('')
   const [vendorGroups, setVendorGroups] = useState([])
+  const [totalVendorDebt, setTotalVendorDebt] = useState(0)
   const [expandedVendor, setExpandedVendor] = useState('')
   const [payableCount, setPayableCount] = useState(0)
   const [payablePage, setPayablePage] = useState(1)
@@ -95,6 +96,7 @@ export default function Debts() {
           if (!active || currentRequest !== requestId.current) return
           setVendorGroups(payableData.vendors)
           setPayableCount(payableData.totalCount)
+          setTotalVendorDebt(payableData.totalBalance)
         }
       } catch (error) {
         if (active && currentRequest === requestId.current) {
@@ -304,6 +306,10 @@ export default function Debts() {
   }
 
   const payablePageCount = Math.max(1, Math.ceil(payableCount / PAGE_SIZE))
+  const totalCustomerReceivable = customerBalances.reduce(
+    (total, debt) => total + Number(debt.balance_due || 0),
+    0
+  )
   const activeCustomerDebt = customerBalances.find(
     (debt) => debt.customer_name.trim().toLocaleLowerCase('id-ID') === expandedCustomer
   )
@@ -367,7 +373,13 @@ export default function Debts() {
               <Icon name="plus" size={15} /> Catat piutang lama
             </button>
           </div>
-          <h4 className="debts-subheading">Daftar faktur kredit</h4>
+          <div className="debts-list-heading">
+            <h4>Daftar faktur kredit</h4>
+            <div className="debts-list-total">
+              <span>Total piutang pelanggan</span>
+              <strong>{rupiah(totalCustomerReceivable)}</strong>
+            </div>
+          </div>
           {customerBalances.length === 0 ? (
             <p className="debts-empty muted">Tidak ada faktur kredit yang belum lunas.</p>
           ) : (
@@ -403,9 +415,11 @@ export default function Debts() {
         </section>
       ) : (
         <section className="card table-card debts-card">
-            <div className="debts-section-heading">
-              <div>
-                <h3>Daftar utang pembelian</h3>
+            <div className="debts-list-heading">
+              <h3>Daftar utang pembelian</h3>
+              <div className="debts-list-total">
+                <span>Total utang pembelian</span>
+                <strong>{rupiah(totalVendorDebt)}</strong>
               </div>
             </div>
             {vendorGroups.length === 0 ? (

@@ -900,6 +900,8 @@ function ActiveApp() {
                           onApplyAppUpdate={applyAppUpdate} />
                       : id === 'dashboard'
                         ? <Page onOpenLowStockProducts={openLowStockProducts} />
+                        : id === 'finance'
+                          ? <Page onNavigateToDebts={() => navigateToPage('debts')} />
                         : id === 'stok'
                           ? <Page lowStockFilterRequest={lowStockFilterRequest} />
                           : <Page />}

@@ -402,7 +402,8 @@ export default function Purchases() {
                     id="purchase-quantity"
                     className="input"
                     type="number"
-                    inputMode="numeric"
+                    inputMode="none"
+                    data-custom-numpad="integer"
                     min="1"
                     step="1"
                     value={quantity}

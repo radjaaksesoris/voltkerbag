@@ -44,7 +44,7 @@ function getCurrentMonthDateRange() {
   }
 }
 
-export default function Finance() {
+export default function Finance({ onNavigateToDebts }) {
   const [report, setReport] = useState({
     entries: [],
     total_count: 0,
@@ -347,7 +347,11 @@ export default function Finance() {
               <strong>+<LoadingNumber label="pemasukan penjualan" /></strong>
             </div>
           </div>
-          <div className="stat-card dashboard-stat-card finance-debt-summary-card">
+          <button
+            className="stat-card dashboard-stat-card finance-debt-summary-card finance-debt-summary-card-trigger"
+            type="button"
+            aria-label="Buka halaman Utang/Piutang"
+            onClick={onNavigateToDebts}>
             <span className="dashboard-stat-icon"><Icon name="coins" size={27} /></span>
             <div className="dashboard-stat-content">
               <span>Ringkasan hutang</span>
@@ -362,7 +366,7 @@ export default function Finance() {
                 </div>
               </div>
             </div>
-          </div>
+          </button>
           <div className="stat-card dashboard-stat-card finance-cash-card">
             <span className="dashboard-stat-icon"><Icon name="wallet" size={27} /></span>
             <div className="dashboard-stat-content">

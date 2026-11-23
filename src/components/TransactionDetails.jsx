@@ -305,6 +305,8 @@ export default function TransactionDetails({ transaction, onClose, onTransaction
                     <span>{item.name} <small>(sisa {remaining} {item.unit || 'pcs'})</small></span>
                     <input
                       type="number"
+                      inputMode="none"
+                      data-custom-numpad="integer"
                       min="0"
                       max={remaining}
                       step="1"

@@ -943,7 +943,8 @@ export async function getVendorPayables(page, pageSize) {
         payments: paymentsByPayable.get(String(payable.id)) || []
       }))
     })),
-    totalCount: totalVendors
+    totalCount: totalVendors,
+    totalBalance: vendors.reduce((total, vendor) => total + vendor.balance_due, 0)
   }
 }
 
