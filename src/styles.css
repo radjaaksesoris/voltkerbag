@@ -4593,6 +4593,15 @@ body:has(.app) {
   box-shadow: 0 0 0 3px rgba(181, 40, 46, .07);
 }
 .app:not(.menu-landing) .purchase-field > label { color: #66544f; font-size: 10px; font-weight: 700; }
+.app:not(.menu-landing) .purchase-total-field {
+  border-color: #912027;
+  background: linear-gradient(145deg, #c13a40, #912027);
+}
+.app:not(.menu-landing) .purchase-total-field > label { color: #fffaf3; }
+.app:not(.menu-landing) .purchase-total-field .purchase-calculated-total {
+  background: transparent;
+  color: #fffaf3;
+}
 .app:not(.menu-landing) .purchase-field .input {
   width: 100%;
   min-width: 0;
@@ -4619,6 +4628,14 @@ body:has(.app) {
   margin-top: 13px;
   padding-inline: 20px;
   border-radius: 5px 18px 5px 18px;
+  border-color: var(--mustard-border);
+  background: var(--mustard-surface);
+  color: var(--mustard-ink);
+}
+.app:not(.menu-landing) .purchase-submit:hover:not(:disabled) {
+  border-color: var(--mustard-dark);
+  background: linear-gradient(145deg, var(--mustard-mid), var(--mustard-dark));
+  color: var(--mustard-ink);
 }
 .app:not(.menu-landing) .purchase-submit:active { transform: translateY(1px); }
 .app:not(.menu-landing) .purchase-form > .form-error,

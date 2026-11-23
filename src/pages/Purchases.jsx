@@ -340,7 +340,6 @@ export default function Purchases() {
         <div className="purchase-heading">
           <div>
             <h2>Pembelian</h2>
-            <p className="muted">Pilih tunai untuk pembelian lunas atau kredit untuk mencatat utang vendor.</p>
           </div>
         </div>
         <form className="purchase-form" onSubmit={savePurchase}>
@@ -438,7 +437,7 @@ export default function Purchases() {
                     </p>
                   )}
                 </div>
-                <div className="purchase-field">
+                <div className="purchase-field purchase-total-field">
                   <label>{paymentType === 'credit' ? 'Total tagihan' : 'Total pembelian'}</label>
                   <p className="purchase-calculated-total">{rupiah(estimatedStockPurchaseTotal)}</p>
                 </div>
