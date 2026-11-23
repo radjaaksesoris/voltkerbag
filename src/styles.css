@@ -5648,3 +5648,7 @@ body:has(.app) {
   .app:not(.menu-landing) .products-table-heading { gap: 8px; }
   .app:not(.menu-landing) .products-low-stock-filter { min-height: 32px; padding: 5px 8px; font-size: 9px; }
 }
+.app:not(.menu-landing) .content .dashboard-overview-sticky .dashboard-stats-grid .dashboard-profit-card {
+  border-color: var(--mustard-border);
+  background: var(--mustard-surface);
+}
