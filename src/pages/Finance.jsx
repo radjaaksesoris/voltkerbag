@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { getAll, getFinanceData, getFinanceInvoices, put, remove, onRefresh, requestPageRefresh, recordCustomerCreditPayment, addManualCustomerCredit, recordExpeditionCost } from '../db'
+import { getAll, getFinanceData, getFinanceInvoices, put, remove, onRefresh, requestPageRefresh, recordExpeditionCost } from '../db'
 import { rupiah, dateOnly, dateTime } from '../format'
 import { dateRangeTimestamps, hasDateRange, localDateValue } from '../dateFilter'
 import MoneyInput from '../components/MoneyInput.jsx'
@@ -53,8 +53,7 @@ export default function Finance() {
     pending_expedition_count: 0,
     total_credit: 0,
     gross_profit: 0,
-    profit_expense: 0,
-    credit_balances: []
+    profit_expense: 0
   })
   const [dateRange, setDateRange] = useState(getCurrentMonthDateRange)
   const [customers, setCustomers] = useState([])
@@ -63,7 +62,6 @@ export default function Finance() {
   const [loadError, setLoadError] = useState('')
   const [actionError, setActionError] = useState('')
   const [loaded, setLoaded] = useState(false)
-  const [showCreditBalances, setShowCreditBalances] = useState(false)
   const [showSalesInvoices, setShowSalesInvoices] = useState(false)
   const [salesInvoices, setSalesInvoices] = useState([])
   const [salesInvoiceCount, setSalesInvoiceCount] = useState(0)
@@ -82,21 +80,8 @@ export default function Finance() {
   const [entryNote, setEntryNote] = useState('')
   const [entryAmount, setEntryAmount] = useState('')
   const [savingEntry, setSavingEntry] = useState(false)
-  const [selectedDebt, setSelectedDebt] = useState(null)
-  const [creditPaymentMode, setCreditPaymentMode] = useState('full')
-  const [creditPaymentAmount, setCreditPaymentAmount] = useState('')
-  const [creditPaymentError, setCreditPaymentError] = useState('')
-  const [savingCreditPayment, setSavingCreditPayment] = useState(false)
-  const [showManualDebtForm, setShowManualDebtForm] = useState(false)
-  const [manualDebtCustomer, setManualDebtCustomer] = useState('')
-  const [manualDebtAmount, setManualDebtAmount] = useState('')
-  const [manualDebtError, setManualDebtError] = useState('')
-  const [savingManualDebt, setSavingManualDebt] = useState(false)
-  const creditPaymentRequest = useRef(null)
-  const manualDebtRequest = useRef(null)
   const requestId = useRef(0)
   const salesInvoiceRequestId = useRef(0)
-  const creditBalancesTriggerRef = useRef(null)
   const salesInvoicesTriggerRef = useRef(null)
 
   useEffect(() => {
@@ -132,7 +117,7 @@ export default function Finance() {
           pageSize: FINANCE_PAGE_SIZE
         })
         if (!active || currentRequest !== requestId.current) return
-        if (!Array.isArray(data.credit_balances) || typeof data.pending_expedition_count !== 'number') {
+        if (typeof data.pending_expedition_count !== 'number') {
           throw new Error('Pembaruan Buku Kas belum tersedia. Jalankan ulang supabase/schema.sql di Supabase, lalu muat ulang.')
         }
         const pageCount = Math.max(1, Math.ceil(data.total_count / FINANCE_PAGE_SIZE))
@@ -229,27 +214,6 @@ export default function Finance() {
     setShowEntryForm(true)
   }
 
-  function openCreditPayment(debt) {
-    setSelectedDebt(debt)
-    setCreditPaymentMode('full')
-    setCreditPaymentAmount(String(Number(debt.balance_due)))
-    setCreditPaymentError('')
-    creditPaymentRequest.current = null
-  }
-
-  function openManualDebtForm() {
-    setManualDebtCustomer('')
-    setManualDebtAmount('')
-    setManualDebtError('')
-    manualDebtRequest.current = null
-    setShowManualDebtForm(true)
-  }
-
-  function closeCreditBalances() {
-    setShowCreditBalances(false)
-    requestAnimationFrame(() => creditBalancesTriggerRef.current?.focus())
-  }
-
   function openSalesInvoices() {
     setSalesInvoicePage(1)
     setShowSalesInvoices(true)
@@ -282,76 +246,6 @@ export default function Finance() {
       setInvoiceDownloadError(error.message || 'Gagal mengunduh faktur.')
     } finally {
       setInvoiceDownloadingId(null)
-    }
-  }
-
-  async function saveManualDebt(event) {
-    event.preventDefault()
-    if (savingManualDebt) return
-    setManualDebtError('')
-    const customerName = manualDebtCustomer.trim()
-    const amount = Number(manualDebtAmount)
-    if (!customers.some((customer) => customer.name === customerName)) {
-      setManualDebtError('Pilih nama pelanggan dari master pelanggan.')
-      return
-    }
-    if (!isSafeRupiahAmount(amount)) {
-      setManualDebtError('Nominal hutang harus rupiah utuh lebih dari Rp0 dan tidak melebihi batas aman.')
-      return
-    }
-
-    const fingerprint = JSON.stringify([customerName, amount])
-    if (manualDebtRequest.current?.fingerprint !== fingerprint) {
-      manualDebtRequest.current = { fingerprint, id: crypto.randomUUID() }
-    }
-    setSavingManualDebt(true)
-    try {
-      await addManualCustomerCredit(customerName, amount, manualDebtRequest.current.id)
-      setShowManualDebtForm(false)
-    } catch (error) {
-      setManualDebtError(error.message || 'Gagal menambahkan hutang pelanggan.')
-    } finally {
-      setSavingManualDebt(false)
-    }
-  }
-
-  async function saveCreditPayment(event) {
-    event.preventDefault()
-    if (!selectedDebt || savingCreditPayment) return
-    setCreditPaymentError('')
-    const balanceDue = Number(selectedDebt.balance_due)
-    const amount = creditPaymentMode === 'full' ? balanceDue : Number(creditPaymentAmount)
-    if (!isSafeRupiahAmount(balanceDue, true)) {
-      setCreditPaymentError('Sisa hutang melebihi batas nominal rupiah yang aman. Periksa data hutang.')
-      return
-    }
-    if (!isSafeRupiahAmount(amount)) {
-      setCreditPaymentError('Nominal harus rupiah utuh lebih dari Rp0 dan tidak melebihi batas aman.')
-      return
-    }
-    if (amount > balanceDue) {
-      setCreditPaymentError('Pembayaran tidak boleh melebihi sisa hutang ' + rupiah(balanceDue) + '.')
-      return
-    }
-
-    const fingerprint = selectedDebt.customer_name + ':' + amount
-    if (creditPaymentRequest.current?.fingerprint !== fingerprint) {
-      creditPaymentRequest.current = { fingerprint, id: crypto.randomUUID() }
-    }
-
-    setSavingCreditPayment(true)
-    try {
-      await recordCustomerCreditPayment(
-        selectedDebt.customer_name,
-        amount,
-        creditPaymentRequest.current.id
-      )
-      setSelectedDebt(null)
-      creditPaymentRequest.current = null
-    } catch (error) {
-      setCreditPaymentError(error.message || 'Gagal menyimpan pembayaran hutang.')
-    } finally {
-      setSavingCreditPayment(false)
     }
   }
 
@@ -557,22 +451,13 @@ export default function Finance() {
               <span className="finance-income-hint">Daftar faktur <Icon name="arrowRight" size={14} /></span>
             </div>
           </button>
-          <button
-            className="stat-card dashboard-stat-card debt-stat-card finance-debt-card"
-            type="button"
-            ref={creditBalancesTriggerRef}
-            aria-haspopup="dialog"
-            aria-expanded={showCreditBalances}
-            onClick={() => setShowCreditBalances(true)}>
+          <div className="stat-card dashboard-stat-card debt-stat-card finance-debt-card">
             <span className="dashboard-stat-icon"><Icon name="tag" size={27} /></span>
             <span className="dashboard-stat-content">
               <span>Hutang Pelanggan</span>
               <strong>{rupiah(totalCredit)}</strong>
-              <span className="debt-stat-hint">
-                Nama pelanggan <Icon name="arrowRight" size={14} />
-              </span>
             </span>
-          </button>
+          </div>
           <div className="stat-card dashboard-stat-card finance-cash-card">
             <span className="dashboard-stat-icon"><Icon name="wallet" size={27} /></span>
             <div className="dashboard-stat-content">
@@ -625,6 +510,7 @@ export default function Finance() {
             </div>
             {invoiceDownloadError && <p className="form-error" role="alert">{invoiceDownloadError}</p>}
             {invoiceDownloadStatus && <p className="backup-success" role="status">{invoiceDownloadStatus}</p>}
+            {customerLoadError && <p className="form-error" role="alert">{customerLoadError}</p>}
             {salesInvoicesError && <p className="form-error" role="alert">{salesInvoicesError}</p>}
             {salesInvoicesLoading ? (
               <p className="muted small">Memuat daftar faktur...</p>
@@ -734,64 +620,6 @@ export default function Finance() {
         </div>
       )}
 
-      {showCreditBalances && (
-        <div className="overlay credit-balances-overlay" onClick={closeCreditBalances}>
-          <section
-            className="modal credit-balances-modal"
-            id="credit-balances-dialog"
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="credit-balances-title"
-            onClick={(event) => event.stopPropagation()}
-            onKeyDown={(event) => {
-              if (event.key === 'Escape') closeCreditBalances()
-            }}>
-            <div className="credit-balances-heading">
-              <div>
-                <h3 id="credit-balances-title">Pelanggan dengan hutang</h3>
-                <p className="muted small">Menampilkan sisa hutang yang masih berjalan, tidak dibatasi periode.</p>
-              </div>
-              <button
-                className="btn credit-balances-close"
-                type="button"
-                aria-label="Tutup daftar pelanggan dengan hutang"
-                autoFocus
-                onClick={closeCreditBalances}>
-                <Icon name="close" size={18} />
-              </button>
-            </div>
-            <div className="credit-balances-heading-actions">
-              <strong className="credit-balances-total">{rupiah(totalCredit)}</strong>
-              <button className="btn btn-primary btn-sm" type="button" onClick={openManualDebtForm}>
-                + Tambah hutang
-              </button>
-            </div>
-            {customerLoadError && <p className="form-error" role="alert">{customerLoadError}</p>}
-            {report.credit_balances.length === 0 ? (
-              <p className="credit-balances-empty muted">Tidak ada pelanggan dengan hutang saat ini.</p>
-            ) : (
-              <ul className={'credit-balances-list' + (report.credit_balances.length >= 5 ? ' is-scrollable' : '')}>
-                {report.credit_balances.map((debt, index) => (
-                  <li key={debt.customer_name}>
-                    <span className="finance-row-number">{index + 1}</span>
-                    <CustomerIdentity
-                      name={debt.customer_name}
-                      customer={customers.find((customer) => customer.name === debt.customer_name)}
-                    />
-                    <div className="credit-balances-actions">
-                      <strong>{rupiah(Number(debt.balance_due))}</strong>
-                      <button className="btn btn-sm btn-primary" type="button" onClick={() => openCreditPayment(debt)}>
-                        Bayar
-                      </button>
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </section>
-        </div>
-      )}
-
       <div className="finance-grid">
         <div className="card table-card finance-ledger">
           <div className="finance-ledger-heading">
@@ -877,52 +705,6 @@ export default function Finance() {
         </div>
       </div>
 
-      {showManualDebtForm && (
-        <div className="overlay" onClick={() => !savingManualDebt && setShowManualDebtForm(false)}>
-          <form
-            className="modal credit-payment-modal"
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="manual-debt-title"
-            onClick={(event) => event.stopPropagation()}
-            onSubmit={saveManualDebt}>
-            <h3 id="manual-debt-title">Tambah hutang lama</h3>
-            <label htmlFor="manual-debt-customer">Nama pelanggan</label>
-            <SelectInput
-              id="manual-debt-customer"
-              className="finance-customer-select"
-              ariaLabel="Nama pelanggan"
-              value={manualDebtCustomer}
-              onChange={setManualDebtCustomer}
-              required
-              disabled={customers.length === 0 || savingManualDebt}
-              placeholder="Pilih pelanggan"
-              options={customers.map((customer) => ({
-                value: customer.name,
-                label: customer.name
-              }))} />
-            {customers.length === 0 && (
-              <p className="muted small">Belum ada pelanggan di master. Tambahkan pelanggan terlebih dahulu di tab Setting.</p>
-            )}
-            <label htmlFor="manual-debt-amount">Nominal hutang</label>
-            <MoneyInput
-              id="manual-debt-amount"
-              value={manualDebtAmount}
-              onChange={setManualDebtAmount}
-              placeholder="Masukkan nominal hutang"
-              required
-            />
-            {manualDebtError && <p className="form-error" role="alert">{manualDebtError}</p>}
-            <div className="modal-actions">
-              <button className="btn" type="button" disabled={savingManualDebt} onClick={() => setShowManualDebtForm(false)}>Batal</button>
-              <button className="btn btn-primary" type="submit" disabled={savingManualDebt || customers.length === 0}>
-                {savingManualDebt ? 'Menyimpan...' : 'Simpan hutang'}
-              </button>
-            </div>
-          </form>
-        </div>
-      )}
-
       {showEntryForm && (
         <div className="overlay" onClick={() => !savingEntry && setShowEntryForm(false)}>
           <form
@@ -999,57 +781,6 @@ export default function Finance() {
         </div>
       )}
 
-      {selectedDebt && (
-        <div className="overlay" onClick={() => !savingCreditPayment && setSelectedDebt(null)}>
-          <form
-            className="modal credit-payment-modal"
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="credit-payment-title"
-            onClick={(event) => event.stopPropagation()}
-            onSubmit={saveCreditPayment}>
-            <h3 id="credit-payment-title">Pembayaran hutang pelanggan</h3>
-            <p className="muted">
-              {selectedDebt.customer_name} · Sisa hutang {rupiah(Number(selectedDebt.balance_due))}
-            </p>
-            <div className="credit-payment-modes" role="group" aria-label="Jenis pembayaran">
-              <button
-                className={'btn ' + (creditPaymentMode === 'full' ? 'btn-primary' : '')}
-                type="button"
-                aria-pressed={creditPaymentMode === 'full'}
-                onClick={() => setCreditPaymentMode('full')}>
-                Lunasi penuh
-              </button>
-              <button
-                className={'btn ' + (creditPaymentMode === 'partial' ? 'btn-primary' : '')}
-                type="button"
-                aria-pressed={creditPaymentMode === 'partial'}
-                onClick={() => {
-                  setCreditPaymentMode('partial')
-                  setCreditPaymentAmount('')
-                }}>
-                Bayar sebagian
-              </button>
-            </div>
-            <label htmlFor="customer-credit-payment-amount">Jumlah pembayaran</label>
-            <MoneyInput
-              id="customer-credit-payment-amount"
-              value={creditPaymentMode === 'full' ? String(Number(selectedDebt.balance_due)) : creditPaymentAmount}
-              onChange={setCreditPaymentAmount}
-              placeholder="Masukkan nominal pembayaran"
-              disabled={creditPaymentMode === 'full'}
-              required
-            />
-            {creditPaymentError && <p className="form-error" role="alert">{creditPaymentError}</p>}
-            <div className="modal-actions">
-              <button className="btn" type="button" disabled={savingCreditPayment} onClick={() => setSelectedDebt(null)}>Batal</button>
-              <button className="btn btn-primary" type="submit" disabled={savingCreditPayment}>
-                {savingCreditPayment ? 'Menyimpan...' : creditPaymentMode === 'full' ? 'Lunasi hutang' : 'Simpan pembayaran'}
-              </button>
-            </div>
-          </form>
-        </div>
-      )}
       {selectedInvoice && (
         <ReceiptPreview
           transaction={selectedInvoice}
