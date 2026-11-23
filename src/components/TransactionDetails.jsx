@@ -61,6 +61,11 @@ export default function TransactionDetails({ transaction, onClose, onTransaction
       .then((rows) => {
         if (active && generation === paymentsLoadGeneration.current) {
           setPayments(rows)
+          setCurrentTransaction((current) => (
+            current.id === currentTransaction.id
+              ? { ...current, payments: rows }
+              : current
+          ))
           setPaymentsError('')
         }
       })

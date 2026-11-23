@@ -45,6 +45,29 @@ test('escapes customer and item text in the generated invoice', () => {
   assert.doesNotMatch(svg, /<script>/)
 })
 
+test('includes partial payment history and the current outstanding balance', () => {
+  const svg = createInvoiceSvg({
+    id: 22,
+    createdAt: '2026-11-17T10:00:00.000Z',
+    customerName: 'Pelanggan',
+    paymentType: 'credit',
+    items: [{ name: 'Tas', qty: 1, unit: 'pcs', price: 100000 }],
+    total: 100000,
+    paidAmount: 40000,
+    balanceDue: 60000,
+    payments: [
+      { date: '2026-11-17T10:00:00.000Z', amount: 10000 },
+      { date: '2026-11-18T10:00:00.000Z', amount: 30000 }
+    ]
+  })
+
+  assert.match(svg, /Sudah dibayar<\/text>[\s\S]*?Rp\s?40\.000/)
+  assert.match(svg, /Sisa tagihan<\/text>[\s\S]*?Rp\s?60\.000/)
+  assert.match(svg, /RIWAYAT PEMBAYARAN/)
+  assert.match(svg, /Rp\s?10\.000/)
+  assert.match(svg, /Rp\s?30\.000/)
+})
+
 test('omits fully returned product lines but preserves return history, reduced total, and refund', () => {
   const svg = createInvoiceSvg({
     id: 21,
