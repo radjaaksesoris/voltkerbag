@@ -1,11 +1,11 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
-import { formatMoneyInput } from '../moneyInput'
+import { clampMoneyInput, formatMoneyInput } from '../moneyInput'
 
 function rawAmount(value) {
   return String(value ?? '').replace(/\D/g, '')
 }
 
-export default function MoneyInput({ value, onChange, className = 'input', inputRef: externalInputRef, ...props }) {
+export default function MoneyInput({ value, onChange, maxAmount, className = 'input', inputRef: externalInputRef, ...props }) {
   const inputRef = useRef(null)
   const pendingDigitOffset = useRef(null)
   const [displayValue, setDisplayValue] = useState(() => formatMoneyInput(value))
@@ -30,7 +30,7 @@ export default function MoneyInput({ value, onChange, className = 'input', input
   function handleChange(event) {
     const input = event.currentTarget
     const offset = rawAmount(input.value.slice(0, input.selectionStart ?? input.value.length)).length
-    const nextValue = rawAmount(input.value)
+    const nextValue = clampMoneyInput(input.value, maxAmount)
     pendingDigitOffset.current = offset
     setDisplayValue(formatMoneyInput(nextValue))
     onChange(nextValue)

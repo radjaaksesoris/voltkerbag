@@ -1,6 +1,5 @@
 import { useLayoutEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
-import Icon from './Icon.jsx'
 
 const INPUT_SELECTOR = 'input[data-custom-numpad]'
 
@@ -50,6 +49,13 @@ export default function CustomNumpad() {
 
     function handleFocusIn(event) {
       const input = event.target
+      const currentActiveInput = activeInputRef.current
+      if (currentActiveInput?.isConnected && input !== currentActiveInput) {
+        if (input instanceof Element && input.closest('.custom-numpad')) return
+        event.stopImmediatePropagation()
+        currentActiveInput.focus({ preventScroll: true })
+        return
+      }
       if (input instanceof HTMLInputElement && input.matches(INPUT_SELECTOR)) syncInputReadOnly()
       const shouldShow = input instanceof HTMLInputElement &&
         input.matches(INPUT_SELECTOR) &&
@@ -62,12 +68,25 @@ export default function CustomNumpad() {
     }
 
     function handlePointerDown(event) {
-      if (event.target.closest('.custom-numpad')) return
-      if (event.target !== activeInputRef.current) {
-        activeInputRef.current?.blur()
-        activeInputRef.current = null
-        setActiveInput(null)
-      }
+      if (!activeInputRef.current?.isConnected ||
+          event.target.closest('.custom-numpad') ||
+          event.target === activeInputRef.current) return
+      event.preventDefault()
+      event.stopImmediatePropagation()
+    }
+
+    function handleClick(event) {
+      if (!activeInputRef.current?.isConnected ||
+          event.target.closest('.custom-numpad') ||
+          event.target === activeInputRef.current) return
+      event.preventDefault()
+      event.stopImmediatePropagation()
+    }
+
+    function handleSubmit(event) {
+      if (!activeInputRef.current?.isConnected) return
+      event.preventDefault()
+      event.stopImmediatePropagation()
     }
 
     function handleKeyDown(event) {
@@ -92,12 +111,16 @@ export default function CustomNumpad() {
     }
 
     document.addEventListener('focusin', handleFocusIn)
-    document.addEventListener('pointerdown', handlePointerDown)
+    document.addEventListener('pointerdown', handlePointerDown, true)
+    document.addEventListener('click', handleClick, true)
+    document.addEventListener('submit', handleSubmit, true)
     document.addEventListener('keydown', handleKeyDown)
     window.addEventListener('resize', handleResize)
     return () => {
       document.removeEventListener('focusin', handleFocusIn)
-      document.removeEventListener('pointerdown', handlePointerDown)
+      document.removeEventListener('pointerdown', handlePointerDown, true)
+      document.removeEventListener('click', handleClick, true)
+      document.removeEventListener('submit', handleSubmit, true)
       document.removeEventListener('keydown', handleKeyDown)
       window.removeEventListener('resize', handleResize)
       observer.disconnect()
@@ -307,10 +330,6 @@ export default function CustomNumpad() {
     if (event.detail === 0) pasteFromClipboard()
   }
 
-  function handleClosePointerDown(event) {
-    event.preventDefault()
-  }
-
   function closeNumpad() {
     activeInputRef.current = null
     setActiveInput(null)
@@ -328,14 +347,6 @@ export default function CustomNumpad() {
         )}
         <button type="button" onPointerDown={handlePastePointerDown} onClick={handlePasteClick}>
           Tempel
-        </button>
-        <button
-          type="button"
-          aria-label="Tutup keypad"
-          title="Tutup keypad"
-          onPointerDown={handleClosePointerDown}
-          onClick={closeNumpad}>
-          <Icon name="close" size={16} />
         </button>
       </div>
       {pasteError && <p className="custom-numpad-error" role="status">{pasteError}</p>}

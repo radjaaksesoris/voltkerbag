@@ -662,6 +662,7 @@ export default function Debts() {
                   setCustomerPaymentAmount(value)
                   setCustomerPaymentError('')
                 }}
+                maxAmount={Number(selectedCustomerDebt.balance_due)}
                 placeholder="Masukkan nominal"
                 required
                 disabled={savingCustomerPayment || loadingCustomerPaymentInvoices}
