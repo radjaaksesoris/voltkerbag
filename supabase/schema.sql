@@ -2971,6 +2971,7 @@ declare
   credit_total numeric;
   credit_balances jsonb;
   gross_profit numeric;
+  profit_expense_total numeric;
   pending_expedition_count bigint;
 begin
   if current_user_id is null then raise exception 'Login diperlukan.'; end if;
@@ -3058,11 +3059,60 @@ begin
   and t."createdAt" >= coalesce(p_from, '-infinity'::timestamptz)
   and t."createdAt" < coalesce(p_to, 'infinity'::timestamptz);
 
+  select coalesce(sum(e.amount), 0)
+  into profit_expense_total
+  from public.finance_entries e
+  where e.owner_id = current_user_id
+    and e.type = 'expense'
+    and not e.pending
+    and coalesce(e.date, e."createdAt") >= coalesce(p_from, '-infinity'::timestamptz)
+    and coalesce(e.date, e."createdAt") < coalesce(p_to, 'infinity'::timestamptz)
+    and not (
+      (
+        lower(trim(coalesce(e.category, ''))) = 'pembelian bahan produksi'
+        and position(chr(30) || 'inventory-purchase:' in coalesce(e.note, '')) > 0
+      )
+      or (
+        lower(trim(coalesce(e.category, ''))) = 'pembayaran utang pembelian'
+        and exists (
+          select 1
+          from public.vendor_payables vp
+          join public.product_stock_adjustments adjustment
+            on adjustment.owner_id = vp.owner_id
+           and adjustment.request_id = vp.request_id
+          where vp.owner_id = e.owner_id
+            and vp.id = e."refId"
+        )
+      )
+    );
+
   select coalesce(jsonb_agg(to_jsonb(page_rows)
     order by coalesce(page_rows.date, page_rows."createdAt") desc nulls last, page_rows.id desc), '[]'::jsonb)
   into entries
   from (
-    select e.*
+    select e.*,
+      (
+        e.type = 'expense'
+        and not e.pending
+        and not (
+          (
+            lower(trim(coalesce(e.category, ''))) = 'pembelian bahan produksi'
+            and position(chr(30) || 'inventory-purchase:' in coalesce(e.note, '')) > 0
+          )
+          or (
+            lower(trim(coalesce(e.category, ''))) = 'pembayaran utang pembelian'
+            and exists (
+              select 1
+              from public.vendor_payables vp
+              join public.product_stock_adjustments adjustment
+                on adjustment.owner_id = vp.owner_id
+               and adjustment.request_id = vp.request_id
+              where vp.owner_id = e.owner_id
+                and vp.id = e."refId"
+            )
+          )
+        )
+      ) as reduces_profit
     from public.finance_entries e
     where e.owner_id = current_user_id
       and (
@@ -3085,7 +3135,8 @@ begin
     'pending_expedition_count', pending_expedition_count,
     'total_credit', credit_total,
     'credit_balances', credit_balances,
-    'gross_profit', gross_profit
+    'gross_profit', gross_profit,
+    'profit_expense', profit_expense_total
   );
 end;
 $$;

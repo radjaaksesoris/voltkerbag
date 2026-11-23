@@ -223,7 +223,7 @@ async function loadSalesSummary(args) {
       financePages.push(await getFinanceData({ ...timestamps, page, pageSize: PAGE_SIZE }))
     }
     expenseEntries = financePages.flatMap((page) => page.entries || [])
-      .filter((entry) => entry.type === 'expense' && !entry.pending && Number(entry.amount) > 0)
+      .filter((entry) => entry.type === 'expense' && !entry.pending && entry.reduces_profit !== false && Number(entry.amount) > 0)
       .map((entry) => ({
         category: entry.category || '',
         note: entry.note || '',
@@ -240,7 +240,7 @@ async function loadSalesSummary(args) {
     capital: finance.capital,
     cash_balance: Number(finance.income) + Number(finance.capital) - Number(finance.expense),
     customer_debt: finance.total_credit,
-    net_profit: Number(dashboard.gross_profit) - Number(finance.expense),
+    net_profit: Number(dashboard.gross_profit) - Number(finance.profit_expense ?? finance.expense),
     explain_profit_difference: args.explainProfitDifference === true,
     expense_entries: expenseEntries,
     pending_expedition_count: finance.pending_expedition_count,
@@ -334,11 +334,14 @@ async function loadSummaryMetric(args) {
       entry.note && entry.category && entry.note !== entry.category ? entry.note : '']
       .filter(Boolean).join(' · '),
     amount: Number(entry.amount) || 0,
-    type: entry.type
+    type: entry.type,
+    reduces_profit: entry.reduces_profit !== false
   }))
   const expenseDetails = financeDetails.filter((entry) => entry.type === 'expense')
+  const profitExpenseDetails = expenseDetails.filter((entry) => entry.reduces_profit)
   const incomeDetails = financeDetails.filter((entry) => entry.type === 'income')
   const allFinanceDetails = financeDetails
+  const profitExpenseTotal = Number(finance?.summary.profit_expense ?? expenseTotal)
 
   const debtDetails = (finance?.summary.credit_balances || []).map((entry) => ({
     label: entry.customer_name || 'Pelanggan',
@@ -362,12 +365,12 @@ async function loadSummaryMetric(args) {
       item_count: Number(transactions?.summary_count) || 0
     },
     net_profit: {
-      total: transactionProfit - expenseTotal,
+      total: transactionProfit - profitExpenseTotal,
       gross_profit: transactionProfit,
-      expense_total: expenseTotal,
+      expense_total: profitExpenseTotal,
       transactions: transactionDetails,
-      expenses: expenseDetails,
-      item_count: transactionDetails.length + expenseDetails.length
+      expenses: profitExpenseDetails,
+      item_count: transactionDetails.length + profitExpenseDetails.length
     },
     income: {
       total: incomeTotal,
@@ -544,7 +547,7 @@ export async function queryStore(intent, args = {}) {
             cash_balance: Number(finance.income) + Number(finance.capital) - Number(finance.expense),
             total_debt: finance.total_credit,
             gross_profit: finance.gross_profit,
-            net_profit: Number(finance.gross_profit) - Number(finance.expense),
+            net_profit: Number(finance.gross_profit) - Number(finance.profit_expense ?? finance.expense),
             pending_expedition_count: finance.pending_expedition_count,
             entries: finance.entries.slice(0, 30)
           }

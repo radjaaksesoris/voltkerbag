@@ -43,6 +43,7 @@ export default function Finance() {
     pending_expedition_count: 0,
     total_credit: 0,
     gross_profit: 0,
+    profit_expense: 0,
     credit_balances: []
   })
   const [dateRange, setDateRange] = useState(getCurrentMonthDateRange)
@@ -187,7 +188,8 @@ export default function Finance() {
   const balance = income + capital - expense
   const totalCredit = Number(report.total_credit)
   const grossProfit = Number(report.gross_profit)
-  const netProfit = grossProfit - expense
+  const profitExpense = Number(report.profit_expense ?? report.expense)
+  const netProfit = grossProfit - profitExpense
   const pageCount = Math.max(1, Math.ceil(report.total_count / FINANCE_PAGE_SIZE))
   const pageStart = (page - 1) * FINANCE_PAGE_SIZE
   const hasFilter = hasDateRange(dateRange)
