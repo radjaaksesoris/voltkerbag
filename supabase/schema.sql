@@ -2017,10 +2017,25 @@ declare
   transaction_row public.transactions%rowtype;
   existing_ref bigint;
   new_paid_amount double precision;
+  customer_balance double precision;
+  existing_customer_payments double precision;
+  target_customer_name text;
   operation_time timestamptz := clock_timestamp();
 begin
   if current_user_id is null then raise exception 'Login diperlukan.'; end if;
   if p_request_id is null then raise exception 'ID permintaan pembayaran wajib diisi.'; end if;
+
+  select coalesce(nullif(btrim("customerName"), ''), 'Pelanggan lama')
+  into target_customer_name
+  from public.transactions
+  where id = p_transaction_id and owner_id = current_user_id;
+  if not found then raise exception 'Transaksi tidak ditemukan.'; end if;
+
+  perform pg_advisory_xact_lock(hashtextextended(
+    current_user_id::text || lower(btrim(target_customer_name)),
+    1
+  ));
+
   select * into transaction_row
   from public.transactions
   where id = p_transaction_id and owner_id = current_user_id
@@ -2044,6 +2059,40 @@ begin
   end if;
   if p_amount > transaction_row."balanceDue" then
     raise exception 'Nominal cicilan melebihi sisa utang.';
+  end if;
+
+  select coalesce(sum(outstanding.balance_due), 0)
+  into customer_balance
+  from (
+    select credit.balance_due
+    from public.manual_customer_credits as credit
+    where credit.owner_id = current_user_id
+      and lower(btrim(credit.customer_name)) = lower(btrim(target_customer_name))
+      and credit.balance_due > 0
+    union all
+    select customer_transaction."balanceDue"
+    from public.transactions as customer_transaction
+    where customer_transaction.owner_id = current_user_id
+      and customer_transaction."paymentType" = 'credit'
+      and lower(coalesce(nullif(btrim(customer_transaction."customerName"), ''), 'Pelanggan lama'))
+        = lower(btrim(target_customer_name))
+      and customer_transaction."balanceDue" > 0
+  ) as outstanding;
+
+  select coalesce(sum(entry.amount), 0)
+  into existing_customer_payments
+  from public.finance_entries as entry
+  where entry.owner_id = current_user_id
+    and entry.type = 'income'
+    and entry.category = 'Cicilan kredit'
+    and left(entry.note, char_length('Pembayaran umum piutang pelanggan · '))
+      = 'Pembayaran umum piutang pelanggan · '
+    and lower(btrim(substring(
+      entry.note from char_length('Pembayaran umum piutang pelanggan · ') + 1
+    ))) = lower(btrim(target_customer_name));
+
+  if p_amount > greatest(0, customer_balance - existing_customer_payments) then
+    raise exception 'Nominal cicilan melebihi sisa piutang gabungan pelanggan.';
   end if;
 
   new_paid_amount := transaction_row."paidAmount" + p_amount;
@@ -2273,13 +2322,10 @@ set search_path = public, pg_temp
 as $$
 declare
   current_user_id uuid := auth.uid();
-  transaction_row public.transactions%rowtype;
-  manual_credit_row public.manual_customer_credits%rowtype;
   existing_entry public.finance_entries%rowtype;
-  balance_due double precision;
+  customer_balance double precision;
+  existing_customer_payments double precision;
   remaining_amount double precision;
-  allocated_amount double precision;
-  new_paid_amount double precision;
   finance_entry_id bigint;
   operation_time timestamptz := clock_timestamp();
 begin
@@ -2302,74 +2348,69 @@ begin
   where owner_id = current_user_id and "requestId" = p_request_id;
   if found then
     if existing_entry.category is distinct from 'Cicilan kredit'
-       or existing_entry.note is distinct from 'Cicilan kredit pelanggan · ' || p_customer_name
+       or (
+         existing_entry.note is distinct from 'Cicilan kredit pelanggan · ' || p_customer_name
+         and existing_entry.note is distinct from 'Pembayaran umum piutang pelanggan · ' || btrim(p_customer_name)
+       )
        or existing_entry.amount is distinct from p_amount then
       raise exception 'ID permintaan pembayaran sudah digunakan.';
     end if;
     return existing_entry.id;
   end if;
 
-  remaining_amount := p_amount;
-  for manual_credit_row in
-    select credit.*
+  perform pg_advisory_xact_lock(hashtextextended(
+    current_user_id::text || lower(btrim(p_customer_name)),
+    1
+  ));
+
+  perform 1
+  from public.manual_customer_credits as credit
+  where credit.owner_id = current_user_id
+    and lower(btrim(credit.customer_name)) = lower(btrim(p_customer_name))
+  order by credit.id
+  for update;
+
+  perform 1
+  from public.transactions as transaction_row
+  where transaction_row.owner_id = current_user_id
+    and transaction_row."paymentType" = 'credit'
+    and lower(coalesce(nullif(btrim(transaction_row."customerName"), ''), 'Pelanggan lama'))
+      = lower(btrim(p_customer_name))
+  order by transaction_row.id
+  for update;
+
+  select coalesce(sum(outstanding.balance_due), 0)
+  into customer_balance
+  from (
+    select credit.balance_due
     from public.manual_customer_credits as credit
     where credit.owner_id = current_user_id
       and lower(btrim(credit.customer_name)) = lower(btrim(p_customer_name))
       and credit.balance_due > 0
-    order by credit."createdAt" asc, credit.id asc
-    for update of credit
-  loop
-    allocated_amount := least(remaining_amount, manual_credit_row.balance_due);
+    union all
+    select transaction_row."balanceDue"
+    from public.transactions as transaction_row
+    where transaction_row.owner_id = current_user_id
+      and transaction_row."paymentType" = 'credit'
+      and lower(coalesce(nullif(btrim(transaction_row."customerName"), ''), 'Pelanggan lama'))
+        = lower(btrim(p_customer_name))
+      and transaction_row."balanceDue" > 0
+  ) as outstanding;
 
-    update public.manual_customer_credits
-    set balance_due = greatest(0, manual_credit_row.balance_due - allocated_amount),
-        "updatedAt" = operation_time
-    where id = manual_credit_row.id and owner_id = current_user_id;
+  select coalesce(sum(entry.amount), 0)
+  into existing_customer_payments
+  from public.finance_entries as entry
+  where entry.owner_id = current_user_id
+    and entry.type = 'income'
+    and entry.category = 'Cicilan kredit'
+    and left(entry.note, char_length('Pembayaran umum piutang pelanggan · '))
+      = 'Pembayaran umum piutang pelanggan · '
+    and lower(btrim(substring(
+      entry.note from char_length('Pembayaran umum piutang pelanggan · ') + 1
+    ))) = lower(btrim(p_customer_name));
 
-    insert into public.manual_customer_credit_payments (
-      owner_id, manual_credit_id, amount, date
-    ) values (
-      current_user_id, manual_credit_row.id, allocated_amount, operation_time
-    );
-
-    remaining_amount := remaining_amount - allocated_amount;
-    exit when remaining_amount <= 0;
-  end loop;
-
-  for transaction_row in
-    select *
-    from public.transactions
-    where owner_id = current_user_id
-      and "paymentType" = 'credit'
-      and lower(coalesce(nullif(btrim("customerName"), ''), 'Pelanggan lama')) = lower(btrim(p_customer_name))
-      and greatest(0, coalesce("balanceDue", total - coalesce("paidAmount", payment))) > 0
-    order by "createdAt" asc nulls first, id asc
-    for update
-  loop
-    balance_due := greatest(0, coalesce(
-      transaction_row."balanceDue",
-      transaction_row.total - coalesce(transaction_row."paidAmount", transaction_row.payment)
-    ));
-    allocated_amount := least(remaining_amount, balance_due);
-    new_paid_amount := coalesce(transaction_row."paidAmount", transaction_row.payment) + allocated_amount;
-
-    update public.transactions
-    set "paidAmount" = new_paid_amount,
-        "balanceDue" = greatest(0, transaction_row.total - new_paid_amount),
-        "updatedAt" = operation_time
-    where id = transaction_row.id and owner_id = current_user_id;
-
-    insert into public.transaction_payments (
-      owner_id, transaction_id, amount, date, source
-    ) values (
-      current_user_id, transaction_row.id, allocated_amount, operation_time, 'customer_credit'
-    );
-
-    remaining_amount := remaining_amount - allocated_amount;
-    exit when remaining_amount <= 0;
-  end loop;
-
-  if remaining_amount > 0 then
+  remaining_amount := greatest(0, customer_balance - existing_customer_payments);
+  if p_amount > remaining_amount then
     raise exception 'Nominal pembayaran melebihi sisa hutang pelanggan.';
   end if;
 
@@ -2377,7 +2418,7 @@ begin
     owner_id, type, category, note, amount, "requestId", date, "createdAt", "updatedAt"
   ) values (
     current_user_id, 'income', 'Cicilan kredit',
-    'Cicilan kredit pelanggan · ' || p_customer_name,
+    'Pembayaran umum piutang pelanggan · ' || btrim(p_customer_name),
     p_amount, p_request_id, operation_time, operation_time, operation_time
   )
   returning id into finance_entry_id;
@@ -2741,48 +2782,56 @@ begin
       )
     );
 
-  select coalesce(sum(outstanding.balance_due), 0)
-  into credit_total
-  from (
-    select t."balanceDue" as balance_due
+  with outstanding as (
+    select
+      coalesce(nullif(btrim(t."customerName"), ''), 'Pelanggan lama') as customer_name,
+      lower(coalesce(nullif(btrim(t."customerName"), ''), 'Pelanggan lama')) as customer_key,
+      t."balanceDue" as balance_due
     from public.transactions t
     where t.owner_id = current_user_id
       and t."paymentType" = 'credit'
       and t."balanceDue" > 0
     union all
-    select c.balance_due
+    select c.customer_name, lower(btrim(c.customer_name)), c.balance_due
     from public.manual_customer_credits c
     where c.owner_id = current_user_id and c.balance_due > 0
-  ) as outstanding;
-
+  ), customer_debts as (
+    select
+      min(outstanding.customer_name) as customer_name,
+      outstanding.customer_key,
+      sum(outstanding.balance_due) as balance_due
+    from outstanding
+    group by outstanding.customer_key
+  ), customer_payments as (
+    select
+      lower(btrim(substring(
+        entry.note from char_length('Pembayaran umum piutang pelanggan · ') + 1
+      ))) as customer_key,
+      sum(entry.amount) as paid_amount
+    from public.finance_entries entry
+    where entry.owner_id = current_user_id
+      and entry.type = 'income'
+      and entry.category = 'Cicilan kredit'
+      and left(entry.note, char_length('Pembayaran umum piutang pelanggan · '))
+        = 'Pembayaran umum piutang pelanggan · '
+    group by lower(btrim(substring(
+      entry.note from char_length('Pembayaran umum piutang pelanggan · ') + 1
+    )))
+  )
   select coalesce(jsonb_agg(
     jsonb_build_object(
       'customer_name', debt.customer_name,
-      'balance_due', debt.balance_due
-    ) order by debt.balance_due desc, debt.customer_name
+      'balance_due', greatest(0, debt.balance_due - coalesce(payment.paid_amount, 0))
+    ) order by greatest(0, debt.balance_due - coalesce(payment.paid_amount, 0)) desc, debt.customer_name
   ), '[]'::jsonb)
   into credit_balances
-  from (
-    select
-      min(outstanding.customer_name) as customer_name,
-      sum(outstanding.balance_due) as balance_due
-    from (
-      select
-        coalesce(nullif(btrim(t."customerName"), ''), 'Pelanggan lama') as customer_name,
-        lower(coalesce(nullif(btrim(t."customerName"), ''), 'Pelanggan lama')) as customer_key,
-        t."balanceDue" as balance_due
-      from public.transactions t
-      where t.owner_id = current_user_id
-        and t."paymentType" = 'credit'
-        and t."balanceDue" > 0
-      union all
-      select c.customer_name, lower(btrim(c.customer_name)), c.balance_due
-      from public.manual_customer_credits c
-      where c.owner_id = current_user_id and c.balance_due > 0
-    ) as outstanding
-    group by outstanding.customer_key
-    having sum(outstanding.balance_due) > 0
-  ) as debt;
+  from customer_debts debt
+  left join customer_payments payment using (customer_key)
+  where greatest(0, debt.balance_due - coalesce(payment.paid_amount, 0)) > 0;
+
+  select coalesce(sum((value->>'balance_due')::numeric), 0)
+  into credit_total
+  from jsonb_array_elements(credit_balances) as customer(value);
 
   select coalesce(sum(t.gross_profit), 0)
   into gross_profit

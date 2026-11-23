@@ -180,8 +180,9 @@ function formatStockQuery(product) {
 function financeEntryCustomerName(entry) {
   if (entry.type !== 'income') return ''
   const note = String(entry.note || '').trim()
-  const manualPaymentPrefix = 'Cicilan kredit pelanggan · '
-  if (note.startsWith(manualPaymentPrefix)) return note.slice(manualPaymentPrefix.length).trim()
+  const paymentPrefixes = ['Cicilan kredit pelanggan · ', 'Pembayaran umum piutang pelanggan · ']
+  const paymentPrefix = paymentPrefixes.find((prefix) => note.startsWith(prefix))
+  if (paymentPrefix) return note.slice(paymentPrefix.length).trim()
   if (note.startsWith('Cicilan transaksi ')) {
     const separatorIndex = note.lastIndexOf(' · ')
     if (separatorIndex !== -1) return note.slice(separatorIndex + 3).trim()

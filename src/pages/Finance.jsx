@@ -983,6 +983,7 @@ export default function Finance() {
             <p className="muted">
               {selectedDebt.customer_name} · Sisa hutang {rupiah(Number(selectedDebt.balance_due))}
             </p>
+            <p className="muted small">Pembayaran mengurangi saldo keseluruhan pelanggan, tidak dialokasikan ke faktur tertentu.</p>
             <div className="credit-payment-modes" role="group" aria-label="Jenis pembayaran">
               <button
                 className={'btn ' + (creditPaymentMode === 'full' ? 'btn-primary' : '')}
@@ -1062,7 +1063,11 @@ function getFinanceEntryCustomerName(entry) {
   if (entry.type !== 'income') return ''
 
   const note = String(entry.note || '').trim()
-  const prefixes = ['Penjualan · ', 'Cicilan kredit pelanggan · ']
+  const prefixes = [
+    'Penjualan · ',
+    'Cicilan kredit pelanggan · ',
+    'Pembayaran umum piutang pelanggan · '
+  ]
   const prefix = prefixes.find((value) => note.startsWith(value))
   if (prefix) return note.slice(prefix.length).trim()
 

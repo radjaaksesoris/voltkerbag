@@ -688,28 +688,60 @@ export async function getTransactionPayments(transactionId) {
   return data || []
 }
 
-export async function getReceivableInvoices(page, pageSize) {
+export async function getCustomerReceivableDetails(customerName) {
   const client = getClient()
-  const { data: transactions, count, error } = await client
-    .from(tableFor('transactions'))
-    .select('id,createdAt,invoiceNo,total,payment,paymentType,paidAmount,balanceDue,customerName,items,returns,change', { count: 'exact' })
-    .eq('paymentType', 'credit')
-    .order('createdAt', { ascending: false, nullsFirst: false })
-    .order('id', { ascending: false })
-    .range((page - 1) * pageSize, page * pageSize - 1)
-  throwIfError(error, 'Gagal memuat daftar piutang pelanggan')
+  const escapeLikePattern = (value) => String(value).replace(/[\\%_]/g, '\\$&')
+  const customerPattern = escapeLikePattern(customerName.trim())
+  const pageSize = 1000
 
-  const transactionIds = (transactions || []).map((transaction) => transaction.id)
+  async function getAllMatchingRows(queryFactory, context) {
+    const rows = []
+    for (let offset = 0; ; offset += pageSize) {
+      const { data, error } = await queryFactory()
+        .range(offset, offset + pageSize - 1)
+      throwIfError(error, context)
+      rows.push(...(data || []))
+      if (!data || data.length < pageSize) return rows
+    }
+  }
+
+  const [transactions, manualCredits, customerPayments] = await Promise.all([
+    getAllMatchingRows(() => client
+      .from(tableFor('transactions'))
+      .select('id,createdAt,invoiceNo,total,payment,paymentType,paidAmount,balanceDue,customerName,items,returns,change')
+      .eq('paymentType', 'credit')
+      .ilike('customerName', customerPattern)
+      .gt('balanceDue', 0)
+      .order('createdAt', { ascending: false, nullsFirst: false })
+      .order('id', { ascending: false }), 'Gagal memuat faktur piutang pelanggan'),
+    getAllMatchingRows(() => client
+      .from(tableFor('manualCredits'))
+      .select('id,customer_name,original_amount,balance_due,createdAt')
+      .ilike('customer_name', customerPattern)
+      .gt('balance_due', 0)
+      .order('createdAt', { ascending: false })
+      .order('id', { ascending: false }), 'Gagal memuat piutang lama pelanggan'),
+    getAllMatchingRows(() => client
+      .from(tableFor('finance'))
+      .select('id,amount,date,note')
+      .eq('type', 'income')
+      .eq('category', 'Cicilan kredit')
+      .ilike('note', escapeLikePattern('Pembayaran umum piutang pelanggan · ' + customerName.trim()))
+      .order('date', { ascending: false, nullsFirst: false })
+      .order('id', { ascending: false }), 'Gagal memuat riwayat pembayaran piutang pelanggan')
+  ])
+
+  const transactionIds = transactions.map((transaction) => transaction.id)
   let paymentRows = []
-  if (transactionIds.length) {
-    const { data, error: paymentError } = await client
-      .from('transaction_payments')
+  for (let offset = 0; offset < transactionIds.length; offset += pageSize) {
+    const { data, error } = await client
+      .from(tableFor('transactionPayments'))
       .select('id,transaction_id,amount,date')
-      .in('transaction_id', transactionIds)
+      .in('transaction_id', transactionIds.slice(offset, offset + pageSize))
       .order('date', { ascending: true })
       .order('id', { ascending: true })
-    throwIfError(paymentError, 'Gagal memuat riwayat pembayaran piutang')
-    paymentRows = data || []
+    throwIfError(error, 'Gagal memuat riwayat pembayaran faktur piutang')
+    paymentRows.push(...(data || []))
   }
 
   const paymentsByTransaction = new Map()
@@ -721,11 +753,12 @@ export async function getReceivableInvoices(page, pageSize) {
   }
 
   return {
-    invoices: (transactions || []).map((transaction) => ({
+    invoices: transactions.map((transaction) => ({
       ...transaction,
       payments: paymentsByTransaction.get(String(transaction.id)) || []
     })),
-    totalCount: count || 0
+    manualCredits,
+    customerPayments
   }
 }
 

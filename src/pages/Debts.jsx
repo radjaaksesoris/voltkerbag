@@ -3,8 +3,8 @@ import {
   addManualCustomerCredit,
   createVendorPayable,
   getAll,
+  getCustomerReceivableDetails,
   getFinanceData,
-  getReceivableInvoices,
   getVendorPayables,
   onRefresh,
   recordCustomerCreditPayment,
@@ -27,9 +27,10 @@ const PAGE_SIZE = 20
 export default function Debts() {
   const [activeTab, setActiveTab] = useState('receivables')
   const [customerBalances, setCustomerBalances] = useState([])
-  const [invoices, setInvoices] = useState([])
-  const [invoiceCount, setInvoiceCount] = useState(0)
-  const [invoicePage, setInvoicePage] = useState(1)
+  const [expandedCustomer, setExpandedCustomer] = useState('')
+  const [customerDetails, setCustomerDetails] = useState({})
+  const [loadingCustomerDetails, setLoadingCustomerDetails] = useState('')
+  const [customerDetailsError, setCustomerDetailsError] = useState('')
   const [payables, setPayables] = useState([])
   const [payableCount, setPayableCount] = useState(0)
   const [payablePage, setPayablePage] = useState(1)
@@ -93,14 +94,9 @@ export default function Debts() {
       setLoadError('')
       try {
         if (activeTab === 'receivables') {
-          const [balanceData, invoiceData] = await Promise.all([
-            getFinanceData({ from: null, to: null, page: 1, pageSize: 1 }),
-            getReceivableInvoices(invoicePage, PAGE_SIZE)
-          ])
+          const balanceData = await getFinanceData({ from: null, to: null, page: 1, pageSize: 1 })
           if (!active || currentRequest !== requestId.current) return
           setCustomerBalances(balanceData.credit_balances || [])
-          setInvoices(invoiceData.invoices)
-          setInvoiceCount(invoiceData.totalCount)
         } else {
           const payableData = await getVendorPayables(payablePage, PAGE_SIZE)
           if (!active || currentRequest !== requestId.current) return
@@ -119,7 +115,7 @@ export default function Debts() {
       active = false
       unsubscribe()
     }
-  }, [activeTab, invoicePage, payablePage])
+  }, [activeTab, payablePage])
 
   async function submitVendorDebt(event) {
     event.preventDefault()
@@ -214,6 +210,29 @@ export default function Debts() {
     customerPaymentRequest.current = null
   }
 
+  async function toggleCustomerDetails(debt) {
+    const customerKey = debt.customer_name.trim().toLocaleLowerCase('id-ID')
+    if (expandedCustomer === customerKey) {
+      setExpandedCustomer('')
+      setCustomerDetailsError('')
+      return
+    }
+
+    setExpandedCustomer(customerKey)
+    setCustomerDetailsError('')
+    if (customerDetails[customerKey]) return
+
+    setLoadingCustomerDetails(customerKey)
+    try {
+      const details = await getCustomerReceivableDetails(debt.customer_name)
+      setCustomerDetails((current) => ({ ...current, [customerKey]: details }))
+    } catch (error) {
+      setCustomerDetailsError(error.message || 'Gagal memuat detail piutang pelanggan.')
+    } finally {
+      setLoadingCustomerDetails('')
+    }
+  }
+
   async function submitCustomerPayment(event) {
     event.preventDefault()
     if (!selectedCustomerDebt || savingLock.current) return
@@ -240,6 +259,12 @@ export default function Debts() {
         customerPaymentRequest.current.id
       )
       customerPaymentRequest.current = null
+      const customerKey = selectedCustomerDebt.customer_name.trim().toLocaleLowerCase('id-ID')
+      setCustomerDetails((current) => {
+        const next = { ...current }
+        delete next[customerKey]
+        return next
+      })
       setSelectedCustomerDebt(null)
     } catch (error) {
       setCustomerPaymentError(error.message || 'Gagal menyimpan pembayaran piutang.')
@@ -287,16 +312,7 @@ export default function Debts() {
     setSelectedInvoice(transaction)
   }
 
-  const invoicePageCount = Math.max(1, Math.ceil(invoiceCount / PAGE_SIZE))
   const payablePageCount = Math.max(1, Math.ceil(payableCount / PAGE_SIZE))
-  const invoicesByCustomer = [...invoices.reduce((groups, invoice) => {
-    const customerName = invoice.customerName?.trim() || 'Pelanggan'
-    const customerKey = customerName.toLowerCase()
-    const group = groups.get(customerKey) || { customerName, invoices: [] }
-    group.invoices.push(invoice)
-    groups.set(customerKey, group)
-    return groups
-  }, new Map()).values()]
 
   return (
     <div className="page debts-page">
@@ -368,64 +384,109 @@ export default function Debts() {
           )}
 
           <h4 className="debts-subheading">Daftar faktur kredit</h4>
-          <div className="debts-table-wrap">
-            <table className="debts-table">
-              <thead>
-                <tr>
-                  <th>Pelanggan</th>
-                  <th>No. faktur</th>
-                  <th>Tanggal</th>
-                  <th className="right">Total</th>
-                  <th className="right">Sudah dibayar</th>
-                  <th className="right">Sisa tagihan</th>
-                  <th>Detail</th>
-                </tr>
-              </thead>
-              <tbody>
-                {!loadError && invoices.length === 0 ? (
-                  <tr><td className="muted center" colSpan="7">Belum ada faktur transaksi kredit.</td></tr>
-                ) : invoicesByCustomer.map((group) => group.invoices.map((invoice, index) => {
-                  const paidAmount = invoice.paidAmount != null
-                    ? Number(invoice.paidAmount)
-                    : Math.min(Number(invoice.total) || 0, Number(invoice.payment) || 0)
-                  const balanceDue = invoice.balanceDue != null
-                    ? Number(invoice.balanceDue)
-                    : Math.max(0, Number(invoice.total) - paidAmount)
-                  return (
-                    <tr key={invoice.id}>
-                      {index === 0 && <td rowSpan={group.invoices.length}><strong>{group.customerName}</strong></td>}
-                      <td><strong>{getInvoiceNumber(invoice)}</strong></td>
-                      <td>{dateOnly(invoice.createdAt)}</td>
-                      <td className="right">{rupiah(invoice.total)}</td>
-                      <td className="right">
-                        <strong>{rupiah(paidAmount)}</strong>
-                        {invoice.payments.length > 0 && (
-                          <span className="debts-payment-history">
-                            {invoice.payments.map((payment, paymentIndex) => (
-                              <span key={paymentIndex}>{dateTime(payment.date)} · {rupiah(payment.amount)}</span>
-                            ))}
-                          </span>
+          {customerBalances.length === 0 ? (
+            <p className="debts-empty muted">Tidak ada faktur kredit yang belum lunas.</p>
+          ) : (
+            <div className="debts-invoice-customer-list">
+              {customerBalances.map((debt) => {
+                const customerKey = debt.customer_name.trim().toLocaleLowerCase('id-ID')
+                const isExpanded = expandedCustomer === customerKey
+                const details = customerDetails[customerKey]
+                return (
+                  <section className="debts-invoice-customer" key={customerKey}>
+                    <div className="debts-invoice-customer-row">
+                      <strong>{debt.customer_name}</strong>
+                      <strong className="danger">{rupiah(Number(debt.balance_due))}</strong>
+                      <button
+                        className="btn btn-sm"
+                        type="button"
+                        aria-expanded={isExpanded}
+                        onClick={() => toggleCustomerDetails(debt)}>
+                        {isExpanded ? 'Tutup detail' : 'Detail faktur'}
+                      </button>
+                    </div>
+                    {isExpanded && (
+                      <div className="debts-invoice-customer-details">
+                        {loadingCustomerDetails === customerKey ? (
+                          <p className="muted small">Memuat detail piutang...</p>
+                        ) : customerDetailsError ? (
+                          <p className="form-error" role="alert">{customerDetailsError}</p>
+                        ) : details && (
+                          <>
+                            <div className="debts-customer-total">
+                              <strong>Sisa piutang gabungan: {rupiah(Number(debt.balance_due))}</strong>
+                              <p className="muted small">
+                                Pembayaran mengurangi saldo keseluruhan pelanggan dan tidak dialokasikan ke faktur tertentu. Saldo per faktur di bawah belum dikurangi pembayaran umum.
+                              </p>
+                            </div>
+                            {details.customerPayments.length > 0 && (
+                              <>
+                                <h5>Pembayaran umum pelanggan</h5>
+                                <div className="debts-customer-payment-history">
+                                  {details.customerPayments.map((payment) => (
+                                    <div key={payment.id}>
+                                      <span>{dateTime(payment.date)}</span>
+                                      <strong>{rupiah(payment.amount)}</strong>
+                                    </div>
+                                  ))}
+                                </div>
+                              </>
+                            )}
+                            <h5>Faktur yang belum lunas</h5>
+                            {details.invoices.length === 0 ? (
+                              <p className="muted small">Tidak ada faktur transaksi yang belum lunas.</p>
+                            ) : (
+                              <div className="debts-table-wrap">
+                                <table className="debts-table debts-detail-table">
+                                  <thead>
+                                    <tr>
+                                      <th>No. faktur</th>
+                                      <th>Tanggal</th>
+                                      <th className="right">Total faktur</th>
+                                      <th className="right">Saldo per faktur</th>
+                                      <th>Detail</th>
+                                    </tr>
+                                  </thead>
+                                  <tbody>
+                                    {details.invoices.map((invoice) => (
+                                      <tr key={invoice.id}>
+                                        <td><strong>{getInvoiceNumber(invoice)}</strong></td>
+                                        <td>{dateOnly(invoice.createdAt)}</td>
+                                        <td className="right">{rupiah(invoice.total)}</td>
+                                        <td className="right"><strong>{rupiah(invoice.balanceDue)}</strong></td>
+                                        <td>
+                                          <button className="btn btn-sm" type="button" onClick={() => setSelectedInvoice(invoice)}>
+                                            Lihat
+                                          </button>
+                                        </td>
+                                      </tr>
+                                    ))}
+                                  </tbody>
+                                </table>
+                              </div>
+                            )}
+                            {details.manualCredits.length > 0 && (
+                              <>
+                                <h5>Piutang lama</h5>
+                                <div className="debts-customer-payment-history">
+                                  {details.manualCredits.map((credit) => (
+                                    <div key={credit.id}>
+                                      <span>{dateOnly(credit.createdAt)}</span>
+                                      <strong>{rupiah(credit.balance_due)}</strong>
+                                    </div>
+                                  ))}
+                                </div>
+                              </>
+                            )}
+                          </>
                         )}
-                      </td>
-                      <td className="right"><strong className={balanceDue > 0 ? 'danger' : 'ok'}>{rupiah(balanceDue)}</strong></td>
-                      <td>
-                        <button className="btn btn-sm" type="button" onClick={() => setSelectedInvoice(invoice)}>
-                          Detail
-                        </button>
-                      </td>
-                    </tr>
-                  )
-                }))}
-              </tbody>
-            </table>
-          </div>
-          <DebtPagination
-            page={invoicePage}
-            pageCount={invoicePageCount}
-            total={invoiceCount}
-            label="faktur"
-            onChange={setInvoicePage}
-          />
+                      </div>
+                    )}
+                  </section>
+                )
+              })}
+            </div>
+          )}
         </section>
       ) : (
         <>
@@ -597,7 +658,7 @@ export default function Debts() {
               placeholder="Masukkan nominal"
               required
             />
-            <p className="muted small">Pembayaran dialokasikan ke piutang tertua pelanggan terlebih dahulu.</p>
+            <p className="muted small">Pembayaran mengurangi saldo keseluruhan pelanggan, tidak dialokasikan ke satu faktur tertentu.</p>
             {customerPaymentError && <p className="form-error" role="alert">{customerPaymentError}</p>}
             <div className="modal-actions">
               <button className="btn" type="button" disabled={savingCustomerPayment} onClick={() => setSelectedCustomerDebt(null)}>Batal</button>
@@ -648,6 +709,7 @@ export default function Debts() {
           transaction={selectedInvoice}
           onClose={() => setSelectedInvoice(null)}
           onTransactionUpdated={updateSelectedInvoice}
+          allowPayment={false}
         />
       )}
     </div>
