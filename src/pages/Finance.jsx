@@ -151,7 +151,6 @@ export default function Finance({ onNavigateToDebts }) {
 
     async function loadInvoices() {
       const currentRequest = ++salesInvoiceRequestId.current
-      setSalesInvoicesLoading(true)
       setSalesInvoicesError('')
       try {
         const result = await getFinanceInvoices({
@@ -218,9 +217,19 @@ export default function Finance({ onNavigateToDebts }) {
 
   function openSalesInvoices() {
     setSalesInvoicePage(1)
+    setSalesInvoices([])
+    setSalesInvoicesLoading(true)
+    setSalesInvoicesError('')
     setShowSalesInvoices(true)
     setInvoiceDownloadError('')
     setInvoiceDownloadStatus('')
+  }
+
+  function changeSalesInvoicePage(nextPage) {
+    setSalesInvoices([])
+    setSalesInvoicesLoading(true)
+    setSalesInvoicesError('')
+    setSalesInvoicePage(nextPage)
   }
 
   function closeSalesInvoices() {
@@ -631,9 +640,9 @@ export default function Finance({ onNavigateToDebts }) {
                   </span>
                   {salesInvoicePageCount > 1 && (
                     <div className="dashboard-pagination-controls" aria-label="Navigasi daftar faktur">
-                      <button className="btn btn-sm" type="button" disabled={salesInvoicePage === 1} onClick={() => setSalesInvoicePage(salesInvoicePage - 1)}>Sebelumnya</button>
+                      <button className="btn btn-sm" type="button" disabled={salesInvoicePage === 1} onClick={() => changeSalesInvoicePage(salesInvoicePage - 1)}>Sebelumnya</button>
                       <span className="small">Halaman {salesInvoicePage} dari {salesInvoicePageCount}</span>
-                      <button className="btn btn-sm" type="button" disabled={salesInvoicePage === salesInvoicePageCount} onClick={() => setSalesInvoicePage(salesInvoicePage + 1)}>Berikutnya</button>
+                      <button className="btn btn-sm" type="button" disabled={salesInvoicePage === salesInvoicePageCount} onClick={() => changeSalesInvoicePage(salesInvoicePage + 1)}>Berikutnya</button>
                     </div>
                   )}
                 </div>

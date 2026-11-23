@@ -9,7 +9,7 @@ import {
   onRefresh,
   recordCustomerCreditPayment,
   recordCustomerInvoiceCreditPayment,
-  recordVendorPayablePayment,
+  recordVendorPayableGroupPayment,
   requestPageRefresh
 } from '../db'
 import { rupiah, dateOnly, dateTime } from '../format'
@@ -21,6 +21,7 @@ import SelectInput from '../components/SelectInput.jsx'
 import TransactionDetails from '../components/TransactionDetails.jsx'
 import Icon from '../components/Icon.jsx'
 import { allocateCustomerPayment } from '../customerPaymentAllocation.js'
+import { allocateVendorPayment } from '../vendorPaymentAllocation.js'
 
 const PAGE_SIZE = 20
 
@@ -39,16 +40,16 @@ export default function Debts() {
   const [customers, setCustomers] = useState([])
   const [customerLoadError, setCustomerLoadError] = useState('')
   const [loadError, setLoadError] = useState('')
-  const [selectedPayable, setSelectedPayable] = useState(null)
+  const [selectedVendorDebt, setSelectedVendorDebt] = useState(null)
   const [paymentAmount, setPaymentAmount] = useState('')
   const [paymentError, setPaymentError] = useState('')
-  const [savingPayment, setSavingPayment] = useState(false)
   const [selectedCustomerDebt, setSelectedCustomerDebt] = useState(null)
   const [customerPaymentAmount, setCustomerPaymentAmount] = useState('')
   const [customerPaymentError, setCustomerPaymentError] = useState('')
   const [savingCustomerPayment, setSavingCustomerPayment] = useState(false)
   const [loadingCustomerPaymentInvoices, setLoadingCustomerPaymentInvoices] = useState(false)
   const [customerPaymentInvoicesError, setCustomerPaymentInvoicesError] = useState('')
+  const [savingVendorPayment, setSavingVendorPayment] = useState(false)
   const [selectedInvoice, setSelectedInvoice] = useState(null)
   const [savingManualDebt, setSavingManualDebt] = useState(false)
   const [manualDebtOpen, setManualDebtOpen] = useState(false)
@@ -56,7 +57,7 @@ export default function Debts() {
   const [manualDebtAmount, setManualDebtAmount] = useState('')
   const [manualDebtError, setManualDebtError] = useState('')
   const requestId = useRef(0)
-  const paymentRequest = useRef(null)
+  const vendorPaymentRequest = useRef(null)
   const customerPaymentRequest = useRef(null)
   const manualDebtRequest = useRef(null)
   const savingLock = useRef(false)
@@ -112,35 +113,67 @@ export default function Debts() {
     }
   }, [activeTab, payablePage])
 
+  function openVendorPayment(vendor) {
+    setSelectedVendorDebt({ ...vendor, excludedPayableIds: [] })
+    setPaymentAmount('')
+    setPaymentError('')
+    vendorPaymentRequest.current = null
+  }
+
+  const vendorPaymentPlan = selectedVendorDebt
+    ? allocateVendorPayment(
+      selectedVendorDebt.payables,
+      Number(paymentAmount),
+      selectedVendorDebt.excludedPayableIds
+    )
+    : { allocations: [], allocatedAmount: 0, remainingAmount: 0 }
+
   async function submitVendorPayment(event) {
     event.preventDefault()
-    if (!selectedPayable || savingLock.current) return
+    if (!selectedVendorDebt || savingLock.current) return
     setPaymentError('')
     const amount = Number(paymentAmount)
     if (!isSafeRupiahAmount(amount)) {
       setPaymentError('Nominal pembayaran harus rupiah utuh lebih dari Rp0 dan tidak melebihi batas aman.')
       return
     }
-    if (amount > Number(selectedPayable.balance_due)) {
-      setPaymentError('Pembayaran tidak boleh melebihi sisa utang ' + rupiah(selectedPayable.balance_due) + '.')
+    if (amount > Number(selectedVendorDebt.balance_due)) {
+      setPaymentError('Pembayaran tidak boleh melebihi sisa utang ' + rupiah(selectedVendorDebt.balance_due) + '.')
       return
     }
-    const fingerprint = selectedPayable.id + ':' + amount
-    if (paymentRequest.current?.fingerprint !== fingerprint) {
-      paymentRequest.current = { fingerprint, id: crypto.randomUUID() }
+    const allocations = vendorPaymentPlan.allocations.map(({ payableId, amount: allocationAmount }) => ({
+      payableId,
+      amount: allocationAmount
+    }))
+    if (vendorPaymentPlan.remainingAmount > 0) {
+      setPaymentError('Nominal pembayaran melebihi saldo pembelian yang masih dipilih. Pilih kembali pembelian atau kurangi nominal pembayaran.')
+      return
+    }
+    if (vendorPaymentPlan.allocatedAmount !== amount) {
+      setPaymentError('Pastikan seluruh nominal pembayaran dialokasikan ke pembelian.')
+      return
+    }
+    const fingerprint = selectedVendorDebt.vendor_name + ':' + amount + ':' + JSON.stringify(allocations)
+    if (vendorPaymentRequest.current?.fingerprint !== fingerprint) {
+      vendorPaymentRequest.current = { fingerprint, id: crypto.randomUUID() }
     }
     savingLock.current = true
-    setSavingPayment(true)
+    setSavingVendorPayment(true)
     try {
-      await recordVendorPayablePayment(selectedPayable.id, amount, paymentRequest.current.id)
-      paymentRequest.current = null
-      setSelectedPayable(null)
+      await recordVendorPayableGroupPayment(
+        selectedVendorDebt.vendor_name,
+        amount,
+        allocations,
+        vendorPaymentRequest.current.id
+      )
+      vendorPaymentRequest.current = null
+      setSelectedVendorDebt(null)
       setPaymentAmount('')
     } catch (error) {
       setPaymentError(error.message || 'Gagal menyimpan pembayaran utang pembelian.')
     } finally {
       savingLock.current = false
-      setSavingPayment(false)
+      setSavingVendorPayment(false)
     }
   }
 
@@ -586,7 +619,15 @@ export default function Debts() {
               <button className="btn" type="button" onClick={() => setExpandedVendor('')}>Tutup</button>
             </header>
             <div className="debts-invoice-customer-details">
-              <strong>Sisa utang gabungan: {rupiah(activeVendorDebt.balance_due)}</strong>
+              <div className="debts-customer-total">
+                <strong>Sisa utang gabungan: {rupiah(activeVendorDebt.balance_due)}</strong>
+                <button
+                  className="btn btn-primary debts-customer-pay-button"
+                  type="button"
+                  onClick={() => openVendorPayment(activeVendorDebt)}>
+                  Bayar
+                </button>
+              </div>
               <h5>Pembelian yang belum lunas</h5>
               <div className="debts-vendor-detail-list">
                 {activeVendorDebt.payables.map((payable) => {
@@ -609,17 +650,6 @@ export default function Debts() {
                           ))}
                         </div>
                       )}
-                      <button
-                        className="btn btn-sm btn-primary"
-                        type="button"
-                        onClick={() => {
-                          setSelectedPayable(payable)
-                          setPaymentAmount(String(payable.balance_due))
-                          setPaymentError('')
-                          paymentRequest.current = null
-                        }}>
-                        Bayar
-                      </button>
                     </article>
                   )
                 })}
@@ -630,30 +660,93 @@ export default function Debts() {
         document.body
       )}
 
-      {selectedPayable && (
+      {selectedVendorDebt && (
         createPortal(
-          <div className="overlay debts-payment-overlay" onClick={() => !savingPayment && setSelectedPayable(null)}>
+          <div className="overlay debts-payment-overlay" onClick={() => !savingVendorPayment && setSelectedVendorDebt(null)}>
             <form className="modal" onClick={(event) => event.stopPropagation()} onSubmit={submitVendorPayment}>
-              <h3>Bayar utang pembelian</h3>
-              <p className="muted">{selectedPayable.vendor_name} · {selectedPayable.description}</p>
-              <p className="installment-balance">Sisa utang <strong>{rupiah(selectedPayable.balance_due)}</strong></p>
-              <div className="debts-payment-modes" role="group" aria-label="Jumlah pembayaran">
-                <button className="btn" type="button" onClick={() => setPaymentAmount(String(selectedPayable.balance_due))}>Lunasi penuh</button>
-                <button className="btn" type="button" onClick={() => setPaymentAmount('')}>Bayar sebagian</button>
-              </div>
+              <h3>Pembayaran utang pembelian</h3>
+              <p className="muted">{selectedVendorDebt.vendor_name} · Sisa utang {rupiah(selectedVendorDebt.balance_due)}</p>
               <label htmlFor="vendor-payable-payment">Jumlah pembayaran</label>
               <MoneyInput
                 id="vendor-payable-payment"
                 value={paymentAmount}
-                onChange={setPaymentAmount}
+                onChange={(value) => {
+                  setPaymentAmount(value)
+                  setPaymentError('')
+                }}
+                maxAmount={Number(selectedVendorDebt.balance_due)}
                 placeholder="Masukkan nominal"
                 required
+                disabled={savingVendorPayment}
               />
+              <div className="debts-payment-allocation">
+                <div className="debts-payment-allocation-heading">
+                  <strong>Alokasi pembayaran</strong>
+                  <span>Pembelian tertua dibayar lebih dahulu</span>
+                </div>
+                {(() => {
+                  const fullAllocation = allocateVendorPayment(
+                    selectedVendorDebt.payables,
+                    selectedVendorDebt.balance_due
+                  ).allocations
+                  const allocatedByPayable = new Map(vendorPaymentPlan.allocations.map((allocation) => [
+                    String(allocation.payableId),
+                    allocation.amount
+                  ]))
+                  return fullAllocation.map(({ payableId, payable }) => {
+                    const allocatedAmount = allocatedByPayable.get(String(payableId)) || 0
+                    const fullyAllocated = allocatedAmount === Number(payable.balance_due)
+                    return (
+                      <article
+                        className={'debts-payment-allocation-row vendor-payment-allocation-row' + (fullyAllocated ? ' is-settled' : '')}
+                        key={payableId}>
+                        <div>
+                          <span className="muted small">Tanggal · Pembelian</span>
+                          <strong>{dateOnly(payable.date)} · {payable.description}</strong>
+                        </div>
+                        <div>
+                          <span className="muted small">Sisa</span>
+                          <strong>{rupiah(payable.balance_due)}</strong>
+                        </div>
+                        <div>
+                          <span className="muted small">Dialokasikan</span>
+                          <strong>{rupiah(allocatedAmount)}</strong>
+                        </div>
+                        {fullyAllocated && (
+                          <button
+                            className="debts-payment-allocation-remove"
+                            type="button"
+                            aria-label={'Keluarkan pembelian ' + payable.description + ' tanggal ' + dateOnly(payable.date) + ' dari alokasi'}
+                            disabled={savingVendorPayment}
+                            onClick={() => setSelectedVendorDebt((current) => ({
+                              ...current,
+                              excludedPayableIds: [...current.excludedPayableIds, payableId]
+                            }))}>
+                            ×
+                          </button>
+                        )}
+                      </article>
+                    )
+                  })
+                })()}
+                {vendorPaymentPlan.remainingAmount > 0 && Number(paymentAmount) > 0 && (
+                  <p className="form-error" role="alert">
+                    Sisa {rupiah(vendorPaymentPlan.remainingAmount)} belum dialokasikan ke pembelian yang dipilih.
+                  </p>
+                )}
+                <div className="debts-payment-allocation-total">
+                  <span>Total pembayaran</span>
+                  <strong>{rupiah(vendorPaymentPlan.allocatedAmount)}</strong>
+                </div>
+              </div>
               {paymentError && <p className="form-error" role="alert">{paymentError}</p>}
               <div className="modal-actions">
-                <button className="btn" type="button" disabled={savingPayment} onClick={() => setSelectedPayable(null)}>Batal</button>
-                <button className="btn btn-primary" type="submit" disabled={savingPayment}>
-                  {savingPayment ? 'Menyimpan...' : 'Simpan pembayaran'}
+                <button className="btn" type="button" disabled={savingVendorPayment} onClick={() => setSelectedVendorDebt(null)}>Batal</button>
+                <button
+                  className="btn btn-primary"
+                  type="submit"
+                  disabled={savingVendorPayment || vendorPaymentPlan.remainingAmount > 0 || !vendorPaymentPlan.allocatedAmount}>
+                  {savingVendorPayment ? 'Menyimpan...' : 'Simpan pembayaran'}
                 </button>
               </div>
             </form>

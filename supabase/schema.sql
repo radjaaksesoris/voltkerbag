@@ -2331,6 +2331,217 @@ begin
 end;
 $$;
 
+create or replace function public.record_vendor_payable_group_payment(
+  p_vendor_name text,
+  p_amount double precision,
+  p_allocations jsonb,
+  p_request_id uuid
+)
+returns bigint
+language plpgsql
+security definer
+set search_path = public, pg_temp
+as $$
+declare
+  current_user_id uuid := auth.uid();
+  clean_vendor_name text := btrim(coalesce(p_vendor_name, ''));
+  existing_entry public.finance_entries%rowtype;
+  payable_row public.vendor_payables%rowtype;
+  allocation_item record;
+  allocation_payable_id bigint;
+  allocation_amount numeric;
+  allocation_total numeric := 0;
+  vendor_balance numeric;
+  allocated_ids bigint[] := '{}';
+  previous_order_date timestamptz;
+  previous_balance numeric;
+  batch_suffix text;
+  batch_entry_count integer;
+  finance_entry_id bigint;
+  inserted_entry_id bigint;
+  allocation_index integer := 0;
+  operation_time timestamptz := clock_timestamp();
+begin
+  if current_user_id is null then raise exception 'Login diperlukan.'; end if;
+  if p_request_id is null then raise exception 'ID permintaan pembayaran utang wajib diisi.'; end if;
+  if clean_vendor_name = '' then raise exception 'Nama vendor wajib diisi.'; end if;
+  if p_amount is null or p_amount <= 0
+     or p_amount > 9007199254740991::double precision
+     or p_amount <> trunc(p_amount)
+     or p_amount::text in ('NaN', 'Infinity', '-Infinity') then
+    raise exception 'Nominal pembayaran harus rupiah utuh lebih dari Rp0.';
+  end if;
+  if jsonb_typeof(p_allocations) is distinct from 'array' then
+    raise exception 'Daftar alokasi pembayaran pembelian tidak valid.';
+  end if;
+  if jsonb_array_length(p_allocations) = 0 then
+    raise exception 'Daftar alokasi pembayaran pembelian tidak valid.';
+  end if;
+
+  batch_suffix := ' · batch=' || p_request_id::text;
+  perform pg_advisory_xact_lock(hashtextextended(current_user_id::text || p_request_id::text, 0));
+
+  select * into existing_entry
+  from public.finance_entries
+  where owner_id = current_user_id and "requestId" = p_request_id;
+  if found then
+    if existing_entry.category is distinct from 'Pembayaran utang pembelian'
+       or right(coalesce(existing_entry.note, ''), char_length(batch_suffix)) <> batch_suffix then
+      raise exception 'ID permintaan pembayaran utang sudah digunakan.';
+    end if;
+    select coalesce(sum(entry.amount), 0), count(distinct entry."refId")
+    into allocation_total, batch_entry_count
+    from public.finance_entries as entry
+    where entry.owner_id = current_user_id
+      and entry.category = 'Pembayaran utang pembelian'
+      and right(coalesce(entry.note, ''), char_length(batch_suffix)) = batch_suffix;
+    if allocation_total <> p_amount::numeric
+       or batch_entry_count <> jsonb_array_length(p_allocations) then
+      raise exception 'ID permintaan pembayaran utang sudah digunakan.';
+    end if;
+    for allocation_item in
+      select value
+      from jsonb_array_elements(p_allocations)
+    loop
+      if not exists (
+        select 1
+        from public.finance_entries as entry
+        where entry.owner_id = current_user_id
+          and entry.category = 'Pembayaran utang pembelian'
+          and entry."refId" = (allocation_item.value->>'payableId')::bigint
+          and entry.amount = (allocation_item.value->>'amount')::double precision
+          and right(coalesce(entry.note, ''), char_length(batch_suffix)) = batch_suffix
+      ) then
+        raise exception 'ID permintaan pembayaran utang sudah digunakan.';
+      end if;
+    end loop;
+    return existing_entry.id;
+  end if;
+
+  perform 1
+  from public.vendor_payables
+  where owner_id = current_user_id
+    and lower(btrim(vendor_name)) = lower(clean_vendor_name)
+    and balance_due > 0
+  order by date asc, id asc
+  for update;
+
+  select coalesce(sum(balance_due), 0)
+  into vendor_balance
+  from public.vendor_payables
+  where owner_id = current_user_id
+    and lower(btrim(vendor_name)) = lower(clean_vendor_name)
+    and balance_due > 0;
+  if p_amount > vendor_balance then
+    raise exception 'Pembayaran melebihi sisa utang vendor.';
+  end if;
+
+  for allocation_item in
+    select value, ordinality
+    from jsonb_array_elements(p_allocations) with ordinality
+    order by ordinality
+  loop
+    begin
+      allocation_payable_id := (allocation_item.value->>'payableId')::bigint;
+      allocation_amount := (allocation_item.value->>'amount')::numeric;
+    exception when others then
+      raise exception 'Data alokasi pembayaran pembelian tidak valid.';
+    end;
+    if allocation_payable_id is null
+       or allocation_amount is null
+       or allocation_amount <= 0
+       or allocation_amount <> trunc(allocation_amount)
+       or allocation_amount > 9007199254740991::numeric then
+      raise exception 'Nominal alokasi pembayaran pembelian tidak valid.';
+    end if;
+    if allocation_payable_id = any(allocated_ids) then
+      raise exception 'Pembelian yang sama tidak boleh muncul lebih dari sekali dalam alokasi.';
+    end if;
+
+    select * into payable_row
+    from public.vendor_payables
+    where id = allocation_payable_id
+      and owner_id = current_user_id
+      and lower(btrim(vendor_name)) = lower(clean_vendor_name)
+    for update;
+    if not found then raise exception 'Utang pembelian vendor tidak ditemukan.'; end if;
+    if payable_row.balance_due <= 0 or allocation_amount > payable_row.balance_due::numeric then
+      raise exception 'Nominal alokasi melebihi sisa utang pembelian.';
+    end if;
+    if allocation_index > 0 then
+      if payable_row.date < previous_order_date
+         or (payable_row.date = previous_order_date
+           and payable_row.id <= allocated_ids[array_length(allocated_ids, 1)]) then
+        raise exception 'Alokasi harus mengikuti urutan pembelian paling awal.';
+      end if;
+      if previous_balance > 0 then
+        raise exception 'Pembelian paling awal harus dialokasikan sebelum pembelian berikutnya.';
+      end if;
+    end if;
+
+    allocated_ids := array_append(allocated_ids, allocation_payable_id);
+    previous_order_date := payable_row.date;
+    previous_balance := payable_row.balance_due::numeric - allocation_amount;
+    allocation_total := allocation_total + allocation_amount;
+    allocation_index := allocation_index + 1;
+  end loop;
+
+  if allocation_total <> p_amount::numeric then
+    raise exception 'Jumlah alokasi pembelian harus sama dengan jumlah pembayaran.';
+  end if;
+
+  allocation_index := 0;
+  for allocation_item in
+    select value
+    from jsonb_array_elements(p_allocations) with ordinality
+    order by ordinality
+  loop
+    allocation_payable_id := (allocation_item.value->>'payableId')::bigint;
+    allocation_amount := (allocation_item.value->>'amount')::numeric;
+    select * into payable_row
+    from public.vendor_payables
+    where id = allocation_payable_id and owner_id = current_user_id
+    for update;
+
+    update public.vendor_payables
+    set balance_due = greatest(0, payable_row.balance_due - allocation_amount::double precision),
+        "updatedAt" = operation_time
+    where id = allocation_payable_id and owner_id = current_user_id;
+
+    insert into public.vendor_payable_payments (
+      owner_id, payable_id, amount, date, request_id
+    ) values (
+      current_user_id,
+      allocation_payable_id,
+      allocation_amount::double precision,
+      operation_time,
+      md5(p_request_id::text || ':' || allocation_payable_id::text)::uuid
+    );
+
+    insert into public.finance_entries (
+      owner_id, type, category, note, amount, "refId", "requestId",
+      date, "createdAt", "updatedAt"
+    ) values (
+      current_user_id,
+      'expense',
+      'Pembayaran utang pembelian',
+      'Pembayaran utang pembelian · ' || payable_row.vendor_name || ' · ' || payable_row.description || batch_suffix,
+      allocation_amount::double precision,
+      allocation_payable_id,
+      case when allocation_index = 0 then p_request_id else null end,
+      operation_time,
+      operation_time,
+      operation_time
+    )
+    returning id into inserted_entry_id;
+    if allocation_index = 0 then finance_entry_id := inserted_entry_id; end if;
+    allocation_index := allocation_index + 1;
+  end loop;
+
+  return finance_entry_id;
+end;
+$$;
+
 create or replace function public.add_manual_customer_credit(
   p_customer_name text,
   p_amount double precision,
@@ -3392,6 +3603,7 @@ revoke all on function public.record_expedition_cost(bigint, double precision) f
 revoke all on function public.record_transaction_payment(bigint, double precision, uuid) from public, anon;
 revoke all on function public.create_vendor_payable(text, text, double precision, timestamptz, uuid) from public, anon;
 revoke all on function public.record_vendor_payable_payment(bigint, double precision, uuid) from public, anon;
+revoke all on function public.record_vendor_payable_group_payment(text, double precision, jsonb, uuid) from public, anon;
 revoke all on function public.return_transaction_items(bigint, jsonb, uuid) from public, anon;
 revoke all on function public.record_customer_credit_payment(text, double precision, uuid) from public, anon;
 revoke all on function public.record_customer_invoice_credit_payment(text, double precision, jsonb, uuid) from public, anon;
@@ -3410,6 +3622,7 @@ grant execute on function public.record_expedition_cost(bigint, double precision
 grant execute on function public.record_transaction_payment(bigint, double precision, uuid) to authenticated;
 grant execute on function public.create_vendor_payable(text, text, double precision, timestamptz, uuid) to authenticated;
 grant execute on function public.record_vendor_payable_payment(bigint, double precision, uuid) to authenticated;
+grant execute on function public.record_vendor_payable_group_payment(text, double precision, jsonb, uuid) to authenticated;
 grant execute on function public.return_transaction_items(bigint, jsonb, uuid) to authenticated;
 grant execute on function public.record_customer_credit_payment(text, double precision, uuid) to authenticated;
 grant execute on function public.record_customer_invoice_credit_payment(text, double precision, jsonb, uuid) to authenticated;

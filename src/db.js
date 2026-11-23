@@ -972,6 +972,18 @@ export async function recordVendorPayablePayment(payableId, amount, requestId) {
   return data
 }
 
+export async function recordVendorPayableGroupPayment(vendorName, amount, allocations, requestId) {
+  const { data, error } = await getClient().rpc('record_vendor_payable_group_payment', {
+    p_vendor_name: vendorName,
+    p_amount: amount,
+    p_allocations: allocations,
+    p_request_id: requestId || crypto.randomUUID()
+  })
+  throwIfError(error, 'Gagal menyimpan pembayaran utang pembelian')
+  notifyRefresh()
+  return data
+}
+
 export async function put(store, value) {
   const now = new Date().toISOString()
   const record = {
