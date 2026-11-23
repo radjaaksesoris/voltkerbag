@@ -1710,16 +1710,16 @@ h3 { margin-bottom: 16px; color: var(--ink); font-size: 15px; font-weight: 700; 
 }
 .dashboard-revenue-card .dashboard-stat-icon { background: linear-gradient(145deg, #ed3543, #be1427); }
 .dashboard-revenue-card .dashboard-stat-content > strong { color: #a51d2a; }
-.dashboard-stats-grid .stat-card.dashboard-profit-card { background-color: #d3e6fb; }
+.dashboard-stats-grid .stat-card.dashboard-profit-card { background: var(--mustard-surface); }
 .dashboard-profit-card::before {
   background:
-    linear-gradient(155deg, transparent 48%, rgba(44, 131, 224, .62) 49% 51%, transparent 52%) 0 0 / 100% 100%,
-    linear-gradient(155deg, transparent 60%, rgba(44, 131, 224, .3) 61%) 0 0 / 100% 100%,
-    linear-gradient(180deg, transparent, rgba(44, 131, 224, .32));
+    linear-gradient(155deg, transparent 48%, rgba(101, 77, 12, .26) 49% 51%, transparent 52%) 0 0 / 100% 100%,
+    linear-gradient(155deg, transparent 60%, rgba(101, 77, 12, .18) 61%) 0 0 / 100% 100%,
+    linear-gradient(180deg, transparent, rgba(101, 77, 12, .14));
   clip-path: polygon(0 100%, 0 86%, 19% 73%, 35% 78%, 54% 51%, 70% 57%, 85% 30%, 100% 19%, 100% 100%);
 }
-.dashboard-profit-card .dashboard-stat-icon { background: linear-gradient(145deg, #3296f2, #1766c1); }
-.dashboard-profit-card .dashboard-stat-content > strong { color: #1b62ad; }
+.dashboard-profit-card .dashboard-stat-icon { background: linear-gradient(145deg, var(--mustard-light), var(--mustard-dark)); color: var(--mustard-ink); }
+.dashboard-profit-card .dashboard-stat-content > strong { color: var(--mustard-ink); }
 .dashboard-stats-grid .stat-card.dashboard-stock-summary { background-color: #cdebdc; }
 .dashboard-stock-summary::before {
   right: 0;
@@ -3850,8 +3850,19 @@ body:has(.app) {
 }
 .app:not(.menu-landing) .dashboard-overview-sticky .dashboard-profit-card {
   grid-column: span 1;
-  border-left: 3px solid #b5282e;
-  background: linear-gradient(115deg, rgba(255, 253, 248, .97), rgba(250, 238, 230, .92));
+  border: 1px solid var(--mustard-border);
+  border-left-width: 3px;
+  background: var(--mustard-surface);
+}
+.app:not(.menu-landing) .dashboard-overview-sticky .dashboard-profit-card .dashboard-stat-icon {
+  border-color: rgba(106, 79, 10, .2);
+  background: linear-gradient(145deg, var(--mustard-light), var(--mustard-dark));
+  color: var(--mustard-ink);
+}
+.app:not(.menu-landing) .dashboard-overview-sticky .dashboard-profit-card .dashboard-stat-icon .icon,
+.app:not(.menu-landing) .dashboard-overview-sticky .dashboard-profit-card .dashboard-stat-content > span,
+.app:not(.menu-landing) .dashboard-overview-sticky .dashboard-profit-card .dashboard-stat-content > strong {
+  color: var(--mustard-ink);
 }
 .app:not(.menu-landing) .dashboard-overview-sticky .dashboard-stock-summary {
   grid-column: span 1;
