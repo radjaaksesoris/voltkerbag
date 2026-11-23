@@ -812,25 +812,51 @@ export async function getCustomerReceivableDetails(customerName) {
 
 export async function getVendorPayables(page, pageSize) {
   const client = getClient()
-  const { data: payables, count, error } = await client
-    .from('vendor_payables')
-    .select('id,vendor_name,description,original_amount,balance_due,date,createdAt', { count: 'exact' })
-    .order('date', { ascending: false })
-    .order('id', { ascending: false })
-    .range((page - 1) * pageSize, page * pageSize - 1)
-  throwIfError(error, 'Gagal memuat daftar utang pembelian')
+  const allPayables = []
+  const batchSize = 1000
+  let offset = 0
+  let totalCount = 0
+  while (offset === 0 || offset < totalCount) {
+    const { data, count, error } = await client
+      .from('vendor_payables')
+      .select('id,vendor_name,description,original_amount,balance_due,date,createdAt', { count: 'exact' })
+      .gt('balance_due', 0)
+      .order('date', { ascending: false })
+      .order('id', { ascending: false })
+      .range(offset, offset + batchSize - 1)
+    throwIfError(error, 'Gagal memuat daftar utang pembelian')
+    if (offset === 0) totalCount = count || 0
+    allPayables.push(...(data || []))
+    offset += batchSize
+  }
 
-  const payableIds = (payables || []).map((payable) => payable.id)
+  const vendorMap = new Map()
+  for (const payable of allPayables) {
+    const vendorName = String(payable.vendor_name || '').trim()
+    const key = vendorName.toLocaleLowerCase('id-ID')
+    const vendor = vendorMap.get(key) || {
+      vendor_name: vendorName,
+      balance_due: 0,
+      payables: []
+    }
+    vendor.balance_due += Number(payable.balance_due)
+    vendor.payables.push({ ...payable, payments: [] })
+    vendorMap.set(key, vendor)
+  }
+  const vendors = [...vendorMap.values()]
+  const totalVendors = vendors.length
+  const vendorPage = vendors.slice((page - 1) * pageSize, page * pageSize)
+  const payableIds = vendorPage.flatMap((vendor) => vendor.payables.map((payable) => payable.id))
   let paymentRows = []
-  if (payableIds.length) {
+  for (let index = 0; index < payableIds.length; index += 500) {
     const { data, error: paymentError } = await client
       .from('vendor_payable_payments')
       .select('id,payable_id,amount,date')
-      .in('payable_id', payableIds)
+      .in('payable_id', payableIds.slice(index, index + 500))
       .order('date', { ascending: true })
       .order('id', { ascending: true })
     throwIfError(paymentError, 'Gagal memuat riwayat pembayaran utang pembelian')
-    paymentRows = data || []
+    paymentRows.push(...(data || []))
   }
 
   const paymentsByPayable = new Map()
@@ -842,11 +868,14 @@ export async function getVendorPayables(page, pageSize) {
   }
 
   return {
-    payables: (payables || []).map((payable) => ({
-      ...payable,
-      payments: paymentsByPayable.get(String(payable.id)) || []
+    vendors: vendorPage.map((vendor) => ({
+      ...vendor,
+      payables: vendor.payables.map((payable) => ({
+        ...payable,
+        payments: paymentsByPayable.get(String(payable.id)) || []
+      }))
     })),
-    totalCount: count || 0
+    totalCount: totalVendors
   }
 }
 

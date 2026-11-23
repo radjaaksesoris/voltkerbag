@@ -2337,7 +2337,7 @@ label { display: block; margin-bottom: 6px; color: var(--muted); font-size: 11px
 .credit-payment-modes { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin: 8px 0; }
 .credit-payment-modes .btn { padding-inline: 8px; }
 .credit-balances-empty { padding: 10px 0 2px; font-size: 12px; }
-.debts-page { width: min(100%, 1240px); gap: 16px; }
+.debts-page { display: grid; align-content: start; width: min(100%, 1240px); gap: 16px; }
 .debts-page-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
 .debts-page-heading h2 { margin: 3px 0 4px; color: var(--ink); font-size: 22px; }
 .debts-page-heading p { margin: 0; }
@@ -2366,6 +2366,19 @@ label { display: block; margin-bottom: 6px; color: var(--muted); font-size: 11px
 .debts-invoice-customer-list { display: grid; }
 .debts-invoice-customer { border-top: 1px solid var(--border); }
 .debts-invoice-customer-row { display: grid; grid-template-columns: 24px minmax(0, 1fr) auto auto; align-items: center; gap: 10px; min-height: 48px; padding: 7px 4px; }
+.debts-vendor-row { display: grid; grid-template-columns: 24px minmax(0, 1fr) auto auto; align-items: center; gap: 10px; min-height: 48px; padding: 7px 4px; border-top: 1px solid var(--border); }
+.debts-vendor-name { min-width: 0; overflow-wrap: anywhere; }
+.debts-vendor-balance { white-space: nowrap; font-variant-numeric: tabular-nums; }
+.debts-vendor-details-modal { max-width: 760px; }
+.debts-vendor-detail-list { display: grid; gap: 8px; margin-top: 7px; }
+.debts-vendor-detail { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 7px 12px; padding: 9px; border: 1px solid var(--border); border-radius: 9px; background: var(--card); }
+.debts-vendor-detail-heading { display: grid; min-width: 0; gap: 3px; }
+.debts-vendor-detail-heading > span { color: var(--muted); font-size: 11px; overflow-wrap: anywhere; }
+.debts-vendor-detail-amount { display: flex; flex-wrap: wrap; gap: 7px 14px; grid-column: 1 / -1; color: var(--muted); font-size: 10px; }
+.debts-vendor-detail-amount strong { margin-left: 3px; color: var(--ink); font-variant-numeric: tabular-nums; }
+.debts-vendor-detail-amount strong.danger { color: var(--danger); }
+.debts-vendor-detail > .debts-payment-history { grid-column: 1; text-align: left; }
+.debts-vendor-detail > .btn { grid-column: 2; grid-row: 1 / span 2; align-self: center; }
 .debts-invoice-customer-number { color: var(--muted); font-size: 11px; font-variant-numeric: tabular-nums; }
 .debts-invoice-customer-identity { min-width: 0; }
 .debts-invoice-customer-identity > strong { overflow-wrap: anywhere; }
@@ -2828,11 +2841,15 @@ label { display: block; margin-bottom: 6px; color: var(--muted); font-size: 11px
   .debts-page { gap: 12px; }
   .debts-page-heading h2 { font-size: 19px; }
   .debts-tabs button { min-height: 38px; padding: 7px 5px; font-size: 11px; }
-  .debts-card, .debts-form-card { padding: 11px 9px; }
+  .debts-card, .debts-form-card { padding: 12px; }
   .debts-section-heading { align-items: flex-start; gap: 8px; }
   .debts-section-heading h3 { font-size: 13px; }
   .debts-section-heading > .btn { padding: 7px 8px; font-size: 10px; }
   .debts-table { min-width: 760px; }
+  .debts-vendor-row { grid-template-columns: 18px minmax(0, 1fr) auto auto; gap: 5px; min-height: 44px; font-size: 10px; }
+  .debts-vendor-row > .btn { min-height: 30px; padding: 5px 6px; font-size: 9px; }
+  .debts-vendor-detail { gap: 6px 8px; padding: 7px; }
+  .debts-vendor-detail-amount { gap: 5px 9px; }
   .debts-detail-table { min-width: 0; }
   .debts-table th, .debts-table td { padding: 7px 5px; font-size: 10px; }
   .debts-form { grid-template-columns: minmax(0, 1fr); gap: 7px; }
@@ -3020,6 +3037,7 @@ label { display: block; margin-bottom: 6px; color: var(--muted); font-size: 11px
   .content:has(> .page-slot-purchases:not([hidden])) { padding-top: 14px; }
   .content:has(> .page-slot-stok:not([hidden])) { padding-top: 14px; }
   .content:has(> .page-slot-finance:not([hidden])) { padding-top: 14px; }
+  .content:has(> .page-slot-debts:not([hidden])) { padding-top: 14px; }
   .page-slot-settings { padding-top: 12px; }
   .nav-hidden .content { padding-bottom: calc(84px + env(safe-area-inset-bottom)); }
   h2 { font-size: 29px; }

@@ -29,7 +29,8 @@ export default function Debts() {
   const [customerDetails, setCustomerDetails] = useState({})
   const [loadingCustomerDetails, setLoadingCustomerDetails] = useState('')
   const [customerDetailsError, setCustomerDetailsError] = useState('')
-  const [payables, setPayables] = useState([])
+  const [vendorGroups, setVendorGroups] = useState([])
+  const [expandedVendor, setExpandedVendor] = useState('')
   const [payableCount, setPayableCount] = useState(0)
   const [payablePage, setPayablePage] = useState(1)
   const [customers, setCustomers] = useState([])
@@ -88,7 +89,7 @@ export default function Debts() {
         } else {
           const payableData = await getVendorPayables(payablePage, PAGE_SIZE)
           if (!active || currentRequest !== requestId.current) return
-          setPayables(payableData.payables)
+          setVendorGroups(payableData.vendors)
           setPayableCount(payableData.totalCount)
         }
       } catch (error) {
@@ -255,6 +256,9 @@ export default function Debts() {
   const activeCustomerDebt = customerBalances.find(
     (debt) => debt.customer_name.trim().toLocaleLowerCase('id-ID') === expandedCustomer
   )
+  const activeVendorDebt = vendorGroups.find(
+    (vendor) => vendor.vendor_name.trim().toLocaleLowerCase('id-ID') === expandedVendor
+  )
 
   return (
     <div className="page debts-page">
@@ -273,6 +277,7 @@ export default function Debts() {
           aria-selected={activeTab === 'receivables'}
           onClick={() => {
             setExpandedCustomer('')
+            setExpandedVendor('')
             setActiveTab('receivables')
           }}>
           Piutang pelanggan
@@ -284,6 +289,7 @@ export default function Debts() {
           aria-selected={activeTab === 'payables'}
           onClick={() => {
             setExpandedCustomer('')
+            setExpandedVendor('')
             setActiveTab('payables')
           }}>
           Utang pembelian
@@ -349,70 +355,35 @@ export default function Debts() {
             <div className="debts-section-heading">
               <div>
                 <h3>Daftar utang pembelian</h3>
-                <p className="muted small">Utang muncul dari pembelian yang dicatat secara kredit. Pembayaran sebagian atau pelunasan dicatat di sini.</p>
               </div>
             </div>
-            <div className="debts-table-wrap">
-              <table className="debts-table">
-                <thead>
-                  <tr>
-                    <th>Tanggal</th>
-                    <th>Vendor</th>
-                    <th>Keterangan</th>
-                    <th className="right">Total</th>
-                    <th className="right">Sudah dibayar</th>
-                    <th className="right">Sisa utang</th>
-                    <th>Pembayaran</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {!loadError && payables.length === 0 ? (
-                    <tr><td className="muted center" colSpan="7">Belum ada utang pembelian yang dicatat.</td></tr>
-                  ) : payables.map((payable) => {
-                    const paidAmount = Number(payable.original_amount) - Number(payable.balance_due)
-                    return (
-                      <tr key={payable.id}>
-                        <td>{dateOnly(payable.date)}</td>
-                        <td><strong>{payable.vendor_name}</strong></td>
-                        <td>{payable.description}</td>
-                        <td className="right">{rupiah(payable.original_amount)}</td>
-                        <td className="right">
-                          <strong>{rupiah(paidAmount)}</strong>
-                          {payable.payments.length > 0 && (
-                            <span className="debts-payment-history">
-                              {payable.payments.map((payment, index) => (
-                                <span key={index}>{dateTime(payment.date)} · {rupiah(payment.amount)}</span>
-                              ))}
-                            </span>
-                          )}
-                        </td>
-                        <td className="right"><strong className={Number(payable.balance_due) > 0 ? 'danger' : 'ok'}>{rupiah(payable.balance_due)}</strong></td>
-                        <td>
-                          {Number(payable.balance_due) > 0 ? (
-                            <button
-                              className="btn btn-sm btn-primary"
-                              type="button"
-                              onClick={() => {
-                                setSelectedPayable(payable)
-                                setPaymentAmount(String(payable.balance_due))
-                                setPaymentError('')
-                                paymentRequest.current = null
-                              }}>
-                              Bayar
-                            </button>
-                          ) : <span className="badge badge-ok">Lunas</span>}
-                        </td>
-                      </tr>
-                    )
-                  })}
-                </tbody>
-              </table>
-            </div>
+            {vendorGroups.length === 0 ? (
+              <p className="debts-empty muted">Belum ada utang pembelian yang dicatat.</p>
+            ) : (
+              <div className="debts-invoice-customer-list debts-vendor-list">
+                {vendorGroups.map((vendor, index) => {
+                  const vendorKey = vendor.vendor_name.trim().toLocaleLowerCase('id-ID')
+                  return (
+                    <div className="debts-vendor-row" key={vendorKey}>
+                      <span className="debts-invoice-customer-number">{(payablePage - 1) * PAGE_SIZE + index + 1}.</span>
+                      <strong className="debts-vendor-name">{vendor.vendor_name}</strong>
+                      <strong className="danger debts-vendor-balance">{rupiah(vendor.balance_due)}</strong>
+                      <button
+                        className="btn btn-sm"
+                        type="button"
+                        onClick={() => setExpandedVendor(vendorKey)}>
+                        Detail utang
+                      </button>
+                    </div>
+                  )
+                })}
+              </div>
+            )}
             <DebtPagination
               page={payablePage}
               pageCount={payablePageCount}
               total={payableCount}
-              label="utang"
+              label="vendor"
               onChange={setPayablePage}
             />
           </section>
@@ -528,6 +499,66 @@ export default function Debts() {
                   )}
                 </>
               )}
+            </div>
+          </section>
+        </div>,
+        document.body
+      )}
+
+      {activeTab === 'payables' && activeVendorDebt && createPortal(
+        <div className="overlay debts-customer-details-overlay" onClick={() => setExpandedVendor('')}>
+          <section
+            className="modal debts-customer-details-modal debts-vendor-details-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="debts-vendor-details-title"
+            onClick={(event) => event.stopPropagation()}>
+            <header className="debts-customer-details-heading">
+              <div>
+                <h3 id="debts-vendor-details-title">Detail utang pembelian</h3>
+                <strong>{activeVendorDebt.vendor_name}</strong>
+              </div>
+              <button className="btn" type="button" onClick={() => setExpandedVendor('')}>Tutup</button>
+            </header>
+            <div className="debts-invoice-customer-details">
+              <strong>Sisa utang gabungan: {rupiah(activeVendorDebt.balance_due)}</strong>
+              <h5>Pembelian yang belum lunas</h5>
+              <div className="debts-vendor-detail-list">
+                {activeVendorDebt.payables.map((payable) => {
+                  const paidAmount = Number(payable.original_amount) - Number(payable.balance_due)
+                  return (
+                    <article className="debts-vendor-detail" key={payable.id}>
+                      <div className="debts-vendor-detail-heading">
+                        <strong>{dateOnly(payable.date)}</strong>
+                        <span>{payable.description}</span>
+                      </div>
+                      <div className="debts-vendor-detail-amount">
+                        <span>Total <strong>{rupiah(payable.original_amount)}</strong></span>
+                        <span>Sudah dibayar <strong>{rupiah(paidAmount)}</strong></span>
+                        <span>Sisa <strong className="danger">{rupiah(payable.balance_due)}</strong></span>
+                      </div>
+                      {payable.payments.length > 0 && (
+                        <div className="debts-payment-history">
+                          {payable.payments.map((payment, index) => (
+                            <span key={index}>{dateTime(payment.date)} · {rupiah(payment.amount)}</span>
+                          ))}
+                        </div>
+                      )}
+                      <button
+                        className="btn btn-sm btn-primary"
+                        type="button"
+                        onClick={() => {
+                          setSelectedPayable(payable)
+                          setPaymentAmount(String(payable.balance_due))
+                          setPaymentError('')
+                          paymentRequest.current = null
+                        }}>
+                        Bayar
+                      </button>
+                    </article>
+                  )
+                })}
+              </div>
             </div>
           </section>
         </div>,
