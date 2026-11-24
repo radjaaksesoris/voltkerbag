@@ -33,6 +33,7 @@ export default function Purchases() {
   const [vendorLoadError, setVendorLoadError] = useState('')
   const [actionError, setActionError] = useState('')
   const [status, setStatus] = useState('')
+  const [purchaseFormCollapsed, setPurchaseFormCollapsed] = useState(false)
   const [purchaseType, setPurchaseType] = useState('stock')
   const [paymentType, setPaymentType] = useState('cash')
   const [products, setProducts] = useState([])
@@ -336,13 +337,20 @@ export default function Purchases() {
 
   return (
     <div className="page purchase-page">
-      <section className="card purchase-form-card">
+      <section className={'card purchase-form-card' + (purchaseFormCollapsed ? ' is-collapsed' : '')}>
         <div className="purchase-heading">
-          <div>
-            <h2>Pembelian</h2>
-          </div>
+          <h2>Pembelian</h2>
+          <button
+            className="purchase-form-toggle"
+            type="button"
+            aria-label={purchaseFormCollapsed ? 'Tampilkan formulir pembelian' : 'Sembunyikan formulir pembelian'}
+            aria-expanded={!purchaseFormCollapsed}
+            aria-controls="purchase-form"
+            onClick={() => setPurchaseFormCollapsed((collapsed) => !collapsed)}>
+            <Icon name={purchaseFormCollapsed ? 'chevronDown' : 'chevronUp'} size={20} />
+          </button>
         </div>
-        <form className="purchase-form" onSubmit={savePurchase}>
+        <form id="purchase-form" className="purchase-form" hidden={purchaseFormCollapsed} onSubmit={savePurchase}>
           <div className="purchase-form-grid">
             <div className="purchase-field">
               <label htmlFor="purchase-type">Jenis pembelian *</label>
