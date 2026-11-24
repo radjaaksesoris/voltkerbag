@@ -63,6 +63,10 @@ export default function Finance({ onNavigateToDebts }) {
   const [page, setPage] = useState(1)
   const [loadError, setLoadError] = useState('')
   const [actionError, setActionError] = useState('')
+  const [showLedgerFilters, setShowLedgerFilters] = useState(false)
+  const [ledgerSearchInput, setLedgerSearchInput] = useState('')
+  const [ledgerTypeInput, setLedgerTypeInput] = useState('')
+  const [ledgerFilters, setLedgerFilters] = useState({ search: '', type: '' })
   const [loaded, setLoaded] = useState(false)
   const [showSalesInvoices, setShowSalesInvoices] = useState(false)
   const [salesInvoices, setSalesInvoices] = useState([])
@@ -116,7 +120,8 @@ export default function Finance({ onNavigateToDebts }) {
         const data = await getFinanceData({
           ...range,
           page,
-          pageSize: FINANCE_PAGE_SIZE
+          pageSize: FINANCE_PAGE_SIZE,
+          ...ledgerFilters
         })
         if (!active || currentRequest !== requestId.current) return
         if (typeof data.pending_expedition_count !== 'number') {
@@ -143,7 +148,7 @@ export default function Finance({ onNavigateToDebts }) {
       active = false
       unsubscribe()
     }
-  }, [dateRange, page])
+  }, [dateRange, page, ledgerFilters])
 
   useEffect(() => {
     if (!showSalesInvoices) return undefined
@@ -189,6 +194,7 @@ export default function Finance({ onNavigateToDebts }) {
   const pageCount = Math.max(1, Math.ceil(report.total_count / FINANCE_PAGE_SIZE))
   const pageStart = (page - 1) * FINANCE_PAGE_SIZE
   const hasFilter = hasDateRange(dateRange)
+  const hasLedgerFilters = Boolean(ledgerFilters.search || ledgerFilters.type)
   const todayDateRange = getTodayDateRange()
   const currentMonthDateRange = getCurrentMonthDateRange()
   const salesInvoicePageCount = Math.max(1, Math.ceil(salesInvoiceCount / FINANCE_INVOICE_PAGE_SIZE))
@@ -223,6 +229,22 @@ export default function Finance({ onNavigateToDebts }) {
     setShowSalesInvoices(true)
     setInvoiceDownloadError('')
     setInvoiceDownloadStatus('')
+  }
+
+  function applyLedgerFilters(event) {
+    event.preventDefault()
+    setPage(1)
+    setLedgerFilters({
+      search: ledgerSearchInput.trim(),
+      type: ledgerTypeInput
+    })
+  }
+
+  function clearLedgerFilters() {
+    setLedgerSearchInput('')
+    setLedgerTypeInput('')
+    setLedgerFilters({ search: '', type: '' })
+    setPage(1)
   }
 
   function changeSalesInvoicePage(nextPage) {
@@ -655,9 +677,48 @@ export default function Finance({ onNavigateToDebts }) {
       <div className="finance-grid">
         <div className="card table-card finance-ledger">
           <div className="finance-ledger-heading">
-            <h3>Buku Kas</h3>
+            <div className="finance-ledger-title">
+              <h3>Buku Kas</h3>
+              <button
+                className={'btn finance-ledger-filter-toggle' + (hasLedgerFilters ? ' is-active' : '')}
+                type="button"
+                aria-expanded={showLedgerFilters}
+                aria-controls="finance-ledger-filter-panel"
+                onClick={() => setShowLedgerFilters((visible) => !visible)}>
+                <Icon name="search" size={16} />
+                <span>Filter</span>
+                {hasLedgerFilters && <span className="finance-ledger-filter-indicator" aria-label="Filter aktif" />}
+              </button>
+            </div>
             <button className="btn btn-primary finance-add-entry-button" type="button" onClick={openNewEntry}>+ Tambah catatan</button>
           </div>
+          {showLedgerFilters && (
+            <form id="finance-ledger-filter-panel" className="finance-ledger-filter-panel" onSubmit={applyLedgerFilters}>
+              <label className="finance-ledger-search-field">
+                <span>Cari nama, ekspedisi, kategori, catatan, atau nominal</span>
+                <input
+                  className="input"
+                  type="search"
+                  value={ledgerSearchInput}
+                  onChange={(event) => setLedgerSearchInput(event.target.value)}
+                  placeholder="Contoh: JNE, nama pelanggan, atau biaya"
+                />
+              </label>
+              <label className="finance-ledger-type-field">
+                <span>Jenis transaksi</span>
+                <select className="input" value={ledgerTypeInput} onChange={(event) => setLedgerTypeInput(event.target.value)}>
+                  <option value="">Semua jenis</option>
+                  <option value="income">Pemasukan</option>
+                  <option value="expense">Pengeluaran</option>
+                  <option value="capital">Modal</option>
+                </select>
+              </label>
+              <div className="finance-ledger-filter-actions">
+                <button className="btn btn-primary" type="submit">Terapkan</button>
+                <button className="btn" type="button" onClick={clearLedgerFilters}>Reset</button>
+              </div>
+            </form>
+          )}
           {report.pending_expedition_count > 0 && (
             <div className="finance-pending-alert" role="alert">
               <strong>Biaya ekspedisi belum diisi</strong>
@@ -670,7 +731,9 @@ export default function Finance({ onNavigateToDebts }) {
             <thead><tr><th>No.</th><th>Jenis</th><th>Tanggal</th><th>Kategori</th><th>Catatan</th><th>Nominal</th><th></th></tr></thead>
             <tbody>
               {report.entries.length === 0 && <tr><td colSpan="7" className="muted center">
-                {hasFilter ? 'Tidak ada catatan pada rentang tanggal ini.' : 'Belum ada catatan.'}
+                {hasLedgerFilters
+                  ? 'Tidak ada catatan yang cocok dengan filter.'
+                  : hasFilter ? 'Tidak ada catatan pada rentang tanggal ini.' : 'Belum ada catatan.'}
               </td></tr>}
               {report.entries.map((e, index) => (
                 <tr key={e.id}>

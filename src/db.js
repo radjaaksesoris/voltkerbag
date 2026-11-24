@@ -563,15 +563,35 @@ export async function getDashboardData({ from, to, summaryFrom, summaryTo, page,
   return data
 }
 
-export async function getFinanceData({ from, to, page, pageSize }) {
+export async function getFinanceData({ from, to, page, pageSize, search = '', type = '' }) {
   const client = getClient()
-  const { data, error } = await client.rpc('get_finance_data', {
+  const searchTerm = String(search || '').trim().toLocaleLowerCase('id-ID')
+  const hasEntryFilters = Boolean(searchTerm || type)
+  const fetchPageSize = hasEntryFilters ? 100 : pageSize
+  const { data: firstPage, error } = await client.rpc('get_finance_data', {
     p_from: from,
     p_to: to,
-    p_page: page,
-    p_page_size: pageSize
+    p_page: hasEntryFilters ? 1 : page,
+    p_page_size: fetchPageSize
   })
   throwIfError(error, 'Gagal memuat ringkasan keuangan')
+
+  let data = firstPage
+  if (hasEntryFilters) {
+    const allEntries = [...(firstPage?.entries || [])]
+    const pageCount = Math.ceil(Number(firstPage?.total_count || 0) / fetchPageSize)
+    for (let currentPage = 2; currentPage <= pageCount; currentPage += 1) {
+      const { data: nextPage, error: pageError } = await client.rpc('get_finance_data', {
+        p_from: from,
+        p_to: to,
+        p_page: currentPage,
+        p_page_size: fetchPageSize
+      })
+      throwIfError(pageError, 'Gagal memuat semua catatan untuk filter Buku Kas')
+      allEntries.push(...(nextPage?.entries || []))
+    }
+    data = { ...firstPage, entries: allEntries }
+  }
 
   let totalVendorDebt = 0
   for (let offset = 0; ; offset += 1000) {
@@ -592,13 +612,17 @@ export async function getFinanceData({ from, to, page, pageSize }) {
   )
   if (expeditionEntries.length) {
     const transactionIds = [...new Set(expeditionEntries.map((entry) => entry.refId))]
-    const { data: transactions, error: transactionError } = await client
-      .from(tableFor('transactions'))
-      .select('id, expedition, customerName')
-      .in('id', transactionIds)
-    throwIfError(transactionError, 'Gagal memuat detail ekspedisi untuk Buku Kas')
+    const transactions = []
+    for (let offset = 0; offset < transactionIds.length; offset += 500) {
+      const { data: transactionBatch, error: transactionError } = await client
+        .from(tableFor('transactions'))
+        .select('id, expedition, customerName')
+        .in('id', transactionIds.slice(offset, offset + 500))
+      throwIfError(transactionError, 'Gagal memuat detail ekspedisi untuk Buku Kas')
+      transactions.push(...(transactionBatch || []))
+    }
 
-    const transactionById = new Map((transactions || []).map((transaction) => [String(transaction.id), transaction]))
+    const transactionById = new Map(transactions.map((transaction) => [String(transaction.id), transaction]))
     const expeditionEntryIds = new Set(expeditionEntries.map((entry) => entry.id))
     data.entries = data.entries.map((entry) => {
       if (!expeditionEntryIds.has(entry.id)) return entry
@@ -611,6 +635,21 @@ export async function getFinanceData({ from, to, page, pageSize }) {
         category: 'Biaya Ekspedisi ' + expedition + ' (' + customerName + ')'
       }
     })
+  }
+
+  if (hasEntryFilters) {
+    const searchTerms = searchTerm.split(/\s+/).filter(Boolean)
+    const filteredEntries = (data.entries || []).filter((entry) => {
+      if (type && entry.type !== type) return false
+      if (!searchTerms.length) return true
+      const searchableText = Object.values(entry)
+        .filter((value) => typeof value === 'string' || typeof value === 'number')
+        .join(' ')
+        .toLocaleLowerCase('id-ID')
+      return searchTerms.every((term) => searchableText.includes(term))
+    })
+    data.total_count = filteredEntries.length
+    data.entries = filteredEntries.slice((page - 1) * pageSize, page * pageSize)
   }
 
   return { ...data, total_vendor_debt: totalVendorDebt }
