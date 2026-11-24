@@ -33,7 +33,7 @@ export default function Purchases() {
   const [vendorLoadError, setVendorLoadError] = useState('')
   const [actionError, setActionError] = useState('')
   const [status, setStatus] = useState('')
-  const [purchaseFormCollapsed, setPurchaseFormCollapsed] = useState(false)
+  const [purchaseFormCollapsed, setPurchaseFormCollapsed] = useState(true)
   const [purchaseType, setPurchaseType] = useState('stock')
   const [paymentType, setPaymentType] = useState('cash')
   const [products, setProducts] = useState([])
