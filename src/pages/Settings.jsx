@@ -296,9 +296,9 @@ export default function Settings() {
   async function createBackup() {
     setBackupSaving(true)
     setBackupError('')
-    setBackupStatus('')
+    setBackupStatus('Menyiapkan backup data toko...')
     try {
-      const backup = await createBackupArchive()
+      const backup = await createBackupArchive(setBackupStatus)
       setBackupStatus(
         'Tersimpan di store-backups/' + backup.path + ' · ' + backup.recordCount + ' baris data, ' +
         new Intl.NumberFormat('id-ID', { maximumFractionDigits: 1 }).format(backup.size / 1024 / 1024) + ' MB).'

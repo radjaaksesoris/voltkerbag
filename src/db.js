@@ -130,7 +130,7 @@ export async function getTransactionsByDateRange({ from, to }) {
   }
 }
 
-export async function createBackupArchive() {
+export async function createBackupArchive(onProgress = () => {}) {
   const client = getClient()
   const { data: { user }, error: userError } = await client.auth.getUser()
   throwIfError(userError, 'Gagal memeriksa akun untuk backup')
@@ -142,6 +142,7 @@ export async function createBackupArchive() {
   }
   throwIfError(startRevisionError, 'Gagal memeriksa konsistensi data backup')
 
+  onProgress('Menyiapkan arsip backup...')
   const { default: JSZip } = await import('jszip')
   const archive = new JSZip()
   const recordManifest = {}
@@ -151,6 +152,7 @@ export async function createBackupArchive() {
     let lastId = 0
     let chunkIndex = 0
     let tableCount = 0
+    onProgress('Membaca data ' + key + '...')
     const pageSize = 100
 
     for (;;) {
@@ -186,7 +188,10 @@ export async function createBackupArchive() {
   }
 
   const images = []
+  let imageIndex = 0
   for (const path of imagePaths) {
+    imageIndex += 1
+    onProgress('Mengambil foto produk ' + imageIndex + ' dari ' + imagePaths.size + '...')
     if (!path.startsWith(user.id + '/')) {
       throw new Error('Backup dihentikan karena gambar produk tidak sesuai dengan akun toko.')
     }
@@ -213,6 +218,7 @@ export async function createBackupArchive() {
     images
   }, null, 2))
 
+  onProgress('Menyusun file ZIP backup...')
   const blob = await archive.generateAsync({
     type: 'blob',
     mimeType: 'application/zip',
@@ -221,6 +227,7 @@ export async function createBackupArchive() {
   })
   const timestamp = new Date().toISOString().replace(/[:.]/g, '-')
   const path = user.id + '/backup-' + timestamp + '.zip'
+  onProgress('Mengunggah backup ke Storage Server...')
   const { error: uploadError } = await client.storage.from('store-backups').upload(path, blob, {
     cacheControl: '3600',
     contentType: 'application/zip',
@@ -995,17 +1002,6 @@ export async function createVendorPayable({ vendorName, description, amount, dat
     p_request_id: requestId || crypto.randomUUID()
   })
   throwIfError(error, 'Gagal mencatat utang pembelian')
-  notifyRefresh()
-  return data
-}
-
-export async function recordVendorPayablePayment(payableId, amount, requestId) {
-  const { data, error } = await getClient().rpc('record_vendor_payable_payment', {
-    p_payable_id: payableId,
-    p_amount: amount,
-    p_request_id: requestId || crypto.randomUUID()
-  })
-  throwIfError(error, 'Gagal menyimpan pembayaran utang pembelian')
   notifyRefresh()
   return data
 }
