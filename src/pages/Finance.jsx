@@ -679,7 +679,9 @@ export default function Finance({ onNavigateToDebts }) {
           <div className="finance-ledger-heading">
             <div className="finance-ledger-title">
               <h3>Buku Kas</h3>
-              {showLedgerFilters ? (
+            </div>
+            <div className="finance-ledger-controls">
+              {showLedgerFilters && (
                 <div className="finance-ledger-search-field">
                   <Icon name="search" size={16} />
                   <input
@@ -691,24 +693,20 @@ export default function Finance({ onNavigateToDebts }) {
                     placeholder="Cari nama, ekspedisi, kategori, catatan, atau nominal"
                     aria-label="Cari di Buku Kas"
                   />
-                  <button className="finance-ledger-search-close" type="button" aria-label="Tutup pencarian" onClick={toggleLedgerSearch}>
-                    <Icon name="close" size={16} />
-                  </button>
                 </div>
-              ) : (
-                <button
-                  className={'btn finance-ledger-filter-toggle' + (hasLedgerFilters ? ' is-active' : '')}
-                  type="button"
-                  aria-expanded={showLedgerFilters}
-                  aria-controls={showLedgerFilters ? 'finance-ledger-filter-input' : undefined}
-                  onClick={toggleLedgerSearch}>
-                  <Icon name="search" size={16} />
-                  <span>Filter</span>
-                  {hasLedgerFilters && <span className="finance-ledger-filter-indicator" aria-label="Filter aktif" />}
-                </button>
               )}
+              <button
+                className={'btn finance-ledger-filter-toggle' + (hasLedgerFilters ? ' is-active' : '')}
+                type="button"
+                aria-expanded={showLedgerFilters}
+                aria-controls={showLedgerFilters ? 'finance-ledger-filter-input' : undefined}
+                onClick={toggleLedgerSearch}>
+                <Icon name="search" size={16} />
+                <span>Filter</span>
+                {hasLedgerFilters && <span className="finance-ledger-filter-indicator" aria-label="Filter aktif" />}
+              </button>
+              <button className="btn btn-primary finance-add-entry-button" type="button" onClick={openNewEntry}>+ Tambah catatan</button>
             </div>
-            <button className="btn btn-primary finance-add-entry-button" type="button" onClick={openNewEntry}>+ Tambah catatan</button>
           </div>
           {report.pending_expedition_count > 0 && (
             <div className="finance-pending-alert" role="alert">
