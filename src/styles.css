@@ -599,6 +599,7 @@ button:focus-visible, input:focus-visible, select:focus-visible {
   min-height: 82px;
   padding: 15px clamp(20px, 4vw, 52px);
   overflow: hidden;
+  border-radius: 0 0 18px 18px;
   border-bottom: 1px solid rgba(255, 255, 255, .18);
   background:
     radial-gradient(ellipse at 78% 125%, rgba(242, 180, 137, .22), transparent 38%),
