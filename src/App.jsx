@@ -235,7 +235,7 @@ const NAV = [
   { id: 'pos', label: 'Transaksi', description: 'Pilih produk, atur pembayaran, dan simpan transaksi.', icon: 'cart' },
   { id: 'menu', label: 'Menu', description: 'Pilih fitur yang ingin dibuka.', icon: 'more' },
   { id: 'purchases', label: 'Pembelian', description: 'Catat barang masuk stok atau bahan non-stok.', icon: 'purchase' },
-  { id: 'debts', label: 'Utang/Piutang', description: 'Kelola piutang pelanggan dan utang pembelian vendor.', icon: 'coins' },
+  { id: 'debts', label: 'Utang/Piutang', description: '', icon: 'coins' },
   { id: 'stok', label: 'Stok Barang', description: 'Kelola katalog produk, harga, dan ketersediaan stok.', icon: 'bag' },
   { id: 'finance', label: 'Keuangan', description: 'Pantau pemasukan, pengeluaran, dan saldo kas toko.', icon: 'wallet' },
   { id: 'settings', label: 'Setting', description: 'Kelola nama pelanggan dan gambar produk.', icon: 'settings' }
@@ -845,7 +845,7 @@ function ActiveApp() {
             </button>
             <div className="topbar-title">
               <strong>{currentPage.label}</strong>
-              <span>{currentPage.description}</span>
+              {currentPage.description && <span>{currentPage.description}</span>}
             </div>
           </div>
           {!isInstalled && (
