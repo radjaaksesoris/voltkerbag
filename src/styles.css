@@ -1405,17 +1405,17 @@ h3 { margin-bottom: 16px; color: var(--ink); font-size: 15px; font-weight: 700; 
 .dashboard-transaction-table { min-width: 720px; }
 .dashboard-date-mobile, .dashboard-amount-mobile { display: none; }
 .finance-ledger-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 16px; }
-.finance-ledger-heading h3 { margin: 0; }
-.finance-ledger-title { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.finance-ledger-heading h3 { flex: 0 0 auto; margin: 0; white-space: nowrap; }
+.finance-ledger-title { display: flex; flex: 1 1 auto; align-items: center; gap: 10px; min-width: 0; }
 .finance-ledger-filter-toggle { display: inline-flex; min-height: 34px; align-items: center; gap: 6px; padding: 6px 10px; }
 .finance-ledger-filter-toggle.is-active { border-color: var(--accent); color: var(--accent-dark); }
 .finance-ledger-filter-indicator { width: 7px; height: 7px; border-radius: 50%; background: var(--accent); }
-.finance-ledger-filter-panel { display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; margin: 0 0 16px; padding: 12px; border: 1px solid var(--border); border-radius: 10px; background: var(--surface, #faf8f4); }
-.finance-ledger-search-field { display: grid; min-width: 0; gap: 5px; margin: 0; }
-.finance-ledger-search-field > span { color: var(--muted); font-size: 11px; font-weight: 700; }
-.finance-ledger-search-field .input { width: 100%; min-width: 0; margin: 0; }
-.finance-ledger-filter-actions { display: flex; align-items: center; gap: 7px; }
-.finance-ledger-filter-actions .btn { min-height: 40px; }
+.finance-ledger-search-field { display: flex; flex: 1 1 0; min-width: 0; height: 40px; align-items: center; gap: 8px; padding: 0 10px; border: 1px solid var(--accent); border-radius: 9px; background: #fff; color: var(--accent-dark); }
+.finance-ledger-search-field .icon { flex: 0 0 auto; }
+.finance-ledger-search-field .input { flex: 1 1 auto; width: 100%; min-width: 0; height: 100%; margin: 0; padding: 0; border: 0; background: transparent; box-shadow: none; font-size: 13px; }
+.finance-ledger-search-field .input:focus { outline: none; }
+.finance-ledger-search-close { display: grid; flex: 0 0 auto; width: 28px; height: 28px; place-items: center; padding: 0; border: 0; border-radius: 6px; background: transparent; color: var(--muted); cursor: pointer; }
+.finance-ledger-search-close:hover { background: var(--accent-soft); color: var(--accent-dark); }
 .finance-pending-alert { display: grid; gap: 3px; margin: 0 0 12px; padding: 11px 13px; border: 1px solid var(--mustard-border); border-radius: 9px; background: var(--mustard-surface); color: var(--mustard-ink); font-size: 12px; }
 .finance-pending-alert strong, .finance-pending-label, .finance-pending-amount { color: var(--mustard-icon); font-weight: 700; }
 .finance-pending-cell { display: grid; justify-items: end; gap: 5px; }
@@ -1874,7 +1874,6 @@ h3 { margin-bottom: 16px; color: var(--ink); font-size: 15px; font-weight: 700; 
   .finance-ledger { padding: 16px; }
   .finance-ledger-heading { margin-bottom: 10px; }
   .finance-ledger-heading .btn { min-height: 34px; padding: 7px 10px; font-size: 11px; }
-  .finance-ledger-filter-actions { justify-content: flex-end; }
   .finance-pending-alert { gap: 2px; margin-bottom: 9px; padding: 8px 10px; font-size: 11px; }
   .finance-ledger-table { font-size: 12px; }
   .finance-ledger-table th,
@@ -3430,10 +3429,16 @@ label { display: block; margin-bottom: 6px; color: var(--muted); font-size: 11px
   .products-table .product-action-trigger { min-width: 30px; min-height: 30px; padding: 4px; }
   .product-action-menu { width: 140px; }
   .finance-ledger { overflow-x: hidden; padding: 12px 8px; }
-  .finance-ledger-heading { flex-wrap: wrap; margin: 0 4px 10px; }
+  .finance-ledger-heading { flex-wrap: nowrap; margin: 0 4px 10px; }
   .finance-ledger-heading h3 { margin-bottom: 0; }
   .finance-ledger-title { gap: 6px; }
-  .finance-ledger-filter-panel { margin: 0 4px 10px; padding: 9px; }
+  .finance-ledger-heading { flex-wrap: nowrap; gap: 7px; }
+  .finance-ledger-title { gap: 6px; }
+  .finance-ledger-filter-toggle { flex: 0 0 auto; }
+  .finance-ledger-search-field { gap: 5px; padding-inline: 6px; }
+  .finance-ledger-search-field .input { font-size: 11px; }
+  .finance-ledger-search-close { width: 24px; height: 24px; }
+  .finance-ledger-heading > .finance-add-entry-button { flex: 0 0 auto; white-space: nowrap; }
   .finance-date-filter .date-filter-caption span { display: none; }
   .finance-ledger-table { display: block; width: 100%; min-width: 0; table-layout: fixed; font-size: 10px; }
   .finance-ledger-table thead,

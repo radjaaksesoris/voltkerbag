@@ -66,6 +66,7 @@ export default function Finance({ onNavigateToDebts }) {
   const [showLedgerFilters, setShowLedgerFilters] = useState(false)
   const [ledgerSearchInput, setLedgerSearchInput] = useState('')
   const [ledgerFilters, setLedgerFilters] = useState({ search: '' })
+  const ledgerSearchInputRef = useRef(null)
   const [loaded, setLoaded] = useState(false)
   const [showSalesInvoices, setShowSalesInvoices] = useState(false)
   const [salesInvoices, setSalesInvoices] = useState([])
@@ -182,6 +183,15 @@ export default function Finance({ onNavigateToDebts }) {
     }
   }, [showSalesInvoices, dateRange, salesInvoicePage])
 
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      const search = ledgerSearchInput.trim()
+      setLedgerFilters((current) => current.search === search ? current : { search })
+      setPage(1)
+    }, 300)
+    return () => window.clearTimeout(timer)
+  }, [ledgerSearchInput])
+
   const income = Number(report.income)
   const expense = Number(report.expense)
   const capital = Number(report.capital)
@@ -230,16 +240,13 @@ export default function Finance({ onNavigateToDebts }) {
     setInvoiceDownloadStatus('')
   }
 
-  function applyLedgerFilters(event) {
-    event.preventDefault()
-    setPage(1)
-    setLedgerFilters({ search: ledgerSearchInput.trim() })
-  }
-
-  function clearLedgerFilters() {
-    setLedgerSearchInput('')
-    setLedgerFilters({ search: '' })
-    setPage(1)
+  function toggleLedgerSearch() {
+    if (showLedgerFilters) {
+      setShowLedgerFilters(false)
+      return
+    }
+    setShowLedgerFilters(true)
+    requestAnimationFrame(() => ledgerSearchInputRef.current?.focus())
   }
 
   function changeSalesInvoicePage(nextPage) {
@@ -674,37 +681,38 @@ export default function Finance({ onNavigateToDebts }) {
           <div className="finance-ledger-heading">
             <div className="finance-ledger-title">
               <h3>Buku Kas</h3>
-              <button
-                className={'btn finance-ledger-filter-toggle' + (hasLedgerFilters ? ' is-active' : '')}
-                type="button"
-                aria-expanded={showLedgerFilters}
-                aria-controls="finance-ledger-filter-panel"
-                onClick={() => setShowLedgerFilters((visible) => !visible)}>
-                <Icon name="search" size={16} />
-                <span>Filter</span>
-                {hasLedgerFilters && <span className="finance-ledger-filter-indicator" aria-label="Filter aktif" />}
-              </button>
+              {showLedgerFilters ? (
+                <div className="finance-ledger-search-field">
+                  <Icon name="search" size={16} />
+                  <input
+                    ref={ledgerSearchInputRef}
+                    id="finance-ledger-filter-input"
+                    className="input"
+                    type="search"
+                    value={ledgerSearchInput}
+                    onChange={(event) => setLedgerSearchInput(event.target.value)}
+                    placeholder="Cari nama, ekspedisi, kategori, catatan, atau nominal"
+                    aria-label="Cari di Buku Kas"
+                  />
+                  <button className="finance-ledger-search-close" type="button" aria-label="Tutup pencarian" onClick={toggleLedgerSearch}>
+                    <Icon name="close" size={16} />
+                  </button>
+                </div>
+              ) : (
+                <button
+                  className={'btn finance-ledger-filter-toggle' + (hasLedgerFilters ? ' is-active' : '')}
+                  type="button"
+                  aria-expanded={showLedgerFilters}
+                  aria-controls={showLedgerFilters ? 'finance-ledger-filter-input' : undefined}
+                  onClick={toggleLedgerSearch}>
+                  <Icon name="search" size={16} />
+                  <span>Filter</span>
+                  {hasLedgerFilters && <span className="finance-ledger-filter-indicator" aria-label="Filter aktif" />}
+                </button>
+              )}
             </div>
             <button className="btn btn-primary finance-add-entry-button" type="button" onClick={openNewEntry}>+ Tambah catatan</button>
           </div>
-          {showLedgerFilters && (
-            <form id="finance-ledger-filter-panel" className="finance-ledger-filter-panel" onSubmit={applyLedgerFilters}>
-              <label className="finance-ledger-search-field">
-                <span>Cari nama, ekspedisi, kategori, catatan, atau nominal</span>
-                <input
-                  className="input"
-                  type="search"
-                  value={ledgerSearchInput}
-                  onChange={(event) => setLedgerSearchInput(event.target.value)}
-                  placeholder="Contoh: JNE, nama pelanggan, atau biaya"
-                />
-              </label>
-              <div className="finance-ledger-filter-actions">
-                <button className="btn btn-primary" type="submit">Terapkan</button>
-                <button className="btn" type="button" onClick={clearLedgerFilters}>Reset</button>
-              </div>
-            </form>
-          )}
           {report.pending_expedition_count > 0 && (
             <div className="finance-pending-alert" role="alert">
               <strong>Biaya ekspedisi belum diisi</strong>
