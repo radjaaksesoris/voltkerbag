@@ -5146,18 +5146,18 @@ body:has(.app) {
   outline: 3px solid rgba(196, 162, 43, .42);
   outline-offset: 3px;
 }
-.app:not(.menu-landing) .finance-ledger-heading > .finance-add-entry-button {
+.app:not(.menu-landing) .finance-ledger-heading .finance-add-entry-button {
   border-color: var(--mustard-border);
   background: var(--mustard-surface);
   color: var(--mustard-ink);
   box-shadow: 0 5px 12px rgba(89, 66, 15, .16);
 }
-.app:not(.menu-landing) .finance-ledger-heading > .finance-add-entry-button:hover:not(:disabled) {
+.app:not(.menu-landing) .finance-ledger-heading .finance-add-entry-button:hover:not(:disabled) {
   border-color: var(--mustard-dark);
   background: linear-gradient(145deg, var(--mustard-mid), var(--mustard-dark));
   color: var(--mustard-ink);
 }
-.app:not(.menu-landing) .finance-ledger-heading > .finance-add-entry-button:focus-visible {
+.app:not(.menu-landing) .finance-ledger-heading .finance-add-entry-button:focus-visible {
   outline: 3px solid rgba(196, 162, 43, .42);
   outline-offset: 3px;
 }
