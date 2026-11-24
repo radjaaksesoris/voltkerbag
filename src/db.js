@@ -563,10 +563,10 @@ export async function getDashboardData({ from, to, summaryFrom, summaryTo, page,
   return data
 }
 
-export async function getFinanceData({ from, to, page, pageSize, search = '', type = '' }) {
+export async function getFinanceData({ from, to, page, pageSize, search = '' }) {
   const client = getClient()
   const searchTerm = String(search || '').trim().toLocaleLowerCase('id-ID')
-  const hasEntryFilters = Boolean(searchTerm || type)
+  const hasEntryFilters = Boolean(searchTerm)
   const fetchPageSize = hasEntryFilters ? 100 : pageSize
   const { data: firstPage, error } = await client.rpc('get_finance_data', {
     p_from: from,
@@ -640,7 +640,6 @@ export async function getFinanceData({ from, to, page, pageSize, search = '', ty
   if (hasEntryFilters) {
     const searchTerms = searchTerm.split(/\s+/).filter(Boolean)
     const filteredEntries = (data.entries || []).filter((entry) => {
-      if (type && entry.type !== type) return false
       if (!searchTerms.length) return true
       const searchableText = Object.values(entry)
         .filter((value) => typeof value === 'string' || typeof value === 'number')

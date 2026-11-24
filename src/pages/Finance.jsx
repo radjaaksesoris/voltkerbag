@@ -65,8 +65,7 @@ export default function Finance({ onNavigateToDebts }) {
   const [actionError, setActionError] = useState('')
   const [showLedgerFilters, setShowLedgerFilters] = useState(false)
   const [ledgerSearchInput, setLedgerSearchInput] = useState('')
-  const [ledgerTypeInput, setLedgerTypeInput] = useState('')
-  const [ledgerFilters, setLedgerFilters] = useState({ search: '', type: '' })
+  const [ledgerFilters, setLedgerFilters] = useState({ search: '' })
   const [loaded, setLoaded] = useState(false)
   const [showSalesInvoices, setShowSalesInvoices] = useState(false)
   const [salesInvoices, setSalesInvoices] = useState([])
@@ -194,7 +193,7 @@ export default function Finance({ onNavigateToDebts }) {
   const pageCount = Math.max(1, Math.ceil(report.total_count / FINANCE_PAGE_SIZE))
   const pageStart = (page - 1) * FINANCE_PAGE_SIZE
   const hasFilter = hasDateRange(dateRange)
-  const hasLedgerFilters = Boolean(ledgerFilters.search || ledgerFilters.type)
+  const hasLedgerFilters = Boolean(ledgerFilters.search)
   const todayDateRange = getTodayDateRange()
   const currentMonthDateRange = getCurrentMonthDateRange()
   const salesInvoicePageCount = Math.max(1, Math.ceil(salesInvoiceCount / FINANCE_INVOICE_PAGE_SIZE))
@@ -234,16 +233,12 @@ export default function Finance({ onNavigateToDebts }) {
   function applyLedgerFilters(event) {
     event.preventDefault()
     setPage(1)
-    setLedgerFilters({
-      search: ledgerSearchInput.trim(),
-      type: ledgerTypeInput
-    })
+    setLedgerFilters({ search: ledgerSearchInput.trim() })
   }
 
   function clearLedgerFilters() {
     setLedgerSearchInput('')
-    setLedgerTypeInput('')
-    setLedgerFilters({ search: '', type: '' })
+    setLedgerFilters({ search: '' })
     setPage(1)
   }
 
@@ -703,15 +698,6 @@ export default function Finance({ onNavigateToDebts }) {
                   onChange={(event) => setLedgerSearchInput(event.target.value)}
                   placeholder="Contoh: JNE, nama pelanggan, atau biaya"
                 />
-              </label>
-              <label className="finance-ledger-type-field">
-                <span>Jenis transaksi</span>
-                <select className="input" value={ledgerTypeInput} onChange={(event) => setLedgerTypeInput(event.target.value)}>
-                  <option value="">Semua jenis</option>
-                  <option value="income">Pemasukan</option>
-                  <option value="expense">Pengeluaran</option>
-                  <option value="capital">Modal</option>
-                </select>
               </label>
               <div className="finance-ledger-filter-actions">
                 <button className="btn btn-primary" type="submit">Terapkan</button>
