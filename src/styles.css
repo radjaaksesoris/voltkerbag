@@ -1459,9 +1459,15 @@ h3 { margin-bottom: 16px; color: var(--ink); font-size: 15px; font-weight: 700; 
 .purchase-form-card { max-width: none; padding: clamp(16px, 2.4vw, 28px); border-radius: 6px 24px 6px 24px; }
 .purchase-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 18px; }
 .purchase-heading h2 { margin: 0; font-size: clamp(22px, 2.4vw, 29px); letter-spacing: -.5px; }
-.purchase-form-toggle { display: grid; flex: 0 0 auto; width: 38px; height: 38px; place-items: center; padding: 0; border: 1px solid rgba(233, 207, 88, .65); border-radius: 9px; background: rgba(233, 207, 88, .14); color: var(--mustard-light); cursor: pointer; transition: background .18s, transform .18s; }
-.purchase-form-toggle:hover { background: rgba(233, 207, 88, .25); }
+.purchase-form-toggle { position: relative; display: grid; flex: 0 0 auto; width: 38px; height: 38px; overflow: hidden; place-items: center; padding: 0; border: 1px solid var(--mustard-border); border-radius: 9px; background: var(--mustard-light); color: var(--mustard-ink); cursor: pointer; transition: background .18s, transform .18s; }
+.purchase-form-toggle::before { position: absolute; inset: 0; transform: translateX(-100%); background: linear-gradient(105deg, transparent 25%, rgba(255, 255, 255, .62) 50%, transparent 75%); animation: purchase-toggle-shimmer 2.2s ease-in-out infinite; content: ''; pointer-events: none; }
+.purchase-form-toggle .icon { position: relative; z-index: 1; }
+.purchase-form-toggle:hover { background: var(--mustard-mid); }
 .purchase-form-toggle:active { transform: scale(.96); }
+@keyframes purchase-toggle-shimmer { 55%, 100% { transform: translateX(100%); } }
+@media (prefers-reduced-motion: reduce) {
+  .purchase-form-toggle::before { animation: none; }
+}
 .app:not(.menu-landing) .purchase-form[hidden] { display: none; }
 .purchase-form-card.is-collapsed .purchase-heading { margin-bottom: 0; }
 .purchase-heading p { max-width: 58ch; font-size: 12px; }
