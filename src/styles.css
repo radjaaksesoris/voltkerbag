@@ -2477,10 +2477,6 @@ label { display: block; margin-bottom: 6px; color: var(--muted); font-size: 11px
 .credit-payment-modes .btn { padding-inline: 8px; }
 .credit-balances-empty { padding: 10px 0 2px; font-size: 12px; }
 .debts-page { display: grid; align-content: start; width: min(100%, 1240px); gap: 16px; }
-.debts-page-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
-.debts-page-heading h2 { margin: 3px 0 4px; color: var(--ink); font-size: 22px; }
-.debts-page-heading p { margin: 0; }
-.debts-page-kicker { color: var(--accent-dark); font-size: 9px; font-weight: 800; letter-spacing: 1px; }
 .debts-tabs { display: flex; gap: 8px; padding: 5px; border: 1px solid var(--border); border-radius: 12px; background: var(--card); }
 .debts-tabs button { flex: 1 1 0; min-height: 40px; padding: 8px 12px; border: 0; border-radius: 8px; background: transparent; color: var(--muted); font: inherit; font-size: 12px; font-weight: 700; cursor: pointer; }
 .debts-tabs button.active { background: var(--accent); color: #fffaf3; box-shadow: 0 4px 10px rgba(99, 34, 30, .14); }
@@ -3046,7 +3042,6 @@ label { display: block; margin-bottom: 6px; color: var(--muted); font-size: 11px
 @media (max-width: 640px) {
   .credit-balances-list.is-scrollable { max-height: 200px; }
   .debts-page { gap: 12px; }
-  .debts-page-heading h2 { font-size: 19px; }
   .debts-tabs button { min-height: 38px; padding: 7px 5px; font-size: 11px; }
   .debts-card, .debts-form-card { padding: 12px; }
   .debts-section-heading { align-items: flex-start; gap: 8px; }

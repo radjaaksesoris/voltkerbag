@@ -352,13 +352,6 @@ export default function Debts() {
 
   return (
     <div className="page debts-page">
-      <header className="debts-page-heading">
-        <div>
-          <span className="debts-page-kicker">KEUANGAN</span>
-          <h2>Utang/Piutang</h2>
-        </div>
-      </header>
-
       <div className="debts-tabs" role="tablist" aria-label="Jenis utang">
         <button
           className={activeTab === 'receivables' ? 'active' : ''}
