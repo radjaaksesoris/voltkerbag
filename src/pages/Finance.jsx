@@ -66,7 +66,6 @@ export default function Finance({ onNavigateToDebts }) {
   const [showLedgerFilters, setShowLedgerFilters] = useState(false)
   const [ledgerSearchInput, setLedgerSearchInput] = useState('')
   const [ledgerFilters, setLedgerFilters] = useState({ search: '' })
-  const ledgerSearchInputRef = useRef(null)
   const [loaded, setLoaded] = useState(false)
   const [showSalesInvoices, setShowSalesInvoices] = useState(false)
   const [salesInvoices, setSalesInvoices] = useState([])
@@ -246,7 +245,6 @@ export default function Finance({ onNavigateToDebts }) {
       return
     }
     setShowLedgerFilters(true)
-    requestAnimationFrame(() => ledgerSearchInputRef.current?.focus())
   }
 
   function changeSalesInvoicePage(nextPage) {
@@ -685,7 +683,6 @@ export default function Finance({ onNavigateToDebts }) {
                 <div className="finance-ledger-search-field">
                   <Icon name="search" size={16} />
                   <input
-                    ref={ledgerSearchInputRef}
                     id="finance-ledger-filter-input"
                     className="input"
                     type="search"
