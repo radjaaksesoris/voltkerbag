@@ -1462,7 +1462,7 @@ h3 { margin-bottom: 16px; color: var(--ink); font-size: 15px; font-weight: 700; 
 .purchase-form-toggle { display: grid; flex: 0 0 auto; width: 38px; height: 38px; place-items: center; padding: 0; border: 1px solid rgba(255, 250, 243, .42); border-radius: 9px; background: rgba(255, 250, 243, .1); color: #fffaf3; cursor: pointer; transition: background .18s, transform .18s; }
 .purchase-form-toggle:hover { background: rgba(255, 250, 243, .2); }
 .purchase-form-toggle:active { transform: scale(.96); }
-.purchase-form[hidden] { display: none; }
+.app:not(.menu-landing) .purchase-form[hidden] { display: none; }
 .purchase-form-card.is-collapsed .purchase-heading { margin-bottom: 0; }
 .purchase-heading p { max-width: 58ch; font-size: 12px; }
 .purchase-stock-notice { margin: 0 0 18px; padding: 10px 13px; border: 1px solid #ead8d1; border-left: 3px solid var(--accent); border-radius: 5px 14px 5px 14px; background: linear-gradient(110deg, #fff5f1, #fffdfa); color: var(--muted); font-size: 11px; line-height: 1.5; }
