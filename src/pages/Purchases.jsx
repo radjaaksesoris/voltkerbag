@@ -549,17 +549,17 @@ export default function Purchases() {
                     <div className="purchase-item-heading">
                       <div className="purchase-item-main">
                         <span className="purchase-item-title">{purchase.purchase}</span>
-                        {entry.purchaseSource !== 'payable' && (
-                          <button
-                            className="btn btn-sm btn-danger purchase-delete-button"
-                            type="button"
-                            aria-label={'Hapus pembelian ' + purchase.purchase}
-                            title="Hapus riwayat pembelian"
-                            disabled={deletingEntryId !== null}
-                            onClick={() => deletePurchase(entry)}>
-                            <Icon name="close" size={16} />
-                          </button>
-                        )}
+                        <button
+                          className="btn btn-sm btn-danger purchase-delete-button"
+                          type="button"
+                          aria-label={'Hapus pembelian ' + purchase.purchase}
+                          title={entry.purchaseSource === 'payable'
+                            ? 'Pembelian kredit tidak dapat dihapus dari riwayat ini'
+                            : 'Hapus riwayat pembelian'}
+                          disabled={entry.purchaseSource === 'payable' || deletingEntryId !== null}
+                          onClick={() => deletePurchase(entry)}>
+                          <Icon name="close" size={16} />
+                        </button>
                       </div>
                       <div className="purchase-item-meta">
                         <span className="purchase-item-type">{purchaseKind}</span>
