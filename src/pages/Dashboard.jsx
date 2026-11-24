@@ -202,8 +202,6 @@ export default function Dashboard({ onOpenLowStockProducts }) {
                 onChange={(event) => {
                   const nextRange = { ...draftDateRange, from: event.target.value }
                   setDraftDateRange(nextRange)
-                  setDateRange(nextRange)
-                  saveDashboardDateRange(nextRange)
                   setTransactionPage(1)
                 }}
                 aria-label="Dari tanggal"

@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useLayoutEffect, useDeferredValue, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { getAll, getProductImageUrl, getProductThumbnailUrl, completeSale, recordTransactionPayment, onRefresh, requestPageRefresh } from '../db'
 import { rupiah } from '../format'
@@ -25,6 +25,7 @@ export default function Transactions() {
   const [mobileCartOpen, setMobileCartOpen] = useState(false)
   const [previewProduct, setPreviewProduct] = useState(null)
   const [q, setQ] = useState('')
+  const deferredQ = useDeferredValue(q)
   const [pay, setPay] = useState('')
   const [customerName, setCustomerName] = useState('')
   const [expeditionName, setExpeditionName] = useState('')
@@ -107,12 +108,22 @@ export default function Transactions() {
       })
     }
 
+    let animationFrame = null
+    function scheduleNotificationPosition() {
+      if (animationFrame !== null) return
+      animationFrame = window.requestAnimationFrame(() => {
+        animationFrame = null
+        positionNotification()
+      })
+    }
+
     positionNotification()
-    window.addEventListener('resize', positionNotification)
-    window.addEventListener('scroll', positionNotification, true)
+    window.addEventListener('resize', scheduleNotificationPosition)
+    window.addEventListener('scroll', scheduleNotificationPosition, true)
     return () => {
-      window.removeEventListener('resize', positionNotification)
-      window.removeEventListener('scroll', positionNotification, true)
+      if (animationFrame !== null) window.cancelAnimationFrame(animationFrame)
+      window.removeEventListener('resize', scheduleNotificationPosition)
+      window.removeEventListener('scroll', scheduleNotificationPosition, true)
     }
   }, [cartNotification, previewProduct])
 
@@ -195,11 +206,11 @@ export default function Transactions() {
     [products]
   )
   const filtered = useMemo(() => {
-    const query = q.trim().toLowerCase()
+    const query = deferredQ.trim().toLowerCase()
     return searchableProducts
       .filter(({ searchName, inStock }) => inStock && searchName.includes(query))
       .map(({ product }) => product)
-  }, [searchableProducts, q])
+  }, [searchableProducts, deferredQ])
   const visibleProducts = filtered.slice(0, visibleProductCount)
 
   function switchMobileView(showCart) {

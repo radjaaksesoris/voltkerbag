@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useDeferredValue, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { addProductStock, getAll, getProductImageUrl, getProductThumbnailUrl, put, remove, removeProductImage, setProductStock, updateProductDetails, uploadProductImage, onRefresh, requestPageRefresh } from '../db'
 import { rupiah } from '../format'
@@ -31,6 +31,7 @@ export default function Products({ lowStockFilterRequest = 0 }) {
   const [categories, setCategories] = useState([])
   const [units, setUnits] = useState([])
   const [q, setQ] = useState('')
+  const deferredQ = useDeferredValue(q)
   const [lowStockOnly, setLowStockOnly] = useState(false)
   const [visibleProductCount, setVisibleProductCount] = useState(PRODUCT_PAGE_SIZE)
   const [form, setForm] = useState(EMPTY)
@@ -106,16 +107,26 @@ export default function Products({ lowStockFilterRequest = 0 }) {
       actionButtonRef.current?.focus()
     }
 
+    let animationFrame = null
+    function scheduleActionMenuPosition() {
+      if (animationFrame !== null) return
+      animationFrame = window.requestAnimationFrame(() => {
+        animationFrame = null
+        updateActionMenuPosition()
+      })
+    }
+
     updateActionMenuPosition()
     document.addEventListener('pointerdown', closeOnOutsideClick)
     document.addEventListener('keydown', closeOnEscape)
-    window.addEventListener('resize', updateActionMenuPosition)
-    window.addEventListener('scroll', updateActionMenuPosition, true)
+    window.addEventListener('resize', scheduleActionMenuPosition)
+    window.addEventListener('scroll', scheduleActionMenuPosition, true)
     return () => {
+      if (animationFrame !== null) window.cancelAnimationFrame(animationFrame)
       document.removeEventListener('pointerdown', closeOnOutsideClick)
       document.removeEventListener('keydown', closeOnEscape)
-      window.removeEventListener('resize', updateActionMenuPosition)
-      window.removeEventListener('scroll', updateActionMenuPosition, true)
+      window.removeEventListener('resize', scheduleActionMenuPosition)
+      window.removeEventListener('scroll', scheduleActionMenuPosition, true)
     }
   }, [actionMenuProductId])
 
@@ -190,11 +201,11 @@ export default function Products({ lowStockFilterRequest = 0 }) {
     [items]
   )
   const filtered = useMemo(() => {
-    const query = q.trim().toLowerCase()
+    const query = deferredQ.trim().toLowerCase()
     return searchableProducts
       .filter(({ product, searchText }) => searchText.includes(query) && (!lowStockOnly || isLowStock(product)))
       .map(({ product }) => product)
-  }, [searchableProducts, q, lowStockOnly])
+  }, [searchableProducts, deferredQ, lowStockOnly])
   const lowStock = useMemo(
     () => items.filter(isLowStock),
     [items]

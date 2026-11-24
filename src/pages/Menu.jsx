@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useDeferredValue, useMemo, useRef, useState } from 'react'
 import { getDashboardData, getFinanceData, onRefresh, requestAppUpdateCheck, requestPageRefresh } from '../db'
 import { dateRangeTimestamps, localDateValue } from '../dateFilter'
 import { rupiah } from '../format'
@@ -31,6 +31,7 @@ export default function Menu({
   onApplyAppUpdate
 }) {
   const [query, setQuery] = useState('')
+  const deferredQuery = useDeferredValue(query)
   const [summary, setSummary] = useState(null)
   const [loadError, setLoadError] = useState('')
   const [loaded, setLoaded] = useState(false)
@@ -109,12 +110,12 @@ export default function Menu({
       { id: 'chat', label: 'Chat', description: 'Tanya dan kelola toko lewat chat.', icon: 'chat' },
       { id: 'refresh', label: 'Perbarui Aplikasi', description: 'Periksa versi terbaru dan segarkan ringkasan menu.', icon: 'sync' }
     ]
-    const normalizedQuery = query.trim().toLocaleLowerCase('id-ID')
+    const normalizedQuery = deferredQuery.trim().toLocaleLowerCase('id-ID')
     if (!normalizedQuery) return shortcuts
     return shortcuts.filter((item) =>
       (item.label + ' ' + item.description).toLocaleLowerCase('id-ID').includes(normalizedQuery)
     )
-  }, [items, query])
+  }, [items, deferredQuery])
 
   const summarySlides = summary
     ? [
@@ -155,7 +156,9 @@ export default function Menu({
     if (summarySlides.length < 2 || summaryPaused) return undefined
 
     const intervalId = window.setInterval(() => {
-      moveSummaryTo((activeSummary + 1) % summarySlides.length)
+      if (document.visibilityState === 'visible') {
+        moveSummaryTo((activeSummary + 1) % summarySlides.length)
+      }
     }, 4000)
     return () => window.clearInterval(intervalId)
   }, [activeSummary, summarySlides.length, summaryPaused])

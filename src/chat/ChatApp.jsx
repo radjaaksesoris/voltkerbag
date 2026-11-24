@@ -512,7 +512,9 @@ export default function ChatApp() {
       setAttachmentPreviewUrl('')
     }
 
-    const intervalId = window.setInterval(resetIfNewDay, 30_000)
+    const intervalId = window.setInterval(() => {
+      if (document.visibilityState === 'visible') resetIfNewDay()
+    }, 30_000)
     window.addEventListener('focus', resetIfNewDay)
     document.addEventListener('visibilitychange', resetIfNewDay)
     return () => {
