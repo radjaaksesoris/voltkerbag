@@ -247,6 +247,13 @@ export default function Finance({ onNavigateToDebts }) {
     setShowLedgerFilters(true)
   }
 
+  function resetLedgerSearch() {
+    setLedgerSearchInput('')
+    setLedgerFilters({ search: '' })
+    setPage(1)
+    setShowLedgerFilters(false)
+  }
+
   function changeSalesInvoicePage(nextPage) {
     setSalesInvoices([])
     setSalesInvoicesLoading(true)
@@ -693,18 +700,23 @@ export default function Finance({ onNavigateToDebts }) {
                     placeholder="Cari nama, ekspedisi, kategori, catatan, atau nominal"
                     aria-label="Cari di Buku Kas"
                   />
+                  <button className="finance-ledger-search-reset" type="button" aria-label="Reset filter" onClick={resetLedgerSearch}>
+                    <Icon name="close" size={16} />
+                  </button>
                 </div>
               )}
-              <button
-                className={'btn finance-ledger-filter-toggle' + (hasLedgerFilters ? ' is-active' : '')}
-                type="button"
-                aria-expanded={showLedgerFilters}
-                aria-controls={showLedgerFilters ? 'finance-ledger-filter-input' : undefined}
-                onClick={toggleLedgerSearch}>
-                <Icon name="search" size={16} />
-                <span>Filter</span>
-                {hasLedgerFilters && <span className="finance-ledger-filter-indicator" aria-label="Filter aktif" />}
-              </button>
+              {!showLedgerFilters && (
+                <button
+                  className={'btn finance-ledger-filter-toggle' + (hasLedgerFilters ? ' is-active' : '')}
+                  type="button"
+                  aria-expanded={showLedgerFilters}
+                  aria-controls={showLedgerFilters ? 'finance-ledger-filter-input' : undefined}
+                  onClick={toggleLedgerSearch}>
+                  <Icon name="search" size={16} />
+                  <span>Filter</span>
+                  {hasLedgerFilters && <span className="finance-ledger-filter-indicator" aria-label="Filter aktif" />}
+                </button>
+              )}
               <button className="btn btn-primary finance-add-entry-button" type="button" onClick={openNewEntry}>+ Tambah catatan</button>
             </div>
           </div>
