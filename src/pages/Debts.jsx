@@ -334,8 +334,17 @@ export default function Debts() {
   }
 
   function updateSelectedInvoice(transaction) {
-    setInvoices((current) => current.map((invoice) => invoice.id === transaction.id ? transaction : invoice))
     setSelectedInvoice(transaction)
+    const customerKey = String(transaction.customerName || '').trim().toLocaleLowerCase('id-ID')
+      || expandedCustomer
+    setCustomerDetails((current) => {
+      const details = current[customerKey]
+      if (!details) return current
+      const invoices = details.invoices
+        .map((invoice) => invoice.id === transaction.id ? { ...invoice, ...transaction } : invoice)
+        .filter((invoice) => Number(invoice.balanceDue) > 0)
+      return { ...current, [customerKey]: { ...details, invoices } }
+    })
   }
 
   const payablePageCount = Math.max(1, Math.ceil(payableCount / PAGE_SIZE))
