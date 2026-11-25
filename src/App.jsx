@@ -843,6 +843,13 @@ function ActiveApp() {
               onClick={() => setNavHidden((hidden) => !hidden)}>
               <Icon name="menu" size={20} />
             </button>
+            <img
+              className="topbar-logo"
+              src={import.meta.env.BASE_URL + 'voltker-logo-320.png'}
+              width="320"
+              height="79"
+              alt="VOLTKER"
+            />
             <div className="topbar-title">
               <strong>{currentPage.label}</strong>
               {currentPage.description && <span>{currentPage.description}</span>}
