@@ -845,10 +845,10 @@ function ActiveApp() {
             </button>
             <img
               className="topbar-logo"
-              src={import.meta.env.BASE_URL + 'voltker-logo-320.png'}
-              width="320"
-              height="79"
-              alt="VOLTKER"
+              src={import.meta.env.BASE_URL + 'voltker-symbol.png'}
+              width="362"
+              height="382"
+              alt="Logo VOLTKER"
             />
             <div className="topbar-title">
               <strong>{currentPage.label}</strong>
