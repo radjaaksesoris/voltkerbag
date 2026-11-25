@@ -8,7 +8,8 @@ export function getFinanceEntryCustomerName(entry) {
   const prefixes = [
     'Penjualan · ',
     'Cicilan kredit pelanggan · ',
-    'Pembayaran umum piutang pelanggan · '
+    'Pembayaran umum piutang pelanggan · ',
+    'Pembayaran piutang lama · '
   ]
   const prefix = prefixes.find((value) => note.startsWith(value))
   if (prefix) return note.slice(prefix.length).trim()

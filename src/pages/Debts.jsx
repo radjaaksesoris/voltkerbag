@@ -7,8 +7,7 @@ import {
   getFinanceData,
   getVendorPayables,
   onRefresh,
-  recordCustomerCreditPayment,
-  recordCustomerInvoiceCreditPayment,
+  recordCustomerDebtPayment,
   recordVendorPayableGroupPayment,
   requestPageRefresh
 } from '../db'
@@ -20,7 +19,11 @@ import MoneyInput from '../components/MoneyInput.jsx'
 import SelectInput from '../components/SelectInput.jsx'
 import TransactionDetails from '../components/TransactionDetails.jsx'
 import Icon from '../components/Icon.jsx'
-import { allocateCustomerPayment } from '../customerPaymentAllocation.js'
+import {
+  allocateCustomerDebtPayment,
+  allocateCustomerPayment,
+  orderCustomerManualCredits
+} from '../customerPaymentAllocation.js'
 import { allocateVendorPayment } from '../vendorPaymentAllocation.js'
 
 const PAGE_SIZE = 20
@@ -178,7 +181,13 @@ export default function Debts() {
   }
 
   async function openCustomerPayment(debt) {
-    setSelectedCustomerDebt({ ...debt, invoices: [], excludedInvoiceIds: [] })
+    setSelectedCustomerDebt({
+      ...debt,
+      invoices: [],
+      manualCredits: [],
+      excludedInvoiceIds: [],
+      excludedManualCreditIds: []
+    })
     setCustomerPaymentAmount('')
     setCustomerPaymentError('')
     setCustomerPaymentInvoicesError('')
@@ -191,22 +200,25 @@ export default function Debts() {
             ...current,
             invoices: details.invoices,
             manualCredits: details.manualCredits,
-            excludedInvoiceIds: []
+            excludedInvoiceIds: [],
+            excludedManualCreditIds: []
           }
         : current)
     } catch (error) {
-      setCustomerPaymentInvoicesError(error.message || 'Gagal memuat daftar faktur untuk pembayaran.')
+      setCustomerPaymentInvoicesError(error.message || 'Gagal memuat komponen piutang untuk pembayaran.')
     } finally {
       setLoadingCustomerPaymentInvoices(false)
     }
   }
 
-  const customerPaymentPlan = selectedCustomerDebt?.invoices
-    ? allocateCustomerPayment(
-      selectedCustomerDebt.invoices,
-      Number(customerPaymentAmount),
-      selectedCustomerDebt.excludedInvoiceIds
-    )
+  const customerPaymentPlan = selectedCustomerDebt
+    ? allocateCustomerDebtPayment({
+      invoices: selectedCustomerDebt.invoices,
+      manualCredits: selectedCustomerDebt.manualCredits,
+      amount: Number(customerPaymentAmount),
+      excludedInvoiceIds: selectedCustomerDebt.excludedInvoiceIds,
+      excludedManualCreditIds: selectedCustomerDebt.excludedManualCreditIds
+    })
     : { allocations: [], allocatedAmount: 0, remainingAmount: 0 }
 
   async function toggleCustomerDetails(debt) {
@@ -245,17 +257,17 @@ export default function Debts() {
       setCustomerPaymentError('Pembayaran tidak boleh melebihi sisa piutang ' + rupiah(selectedCustomerDebt.balance_due) + '.')
       return
     }
-    const allocations = customerPaymentPlan.allocations.map(({ transactionId, amount: allocationAmount }) => ({
-      transactionId,
+    const allocations = customerPaymentPlan.allocations.map(({ kind, id, amount: allocationAmount }) => ({
+      kind,
+      id,
       amount: allocationAmount
     }))
-    const hasInvoices = selectedCustomerDebt.invoices.length > 0
-    if (hasInvoices && customerPaymentPlan.remainingAmount > 0) {
-      setCustomerPaymentError('Nominal pembayaran melebihi saldo faktur yang masih dipilih. Pilih kembali faktur atau kurangi nominal pembayaran.')
+    if (customerPaymentPlan.remainingAmount > 0) {
+      setCustomerPaymentError('Nominal pembayaran melebihi saldo piutang yang masih dipilih. Pilih kembali komponen piutang atau kurangi nominal pembayaran.')
       return
     }
-    if (hasInvoices && customerPaymentPlan.allocatedAmount !== amount) {
-      setCustomerPaymentError('Pastikan seluruh nominal pembayaran dialokasikan ke faktur.')
+    if (customerPaymentPlan.allocatedAmount !== amount) {
+      setCustomerPaymentError('Pastikan seluruh nominal pembayaran dialokasikan ke faktur atau piutang lama.')
       return
     }
     const fingerprint = selectedCustomerDebt.customer_name + ':' + amount + ':' + JSON.stringify(allocations)
@@ -265,20 +277,12 @@ export default function Debts() {
     savingLock.current = true
     setSavingCustomerPayment(true)
     try {
-      if (hasInvoices) {
-        await recordCustomerInvoiceCreditPayment(
-          selectedCustomerDebt.customer_name,
-          amount,
-          allocations,
-          customerPaymentRequest.current.id
-        )
-      } else {
-        await recordCustomerCreditPayment(
-          selectedCustomerDebt.customer_name,
-          amount,
-          customerPaymentRequest.current.id
-        )
-      }
+      await recordCustomerDebtPayment(
+        selectedCustomerDebt.customer_name,
+        amount,
+        allocations,
+        customerPaymentRequest.current.id
+      )
       customerPaymentRequest.current = null
       const customerKey = selectedCustomerDebt.customer_name.trim().toLocaleLowerCase('id-ID')
       setSelectedCustomerDebt(null)
@@ -536,6 +540,19 @@ export default function Debts() {
                       </div>
                     </>
                   )}
+                  {(customerDetails[expandedCustomer].manualCreditPayments || []).length > 0 && (
+                    <>
+                      <h5>Pembayaran piutang lama</h5>
+                      <div className="debts-customer-payment-history">
+                        {(customerDetails[expandedCustomer].manualCreditPayments || []).map((payment) => (
+                          <div key={payment.id}>
+                            <span>{dateTime(payment.date)}</span>
+                            <strong>{rupiah(payment.amount)}</strong>
+                          </div>
+                        ))}
+                      </div>
+                    </>
+                  )}
                   <h5>Faktur yang belum lunas</h5>
                   {customerDetails[expandedCustomer].invoices.length === 0 ? (
                     <p className="muted small">Tidak ada faktur transaksi yang belum lunas.</p>
@@ -777,14 +794,14 @@ export default function Debts() {
                 disabled={savingCustomerPayment || loadingCustomerPaymentInvoices}
               />
               {loadingCustomerPaymentInvoices ? (
-                <p className="muted small">Memuat daftar faktur...</p>
+                <p className="muted small">Memuat komponen piutang...</p>
               ) : customerPaymentInvoicesError ? (
                 <p className="form-error" role="alert">{customerPaymentInvoicesError}</p>
-              ) : selectedCustomerDebt.invoices.length > 0 ? (
+              ) : selectedCustomerDebt.invoices.length > 0 || selectedCustomerDebt.manualCredits.length > 0 ? (
                 <div className="debts-payment-allocation">
                   <div className="debts-payment-allocation-heading">
                     <strong>Alokasi pembayaran</strong>
-                    <span>No faktur · Total · Dialokasikan</span>
+                    <span>Faktur dan piutang lama · Saldo · Dialokasikan</span>
                   </div>
                   {(() => {
                     const invoiceBalanceTotal = selectedCustomerDebt.invoices.reduce(
@@ -796,49 +813,92 @@ export default function Debts() {
                       invoiceBalanceTotal,
                       selectedCustomerDebt.excludedInvoiceIds
                     ).allocations
-                    const paidByInvoice = new Map(customerPaymentPlan.allocations.map((allocation) => [
-                      String(allocation.transactionId),
+                    const allManualCredits = orderCustomerManualCredits(
+                      selectedCustomerDebt.manualCredits,
+                      selectedCustomerDebt.excludedManualCreditIds
+                    )
+                    const paidByAllocation = new Map(customerPaymentPlan.allocations.map((allocation) => [
+                      allocation.kind + ':' + allocation.id,
                       allocation.amount
                     ]))
-                    return allInvoices.map(({ transactionId, invoice }) => {
-                      const allocatedAmount = paidByInvoice.get(String(transactionId)) || 0
-                      const fullyAllocated = allocatedAmount === Number(invoice.balanceDue)
-                      return (
-                        <article
-                          className={'debts-payment-allocation-row' + (fullyAllocated ? ' is-settled' : '')}
-                          key={transactionId}>
-                          <div>
-                            <span className="muted small">No faktur</span>
-                            <strong>{getInvoiceNumber(invoice)}</strong>
-                          </div>
-                          <div>
-                            <span className="muted small">Total</span>
-                            <strong>{rupiah(invoice.balanceDue)}</strong>
-                          </div>
-                          <div>
-                            <span className="muted small">Dialokasikan</span>
-                            <strong>{rupiah(allocatedAmount)}</strong>
-                          </div>
-                          {fullyAllocated && (
-                            <button
-                              className="debts-payment-allocation-remove"
-                              type="button"
-                              aria-label={'Keluarkan faktur ' + getInvoiceNumber(invoice) + ' dari alokasi'}
-                              disabled={savingCustomerPayment}
-                              onClick={() => setSelectedCustomerDebt((current) => ({
-                                ...current,
-                                excludedInvoiceIds: [...current.excludedInvoiceIds, transactionId]
-                              }))}>
-                              ×
-                            </button>
-                          )}
-                        </article>
-                      )
-                    })
+                    return (
+                      <>
+                        {allInvoices.map(({ transactionId, invoice }) => {
+                          const allocatedAmount = paidByAllocation.get('invoice:' + transactionId) || 0
+                          const fullyAllocated = allocatedAmount === Number(invoice.balanceDue)
+                          return (
+                            <article
+                              className={'debts-payment-allocation-row' + (fullyAllocated ? ' is-settled' : '')}
+                              key={'invoice-' + transactionId}>
+                              <div>
+                                <span className="muted small">No faktur</span>
+                                <strong>{getInvoiceNumber(invoice)}</strong>
+                              </div>
+                              <div>
+                                <span className="muted small">Total</span>
+                                <strong>{rupiah(invoice.balanceDue)}</strong>
+                              </div>
+                              <div>
+                                <span className="muted small">Dialokasikan</span>
+                                <strong>{rupiah(allocatedAmount)}</strong>
+                              </div>
+                              {fullyAllocated && (
+                                <button
+                                  className="debts-payment-allocation-remove"
+                                  type="button"
+                                  aria-label={'Keluarkan faktur ' + getInvoiceNumber(invoice) + ' dari alokasi'}
+                                  disabled={savingCustomerPayment}
+                                  onClick={() => setSelectedCustomerDebt((current) => ({
+                                    ...current,
+                                    excludedInvoiceIds: [...current.excludedInvoiceIds, transactionId]
+                                  }))}>
+                                  ×
+                                </button>
+                              )}
+                            </article>
+                          )
+                        })}
+                        {allManualCredits.map((credit) => {
+                          const allocatedAmount = paidByAllocation.get('manual_credit:' + credit.id) || 0
+                          const fullyAllocated = allocatedAmount === Number(credit.balance_due)
+                          return (
+                            <article
+                              className={'debts-payment-allocation-row' + (fullyAllocated ? ' is-settled' : '')}
+                              key={'manual-credit-' + credit.id}>
+                              <div>
+                                <span className="muted small">Piutang lama</span>
+                                <strong>{dateOnly(credit.createdAt)}</strong>
+                              </div>
+                              <div>
+                                <span className="muted small">Sisa</span>
+                                <strong>{rupiah(credit.balance_due)}</strong>
+                              </div>
+                              <div>
+                                <span className="muted small">Dialokasikan</span>
+                                <strong>{rupiah(allocatedAmount)}</strong>
+                              </div>
+                              {fullyAllocated && (
+                                <button
+                                  className="debts-payment-allocation-remove"
+                                  type="button"
+                                  aria-label={'Keluarkan piutang lama ' + dateOnly(credit.createdAt) + ' dari alokasi'}
+                                  disabled={savingCustomerPayment}
+                                  onClick={() => setSelectedCustomerDebt((current) => ({
+                                    ...current,
+                                    excludedManualCreditIds: [...current.excludedManualCreditIds, credit.id]
+                                  }))}>
+                                  ×
+                                </button>
+                              )}
+                            </article>
+                          )
+                        })}
+                      </>
+                    )
                   })()}
                   {customerPaymentPlan.remainingAmount > 0 && Number(customerPaymentAmount) > 0 && (
                     <p className="form-error" role="alert">
-                      Sisa {rupiah(customerPaymentPlan.remainingAmount)} belum dialokasikan ke faktur yang dipilih.
+                      Sisa {rupiah(customerPaymentPlan.remainingAmount)} belum dialokasikan ke faktur atau piutang lama.
                     </p>
                   )}
                   <div className="debts-payment-allocation-total">
@@ -853,7 +913,7 @@ export default function Debts() {
                 <button
                   className="btn btn-primary"
                   type="submit"
-                  disabled={savingCustomerPayment || loadingCustomerPaymentInvoices || Boolean(customerPaymentInvoicesError) || (selectedCustomerDebt.invoices.length > 0 && customerPaymentPlan.remainingAmount > 0)}>
+                  disabled={savingCustomerPayment || loadingCustomerPaymentInvoices || Boolean(customerPaymentInvoicesError) || customerPaymentPlan.remainingAmount > 0}>
                   {savingCustomerPayment ? 'Menyimpan...' : 'Simpan pembayaran'}
                 </button>
               </div>

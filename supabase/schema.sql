@@ -2958,6 +2958,351 @@ begin
 end;
 $$;
 
+create or replace function public.record_customer_debt_payment(
+  p_customer_name text,
+  p_amount double precision,
+  p_allocations jsonb,
+  p_request_id uuid
+)
+returns bigint
+language plpgsql
+security definer
+set search_path = public, pg_temp
+as $$
+declare
+  current_user_id uuid := auth.uid();
+  clean_customer_name text := btrim(coalesce(p_customer_name, ''));
+  existing_entry public.finance_entries%rowtype;
+  transaction_row public.transactions%rowtype;
+  credit_row public.manual_customer_credits%rowtype;
+  allocation_item record;
+  allocation_kind text;
+  allocation_id bigint;
+  allocation_amount numeric;
+  allocation_total numeric := 0;
+  allocated_invoice_ids bigint[] := '{}';
+  allocated_credit_ids bigint[] := '{}';
+  new_paid_amount double precision;
+  customer_balance double precision;
+  legacy_payments double precision;
+  remaining_amount double precision;
+  previous_invoice_order_time timestamptz;
+  previous_invoice_id bigint;
+  previous_invoice_balance double precision := 0;
+  previous_credit_order_time timestamptz;
+  previous_credit_id bigint;
+  previous_credit_balance double precision := 0;
+  seen_manual_credit boolean := false;
+  batch_suffix text;
+  finance_entry_id bigint;
+  batch_entry_count bigint;
+  operation_time timestamptz := clock_timestamp();
+begin
+  if current_user_id is null then raise exception 'Login diperlukan.'; end if;
+  if p_request_id is null then raise exception 'ID permintaan pembayaran wajib diisi.'; end if;
+  if clean_customer_name = '' then raise exception 'Nama pelanggan wajib diisi.'; end if;
+  if p_amount is null or p_amount <= 0
+     or p_amount > 9007199254740991::double precision
+     or p_amount <> trunc(p_amount)
+     or p_amount::text in ('NaN', 'Infinity', '-Infinity') then
+    raise exception 'Nominal pembayaran harus rupiah utuh dalam batas aman.';
+  end if;
+  if jsonb_typeof(p_allocations) is distinct from 'array' or jsonb_array_length(p_allocations) = 0 then
+    raise exception 'Daftar alokasi pembayaran tidak valid.';
+  end if;
+
+  batch_suffix := ' · batch=' || p_request_id::text;
+  perform pg_advisory_xact_lock(hashtextextended(current_user_id::text || p_request_id::text, 0));
+
+  select * into existing_entry
+  from public.finance_entries
+  where owner_id = current_user_id and "requestId" = p_request_id;
+  if found then
+    if existing_entry.category is distinct from 'Cicilan kredit'
+       or right(coalesce(existing_entry.note, ''), char_length(batch_suffix)) <> batch_suffix then
+      raise exception 'ID permintaan pembayaran sudah digunakan.';
+    end if;
+    select coalesce(sum(entry.amount), 0), count(*)
+    into allocation_total, batch_entry_count
+    from public.finance_entries as entry
+    where entry.owner_id = current_user_id
+      and entry.category = 'Cicilan kredit'
+      and right(coalesce(entry.note, ''), char_length(batch_suffix)) = batch_suffix;
+    if allocation_total <> p_amount::numeric
+       or batch_entry_count <> jsonb_array_length(p_allocations) then
+      raise exception 'ID permintaan pembayaran sudah digunakan.';
+    end if;
+    for allocation_item in
+      select value
+      from jsonb_array_elements(p_allocations)
+    loop
+      begin
+        allocation_kind := allocation_item.value->>'kind';
+        allocation_id := (allocation_item.value->>'id')::bigint;
+        allocation_amount := (allocation_item.value->>'amount')::numeric;
+      exception when others then
+        raise exception 'ID permintaan pembayaran sudah digunakan.';
+      end;
+      if allocation_kind is null
+         or allocation_kind not in ('invoice', 'manual_credit')
+         or allocation_id is null
+         or allocation_amount is null
+         or not exists (
+           select 1
+           from public.finance_entries as entry
+           where entry.owner_id = current_user_id
+             and entry.category = 'Cicilan kredit'
+             and entry."refId" = allocation_id
+             and entry.amount = allocation_amount::double precision
+             and right(coalesce(entry.note, ''), char_length(batch_suffix)) = batch_suffix
+             and (
+               (allocation_kind = 'invoice' and left(coalesce(entry.note, ''), char_length('Cicilan transaksi ')) = 'Cicilan transaksi ')
+               or (allocation_kind = 'manual_credit' and left(coalesce(entry.note, ''), char_length('Pembayaran piutang lama · ')) = 'Pembayaran piutang lama · ')
+             )
+         ) then
+        raise exception 'ID permintaan pembayaran sudah digunakan.';
+      end if;
+    end loop;
+    return existing_entry.id;
+  end if;
+
+  perform pg_advisory_xact_lock(hashtextextended(
+    current_user_id::text || lower(clean_customer_name),
+    1
+  ));
+
+  perform 1
+  from public.transactions as customer_transaction
+  where customer_transaction.owner_id = current_user_id
+    and customer_transaction."paymentType" = 'credit'
+    and lower(coalesce(nullif(btrim(customer_transaction."customerName"), ''), 'Pelanggan lama'))
+      = lower(clean_customer_name)
+  order by coalesce(customer_transaction."createdAt", 'infinity'::timestamptz), customer_transaction.id
+  for update;
+
+  perform 1
+  from public.manual_customer_credits as customer_credit
+  where customer_credit.owner_id = current_user_id
+    and lower(btrim(customer_credit.customer_name)) = lower(clean_customer_name)
+  order by coalesce(customer_credit."createdAt", 'infinity'::timestamptz), customer_credit.id
+  for update;
+
+  select coalesce(sum(outstanding.balance_due), 0)
+  into customer_balance
+  from (
+    select customer_credit.balance_due
+    from public.manual_customer_credits as customer_credit
+    where customer_credit.owner_id = current_user_id
+      and lower(btrim(customer_credit.customer_name)) = lower(clean_customer_name)
+      and customer_credit.balance_due > 0
+    union all
+    select customer_transaction."balanceDue"
+    from public.transactions as customer_transaction
+    where customer_transaction.owner_id = current_user_id
+      and customer_transaction."paymentType" = 'credit'
+      and lower(coalesce(nullif(btrim(customer_transaction."customerName"), ''), 'Pelanggan lama'))
+        = lower(clean_customer_name)
+      and customer_transaction."balanceDue" > 0
+  ) as outstanding;
+
+  select coalesce(sum(entry.amount), 0)
+  into legacy_payments
+  from public.finance_entries as entry
+  where entry.owner_id = current_user_id
+    and entry.type = 'income'
+    and entry.category = 'Cicilan kredit'
+    and entry."refId" is null
+    and left(entry.note, char_length('Pembayaran umum piutang pelanggan · '))
+      = 'Pembayaran umum piutang pelanggan · '
+    and lower(btrim(substring(
+      entry.note from char_length('Pembayaran umum piutang pelanggan · ') + 1
+    ))) = lower(clean_customer_name);
+
+  remaining_amount := greatest(0, customer_balance - legacy_payments);
+  if p_amount > remaining_amount then
+    raise exception 'Nominal pembayaran melebihi sisa hutang pelanggan.';
+  end if;
+
+  for allocation_item in
+    select value, ordinality
+    from jsonb_array_elements(p_allocations) with ordinality
+  loop
+    begin
+      allocation_kind := allocation_item.value->>'kind';
+      allocation_id := (allocation_item.value->>'id')::bigint;
+      allocation_amount := (allocation_item.value->>'amount')::numeric;
+    exception when others then
+      raise exception 'Data alokasi pembayaran tidak valid.';
+    end;
+    if allocation_kind is null
+       or allocation_kind not in ('invoice', 'manual_credit')
+       or allocation_id is null
+       or allocation_id <= 0
+       or allocation_amount is null
+       or allocation_amount <= 0
+       or allocation_amount <> trunc(allocation_amount)
+       or allocation_amount > 9007199254740991::numeric then
+      raise exception 'Data alokasi pembayaran tidak valid.';
+    end if;
+    if (allocation_kind = 'invoice' and allocation_id = any(allocated_invoice_ids))
+       or (allocation_kind = 'manual_credit' and allocation_id = any(allocated_credit_ids)) then
+      raise exception 'Komponen pembayaran yang sama tidak boleh muncul lebih dari sekali.';
+    end if;
+
+    if allocation_kind = 'invoice' then
+      if seen_manual_credit then
+        raise exception 'Faktur harus dialokasikan sebelum piutang lama.';
+      end if;
+      select * into transaction_row
+      from public.transactions
+      where id = allocation_id
+        and owner_id = current_user_id
+        and "paymentType" = 'credit'
+        and lower(coalesce(nullif(btrim("customerName"), ''), 'Pelanggan lama'))
+          = lower(clean_customer_name)
+      for update;
+      if not found then raise exception 'Faktur piutang pelanggan tidak ditemukan.'; end if;
+      if transaction_row."balanceDue" <= 0
+         or allocation_amount > transaction_row."balanceDue"::numeric then
+        raise exception 'Nominal alokasi melebihi sisa faktur.';
+      end if;
+      if previous_invoice_id is not null then
+        if coalesce(transaction_row."createdAt", 'infinity'::timestamptz)
+             < coalesce(previous_invoice_order_time, 'infinity'::timestamptz)
+           or (
+             coalesce(transaction_row."createdAt", 'infinity'::timestamptz)
+               = coalesce(previous_invoice_order_time, 'infinity'::timestamptz)
+             and transaction_row.id <= previous_invoice_id
+           ) then
+          raise exception 'Alokasi harus mengikuti urutan faktur paling awal.';
+        end if;
+        if previous_invoice_balance > 0 then
+          raise exception 'Faktur paling awal harus dialokasikan sebelum faktur berikutnya.';
+        end if;
+      end if;
+      allocated_invoice_ids := array_append(allocated_invoice_ids, allocation_id);
+      previous_invoice_id := transaction_row.id;
+      previous_invoice_order_time := transaction_row."createdAt";
+      previous_invoice_balance := transaction_row."balanceDue"::double precision - allocation_amount::double precision;
+    else
+      seen_manual_credit := true;
+      if previous_invoice_balance > 0 then
+        raise exception 'Faktur paling awal harus dilunasi sebelum membayar piutang lama.';
+      end if;
+      select * into credit_row
+      from public.manual_customer_credits
+      where id = allocation_id
+        and owner_id = current_user_id
+        and lower(btrim(customer_name)) = lower(clean_customer_name)
+      for update;
+      if not found then raise exception 'Piutang lama pelanggan tidak ditemukan.'; end if;
+      if credit_row.balance_due <= 0
+         or allocation_amount > credit_row.balance_due::numeric then
+        raise exception 'Nominal alokasi melebihi sisa piutang lama.';
+      end if;
+      if previous_credit_id is not null then
+        if coalesce(credit_row."createdAt", 'infinity'::timestamptz)
+             < coalesce(previous_credit_order_time, 'infinity'::timestamptz)
+           or (
+             coalesce(credit_row."createdAt", 'infinity'::timestamptz)
+               = coalesce(previous_credit_order_time, 'infinity'::timestamptz)
+             and credit_row.id <= previous_credit_id
+           ) then
+          raise exception 'Alokasi piutang lama harus mengikuti urutan paling awal.';
+        end if;
+        if previous_credit_balance > 0 then
+          raise exception 'Piutang lama paling awal harus dialokasikan sebelum berikutnya.';
+        end if;
+      end if;
+      allocated_credit_ids := array_append(allocated_credit_ids, allocation_id);
+      previous_credit_id := credit_row.id;
+      previous_credit_order_time := credit_row."createdAt";
+      previous_credit_balance := credit_row.balance_due::double precision - allocation_amount::double precision;
+    end if;
+
+    allocation_total := allocation_total + allocation_amount;
+  end loop;
+
+  if allocation_total <> p_amount::numeric then
+    raise exception 'Jumlah alokasi harus sama dengan jumlah pembayaran.';
+  end if;
+
+  for allocation_item in
+    select value
+    from jsonb_array_elements(p_allocations) with ordinality
+    order by ordinality
+  loop
+    allocation_kind := allocation_item.value->>'kind';
+    allocation_id := (allocation_item.value->>'id')::bigint;
+    allocation_amount := (allocation_item.value->>'amount')::numeric;
+
+    if allocation_kind = 'invoice' then
+      select * into transaction_row
+      from public.transactions
+      where id = allocation_id and owner_id = current_user_id
+      for update;
+
+      new_paid_amount := transaction_row."paidAmount" + allocation_amount::double precision;
+      update public.transactions
+      set "paidAmount" = new_paid_amount,
+          "balanceDue" = greatest(0, transaction_row.total - new_paid_amount),
+          "updatedAt" = operation_time
+      where id = allocation_id;
+
+      insert into public.transaction_payments (
+        owner_id, transaction_id, amount, date, source
+      ) values (
+        current_user_id, allocation_id, allocation_amount::double precision,
+        operation_time, 'installment'
+      );
+
+      insert into public.finance_entries (
+        owner_id, type, category, note, amount, "refId", "requestId", date, "createdAt", "updatedAt"
+      ) values (
+        current_user_id, 'income', 'Cicilan kredit',
+        'Cicilan transaksi ' || coalesce(transaction_row."invoiceNo", '#' || allocation_id::text)
+          || ' · ' || coalesce(transaction_row."customerName", clean_customer_name) || batch_suffix,
+        allocation_amount::double precision, allocation_id,
+        case when finance_entry_id is null then p_request_id else null end,
+        operation_time, operation_time, operation_time
+      )
+      returning id into finance_entry_id;
+    else
+      select * into credit_row
+      from public.manual_customer_credits
+      where id = allocation_id and owner_id = current_user_id
+      for update;
+
+      update public.manual_customer_credits
+      set balance_due = greatest(0, credit_row.balance_due - allocation_amount::double precision),
+          "updatedAt" = operation_time
+      where id = allocation_id;
+
+      insert into public.manual_customer_credit_payments (
+        owner_id, manual_credit_id, amount, date, legacy_key
+      ) values (
+        current_user_id, allocation_id, allocation_amount::double precision, operation_time,
+        'request:' || p_request_id::text || ':credit:' || allocation_id::text
+      )
+      on conflict (owner_id, legacy_key) do nothing;
+
+      insert into public.finance_entries (
+        owner_id, type, category, note, amount, "refId", "requestId", date, "createdAt", "updatedAt"
+      ) values (
+        current_user_id, 'income', 'Cicilan kredit',
+        'Pembayaran piutang lama · ' || clean_customer_name || batch_suffix,
+        allocation_amount::double precision, allocation_id,
+        case when finance_entry_id is null then p_request_id else null end,
+        operation_time, operation_time, operation_time
+      )
+      returning id into finance_entry_id;
+    end if;
+  end loop;
+
+  return finance_entry_id;
+end;
+$$;
+
 create or replace function public.delete_manual_finance_entry(p_entry_id bigint)
 returns void
 language plpgsql
@@ -3487,6 +3832,7 @@ begin
     where entry.owner_id = current_user_id
       and entry.type = 'income'
       and entry.category = 'Cicilan kredit'
+      and entry."refId" is null
       and left(entry.note, char_length('Pembayaran umum piutang pelanggan · '))
         = 'Pembayaran umum piutang pelanggan · '
     group by lower(btrim(substring(
@@ -3607,6 +3953,7 @@ revoke all on function public.record_vendor_payable_group_payment(text, double p
 revoke all on function public.return_transaction_items(bigint, jsonb, uuid) from public, anon;
 revoke all on function public.record_customer_credit_payment(text, double precision, uuid) from public, anon;
 revoke all on function public.record_customer_invoice_credit_payment(text, double precision, jsonb, uuid) from public, anon;
+revoke all on function public.record_customer_debt_payment(text, double precision, jsonb, uuid) from public, anon;
 revoke all on function public.delete_manual_finance_entry(bigint) from public, anon;
 revoke all on function public.record_stock_purchase(bigint, integer, double precision, text, timestamptz, uuid) from public, anon;
 revoke all on function public.record_credit_stock_purchase(bigint, integer, double precision, text, text, double precision, timestamptz, uuid) from public, anon;
@@ -3626,6 +3973,7 @@ grant execute on function public.record_vendor_payable_group_payment(text, doubl
 grant execute on function public.return_transaction_items(bigint, jsonb, uuid) to authenticated;
 grant execute on function public.record_customer_credit_payment(text, double precision, uuid) to authenticated;
 grant execute on function public.record_customer_invoice_credit_payment(text, double precision, jsonb, uuid) to authenticated;
+grant execute on function public.record_customer_debt_payment(text, double precision, jsonb, uuid) to authenticated;
 grant execute on function public.delete_manual_finance_entry(bigint) to authenticated;
 grant execute on function public.record_stock_purchase(bigint, integer, double precision, text, timestamptz, uuid) to authenticated;
 grant execute on function public.record_credit_stock_purchase(bigint, integer, double precision, text, text, double precision, timestamptz, uuid) to authenticated;

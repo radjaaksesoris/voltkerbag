@@ -866,7 +866,7 @@ export async function getCustomerReceivableDetails(customerName) {
     }
   }
 
-  const [transactions, manualCredits, customerPayments] = await Promise.all([
+  const [transactions, manualCredits, manualCreditHistory, customerPayments] = await Promise.all([
     getAllMatchingRows(() => client
       .from(tableFor('transactions'))
       .select('id,createdAt,invoiceNo,total,payment,paymentType,paidAmount,balanceDue,customerName,items,returns,change')
@@ -882,6 +882,12 @@ export async function getCustomerReceivableDetails(customerName) {
       .gt('balance_due', 0)
       .order('createdAt', { ascending: false })
       .order('id', { ascending: false }), 'Gagal memuat piutang lama pelanggan'),
+    getAllMatchingRows(() => client
+      .from(tableFor('manualCredits'))
+      .select('id')
+      .ilike('customer_name', customerPattern)
+      .order('id', { ascending: true }),
+      'Gagal memuat riwayat piutang lama pelanggan'),
     getAllMatchingRows(() => client
       .from(tableFor('finance'))
       .select('id,amount,date,note')
@@ -905,6 +911,19 @@ export async function getCustomerReceivableDetails(customerName) {
     paymentRows.push(...(data || []))
   }
 
+  const manualCreditIds = manualCreditHistory.map((credit) => credit.id)
+  const manualCreditPayments = []
+  for (let offset = 0; offset < manualCreditIds.length; offset += pageSize) {
+    const { data, error } = await client
+      .from(tableFor('manualCreditPayments'))
+      .select('id,manual_credit_id,amount,date')
+      .in('manual_credit_id', manualCreditIds.slice(offset, offset + pageSize))
+      .order('date', { ascending: false, nullsFirst: false })
+      .order('id', { ascending: false })
+    throwIfError(error, 'Gagal memuat riwayat pembayaran piutang lama pelanggan')
+    manualCreditPayments.push(...(data || []))
+  }
+
   const paymentsByTransaction = new Map()
   for (const payment of paymentRows) {
     const key = String(payment.transaction_id)
@@ -919,6 +938,7 @@ export async function getCustomerReceivableDetails(customerName) {
       payments: paymentsByTransaction.get(String(transaction.id)) || []
     })),
     manualCredits,
+    manualCreditPayments,
     customerPayments
   }
 }
@@ -1143,6 +1163,22 @@ export async function recordCustomerInvoiceCreditPayment(customerName, amount, a
     p_request_id: requestId || crypto.randomUUID()
   })
   throwIfError(error, 'Gagal menyimpan pembayaran faktur piutang pelanggan')
+  notifyRefresh()
+  return data
+}
+
+export async function recordCustomerDebtPayment(customerName, amount, allocations, requestId) {
+  const { data, error } = await getClient().rpc('record_customer_debt_payment', {
+    p_customer_name: customerName,
+    p_amount: amount,
+    p_allocations: allocations.map(({ kind, id, amount: allocationAmount }) => ({
+      kind,
+      id,
+      amount: allocationAmount
+    })),
+    p_request_id: requestId || crypto.randomUUID()
+  })
+  throwIfError(error, 'Gagal menyimpan pembayaran piutang pelanggan')
   notifyRefresh()
   return data
 }

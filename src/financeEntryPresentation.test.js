@@ -22,6 +22,16 @@ test('keeps customer names from credit payments without batch metadata', () => {
   )
 })
 
+test('extracts customer names from manual credit payments with batch metadata', () => {
+  assert.equal(
+    getFinanceEntryCustomerName({
+      type: 'income',
+      note: 'Pembayaran piutang lama · Andri · batch=05c33b6d-c032-4f04-b796-0ce242bd68ba'
+    }),
+    'Andri'
+  )
+})
+
 test('does not show customer names for non-income entries', () => {
   assert.equal(
     getFinanceEntryCustomerName({

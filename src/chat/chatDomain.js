@@ -179,8 +179,14 @@ function formatStockQuery(product) {
 
 function financeEntryCustomerName(entry) {
   if (entry.type !== 'income') return ''
-  const note = String(entry.note || '').trim()
-  const paymentPrefixes = ['Cicilan kredit pelanggan · ', 'Pembayaran umum piutang pelanggan · ']
+  const rawNote = String(entry.note || '').trim()
+  const batchIndex = rawNote.lastIndexOf(' · batch=')
+  const note = batchIndex === -1 ? rawNote : rawNote.slice(0, batchIndex)
+  const paymentPrefixes = [
+    'Cicilan kredit pelanggan · ',
+    'Pembayaran umum piutang pelanggan · ',
+    'Pembayaran piutang lama · '
+  ]
   const paymentPrefix = paymentPrefixes.find((prefix) => note.startsWith(prefix))
   if (paymentPrefix) return note.slice(paymentPrefix.length).trim()
   if (note.startsWith('Cicilan transaksi ')) {
@@ -1384,7 +1390,7 @@ export async function prepareAction(action, args = {}, attachment = null) {
 }
 
 export async function executeAction(draft) {
-  const { addManualCustomerCredit, addProductStock, completeSale, createBackupArchive, recordCustomerCreditPayment, remove, removeProductImage, resetStoreData, restoreBackupArchive, updateProductDetails, put } = await import('../db')
+  const { addManualCustomerCredit, addProductStock, completeSale, createBackupArchive, getCustomerReceivableDetails, recordCustomerDebtPayment, remove, removeProductImage, resetStoreData, restoreBackupArchive, updateProductDetails, put } = await import('../db')
   const id = draft.requestId || crypto.randomUUID()
 
   if (draft.action === 'add_stock') {
@@ -1433,7 +1439,26 @@ export async function executeAction(draft) {
   }
 
   if (draft.action === 'credit_payment') {
-    await recordCustomerCreditPayment(draft.payload.customerName, draft.payload.amount, id)
+    const { allocateCustomerDebtPayment } = await import('../customerPaymentAllocation.js')
+    const details = await getCustomerReceivableDetails(draft.payload.customerName)
+    const plan = allocateCustomerDebtPayment({
+      invoices: details.invoices,
+      manualCredits: details.manualCredits,
+      amount: draft.payload.amount
+    })
+    if (plan.remainingAmount > 0) {
+      throw new Error('Nominal pembayaran melebihi sisa hutang ' + draft.payload.customerName + '.')
+    }
+    await recordCustomerDebtPayment(
+      draft.payload.customerName,
+      draft.payload.amount,
+      plan.allocations.map(({ kind, id: allocationId, amount }) => ({
+        kind,
+        id: allocationId,
+        amount
+      })),
+      id
+    )
     return 'Pembayaran hutang ' + draft.payload.customerName + ' sebesar Rp' + draft.payload.amount.toLocaleString('id-ID') + ' berhasil dicatat.'
   }
   if (draft.action === 'transaction_payment') {
