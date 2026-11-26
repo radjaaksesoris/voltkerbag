@@ -454,6 +454,16 @@ function ActiveApp() {
     let installingWorker
     let updateCheckInterval
     let updateCheckInFlight = false
+    let reloadingForWorkerUpdate = false
+    const hadController = Boolean(navigator.serviceWorker.controller)
+
+    function reloadAfterWorkerUpdate() {
+      if (!hadController || reloadingForWorkerUpdate) return
+      reloadingForWorkerUpdate = true
+      saveSessionForAppReload()
+        .catch((error) => console.warn('Sesi tidak sempat disimpan sebelum pembaruan aplikasi:', error))
+        .finally(() => window.location.reload())
+    }
 
     function checkWaitingWorker() {
       if (registration?.waiting && navigator.serviceWorker.controller) {
@@ -508,6 +518,7 @@ function ActiveApp() {
     }
 
     navigator.serviceWorker.addEventListener('message', onServiceWorkerMessage)
+    navigator.serviceWorker.addEventListener('controllerchange', reloadAfterWorkerUpdate)
     trackServiceWorker()
 
     return () => {
@@ -516,6 +527,7 @@ function ActiveApp() {
       installingWorker?.removeEventListener('statechange', onWorkerStateChange)
       registration?.removeEventListener('updatefound', observeInstallingWorker)
       navigator.serviceWorker.removeEventListener('message', onServiceWorkerMessage)
+      navigator.serviceWorker.removeEventListener('controllerchange', reloadAfterWorkerUpdate)
       document.removeEventListener('visibilitychange', checkForAvailableUpdate)
       if (serviceWorkerRegistration.current === registration) {
         serviceWorkerRegistration.current = null
