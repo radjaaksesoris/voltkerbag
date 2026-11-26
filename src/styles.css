@@ -24,7 +24,12 @@
   --shadow: 0 14px 36px rgba(56, 39, 27, .07);
 }
 
-* { box-sizing: border-box; margin: 0; padding: 0; }
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  -webkit-tap-highlight-color: rgba(181, 40, 46, .18);
+}
 html { scroll-behavior: smooth; }
 body {
   min-width: 320px;
