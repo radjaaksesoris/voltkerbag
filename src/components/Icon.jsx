@@ -45,19 +45,12 @@ export default function Icon({ name, size = 20, className = '' }) {
       height={size}
       viewBox="0 0 24 24"
       fill="none"
-      stroke="url(#voltkerIconStroke)"
+      stroke="currentColor"
       strokeWidth="1.8"
       strokeLinecap="round"
       strokeLinejoin="round"
       aria-hidden="true"
       focusable="false">
-      <defs>
-        <linearGradient id="voltkerIconStroke" x1="0" y1="0" x2="0.8" y2="1">
-          <stop offset="0" stopColor="currentColor" stopOpacity=".62" />
-          <stop offset=".32" stopColor="currentColor" />
-          <stop offset="1" stopColor="currentColor" stopOpacity=".72" />
-        </linearGradient>
-      </defs>
       {ICONS[name]}
     </svg>
   )
