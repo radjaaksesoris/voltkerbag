@@ -4547,6 +4547,24 @@ body:has(.app) {
     grid-template-columns: repeat(4, minmax(0, 1fr));
     gap: 7px;
   }
+  .app:not(.menu-landing) .transactions-page .product-grid-pagination {
+    gap: 11px;
+    margin-top: 20px;
+  }
+  .app:not(.menu-landing) .transactions-page .product-grid-pagination > span {
+    font-size: 12px;
+  }
+  .app:not(.menu-landing) .transactions-page .product-load-more {
+    display: inline-flex;
+    width: min(100%, 360px);
+    min-height: 48px;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    border-radius: 6px 16px 6px 16px;
+    box-shadow: 0 6px 16px rgba(145, 32, 39, .2);
+    font-size: 13px;
+  }
   .app:not(.menu-landing) .transactions-page .product-card {
     padding: 5px;
   }

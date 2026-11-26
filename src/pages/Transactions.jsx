@@ -549,10 +549,11 @@ export default function Transactions() {
               <span className="muted">Menampilkan {visibleProducts.length} dari {filtered.length} produk</span>
               {visibleProducts.length < filtered.length && (
                 <button
-                  className="btn"
+                  className="btn btn-primary product-load-more"
                   type="button"
                   onClick={() => setVisibleProductCount((count) => count + PRODUCT_BATCH_SIZE)}>
                   Tampilkan {Math.min(PRODUCT_BATCH_SIZE, filtered.length - visibleProducts.length)} produk lagi
+                  <Icon name="chevronDown" size={17} />
                 </button>
               )}
             </div>
