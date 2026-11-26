@@ -40,7 +40,7 @@ const ICONS = {
 export default function Icon({ name, size = 20, className = '' }) {
   return (
     <svg
-      className={'icon icon-3d ' + className}
+      className={'icon ' + className}
       width={size}
       height={size}
       viewBox="0 0 24 24"
