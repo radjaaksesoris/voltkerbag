@@ -459,24 +459,32 @@ set "paidAmount" = case
     end
 where "paidAmount" = 0 and coalesce(payment, 0) > 0;
 
-create index if not exists products_owner_id_idx on public.products (owner_id);
-create index if not exists product_categories_owner_id_idx on public.product_categories (owner_id);
+create index if not exists products_owner_id_id_idx on public.products (owner_id, id);
+drop index if exists public.products_owner_id_idx;
+create index if not exists product_categories_owner_id_id_idx on public.product_categories (owner_id, id);
+drop index if exists public.product_categories_owner_id_idx;
 create unique index if not exists product_categories_owner_name_idx
   on public.product_categories (owner_id, lower(name));
-create index if not exists product_units_owner_id_idx on public.product_units (owner_id);
+create index if not exists product_units_owner_id_id_idx on public.product_units (owner_id, id);
+drop index if exists public.product_units_owner_id_idx;
 create unique index if not exists product_units_owner_name_idx
   on public.product_units (owner_id, lower(name));
-create index if not exists customer_names_owner_id_idx on public.customer_names (owner_id);
+create index if not exists customer_names_owner_id_id_idx on public.customer_names (owner_id, id);
+drop index if exists public.customer_names_owner_id_idx;
 create unique index if not exists customer_names_owner_name_idx
   on public.customer_names (owner_id, lower(trim(name)));
-create index if not exists vendor_names_owner_id_idx on public.vendor_names (owner_id);
+create index if not exists vendor_names_owner_id_id_idx on public.vendor_names (owner_id, id);
+drop index if exists public.vendor_names_owner_id_idx;
 create unique index if not exists vendor_names_owner_name_idx
   on public.vendor_names (owner_id, lower(trim(name)));
-create index if not exists expedition_names_owner_id_idx on public.expedition_names (owner_id);
+create index if not exists expedition_names_owner_id_id_idx on public.expedition_names (owner_id, id);
+drop index if exists public.expedition_names_owner_id_idx;
 create unique index if not exists expedition_names_owner_name_idx
   on public.expedition_names (owner_id, lower(trim(name)));
-create index if not exists transactions_owner_id_idx on public.transactions (owner_id);
-create index if not exists finance_entries_owner_id_idx on public.finance_entries (owner_id);
+create index if not exists transactions_owner_id_id_idx on public.transactions (owner_id, id);
+drop index if exists public.transactions_owner_id_idx;
+create index if not exists finance_entries_owner_id_id_idx on public.finance_entries (owner_id, id);
+drop index if exists public.finance_entries_owner_id_idx;
 create index if not exists finance_entries_owner_ref_id_id_idx on public.finance_entries (owner_id, "refId", id);
 create index if not exists manual_customer_credits_owner_customer_idx
   on public.manual_customer_credits (owner_id, lower(btrim(customer_name)), "createdAt", id)
