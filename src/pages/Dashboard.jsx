@@ -1,5 +1,5 @@
-import { useEffect, useRef, useState } from 'react'
-import { getAll, getDashboardData, onRefresh, requestPageRefresh } from '../db'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import { getAll, getDashboardData, getLowStockProductIds, onRefresh, requestPageRefresh } from '../db'
 import { rupiah, dateOnly, dateTime } from '../format'
 import {
   dateRangeTimestamps,
@@ -12,7 +12,6 @@ import { getInvoiceNumber } from '../invoice'
 import CustomerIdentity from '../components/CustomerIdentity.jsx'
 import Icon from '../components/Icon'
 import LoadingNumber from '../components/LoadingNumber.jsx'
-import { isLowStock } from '../productUnits.js'
 
 const TRANSACTIONS_PER_PAGE = 15
 
@@ -35,7 +34,7 @@ export default function Dashboard({ onOpenLowStockProducts }) {
   const [transactionPage, setTransactionPage] = useState(1)
   const [selectedTransaction, setSelectedTransaction] = useState(null)
   const [customers, setCustomers] = useState([])
-  const [lowStockProducts, setLowStockProducts] = useState([])
+  const [lowStockProductIds, setLowStockProductIds] = useState([])
   const [lowStockProductsLoaded, setLowStockProductsLoaded] = useState(false)
   const [lowStockProductsError, setLowStockProductsError] = useState('')
   const [dismissedLowStockIds, setDismissedLowStockIds] = useState([])
@@ -62,7 +61,7 @@ export default function Dashboard({ onOpenLowStockProducts }) {
       }
     }
     loadCustomers()
-    const unsubscribe = onRefresh(loadCustomers, 'dashboard')
+    const unsubscribe = onRefresh(loadCustomers, 'dashboard', ['customers'])
     return () => {
       active = false
       unsubscribe()
@@ -73,11 +72,10 @@ export default function Dashboard({ onOpenLowStockProducts }) {
     let active = true
     async function loadLowStockProducts() {
       try {
-        const products = await getAll('products')
+        const productIds = await getLowStockProductIds()
         if (!active) return
-        const lowProducts = products.filter(isLowStock)
-        const lowIds = new Set(lowProducts.map((product) => product.id))
-        setLowStockProducts(lowProducts)
+        const lowIds = new Set(productIds)
+        setLowStockProductIds(productIds)
         setDismissedLowStockIds((dismissed) => dismissed.filter((id) => lowIds.has(id)))
         setLowStockProductsError('')
       } catch (error) {
@@ -87,7 +85,7 @@ export default function Dashboard({ onOpenLowStockProducts }) {
       }
     }
     loadLowStockProducts()
-    const unsubscribe = onRefresh(loadLowStockProducts, 'dashboard')
+    const unsubscribe = onRefresh(loadLowStockProducts, 'dashboard', ['products'])
     return () => {
       active = false
       unsubscribe()
@@ -144,6 +142,10 @@ export default function Dashboard({ onOpenLowStockProducts }) {
     }
   }, [dateRange, transactionPage, creditFirst, nameSort])
 
+  const customersByName = useMemo(
+    () => new Map(customers.map((customer) => [customer.name, customer])),
+    [customers]
+  )
   const today = localDateValue(new Date())
   const isTodayRange = dateRange.from === today && dateRange.to === today
 
@@ -159,11 +161,11 @@ export default function Dashboard({ onOpenLowStockProducts }) {
   const pageStart = (currentPage - 1) * TRANSACTIONS_PER_PAGE
   const pageTransactions = report.transactions
   const totalAsset = Number(report.inventory?.total_asset || 0)
-  const newLowStockProducts = lowStockProducts.filter((product) => !dismissedLowStockIds.includes(product.id))
+  const newLowStockProductIds = lowStockProductIds.filter((id) => !dismissedLowStockIds.includes(id))
 
   function openLowStockProducts() {
     setDismissedLowStockIds((dismissed) => [
-      ...new Set([...dismissed, ...newLowStockProducts.map((product) => product.id)])
+      ...new Set([...dismissed, ...newLowStockProductIds])
     ])
     onOpenLowStockProducts?.()
   }
@@ -273,14 +275,14 @@ export default function Dashboard({ onOpenLowStockProducts }) {
               <strong>{loaded ? rupiah(totalAsset) : <LoadingNumber label="nilai stok" />}</strong>
             </div>
           </div>
-          {loaded && lowStockProductsLoaded && newLowStockProducts.length > 0 && (
+          {loaded && lowStockProductsLoaded && newLowStockProductIds.length > 0 && (
             <button
               type="button"
               className="dashboard-low-stock-alert"
               onClick={openLowStockProducts}
-              aria-label={`Buka ${newLowStockProducts.length} produk dengan stok menipis`}>
+              aria-label={`Buka ${newLowStockProductIds.length} produk dengan stok menipis`}>
               <Icon name="box" size={18} />
-              <span>{newLowStockProducts.length} Produk, Stok menipis</span>
+              <span>{newLowStockProductIds.length} Produk, Stok menipis</span>
               <Icon name="chevronRight" size={16} />
             </button>
           )}
@@ -362,7 +364,7 @@ export default function Dashboard({ onOpenLowStockProducts }) {
                     <div className="dashboard-customer-cell">
                       <CustomerIdentity
                         name={t.customerName}
-                        customer={customers.find((customer) => customer.name === t.customerName)}
+                        customer={customersByName.get(t.customerName)}
                         className="transaction-customer"
                       />
                       <span className="transaction-invoice">{getInvoiceNumber(t)}</span>
@@ -382,8 +384,8 @@ export default function Dashboard({ onOpenLowStockProducts }) {
                   <td className="right">
                     <button className="btn btn-sm btn-primary" onClick={() => setSelectedTransaction({
                       ...t,
-                      customerPhone: customers.find((customer) => customer.name === t.customerName)?.phone || '',
-                      customerAddress: customers.find((customer) => customer.name === t.customerName)?.address || '',
+                      customerPhone: customersByName.get(t.customerName)?.phone || '',
+                      customerAddress: customersByName.get(t.customerName)?.address || '',
                       expedition: t.expedition || ''
                     })}>Detail</button>
                   </td>

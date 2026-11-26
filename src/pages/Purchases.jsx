@@ -289,7 +289,7 @@ export default function Purchases() {
   async function deletePurchase(entry) {
     if (deletingLock.current) return
     const purchase = parsePurchaseNote(entry.note)
-    const stockEntry = Boolean(entry.requestId)
+    const stockEntry = Boolean(entry.requestId || entry.stockPurchase || purchase.stockPurchase)
     if (!confirm(
       'Hapus riwayat pembelian "' + purchase.purchase + '"?' +
       (stockEntry

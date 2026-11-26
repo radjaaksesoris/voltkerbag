@@ -1,8 +1,6 @@
-import { useEffect, useRef, useState } from 'react'
+import { memo, useCallback, useEffect, useRef, useState } from 'react'
 import LoginScreen from '../components/LoginScreen.jsx'
 import Icon from '../components/Icon.jsx'
-import ReceiptPreview from '../components/ReceiptPreview.jsx'
-import { downloadInvoiceJpeg } from '../invoiceJpeg'
 import {
   onAuthStateChange,
   getAuthSession,
@@ -49,6 +47,7 @@ function formatData(data) {
   return JSON.stringify(data, null, 2)
 }
 
+const ASSISTANT_CHECK_CACHE_MS = 60_000
 const SUMMARY_METRIC_LABELS = {
   transaction_count: 'transaksi',
   sales_total: 'omzet',
@@ -256,6 +255,174 @@ function renderChatText(text, formatCurrencyAsTable = true, onSummaryMetricClick
   return <div className="chat-rich-text">{blocks}</div>
 }
 
+const ChatMessage = memo(function ChatMessage({
+  id,
+  role,
+  text,
+  hasError,
+  hasSuccess,
+  formatCurrencyAsTable,
+  attachmentPreviewUrl,
+  attachmentName,
+  hasSummaryRange,
+  summaryRangeFrom,
+  summaryRangeTo,
+  hasSummaryDetail,
+  summaryMetric,
+  summaryLoading,
+  summaryText,
+  summaryError,
+  feedbackEligible,
+  feedbackSubmitted,
+  feedbackActive,
+  feedbackText,
+  feedbackError,
+  confirmationText,
+  actionBusy,
+  draft,
+  onOpenSummaryMetric,
+  onRegisterSummaryDetailRef,
+  onSubmitCorrection,
+  onStartFeedback,
+  onCancelFeedback,
+  onFeedbackTextChange,
+  onConfirmAction,
+  onCancelAction,
+  onConfirmationTextChange
+}) {
+  const openMetric = useCallback((metric) => {
+    onOpenSummaryMetric(id, summaryRangeFrom, summaryRangeTo, metric)
+  }, [id, onOpenSummaryMetric, summaryRangeFrom, summaryRangeTo])
+  const closeSummary = useCallback(() => {
+    onOpenSummaryMetric(id, summaryRangeFrom, summaryRangeTo, summaryMetric)
+  }, [id, onOpenSummaryMetric, summaryRangeFrom, summaryRangeTo, summaryMetric])
+  const registerSummaryDetailRef = useCallback((element) => {
+    onRegisterSummaryDetailRef(id, element)
+  }, [id, onRegisterSummaryDetailRef])
+  const submitCorrection = useCallback((event) => {
+    onSubmitCorrection(event, id)
+  }, [id, onSubmitCorrection])
+  const startFeedback = useCallback(() => onStartFeedback(id), [id, onStartFeedback])
+  const cancelAction = useCallback(() => onCancelAction(id), [id, onCancelAction])
+  const confirmAction = useCallback(() => onConfirmAction(id, draft), [id, draft, onConfirmAction])
+
+  return (
+    <article className={'chat-message chat-message-' + role}>
+      {role === 'assistant' && (
+        <div className="chat-avatar" aria-hidden="true">
+          <img src={import.meta.env.BASE_URL + 'voltker-icon-192.png'} alt="" />
+        </div>
+      )}
+      <div className="chat-message-content">
+        <div className={'chat-bubble' + (hasError ? ' is-error' : '') + (hasSuccess ? ' is-success' : '')}>
+          <span className="chat-bubble-kicker" aria-hidden="true">
+            {role === 'user' ? 'PESAN ADMIN' : 'VOLTKER · ASISTEN TOKO'}
+          </span>
+          {renderChatText(text, formatCurrencyAsTable, hasSummaryRange ? openMetric : null, summaryMetric)}
+          {attachmentPreviewUrl && (
+            <img
+              className="chat-message-image"
+              src={attachmentPreviewUrl}
+              alt={'Lampiran ' + (attachmentName || 'gambar')}
+            />
+          )}
+          {attachmentName && <span className="chat-attachment-label"><Icon name="image" size={14} />{attachmentName}</span>}
+        </div>
+        {hasSummaryRange && hasSummaryDetail && (
+          <section
+            ref={registerSummaryDetailRef}
+            className="chat-summary-detail"
+            aria-live="polite">
+            <div className="chat-summary-detail-heading">
+              <strong>Rincian {SUMMARY_METRIC_LABELS[summaryMetric]}</strong>
+              <button
+                type="button"
+                aria-label="Tutup rincian metrik"
+                onClick={closeSummary}>
+                Tutup
+              </button>
+            </div>
+            {summaryLoading && (
+              <p role="status">Memuat rincian sesuai periode laporan...</p>
+            )}
+            {summaryError && (
+              <p className="chat-summary-detail-error" role="alert">
+                {summaryError}
+              </p>
+            )}
+            {summaryText && renderChatText(summaryText)}
+          </section>
+        )}
+
+        {feedbackEligible && !feedbackSubmitted && (
+          <div className="chat-feedback">
+            {feedbackActive
+              ? (
+                  <form onSubmit={submitCorrection}>
+                    <label>
+                      Saran koreksi (maks. 240 karakter)
+                      <textarea
+                        value={feedbackText}
+                        maxLength={240}
+                        onChange={(event) => onFeedbackTextChange(event.target.value)}
+                        placeholder="Tuliskan panduan umum yang seharusnya diikuti AI."
+                        required
+                      />
+                    </label>
+                    <p>Jangan sertakan nama pelanggan, nomor telepon, email, atau hasil data toko.</p>
+                    {feedbackError && <p className="chat-preferences-error" role="alert">{feedbackError}</p>}
+                    <div>
+                      <button type="button" onClick={onCancelFeedback}>Batal</button>
+                      <button type="submit">Ajukan untuk ditinjau</button>
+                    </div>
+                  </form>
+                )
+              : <button type="button" onClick={startFeedback}>Sarankan koreksi</button>}
+          </div>
+        )}
+        {feedbackSubmitted && (
+          <small className="chat-feedback-status">Koreksi menunggu tinjauan di Preferensi.</small>
+        )}
+
+        {draft && (
+          <section className="chat-action-card" aria-label="Pratinjau tindakan">
+            <div className="chat-action-heading">
+              <span className="chat-action-icon"><Icon name="bolt" size={16} /></span>
+              <div><small>PRATINJAU TINDAKAN</small><strong>{draft.title}</strong></div>
+            </div>
+            <ul>
+              {draft.details.map((detail) => <li key={detail}>{renderChatText(detail)}</li>)}
+            </ul>
+            {draft.action === 'reset_store' && (
+              <label className="chat-confirm-reset">
+                Ketik <strong>HAPUS DATA</strong> untuk menyetujui
+                <input
+                  className="input"
+                  value={confirmationText}
+                  onChange={(event) => onConfirmationTextChange(event.target.value)}
+                  autoComplete="off"
+                  spellCheck="false"
+                  disabled={actionBusy}
+                />
+              </label>
+            )}
+            <div className="chat-action-buttons">
+              <button className="btn" type="button" disabled={actionBusy} onClick={cancelAction}>Batal</button>
+              <button
+                className={'btn btn-primary' + (draft.action === 'reset_store' ? ' btn-danger' : '')}
+                type="button"
+                disabled={actionBusy || (draft.action === 'reset_store' && confirmationText !== 'HAPUS DATA')}
+                onClick={confirmAction}>
+                {actionBusy ? 'Menyimpan...' : 'Konfirmasi'}
+              </button>
+            </div>
+          </section>
+        )}
+      </div>
+    </article>
+  )
+})
+
 export default function ChatApp() {
   const [session, setSession] = useState(null)
   const [checkingSession, setCheckingSession] = useState(true)
@@ -291,8 +458,6 @@ export default function ChatApp() {
   const [attachmentPreviewUrl, setAttachmentPreviewUrl] = useState('')
   const [productCreation, setProductCreation] = useState(null)
   const [confirmationText, setConfirmationText] = useState('')
-  const [receiptTransaction, setReceiptTransaction] = useState(null)
-  const [receiptError, setReceiptError] = useState('')
   const fileInputRef = useRef(null)
   const endOfMessagesRef = useRef(null)
   const inputRef = useRef(null)
@@ -303,41 +468,44 @@ export default function ChatApp() {
   const attachmentPreviewUrls = useRef(new Set())
   const chatDayRef = useRef(getChatDayKey())
   const chatBusyRef = useRef(false)
+  const summaryMetricDetailsRef = useRef(summaryMetricDetails)
+  const confirmationTextRef = useRef(confirmationText)
+  const feedbackTextRef = useRef(feedbackText)
+  const lastSuccessfulAssistantCheck = useRef(0)
+  const pendingHistorySaveRef = useRef(null)
+  summaryMetricDetailsRef.current = summaryMetricDetails
+  confirmationTextRef.current = confirmationText
+  feedbackTextRef.current = feedbackText
   const chatUserId = session?.user?.id
   const chatDayKey = getChatDayKey()
   const hasPendingAction = messages.some((message) => message.draft)
-  const needsSharedStyles = !session
 
-  async function openSummaryMetric(message, metric) {
-    const existing = summaryMetricDetails[message.id]
+  const openSummaryMetric = useCallback(async (messageId, from, to, metric) => {
+    const existing = summaryMetricDetailsRef.current[messageId]
     if (existing?.metric === metric) {
       lastSummaryDetailMessageId.current = ''
-      summaryMetricRequestIds.current.delete(message.id)
+      summaryMetricRequestIds.current.delete(messageId)
       setSummaryMetricDetails((current) => {
         const next = { ...current }
-        delete next[message.id]
+        delete next[messageId]
         return next
       })
       return
     }
 
-    lastSummaryDetailMessageId.current = message.id
+    lastSummaryDetailMessageId.current = messageId
     const requestId = crypto.randomUUID()
-    summaryMetricRequestIds.current.set(message.id, requestId)
+    summaryMetricRequestIds.current.set(messageId, requestId)
     setSummaryMetricDetails((current) => ({
       ...current,
-      [message.id]: { metric, loading: true, text: '', error: '' }
+      [messageId]: { metric, loading: true, text: '', error: '' }
     }))
     try {
-      const { data } = await queryStore('summary_metric', {
-        metric,
-        from: message.summaryRange.from,
-        to: message.summaryRange.to
-      })
-      if (summaryMetricRequestIds.current.get(message.id) !== requestId) return
+      const { data } = await queryStore('summary_metric', { metric, from, to })
+      if (summaryMetricRequestIds.current.get(messageId) !== requestId) return
       setSummaryMetricDetails((current) => ({
         ...current,
-        [message.id]: {
+        [messageId]: {
           metric,
           loading: false,
           text: formatQueryAnswer('summary_metric', data),
@@ -345,10 +513,10 @@ export default function ChatApp() {
         }
       }))
     } catch (error) {
-      if (summaryMetricRequestIds.current.get(message.id) !== requestId) return
+      if (summaryMetricRequestIds.current.get(messageId) !== requestId) return
       setSummaryMetricDetails((current) => ({
         ...current,
-        [message.id]: {
+        [messageId]: {
           metric,
           loading: false,
           text: '',
@@ -356,7 +524,7 @@ export default function ChatApp() {
         }
       }))
     }
-  }
+  }, [])
 
   useEffect(() => {
     if (!rateLimitWait) return undefined
@@ -367,63 +535,49 @@ export default function ChatApp() {
   }, [rateLimitWait])
 
   useEffect(() => {
-    let active = true
-    if (!needsSharedStyles) return () => { active = false }
-    import('../styles.css').catch((error) => {
-      console.error('Gagal memuat gaya aplikasi VOLTKER:', error)
-      if (active) setConnectionError('Sebagian tampilan aplikasi gagal dimuat. Muat ulang halaman untuk mencoba kembali.')
-    })
-    return () => { active = false }
-  }, [needsSharedStyles])
-
-  useEffect(() => {
     chatBusyRef.current = busy || actionBusy
   }, [busy, actionBusy])
 
-  async function refreshAssistantConnection() {
+  async function verifyAssistantConnection(isActive, force = false) {
     if (!chatUserId) return
+    if (!force && Date.now() - lastSuccessfulAssistantCheck.current < ASSISTANT_CHECK_CACHE_MS) {
+      if (isActive()) setAssistantConnection({ status: 'connected', message: 'AI Groq terhubung.' })
+      return
+    }
     setCheckingAssistant(true)
     setAssistantConnection({ status: 'checking', message: '' })
     try {
       await checkAssistantConnection()
-      setAssistantConnection({ status: 'connected', message: 'AI Groq terhubung.' })
+      lastSuccessfulAssistantCheck.current = Date.now()
+      if (isActive()) setAssistantConnection({ status: 'connected', message: 'AI Groq terhubung.' })
     } catch (error) {
       console.error('Pemeriksaan koneksi AI Groq gagal:', error)
-      setAssistantConnection({
-        status: 'disconnected',
-        message: error.message || 'AI Groq tidak dapat dihubungi.'
-      })
+      if (isActive()) {
+        setAssistantConnection({
+          status: 'disconnected',
+          message: error.message || 'AI Groq tidak dapat dihubungi.'
+        })
+      }
     } finally {
-      setCheckingAssistant(false)
+      if (isActive()) setCheckingAssistant(false)
     }
   }
 
+  function refreshAssistantConnection() {
+    return verifyAssistantConnection(() => true, true)
+  }
+
   useEffect(() => {
+    lastSuccessfulAssistantCheck.current = 0
     if (!chatUserId) {
       setAssistantConnection({ status: 'checking', message: '' })
       return
     }
     let active = true
-    const check = async () => {
-      setCheckingAssistant(true)
-      setAssistantConnection({ status: 'checking', message: '' })
-      try {
-        await checkAssistantConnection()
-        if (active) setAssistantConnection({ status: 'connected', message: 'AI Groq terhubung.' })
-      } catch (error) {
-        console.error('Pemeriksaan koneksi AI Groq gagal:', error)
-        if (active) {
-          setAssistantConnection({
-            status: 'disconnected',
-            message: error.message || 'AI Groq tidak dapat dihubungi.'
-          })
-        }
-      } finally {
-        if (active) setCheckingAssistant(false)
-      }
-    }
+    const check = () => verifyAssistantConnection(() => active)
     const onOnline = () => check()
     const onOffline = () => {
+      lastSuccessfulAssistantCheck.current = 0
       setAssistantConnection({
         status: 'disconnected',
         message: 'Perangkat sedang offline; AI Groq tidak dapat dihubungi.'
@@ -481,16 +635,31 @@ export default function ChatApp() {
   }, [chatUserId])
 
   useEffect(() => {
-    if (!chatUserId || historyOwner !== chatUserId) return
+    if (!chatUserId || historyOwner !== chatUserId) return undefined
 
+    pendingHistorySaveRef.current = { userId: chatUserId, dayKey: chatDayKey, messages }
+    const timeout = window.setTimeout(() => {
+      try {
+        saveChatHistory(window.localStorage, chatUserId, chatDayKey, messages)
+        pendingHistorySaveRef.current = null
+        setHistoryError('')
+      } catch (error) {
+        console.error('Gagal menyimpan riwayat chat:', error)
+        setHistoryError('Riwayat chat tidak dapat disimpan di perangkat ini.')
+      }
+    }, 300)
+    return () => window.clearTimeout(timeout)
+  }, [chatDayKey, chatUserId, historyOwner, messages])
+
+  useEffect(() => () => {
+    const pending = pendingHistorySaveRef.current
+    if (!pending) return
     try {
-      saveChatHistory(window.localStorage, chatUserId, chatDayKey, messages)
-      setHistoryError('')
+      saveChatHistory(window.localStorage, pending.userId, pending.dayKey, pending.messages)
     } catch (error) {
       console.error('Gagal menyimpan riwayat chat:', error)
-      setHistoryError('Riwayat chat tidak dapat disimpan di perangkat ini.')
     }
-  }, [chatDayKey, chatUserId, historyOwner, messages])
+  }, [])
 
   useEffect(() => () => {
     attachmentPreviewUrls.current.forEach((url) => URL.revokeObjectURL(url))
@@ -615,7 +784,7 @@ export default function ChatApp() {
     attachmentPreviewUrls.current.delete(url)
   }
 
-  function persistPreferences(nextPreferences, updateDraft = true) {
+  const persistPreferences = useCallback((nextPreferences, updateDraft = true) => {
     if (!chatUserId || preferencesOwner !== chatUserId) {
       setPreferencesError('Preferensi asisten belum siap untuk akun ini. Coba kembali.')
       return null
@@ -636,7 +805,7 @@ export default function ChatApp() {
       setPreferencesError(error.message || 'Preferensi asisten tidak dapat disimpan.')
       return null
     }
-  }
+  }, [chatUserId, preferencesOwner])
 
   function savePreferences(event) {
     event.preventDefault()
@@ -657,11 +826,16 @@ export default function ChatApp() {
     }
   }
 
-  function submitCorrection(event, message) {
+  const registerSummaryDetailRef = useCallback((messageId, element) => {
+    if (element) summaryDetailRefs.current.set(messageId, element)
+    else summaryDetailRefs.current.delete(messageId)
+  }, [])
+
+  const submitCorrection = useCallback((event, messageId) => {
     event.preventDefault()
     setFeedbackError('')
     try {
-      const correction = createChatCorrection(feedbackText, crypto.randomUUID())
+      const correction = createChatCorrection(feedbackTextRef.current, crypto.randomUUID())
       const saved = persistPreferences({
         ...preferences,
         corrections: [...preferences.corrections, correction].slice(-12)
@@ -671,14 +845,25 @@ export default function ChatApp() {
         return
       }
       setMessages((current) => current.map((entry) =>
-        entry.id === message.id ? { ...entry, feedbackSubmitted: true } : entry
+        entry.id === messageId ? { ...entry, feedbackSubmitted: true } : entry
       ))
       setFeedbackMessageId('')
       setFeedbackText('')
     } catch (error) {
       setFeedbackError(error.message || 'Koreksi tidak dapat disimpan.')
     }
-  }
+  }, [persistPreferences, preferences])
+
+  const startFeedback = useCallback((messageId) => {
+    setFeedbackMessageId(messageId)
+    setFeedbackText('')
+    setFeedbackError('')
+  }, [])
+
+  const cancelFeedback = useCallback(() => {
+    setFeedbackMessageId('')
+    setFeedbackError('')
+  }, [])
 
   function reviewCorrection(id, status) {
     try {
@@ -1039,17 +1224,17 @@ export default function ChatApp() {
     }
   }
 
-  async function confirmAction(message) {
-    if (!message?.draft || actionBusy || operationLock.current) return
-    if (message.draft.action === 'reset_store' && confirmationText !== 'HAPUS DATA') return
+  const confirmAction = useCallback(async (messageId, draft) => {
+    if (!draft || actionBusy || operationLock.current) return
+    if (draft.action === 'reset_store' && confirmationTextRef.current !== 'HAPUS DATA') return
 
     operationLock.current = true
     setActionBusy(true)
     setConfirmationText('')
     try {
-      const result = await executeAction(message.draft)
+      const result = await executeAction(draft)
       setMessages((current) => current.map((entry) =>
-        entry.id === message.id ? { ...entry, draft: null, completed: true } : entry
+        entry.id === messageId ? { ...entry, draft: null, completed: true } : entry
       ))
       if (typeof result === 'string') {
         appendMessage(setMessages, { role: 'assistant', text: result, success: true })
@@ -1071,24 +1256,15 @@ export default function ChatApp() {
       operationLock.current = false
       setActionBusy(false)
     }
-  }
+  }, [actionBusy])
 
-  function cancelAction(message) {
+  const cancelAction = useCallback((messageId) => {
     setMessages((current) => current.map((entry) =>
-      entry.id === message.id ? { ...entry, draft: null, cancelled: true } : entry
+      entry.id === messageId ? { ...entry, draft: null, cancelled: true } : entry
     ))
     setConfirmationText('')
     requestAnimationFrame(() => inputRef.current?.focus())
-  }
-
-  async function downloadInvoice(transaction) {
-    setReceiptError('')
-    try {
-      await downloadInvoiceJpeg(transaction)
-    } catch (error) {
-      setReceiptError(error.message || 'Gagal mengunduh faktur.')
-    }
-  }
+  }, [])
 
   if (!session && checkingSession) {
     return (
@@ -1287,138 +1463,47 @@ export default function ChatApp() {
               </button>
             </div>
           )}
-          {messages.map((message) => (
-            <article key={message.id} className={'chat-message chat-message-' + message.role}>
-              {message.role === 'assistant' && (
-                <div className="chat-avatar" aria-hidden="true">
-                  <img src={import.meta.env.BASE_URL + 'voltker-icon-192.png'} alt="" />
-                </div>
-              )}
-              <div className="chat-message-content">
-                <div className={'chat-bubble' + (message.error ? ' is-error' : '') + (message.success ? ' is-success' : '')}>
-                  <span className="chat-bubble-kicker" aria-hidden="true">
-                    {message.role === 'user' ? 'PESAN ADMIN' : 'VOLTKER · ASISTEN TOKO'}
-                  </span>
-                  {renderChatText(
-                    message.text,
-                    message.role === 'assistant' && message.formatCurrencyAsTable !== false,
-                    message.summaryRange
-                      ? (metric) => openSummaryMetric(message, metric)
-                      : null,
-                    summaryMetricDetails[message.id]?.metric
-                  )}
-                  {message.attachmentPreviewUrl && (
-                    <img
-                      className="chat-message-image"
-                      src={message.attachmentPreviewUrl}
-                      alt={'Lampiran ' + (message.attachmentName || 'gambar')}
-                    />
-                  )}
-                  {message.attachmentName && <span className="chat-attachment-label"><Icon name="image" size={14} />{message.attachmentName}</span>}
-                </div>
-                {message.summaryRange && summaryMetricDetails[message.id] && (
-                  <section
-                    ref={(element) => {
-                      if (element) summaryDetailRefs.current.set(message.id, element)
-                      else summaryDetailRefs.current.delete(message.id)
-                    }}
-                    className="chat-summary-detail"
-                    aria-live="polite">
-                    <div className="chat-summary-detail-heading">
-                      <strong>Rincian {SUMMARY_METRIC_LABELS[summaryMetricDetails[message.id].metric]}</strong>
-                      <button
-                        type="button"
-                        aria-label="Tutup rincian metrik"
-                        onClick={() => openSummaryMetric(message, summaryMetricDetails[message.id].metric)}>
-                        Tutup
-                      </button>
-                    </div>
-                    {summaryMetricDetails[message.id].loading && (
-                      <p role="status">Memuat rincian sesuai periode laporan...</p>
-                    )}
-                    {summaryMetricDetails[message.id].error && (
-                      <p className="chat-summary-detail-error" role="alert">
-                        {summaryMetricDetails[message.id].error}
-                      </p>
-                    )}
-                    {summaryMetricDetails[message.id].text && renderChatText(summaryMetricDetails[message.id].text)}
-                  </section>
-                )}
-
-                {message.feedbackEligible && !message.feedbackSubmitted && (
-                  <div className="chat-feedback">
-                    {feedbackMessageId === message.id
-                      ? (
-                          <form onSubmit={(event) => submitCorrection(event, message)}>
-                            <label>
-                              Saran koreksi (maks. 240 karakter)
-                              <textarea
-                                value={feedbackText}
-                                maxLength={240}
-                                onChange={(event) => setFeedbackText(event.target.value)}
-                                placeholder="Tuliskan panduan umum yang seharusnya diikuti AI."
-                                required
-                              />
-                            </label>
-                            <p>Jangan sertakan nama pelanggan, nomor telepon, email, atau hasil data toko.</p>
-                            {feedbackError && <p className="chat-preferences-error" role="alert">{feedbackError}</p>}
-                            <div>
-                              <button type="button" onClick={() => {
-                                setFeedbackMessageId('')
-                                setFeedbackError('')
-                              }}>Batal</button>
-                              <button type="submit">Ajukan untuk ditinjau</button>
-                            </div>
-                          </form>
-                        )
-                      : <button type="button" onClick={() => {
-                          setFeedbackMessageId(message.id)
-                          setFeedbackText('')
-                          setFeedbackError('')
-                        }}>Sarankan koreksi</button>}
-                  </div>
-                )}
-                {message.feedbackSubmitted && (
-                  <small className="chat-feedback-status">Koreksi menunggu tinjauan di Preferensi.</small>
-                )}
-
-                {message.draft && (
-                  <section className="chat-action-card" aria-label="Pratinjau tindakan">
-                    <div className="chat-action-heading">
-                      <span className="chat-action-icon"><Icon name="bolt" size={16} /></span>
-                      <div><small>PRATINJAU TINDAKAN</small><strong>{message.draft.title}</strong></div>
-                    </div>
-                    <ul>
-                      {message.draft.details.map((detail) => <li key={detail}>{renderChatText(detail)}</li>)}
-                    </ul>
-                    {message.draft.action === 'reset_store' && (
-                      <label className="chat-confirm-reset">
-                        Ketik <strong>HAPUS DATA</strong> untuk menyetujui
-                        <input
-                          className="input"
-                          value={confirmationText}
-                          onChange={(event) => setConfirmationText(event.target.value)}
-                          autoComplete="off"
-                          spellCheck="false"
-                          disabled={actionBusy}
-                        />
-                      </label>
-                    )}
-                    <div className="chat-action-buttons">
-                      <button className="btn" type="button" disabled={actionBusy} onClick={() => cancelAction(message)}>Batal</button>
-                      <button
-                        className={'btn btn-primary' + (message.draft.action === 'reset_store' ? ' btn-danger' : '')}
-                        type="button"
-                        disabled={actionBusy || (message.draft.action === 'reset_store' && confirmationText !== 'HAPUS DATA')}
-                        onClick={() => confirmAction(message)}>
-                        {actionBusy ? 'Menyimpan...' : 'Konfirmasi'}
-                      </button>
-                    </div>
-                  </section>
-                )}
-              </div>
-            </article>
-          ))}
+          {messages.map((message) => {
+            const detail = summaryMetricDetails[message.id]
+            return (
+              <ChatMessage
+                key={message.id}
+                id={message.id}
+                role={message.role}
+                text={message.text}
+                hasError={Boolean(message.error)}
+                hasSuccess={Boolean(message.success)}
+                formatCurrencyAsTable={message.role === 'assistant' && message.formatCurrencyAsTable !== false}
+                attachmentPreviewUrl={message.attachmentPreviewUrl || ''}
+                attachmentName={message.attachmentName || ''}
+                hasSummaryRange={Boolean(message.summaryRange)}
+                summaryRangeFrom={message.summaryRange?.from || ''}
+                summaryRangeTo={message.summaryRange?.to || ''}
+                hasSummaryDetail={Boolean(detail)}
+                summaryMetric={detail?.metric || ''}
+                summaryLoading={Boolean(detail?.loading)}
+                summaryText={detail?.text || ''}
+                summaryError={detail?.error || ''}
+                feedbackEligible={Boolean(message.feedbackEligible)}
+                feedbackSubmitted={Boolean(message.feedbackSubmitted)}
+                feedbackActive={feedbackMessageId === message.id}
+                feedbackText={feedbackMessageId === message.id ? feedbackText : ''}
+                feedbackError={feedbackMessageId === message.id ? feedbackError : ''}
+                confirmationText={message.draft?.action === 'reset_store' ? confirmationText : ''}
+                actionBusy={actionBusy}
+                draft={message.draft || null}
+                onOpenSummaryMetric={openSummaryMetric}
+                onRegisterSummaryDetailRef={registerSummaryDetailRef}
+                onSubmitCorrection={submitCorrection}
+                onStartFeedback={startFeedback}
+                onCancelFeedback={cancelFeedback}
+                onFeedbackTextChange={setFeedbackText}
+                onConfirmAction={confirmAction}
+                onCancelAction={cancelAction}
+                onConfirmationTextChange={setConfirmationText}
+              />
+            )
+          })}
           {(busy || actionBusy) && (
             <div className="chat-thinking" role="status" aria-live="polite">
               <span /><span /><span />{actionBusy ? 'Menyimpan perubahan...' : processingStage}
@@ -1510,11 +1595,6 @@ export default function ChatApp() {
           <p className="chat-composer-footnote">Tulis maksud, nama objek, dan detail perubahan. Jika ada yang kurang, asisten akan bertanya. Periksa pratinjau sebelum mengonfirmasi.</p>
         </div>
       </section>
-
-      {receiptError && <div className="chat-toast-error" role="alert">{receiptError}</div>}
-      {receiptTransaction && (
-        <ReceiptPreview transaction={receiptTransaction} onClose={() => setReceiptTransaction(null)} />
-      )}
     </main>
   )
 }

@@ -3,10 +3,10 @@ import {
   getDashboardData,
   getFinanceData,
   getPurchaseEntries,
-  getTransactionPayments,
   getTransactionsByDateRange,
   getTransactionSummary
 } from '../db'
+import { getClient } from '../supabaseSync'
 import { formatPurchaseNote, parsePurchaseNote } from '../purchaseNote'
 import { dateRangeTimestamps, localDateValue } from '../dateFilter'
 import { isSafeRupiahAmount } from '../money'
@@ -55,6 +55,36 @@ const MASTER_DELETE_ACTIONS = new Map([
   ['delete_category', ['categories', 'Kategori']],
   ['delete_unit', ['units', 'Satuan']]
 ])
+const MAX_ANALYTICS_WINDOW_DAYS = 90
+
+function boundAnalyticsRange(range) {
+  if (!range?.from) {
+    const start = new Date()
+    start.setDate(start.getDate() - (MAX_ANALYTICS_WINDOW_DAYS - 1))
+    return { from: localDateValue(start), to: range?.to || localDateValue(new Date()) }
+  }
+  return range
+}
+
+async function getPaymentsByTransactionIds(transactionIds) {
+  const grouped = new Map(transactionIds.map((id) => [String(id), []]))
+  if (!transactionIds.length) return grouped
+
+  const { data, error } = await getClient()
+    .from('transaction_payments')
+    .select('transaction_id, id, amount, date')
+    .in('transaction_id', transactionIds)
+    .order('date', { ascending: true })
+    .order('id', { ascending: true })
+  if (error) throw new Error('Gagal memuat riwayat pembayaran transaksi: ' + error.message)
+
+  for (const payment of data || []) {
+    const key = String(payment.transaction_id)
+    if (!grouped.has(key)) grouped.set(key, [])
+    grouped.get(key).push({ id: payment.id, amount: payment.amount, date: payment.date })
+  }
+  return grouped
+}
 
 function isAutomaticFinanceEntry(entry) {
   const category = String(entry.category || '').trim().toLocaleLowerCase('id-ID')
@@ -434,7 +464,7 @@ export async function queryStore(intent, args = {}) {
     const restockStart = new Date()
     restockStart.setDate(restockStart.getDate() - 29)
     const restockRange = args.includeRestock === true
-      ? { from: localDateValue(restockStart), to: localDateValue(new Date()) }
+      ? boundAnalyticsRange({ from: localDateValue(restockStart), to: localDateValue(new Date()) })
       : null
     const [products, summary, transactions] = await Promise.all([
       getAll('products'),
@@ -492,7 +522,7 @@ export async function queryStore(intent, args = {}) {
     const range = dateRangeForQuery(args)
     const [products, transactions] = await Promise.all([
       getAll('products'),
-      getTransactionsByDateRange(dateRangeTimestamps(range))
+      getTransactionsByDateRange(dateRangeTimestamps(boundAnalyticsRange(range)))
     ])
     return {
       title: 'Produk terlaris dengan stok rendah',
@@ -712,7 +742,13 @@ export async function queryStore(intent, args = {}) {
       .sort((left, right) => new Date(right.createdAt || 0) - new Date(left.createdAt || 0))
     const matchingCount = filtered.length
     const matching = (args.answerMode === 'latest' ? filtered.slice(0, 1) : filtered.slice(0, 30))
-    const transactionRows = await Promise.all(matching.map(async (transaction) => ({
+    const creditTransactionIds = args.includeDetails
+      ? [...new Set(matching
+        .filter((transaction) => transaction.paymentType === 'credit')
+        .map((transaction) => transaction.id))]
+      : []
+    const paymentsByTransactionId = await getPaymentsByTransactionIds(creditTransactionIds)
+    const transactionRows = matching.map((transaction) => ({
       id: transaction.id,
       invoiceNo: transaction.invoiceNo,
       customerName: transaction.customerName,
@@ -724,13 +760,13 @@ export async function queryStore(intent, args = {}) {
       payment: transaction.payment,
       paidAmount: transaction.paidAmount,
       payments: args.includeDetails && transaction.paymentType === 'credit'
-        ? await getTransactionPayments(transaction.id)
+        ? paymentsByTransactionId.get(String(transaction.id)) || []
         : transaction.payments || [],
       balanceDue: transaction.balanceDue,
       change: transaction.change,
       expedition: transaction.expedition || '',
       createdAt: transaction.createdAt
-    })))
+    }))
     return {
       title: 'Riwayat transaksi',
       data: {

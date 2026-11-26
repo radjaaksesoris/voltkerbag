@@ -13,6 +13,7 @@ const CHUNK_RELOAD_KEY = 'voltker:chunk-reload-attempted'
 const MENU_TRANSITION_DURATION_MS = 600
 const MENU_TRANSITION_FALLBACK_DELAY_MS = MENU_TRANSITION_DURATION_MS + 150
 const ANDROID_BACK_GUARD_STATE = '__voltkerAndroidBackGuard'
+const FOCUS_VERIFY_DELAY_MS = 2000
 
 function getMenuTransitionSwitchDelay() {
   return MENU_TRANSITION_DURATION_MS * 0.35
@@ -323,6 +324,8 @@ function ActiveApp() {
     setPage(nextPage)
   }, [])
 
+  const navigateToDebts = useCallback(() => navigateToPage('debts'), [navigateToPage])
+
   const openLowStockProducts = useCallback(() => {
     setLowStockFilterRequest((request) => request + 1)
     navigateToPage('stok')
@@ -579,9 +582,22 @@ function ActiveApp() {
       }
     }
 
-    const onOnline = () => verifyConnection()
-    const onFocus = () => verifyConnection()
+    let focusVerifyTimer = null
+    const onOnline = () => {
+      window.clearTimeout(focusVerifyTimer)
+      focusVerifyTimer = null
+      verifyConnection()
+    }
+    const onFocus = () => {
+      window.clearTimeout(focusVerifyTimer)
+      focusVerifyTimer = window.setTimeout(() => {
+        focusVerifyTimer = null
+        verifyConnection()
+      }, FOCUS_VERIFY_DELAY_MS)
+    }
     const onOffline = () => {
+      window.clearTimeout(focusVerifyTimer)
+      focusVerifyTimer = null
       setConnectionError('Koneksi internet tidak tersedia. Data terbaru tidak dapat disimpan.')
       setCheckingSession(false)
     }
@@ -592,6 +608,7 @@ function ActiveApp() {
     window.addEventListener('offline', onOffline)
     return () => {
       active = false
+      window.clearTimeout(focusVerifyTimer)
       unsubscribe()
       window.removeEventListener('online', onOnline)
       window.removeEventListener('focus', onFocus)
@@ -892,7 +909,7 @@ function ActiveApp() {
           {NAV.filter(({ id }) => visitedPages.has(id)).map(({ id }) => {
             const Page = PAGES[id]
             return (
-              <div key={id} className={'page-slot page-slot-' + id} hidden={page !== id}>
+              <div key={id} data-page-id={id} className={'page-slot page-slot-' + id} hidden={page !== id}>
                 <PageErrorBoundary>
                   <Suspense fallback={<PageLoadingFallback pageId={id} />}>
                     {id === 'menu'
@@ -908,7 +925,7 @@ function ActiveApp() {
                       : id === 'dashboard'
                         ? <Page onOpenLowStockProducts={openLowStockProducts} />
                         : id === 'finance'
-                          ? <Page onNavigateToDebts={() => navigateToPage('debts')} />
+                          ? <Page onNavigateToDebts={navigateToDebts} />
                         : id === 'stok'
                           ? <Page lowStockFilterRequest={lowStockFilterRequest} />
                           : <Page />}

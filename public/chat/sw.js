@@ -1,4 +1,4 @@
-const CACHE_NAME = 'voltker-chat-v3'
+const CACHE_NAME = 'voltker-chat-__BUILD_VERSION__'
 const APP_SHELL = [
   './',
   './index.html',
@@ -7,19 +7,37 @@ const APP_SHELL = [
   '../voltker-icon-512.png'
 ]
 
+async function removeOldCaches() {
+  const cacheNames = await caches.keys()
+  await Promise.all(
+    cacheNames
+      .filter((name) => name.startsWith('voltker-chat-') && name !== CACHE_NAME)
+      .map((name) => caches.delete(name))
+  )
+}
+
 self.addEventListener('install', (event) => {
   event.waitUntil(caches.open(CACHE_NAME).then((cache) => cache.addAll(APP_SHELL)))
 })
 
 self.addEventListener('activate', (event) => {
   event.waitUntil((async () => {
-    const cacheNames = await caches.keys()
-    await Promise.all(
-      cacheNames
-        .filter((name) => name.startsWith('voltker-chat-') && name !== CACHE_NAME)
-        .map((name) => caches.delete(name))
-    )
+    await removeOldCaches()
     await self.clients.claim()
+  })())
+})
+
+self.addEventListener('message', (event) => {
+  if (event.data?.type !== 'SKIP_WAITING') return
+
+  event.waitUntil((async () => {
+    const clients = await self.clients.matchAll({ type: 'window', includeUncontrolled: true })
+    for (const client of clients) {
+      if (client.id !== event.source?.id) {
+        client.postMessage({ type: 'UPDATE_READY' })
+      }
+    }
+    await self.skipWaiting()
   })())
 })
 

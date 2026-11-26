@@ -85,12 +85,25 @@ test('reports all provider failures after exhausting the fallback chain', async 
       async () => { throw Object.assign(new Error('rate limited'), { status: 429 }) },
       [
         { provider: 'Gemini', generate: async () => { throw Object.assign(new Error('high demand'), { status: 503 }) } },
-        { provider: 'OpenRouter Free', generate: async () => { throw Object.assign(new Error('free request limit reached'), { status: 429 }) } }
+        { provider: 'OpenRouter Free', generate: async () => { throw Object.assign(new Error('temporary failure'), { status: 503 }) } }
       ]
     ),
     (error) => error.status === 502
-      && /Groq: rate limited/.test(error.message)
-      && /Gemini: high demand/.test(error.message)
-      && /OpenRouter Free: free request limit reached/.test(error.message)
+      && error.message === 'Semua provider AI cadangan gagal. Groq: batas permintaan tercapai. · Gemini: gagal memproses permintaan. · OpenRouter Free: gagal memproses permintaan.'
+  )
+})
+
+test('preserves 429 and retryAfterSeconds when all providers are rate limited', async () => {
+  await assert.rejects(
+    generateWithProviderFallback(
+      async () => { throw Object.assign(new Error('rate limited'), { status: 429, retryAfterSeconds: 12 }) },
+      [
+        { provider: 'Gemini', generate: async () => { throw Object.assign(new Error('limited'), { status: 429, retryAfterSeconds: 30 }) } },
+        { provider: 'OpenRouter Free', generate: async () => { throw Object.assign(new Error('limited'), { status: 429, retryAfterSeconds: 20 }) } }
+      ]
+    ),
+    (error) => error.status === 429
+      && error.retryAfterSeconds === 30
+      && /batas permintaan/.test(error.message)
   )
 })

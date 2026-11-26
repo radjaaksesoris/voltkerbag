@@ -3,8 +3,8 @@ import { createPortal } from 'react-dom'
 import {
   addManualCustomerCredit,
   getAll,
+  getCustomerCreditBalances,
   getCustomerReceivableDetails,
-  getFinanceData,
   getVendorPayables,
   onRefresh,
   recordCustomerDebtPayment,
@@ -92,9 +92,9 @@ export default function Debts() {
       setLoadError('')
       try {
         if (activeTab === 'receivables') {
-          const balanceData = await getFinanceData({ from: null, to: null, page: 1, pageSize: 1 })
+          const balances = await getCustomerCreditBalances()
           if (!active || currentRequest !== requestId.current) return
-          setCustomerBalances(balanceData.credit_balances || [])
+          setCustomerBalances(balances)
         } else {
           const payableData = await getVendorPayables(payablePage, PAGE_SIZE)
           if (!active || currentRequest !== requestId.current) return

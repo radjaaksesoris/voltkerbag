@@ -1,6 +1,7 @@
 import React from 'react'
 import { createRoot } from 'react-dom/client'
 import App from './App.jsx'
+import AppDisabledNotice, { APP_TEMPORARILY_DISABLED } from './appAvailability.js'
 import './styles.css'
 
 if ('serviceWorker' in navigator) {
@@ -25,6 +26,6 @@ if ('serviceWorker' in navigator) {
 
 createRoot(document.getElementById('root')).render(
   <React.StrictMode>
-    <App />
+    {APP_TEMPORARILY_DISABLED ? <AppDisabledNotice /> : <App />}
   </React.StrictMode>
 )

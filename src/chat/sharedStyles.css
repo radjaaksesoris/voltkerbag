@@ -1,0 +1,23 @@
+:root {
+  color-scheme: light;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  -webkit-tap-highlight-color: rgba(181, 40, 46, .18);
+}
+html { scroll-behavior: smooth; }
+body {
+  font-family: 'Avenir Next', system-ui, sans-serif;
+  line-height: 1.5;
+}
+
+button, input, select { font: inherit; }
+button { cursor: pointer; }
+button:focus-visible, input:focus-visible, select:focus-visible {
+  outline: 3px solid rgba(181, 40, 46, .3);
+  outline-offset: 2px;
+}
+.icon { display: inline-block; flex: 0 0 auto; vertical-align: middle; }

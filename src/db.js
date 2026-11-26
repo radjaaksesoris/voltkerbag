@@ -4,6 +4,7 @@ import {
   isValidBackupChunkManifestEntry,
   isValidBackupChunkRows
 } from './backupFormat'
+import { isLowStock } from './productUnits.js'
 export { requestAppUpdateCheck, requestPageRefresh } from './refreshEvents.js'
 
 const TABLES = {
@@ -43,9 +44,43 @@ const masterDataCache = new Map()
 let masterDataCacheGeneration = 0
 let refreshCacheInvalidationInstalled = false
 
-function invalidateMasterDataCache() {
-  masterDataCacheGeneration += 1
-  masterDataCache.clear()
+function normalizeTableList(tables) {
+  if (tables == null) return []
+  const values = Array.isArray(tables) ? tables : [tables]
+  return values.filter((table) => typeof table === 'string' && table.trim()).map((table) => table.trim())
+}
+
+function tableScopeNames(tables) {
+  const names = new Set()
+  for (const table of normalizeTableList(tables)) {
+    names.add(table)
+    if (TABLES[table]) names.add(TABLES[table])
+    for (const [store, tableName] of Object.entries(TABLES)) {
+      if (tableName === table) names.add(store)
+    }
+  }
+  return names
+}
+
+function invalidateMasterDataCache(tables) {
+  const scope = normalizeTableList(tables)
+  if (!scope.length) {
+    masterDataCacheGeneration += 1
+    masterDataCache.clear()
+    return
+  }
+  const stores = new Set()
+  for (const name of tableScopeNames(scope)) {
+    if (TABLES[name]) stores.add(name)
+  }
+  let invalidated = false
+  for (const key of [...masterDataCache.keys()]) {
+    if (stores.has(key.slice(key.lastIndexOf(':') + 1))) {
+      masterDataCache.delete(key)
+      invalidated = true
+    }
+  }
+  if (invalidated) masterDataCacheGeneration += 1
 }
 
 function tableFor(store) {
@@ -570,9 +605,36 @@ export async function getDashboardData({ from, to, summaryFrom, summaryTo, page,
   return data
 }
 
-export async function getFinanceData({ from, to, page, pageSize, search = '' }) {
-  const client = getClient()
-  const searchTerm = String(search || '').trim().toLocaleLowerCase('id-ID')
+async function readVendorDebtSummary(client) {
+  const { data, error } = await client.rpc('get_vendor_debt_summary')
+  if (error) return null
+  const total = Number(data?.total_vendor_debt)
+  return Number.isFinite(total) ? total : null
+}
+
+async function scanVendorDebtTotal(client) {
+  let totalVendorDebt = 0
+  for (let offset = 0; ; offset += 1000) {
+    const { data: payables, error: payableError } = await client
+      .from('vendor_payables')
+      .select('balance_due')
+      .gt('balance_due', 0)
+      .order('id', { ascending: true })
+      .range(offset, offset + 999)
+    throwIfError(payableError, 'Gagal memuat total utang vendor')
+    totalVendorDebt += (payables || []).reduce((total, payable) => total + Number(payable.balance_due), 0)
+    if (!payables || payables.length < 1000) break
+  }
+  return totalVendorDebt
+}
+
+async function getVendorDebtTotal(client) {
+  const summary = await readVendorDebtSummary(client)
+  if (summary != null) return summary
+  return scanVendorDebtTotal(client)
+}
+
+async function fetchLegacyFinanceData({ client, from, to, page, pageSize, searchTerm }) {
   const hasEntryFilters = Boolean(searchTerm)
   const fetchPageSize = hasEntryFilters ? 100 : pageSize
   const { data: firstPage, error } = await client.rpc('get_finance_data', {
@@ -598,53 +660,7 @@ export async function getFinanceData({ from, to, page, pageSize, search = '' }) 
       allEntries.push(...(nextPage?.entries || []))
     }
     data = { ...firstPage, entries: allEntries }
-  }
 
-  let totalVendorDebt = 0
-  for (let offset = 0; ; offset += 1000) {
-    const { data: payables, error: payableError } = await client
-      .from('vendor_payables')
-      .select('balance_due')
-      .gt('balance_due', 0)
-      .order('id', { ascending: true })
-      .range(offset, offset + 999)
-    throwIfError(payableError, 'Gagal memuat total utang vendor')
-    totalVendorDebt += (payables || []).reduce((total, payable) => total + Number(payable.balance_due), 0)
-    if (!payables || payables.length < 1000) break
-  }
-
-  const expeditionEntries = (data?.entries || []).filter((entry) =>
-    entry.refId != null
-    && String(entry.category || '').trim().toLocaleLowerCase('id-ID') === 'biaya ekspedisi'
-  )
-  if (expeditionEntries.length) {
-    const transactionIds = [...new Set(expeditionEntries.map((entry) => entry.refId))]
-    const transactions = []
-    for (let offset = 0; offset < transactionIds.length; offset += 500) {
-      const { data: transactionBatch, error: transactionError } = await client
-        .from(tableFor('transactions'))
-        .select('id, expedition, customerName')
-        .in('id', transactionIds.slice(offset, offset + 500))
-      throwIfError(transactionError, 'Gagal memuat detail ekspedisi untuk Buku Kas')
-      transactions.push(...(transactionBatch || []))
-    }
-
-    const transactionById = new Map(transactions.map((transaction) => [String(transaction.id), transaction]))
-    const expeditionEntryIds = new Set(expeditionEntries.map((entry) => entry.id))
-    data.entries = data.entries.map((entry) => {
-      if (!expeditionEntryIds.has(entry.id)) return entry
-      const transaction = transactionById.get(String(entry.refId))
-      const expedition = String(transaction?.expedition || '').trim()
-      if (!expedition) return entry
-      const customerName = String(transaction.customerName || '').trim() || 'Pelanggan'
-      return {
-        ...entry,
-        category: 'Biaya Ekspedisi ' + expedition + ' (' + customerName + ')'
-      }
-    })
-  }
-
-  if (hasEntryFilters) {
     const searchTerms = searchTerm.split(/\s+/).filter(Boolean)
     const filteredEntries = (data.entries || []).filter((entry) => {
       if (!searchTerms.length) return true
@@ -657,8 +673,92 @@ export async function getFinanceData({ from, to, page, pageSize, search = '' }) 
     data.total_count = filteredEntries.length
     data.entries = filteredEntries.slice((page - 1) * pageSize, page * pageSize)
   }
+  return data
+}
 
-  return { ...data, total_vendor_debt: totalVendorDebt }
+async function fetchFinanceReport({ client, from, to, page, pageSize, rawSearch, searchTerm }) {
+  if (!searchTerm) {
+    const { data, error } = await client.rpc('get_finance_data', {
+      p_from: from,
+      p_to: to,
+      p_page: page,
+      p_page_size: pageSize
+    })
+    throwIfError(error, 'Gagal memuat ringkasan keuangan')
+    return data
+  }
+
+  const { data, error } = await client.rpc('get_finance_data', {
+    p_from: from,
+    p_to: to,
+    p_page: page,
+    p_page_size: pageSize,
+    p_search: rawSearch
+  })
+  if (!error) return data
+  return fetchLegacyFinanceData({ client, from, to, page, pageSize, searchTerm })
+}
+
+async function enrichFinanceExpeditionEntries(client, data) {
+  const expeditionEntries = (data?.entries || []).filter((entry) =>
+    entry.refId != null
+    && String(entry.category || '').trim().toLocaleLowerCase('id-ID') === 'biaya ekspedisi'
+  )
+  if (!expeditionEntries.length) return data
+
+  const transactionIds = [...new Set(expeditionEntries.map((entry) => entry.refId))]
+  const transactions = []
+  for (let offset = 0; offset < transactionIds.length; offset += 500) {
+    const { data: transactionBatch, error: transactionError } = await client
+      .from(tableFor('transactions'))
+      .select('id, expedition, customerName')
+      .in('id', transactionIds.slice(offset, offset + 500))
+    throwIfError(transactionError, 'Gagal memuat detail ekspedisi untuk Buku Kas')
+    transactions.push(...(transactionBatch || []))
+  }
+
+  const transactionById = new Map(transactions.map((transaction) => [String(transaction.id), transaction]))
+  const expeditionEntryIds = new Set(expeditionEntries.map((entry) => entry.id))
+  data.entries = data.entries.map((entry) => {
+    if (!expeditionEntryIds.has(entry.id)) return entry
+    const transaction = transactionById.get(String(entry.refId))
+    const expedition = String(transaction?.expedition || '').trim()
+    if (!expedition) return entry
+    const customerName = String(transaction.customerName || '').trim() || 'Pelanggan'
+    return {
+      ...entry,
+      category: 'Biaya Ekspedisi ' + expedition + ' (' + customerName + ')'
+    }
+  })
+  return data
+}
+
+export async function getFinanceData({ from, to, page, pageSize, search = '' }) {
+  const client = getClient()
+  const rawSearch = String(search || '').trim()
+  const searchTerm = rawSearch.toLocaleLowerCase('id-ID')
+  const [data, totalVendorDebt] = await Promise.all([
+    fetchFinanceReport({ client, from, to, page, pageSize, rawSearch, searchTerm }),
+    getVendorDebtTotal(client)
+  ])
+  const enrichedData = await enrichFinanceExpeditionEntries(client, data)
+  return { ...enrichedData, total_vendor_debt: totalVendorDebt }
+}
+
+export async function getCustomerCreditBalances() {
+  const client = getClient()
+  const { data, error } = await client.rpc('get_customer_credit_balances')
+  if (!error && Array.isArray(data)) return data
+  const financeData = await getFinanceData({ from: null, to: null, page: 1, pageSize: 1 })
+  return financeData.credit_balances || []
+}
+
+export async function getLowStockProductIds() {
+  const client = getClient()
+  const { data, error } = await client.rpc('get_low_stock_product_ids')
+  if (!error && Array.isArray(data)) return data.map((id) => Number(id)).filter((id) => Number.isFinite(id))
+  const products = await getAll('products')
+  return products.filter(isLowStock).map((product) => product.id)
 }
 
 export async function getFinanceInvoices({ from, to, page, pageSize }) {
@@ -707,8 +807,19 @@ export async function getFinanceInvoices({ from, to, page, pageSize }) {
   }
 }
 
-export async function getPurchaseEntries(page, pageSize) {
-  const client = getClient()
+async function fetchPurchaseEntriesPage(client, page, pageSize) {
+  const { data, error } = await client.rpc('get_purchase_entries_page', {
+    p_page: page,
+    p_page_size: pageSize
+  })
+  if (error || !data || !Array.isArray(data.entries)) return null
+  return {
+    entries: data.entries,
+    totalCount: Number(data.total_count) || 0
+  }
+}
+
+async function fetchPurchaseEntriesLegacy(client, page, pageSize) {
   const to = page * pageSize - 1
   const [{ data: expenses, count: expenseCount, error: expenseError }, { data: payables, count: payableCount, error: payableError }] = await Promise.all([
     client
@@ -777,6 +888,13 @@ export async function getPurchaseEntries(page, pageSize) {
   }
 }
 
+export async function getPurchaseEntries(page, pageSize) {
+  const client = getClient()
+  const rpcPage = await fetchPurchaseEntriesPage(client, page, pageSize)
+  if (rpcPage) return rpcPage
+  return fetchPurchaseEntriesLegacy(client, page, pageSize)
+}
+
 export async function getLatestStockPurchaseUnitCost(productId) {
   const { data, error } = await getClient()
     .from(tableFor('stockAdjustments'))
@@ -796,7 +914,7 @@ export async function removePurchaseEntry(id) {
     p_entry_id: id
   })
   throwIfError(error, 'Gagal menghapus riwayat pembelian')
-  notifyRefresh()
+  notifyRefresh({ tables: [TABLES.finance, TABLES.stockAdjustments, TABLES.products, 'vendor_payables'] })
 }
 
 export async function recordStockPurchase({ productId, quantityPcs, unitCost, vendor, date, requestId }) {
@@ -809,7 +927,7 @@ export async function recordStockPurchase({ productId, quantityPcs, unitCost, ve
     p_request_id: requestId || crypto.randomUUID()
   })
   throwIfError(error, 'Gagal mencatat pembelian dan menambahkan stok')
-  notifyRefresh()
+  notifyRefresh({ tables: [TABLES.products, TABLES.stockAdjustments, TABLES.finance] })
   return data
 }
 
@@ -825,7 +943,7 @@ export async function recordCreditStockPurchase({ productId, quantityPcs, unitCo
     p_request_id: requestId || crypto.randomUUID()
   })
   throwIfError(error, 'Gagal mencatat pembelian kredit dan menambahkan stok')
-  notifyRefresh()
+  notifyRefresh({ tables: [TABLES.products, TABLES.stockAdjustments, TABLES.finance, 'vendor_payables'] })
   return data
 }
 
@@ -943,8 +1061,23 @@ export async function getCustomerReceivableDetails(customerName) {
   }
 }
 
-export async function getVendorPayables(page, pageSize) {
-  const client = getClient()
+async function fetchVendorPayablesPage(client, page, pageSize) {
+  const { data, error } = await client.rpc('get_vendor_payables_page', {
+    p_page: page,
+    p_page_size: pageSize
+  })
+  if (error || !data || !Array.isArray(data.vendors)) return null
+  return {
+    vendors: data.vendors.map((vendor) => ({
+      ...vendor,
+      payables: Array.isArray(vendor.payables) ? vendor.payables : []
+    })),
+    totalCount: Number(data.total_count) || 0,
+    totalBalance: Number(data.total_balance) || 0
+  }
+}
+
+async function fetchVendorPayablesLegacy(client, page, pageSize) {
   const allPayables = []
   const batchSize = 1000
   let offset = 0
@@ -977,10 +1110,16 @@ export async function getVendorPayables(page, pageSize) {
     vendorMap.set(key, vendor)
   }
   const vendors = [...vendorMap.values()]
-  const totalVendors = vendors.length
-  const vendorPage = vendors.slice((page - 1) * pageSize, page * pageSize)
+  return {
+    vendors: vendors.slice((page - 1) * pageSize, page * pageSize),
+    totalCount: vendors.length,
+    totalBalance: vendors.reduce((total, vendor) => total + vendor.balance_due, 0)
+  }
+}
+
+async function attachVendorPayablePayments(client, vendorPage) {
   const payableIds = vendorPage.flatMap((vendor) => vendor.payables.map((payable) => payable.id))
-  let paymentRows = []
+  const paymentRows = []
   for (let index = 0; index < payableIds.length; index += 500) {
     const { data, error: paymentError } = await client
       .from('vendor_payable_payments')
@@ -1000,16 +1139,27 @@ export async function getVendorPayables(page, pageSize) {
     paymentsByPayable.set(key, payments)
   }
 
+  return vendorPage.map((vendor) => ({
+    ...vendor,
+    payables: vendor.payables.map((payable) => ({
+      ...payable,
+      payments: paymentsByPayable.get(String(payable.id)) || []
+    }))
+  }))
+}
+
+export async function getVendorPayables(page, pageSize) {
+  const client = getClient()
+  const [rpcPage, summary] = await Promise.all([
+    fetchVendorPayablesPage(client, page, pageSize),
+    readVendorDebtSummary(client)
+  ])
+  const pageData = rpcPage || await fetchVendorPayablesLegacy(client, page, pageSize)
+  const vendors = await attachVendorPayablePayments(client, pageData.vendors)
   return {
-    vendors: vendorPage.map((vendor) => ({
-      ...vendor,
-      payables: vendor.payables.map((payable) => ({
-        ...payable,
-        payments: paymentsByPayable.get(String(payable.id)) || []
-      }))
-    })),
-    totalCount: totalVendors,
-    totalBalance: vendors.reduce((total, vendor) => total + vendor.balance_due, 0)
+    vendors,
+    totalCount: pageData.totalCount,
+    totalBalance: summary != null ? summary : pageData.totalBalance
   }
 }
 
@@ -1022,7 +1172,7 @@ export async function createVendorPayable({ vendorName, description, amount, dat
     p_request_id: requestId || crypto.randomUUID()
   })
   throwIfError(error, 'Gagal mencatat utang pembelian')
-  notifyRefresh()
+  notifyRefresh({ tables: ['vendor_payables'] })
   return data
 }
 
@@ -1034,7 +1184,7 @@ export async function recordVendorPayableGroupPayment(vendorName, amount, alloca
     p_request_id: requestId || crypto.randomUUID()
   })
   throwIfError(error, 'Gagal menyimpan pembayaran utang pembelian')
-  notifyRefresh()
+  notifyRefresh({ tables: ['vendor_payables', 'vendor_payable_payments', TABLES.finance] })
   return data
 }
 
@@ -1052,7 +1202,7 @@ export async function put(store, value) {
     ? await query.insert(record).select('id').single()
     : await query.upsert(record, { onConflict: 'id' }).select('id').single()
   throwIfError(error, 'Gagal menyimpan data')
-  notifyRefresh()
+  notifyRefresh({ tables: [tableFor(store)] })
   return data.id
 }
 
@@ -1064,7 +1214,7 @@ export async function updateProductDetails(id, value) {
     .select('id')
     .single()
   throwIfError(error, 'Gagal memperbarui produk')
-  notifyRefresh()
+  notifyRefresh({ tables: [TABLES.products] })
   return data.id
 }
 
@@ -1089,7 +1239,9 @@ export async function completeSale(transaction, cart, requestId) {
     throw new Error('Transaksi tersimpan, tetapi nomor faktur resmi tidak ditemukan')
   }
 
-  notifyRefresh()
+  notifyRefresh({
+    tables: [TABLES.transactions, TABLES.transactionPayments, TABLES.finance, TABLES.products, TABLES.customers]
+  })
   return savedTransaction
 }
 
@@ -1105,7 +1257,7 @@ export async function addProductStock(productId, quantityPcs, unitCost, requestI
     p_price_lusin: pricing.priceLusin ?? null
   })
   throwIfError(error, 'Gagal menambahkan stok produk')
-  notifyRefresh()
+  notifyRefresh({ tables: [TABLES.products, TABLES.stockAdjustments] })
   return data
 }
 
@@ -1115,7 +1267,7 @@ export async function setProductStock(productId, stockPcs) {
     p_stock_pcs: stockPcs
   })
   throwIfError(error, 'Gagal memperbarui stok produk')
-  notifyRefresh()
+  notifyRefresh({ tables: [TABLES.products] })
   return data
 }
 
@@ -1126,7 +1278,7 @@ export async function recordTransactionPayment(transactionId, amount, requestId)
     p_request_id: requestId || crypto.randomUUID()
   })
   throwIfError(error, 'Gagal menyimpan cicilan')
-  notifyRefresh()
+  notifyRefresh({ tables: [TABLES.transactionPayments, TABLES.transactions, TABLES.finance] })
   return data
 }
 
@@ -1137,7 +1289,7 @@ export async function returnTransactionItems(transactionId, items, requestId) {
     p_request_id: requestId || crypto.randomUUID()
   })
   throwIfError(error, 'Gagal mencatat retur transaksi')
-  notifyRefresh()
+  notifyRefresh({ tables: [TABLES.transactions, TABLES.products, TABLES.finance] })
   return data
 }
 
@@ -1148,7 +1300,7 @@ export async function recordCustomerCreditPayment(customerName, amount, requestI
     p_request_id: requestId || crypto.randomUUID()
   })
   throwIfError(error, 'Gagal menyimpan pembayaran hutang pelanggan')
-  notifyRefresh()
+  notifyRefresh({ tables: [TABLES.finance, TABLES.transactions, TABLES.manualCredits] })
   return data
 }
 
@@ -1163,7 +1315,7 @@ export async function recordCustomerInvoiceCreditPayment(customerName, amount, a
     p_request_id: requestId || crypto.randomUUID()
   })
   throwIfError(error, 'Gagal menyimpan pembayaran faktur piutang pelanggan')
-  notifyRefresh()
+  notifyRefresh({ tables: [TABLES.transactionPayments, TABLES.transactions, TABLES.finance] })
   return data
 }
 
@@ -1179,7 +1331,15 @@ export async function recordCustomerDebtPayment(customerName, amount, allocation
     p_request_id: requestId || crypto.randomUUID()
   })
   throwIfError(error, 'Gagal menyimpan pembayaran piutang pelanggan')
-  notifyRefresh()
+  notifyRefresh({
+    tables: [
+      TABLES.transactions,
+      TABLES.transactionPayments,
+      TABLES.manualCredits,
+      TABLES.manualCreditPayments,
+      TABLES.finance
+    ]
+  })
   return data
 }
 
@@ -1190,7 +1350,7 @@ export async function addManualCustomerCredit(customerName, amount, requestId) {
     p_request_id: requestId || crypto.randomUUID()
   })
   throwIfError(error, 'Gagal menambahkan hutang pelanggan')
-  notifyRefresh()
+  notifyRefresh({ tables: [TABLES.manualCredits, TABLES.finance] })
   return data
 }
 
@@ -1200,7 +1360,7 @@ export async function recordExpeditionCost(entryId, amount) {
     p_amount: amount
   })
   throwIfError(error, 'Gagal menyimpan biaya ekspedisi')
-  notifyRefresh()
+  notifyRefresh({ tables: [TABLES.finance] })
   return data
 }
 
@@ -1268,7 +1428,7 @@ export async function remove(store, id) {
       [store === 'categories' ? 'p_category_id' : 'p_unit_id']: id
     })
     throwIfError(error, 'Gagal menghapus ' + (store === 'categories' ? 'kategori' : 'satuan'))
-    notifyRefresh()
+    notifyRefresh({ tables: [tableFor(store)] })
     return
   }
   if (store === 'finance') {
@@ -1276,26 +1436,48 @@ export async function remove(store, id) {
       p_entry_id: id
     })
     throwIfError(error, 'Gagal menghapus catatan keuangan')
-    notifyRefresh()
+    notifyRefresh({ tables: [TABLES.finance] })
     return
   }
   const { error } = await getClient().from(tableFor(store)).delete().eq('id', id)
   throwIfError(error, 'Gagal menghapus data')
-  notifyRefresh()
+  notifyRefresh({ tables: [tableFor(store)] })
 }
 
-export function notifyRefresh() {
-  invalidateMasterDataCache()
-  window.dispatchEvent(new CustomEvent('voltker:refresh'))
+export function notifyRefresh({ tables, pageId } = {}) {
+  invalidateMasterDataCache(tables)
+  const detail = {}
+  if (tables != null) detail.tables = normalizeTableList(tables)
+  if (pageId != null) detail.pageId = pageId
+  window.dispatchEvent(new CustomEvent('voltker:refresh', { detail }))
 }
 
-export function onRefresh(fn, pageId) {
+function invalidateFromRefreshEvent(event) {
+  invalidateMasterDataCache(event.detail?.tables)
+}
+
+function isPageSlotHidden(targetPageId) {
+  if (typeof document === 'undefined') return false
+  for (const slot of document.querySelectorAll('[data-page-id]')) {
+    if (slot.dataset.pageId === targetPageId) return Boolean(slot.hidden)
+  }
+  return false
+}
+
+export function onRefresh(fn, pageId, tables) {
   if (!refreshCacheInvalidationInstalled) {
-    window.addEventListener('voltker:refresh', invalidateMasterDataCache)
+    window.addEventListener('voltker:refresh', invalidateFromRefreshEvent)
     refreshCacheInvalidationInstalled = true
   }
+  const handlerScope = normalizeTableList(tables).length ? tableScopeNames(tables) : null
   function handleRefresh(event) {
-    if (event.detail?.pageId && event.detail.pageId !== pageId) return
+    const detail = event.detail || {}
+    if (detail.pageId && detail.pageId !== pageId) return
+    if (detail.tables && handlerScope) {
+      const eventScope = tableScopeNames(detail.tables)
+      if (![...eventScope].some((table) => handlerScope.has(table))) return
+    }
+    if (pageId && isPageSlotHidden(pageId)) return
     fn()
   }
   window.addEventListener('voltker:refresh', handleRefresh)

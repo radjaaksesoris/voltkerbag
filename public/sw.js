@@ -48,14 +48,20 @@ self.addEventListener('fetch', (event) => {
   if (request.method !== 'GET' || requestUrl.origin !== self.location.origin) return
 
   if (request.mode === 'navigate') {
+    const navigationKey = `${requestUrl.pathname}${requestUrl.search}`
     event.respondWith(
       fetch(request, { cache: 'no-cache' })
         .then((response) => {
-          const copy = response.clone()
-          caches.open(CACHE_NAME).then((cache) => cache.put('./index.html', copy))
+          if (response.ok) {
+            const copy = response.clone()
+            caches.open(CACHE_NAME).then((cache) => cache.put(navigationKey, copy))
+          }
           return response
         })
-        .catch(async () => (await caches.open(CACHE_NAME)).match('./index.html') || Response.error())
+        .catch(async () => {
+          const cache = await caches.open(CACHE_NAME)
+          return (await cache.match(navigationKey)) || (await cache.match('./index.html')) || Response.error()
+        })
     )
     return
   }

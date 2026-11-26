@@ -1,5 +1,6 @@
 const CHAT_HISTORY_VERSION = 1
 const MAX_CHAT_HISTORY_MESSAGES = 100
+const MAX_CHAT_HISTORY_BYTES = 256 * 1024
 
 function getChatHistoryKey(userId) {
   return 'voltker-chat-history:v' + CHAT_HISTORY_VERSION + ':' + encodeURIComponent(userId)
@@ -66,9 +67,17 @@ export function saveChatHistory(storage, userId, dayKey, messages) {
     .slice(-MAX_CHAT_HISTORY_MESSAGES)
     .map(normalizeMessage)
 
-  storage.setItem(getChatHistoryKey(userId), JSON.stringify({
+  const serialize = () => JSON.stringify({
     version: CHAT_HISTORY_VERSION,
     day: dayKey,
     messages: savedMessages
-  }))
+  })
+  const encoder = new TextEncoder()
+  let payload = serialize()
+  while (savedMessages.length && encoder.encode(payload).length > MAX_CHAT_HISTORY_BYTES) {
+    savedMessages.shift()
+    payload = serialize()
+  }
+
+  storage.setItem(getChatHistoryKey(userId), payload)
 }
